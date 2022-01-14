@@ -133,7 +133,6 @@ export class TaskService {
         newBlock.num_txs = blockData.block.data.txs.length;
         newBlock.proposer = blockData.block.header.proposer_address;
         newBlock.timestamp = blockData.block.header.time;
-        const savedBlock = await this.blockRepository.save(newBlock);
 
         if (blockData.block.data.txs && blockData.block.data.txs.length > 0) {
           // create transaction
@@ -161,6 +160,7 @@ export class TaskService {
               txType = txAction.value.replace(regex, ' ').toUpperCase();
             }
 
+            const savedBlock = await this.blockRepository.save(newBlock);
             const newTx = new Transaction();
             newTx.block = savedBlock;
             newTx.code = txData.tx_result.code;
