@@ -53,8 +53,8 @@ export class TaskService {
 
     return data;
   }
-  async getDataRPC(api, params) {
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
+  async getDataRPC(rpc, params) {
+    const data = await lastValueFrom(this.httpService.get(rpc + params)).then(
       (rs) => rs.data,
     );
 
@@ -145,7 +145,7 @@ export class TaskService {
             // fetch tx data
             const params = `tx?hash=0x${txHash}&prove=true`;
 
-            const txData = await this.getDataRPC(api, params);
+            const txData = await this.getDataAPI(api, params);
 
             let txType = 'FAILED';
             if (txData.tx_result.code === 0) {
