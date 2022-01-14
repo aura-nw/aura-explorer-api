@@ -145,7 +145,7 @@ export class TaskService {
             // fetch tx data
             const params = `tx?hash=0x${txHash}&prove=true`;
 
-            const txData = await this.getDataAPI(api, params);
+            const txData = await this.getDataRPC(rpc, params);
 
             let txType = 'FAILED';
             if (txData.tx_result.code === 0) {
