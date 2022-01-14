@@ -11,5 +11,6 @@ export default (): any => ({
   },
   node: {
     rpc: process.env.RPC,
+    api: process.env.API,
   },
 });

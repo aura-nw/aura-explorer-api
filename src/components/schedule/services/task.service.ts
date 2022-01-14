@@ -53,8 +53,8 @@ export class TaskService {
 
     return data;
   }
-  async getDataRPC(rpc, params) {
-    const data = await lastValueFrom(this.httpService.get(rpc + params)).then(
+  async getDataRPC(api, params) {
+    const data = await lastValueFrom(this.httpService.get(api + params)).then(
       (rs) => rs.data,
     );
 
@@ -93,6 +93,7 @@ export class TaskService {
     }
 
     const rpc = this.configService.get<string>('node.rpc');
+    const api = this.configService.get<string>('node.api');
 
     // get latest block height
     const payloadStatus = {
@@ -144,7 +145,7 @@ export class TaskService {
             // fetch tx data
             const params = `tx?hash=0x${txHash}&prove=true`;
 
-            const txData = await this.getDataRPC(rpc, params);
+            const txData = await this.getDataRPC(api, params);
 
             let txType = 'FAILED';
             if (txData.tx_result.code === 0) {

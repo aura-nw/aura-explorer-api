@@ -15,6 +15,7 @@ export const configModuleOptions: ConfigModuleOptions = {
     DB_USER: Joi.string().required(),
     DB_PASS: Joi.string().required(),
     RPC: Joi.string().required(),
+    API: Joi.string().required(),
     START_HEIGHT: Joi.number(),
   }),
 };
