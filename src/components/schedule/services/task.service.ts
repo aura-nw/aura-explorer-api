@@ -179,6 +179,8 @@ export class TaskService {
             newTx.type = txType;
             await this.txRepository.save(newTx);
           }
+        } else {
+          await this.blockRepository.save(newBlock);
         }
 
         // update current block
