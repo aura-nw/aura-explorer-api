@@ -34,7 +34,7 @@ export class InfluxDBClient {
       count: string,
       timestamp: string
     }[] = [];
-    const query = `from(bucket: "${this.bucket}") |> range(start: -${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> window(every: ${step}) |> count()`;
+    const query = `from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> window(every: ${step}) |> count()`;
     const output = new Promise((resolve, reject) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
