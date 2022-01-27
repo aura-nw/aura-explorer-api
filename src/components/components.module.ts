@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SharedModule } from '../shared/shared.module';
 
 import { BlockModule } from './block/block.module';
+import { MetricModule } from './metric/metric.module';
 import { TaskModule } from './schedule/task.module';
 import { TransactionModule } from './transaction/transaction.module';
 
@@ -13,7 +14,8 @@ import { TransactionModule } from './transaction/transaction.module';
     BlockModule,
     TransactionModule,
     TaskModule,
+    MetricModule,
     ScheduleModule.forRoot(),
   ],
 })
-export class ComponentsModule {}
+export class ComponentsModule { }

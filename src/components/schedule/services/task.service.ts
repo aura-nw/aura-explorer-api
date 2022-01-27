@@ -10,11 +10,13 @@ import { AkcLogger, Block, Transaction, SyncStatus } from '../../../shared';
 import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
 import { TransactionRepository } from '../repositories/transaction.repository';
+import { InfluxDBClient } from './influxdb-client';
 
 @Injectable()
 export class TaskService {
   isSyncing: boolean;
   currentBlock: number;
+  influxDbClient: InfluxDBClient;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -27,6 +29,13 @@ export class TaskService {
     this.logger.setContext(TaskService.name);
     this.isSyncing = false;
     this.getCurrentStatus();
+
+    this.influxDbClient = new InfluxDBClient(
+      this.configService.get<string>('influxdb.bucket'),
+      this.configService.get<string>('influxdb.org'),
+      this.configService.get<string>('influxdb.url'),
+      this.configService.get<string>('influxdb.token'),
+    );
   }
 
   async getCurrentStatus() {
@@ -126,6 +135,8 @@ export class TaskService {
         };
         const blockData = await this.postDataRPC(rpc, payloadBlock);
 
+        // TODO: init write api
+        this.influxDbClient.initWriteApi();
         // create block
         const newBlock = new Block();
         newBlock.block_hash = blockData.block_id.hash;
@@ -184,6 +195,13 @@ export class TaskService {
             newTx.tx_hash = txData.hash;
             newTx.type = txType;
             await this.txRepository.save(newTx);
+            // TODO: Write tx to influxdb
+            this.influxDbClient.writeTx(
+              newTx.tx_hash,
+              newTx.height,
+              newTx.type,
+              newTx.timestamp,
+            );
           }
         } else {
           try {
@@ -191,7 +209,19 @@ export class TaskService {
           } catch (error) {
             this.logger.error(null, `Block is already existed!`);
           }
+          // TODO: Write block to influxdb
+          this.influxDbClient.writeBlock(
+            newBlock.height,
+            newBlock.block_hash,
+            newBlock.num_txs,
+            newBlock.chainid,
+            newBlock.timestamp,
+          );
         }
+        /**
+         * TODO: Flush pending writes and close writeApi.
+         */
+        this.influxDbClient.closeWriteApi();
 
         // update current block
         await this.updateStatus(fetchingBlockHeight);

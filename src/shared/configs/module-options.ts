@@ -17,5 +17,9 @@ export const configModuleOptions: ConfigModuleOptions = {
     RPC: Joi.string().required(),
     API: Joi.string().required(),
     START_HEIGHT: Joi.number(),
+    INFLUXDB_TOKEN: Joi.string().required(),
+    INFLUXDB_URL: Joi.string().required(),
+    INFLUXDB_BUCKET: Joi.string().required(),
+    INFLUXDB_ORG: Joi.string().required(),
   }),
 };
