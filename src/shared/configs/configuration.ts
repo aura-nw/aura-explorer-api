@@ -13,4 +13,10 @@ export default (): any => ({
     rpc: process.env.RPC,
     api: process.env.API,
   },
+  influxdb: {
+    token: process.env.INFLUXDB_TOKEN,
+    url: process.env.INFLUXDB_URL,
+    bucket: process.env.INFLUXDB_BUCKET,
+    org: process.env.INFLUXDB_ORG
+  }
 });
