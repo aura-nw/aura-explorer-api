@@ -1,7 +1,8 @@
-import { InfluxDB, Point, WriteApi } from "@influxdata/influxdb-client";
+import { InfluxDB, Point, QueryApi, WriteApi } from "@influxdata/influxdb-client";
 
 export class InfluxDBClient {
   private client: InfluxDB;
+  private queryApi: QueryApi;
   private writeApi: WriteApi;
 
   constructor(
@@ -13,16 +14,48 @@ export class InfluxDBClient {
     this.client = new InfluxDB({ url, token });
   }
 
+  initQueryApi(): void {
+    this.queryApi = this.client.getQueryApi(this.org);
+  }
+
   initWriteApi(): void {
     this.writeApi = this.client.getWriteApi(this.org, this.bucket);
     return;
   }
 
-
   closeWriteApi(): void {
     this.writeApi.close().then(() => {
       return;
     });
+  }
+
+  queryData(measurement, statTime, step) {
+    const results: {
+      count: string,
+      timestamp: string
+    }[] = [];
+    const query = `from(bucket: "${this.bucket}") |> range(start: -${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> window(every: ${step}) |> count()`;
+    const output = new Promise((resolve, reject) => {
+      this.queryApi.queryRows(query, {
+        next(row, tableMeta) {
+          const o = tableMeta.toObject(row);
+          results.push({
+            timestamp: o._start,
+            count: String(o._value),
+          });
+        },
+        error(error) {
+          console.error(error);
+          console.log('Finished ERROR');
+          return resolve(results);
+        },
+        complete() {
+          console.log('Finished SUCCESS');
+          return resolve(results);
+        },
+      });
+    });
+    return output;
   }
 
   writeBlock(height, block_hash, num_txs, chainid, timestamp): void {
