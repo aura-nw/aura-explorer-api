@@ -40,7 +40,7 @@ export class InfluxDBClient {
       // .tag('chainid', chainid)
       .stringField('tx_hash', tx_hash)
       .intField('height', height)
-      .intField('type', type)
+      .stringField('type', type)
       .timestamp(this.convertDate(timestamp));
     this.writeApi.writePoint(point);
   }
