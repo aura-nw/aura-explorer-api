@@ -194,7 +194,11 @@ export class TaskService {
             newTx.tx = txData.tx;
             newTx.tx_hash = txData.hash;
             newTx.type = txType;
-            await this.txRepository.save(newTx);
+            try {
+              await this.txRepository.save(newTx);
+            } catch (error) {
+              this.logger.error(null, `Transaction is already existed!`);
+            }
             // TODO: Write tx to influxdb
             this.influxDbClient.writeTx(
               newTx.tx_hash,
