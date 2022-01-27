@@ -160,8 +160,14 @@ export class TaskService {
               const regex = /_/gi;
               txType = txAction.value.replace(regex, ' ').toUpperCase();
             }
-
-            const savedBlock = await this.blockRepository.save(newBlock);
+            let savedBlock;
+            try {
+              savedBlock = await this.blockRepository.save(newBlock);
+            } catch (error) {
+              savedBlock = await this.blockRepository.findOne({
+                where: { block_hash: blockData.block_id.hash },
+              });
+            }
             const newTx = new Transaction();
             newTx.block = savedBlock;
             newTx.code = txData.tx_result.code;
@@ -180,7 +186,11 @@ export class TaskService {
             await this.txRepository.save(newTx);
           }
         } else {
-          await this.blockRepository.save(newBlock);
+          try {
+            await this.blockRepository.save(newBlock);
+          } catch (error) {
+            this.logger.error(null, `Block is already existed!`);
+          }
         }
 
         // update current block
