@@ -91,7 +91,7 @@ export class TaskService {
     }
   }
 
-  @Interval(1000)
+  @Interval(500)
   async handleInterval() {
     // check status
     if (this.isSyncing) {
@@ -102,7 +102,7 @@ export class TaskService {
     }
 
     const rpc = this.configService.get<string>('node.rpc');
-    const api = this.configService.get<string>('node.api');
+    // const api = this.configService.get<string>('node.api');
 
     // get latest block height
     const payloadStatus = {
