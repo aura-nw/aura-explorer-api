@@ -91,7 +91,7 @@ export class TaskService {
     }
   }
 
-  @Interval(2000)
+  @Interval(1000)
   async handleInterval() {
     // check status
     if (this.isSyncing) {
