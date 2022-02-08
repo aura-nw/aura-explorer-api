@@ -7,6 +7,7 @@ import { BlockModule } from './block/block.module';
 import { MetricModule } from './metric/metric.module';
 import { TaskModule } from './schedule/task.module';
 import { TransactionModule } from './transaction/transaction.module';
+import { ValidatorModule } from './validator/validator.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { TransactionModule } from './transaction/transaction.module';
     TransactionModule,
     TaskModule,
     MetricModule,
+    ValidatorModule,
     ScheduleModule.forRoot(),
   ],
 })
