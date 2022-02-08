@@ -32,16 +32,19 @@ export class ValidatorService {
 
   async getValidators(
     ctx: RequestContext,
-  ): Promise<{ validators: ValidatorOutput[]; count: number }> {
+  ): Promise<any> {
+    // ): Promise<{ validators: ValidatorOutput[]; count: number }> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
     const validators = await this.getDataAPI(this.cosmosScanAPI, "/validators", ctx);
 
-    const validatorsOutput = plainToClass(ValidatorOutput, validators, {
-      excludeExtraneousValues: true,
-    });
+    // const validatorsOutput = plainToClass(ValidatorOutput, validators, {
+    //   excludeExtraneousValues: true,
+    // });
 
-    return { validators: validatorsOutput, count: validators.length };
+    return {
+      validators, count: validators.length
+    };
   }
 
   async getValidatorByAddress(ctx: RequestContext, address: string): Promise<any> {
