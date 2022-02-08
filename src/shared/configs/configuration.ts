@@ -2,6 +2,7 @@ export default (): any => ({
   apiPrefix: process.env.API_PREFIX,
   port: process.env.PORT,
   startHeight: process.env.START_HEIGHT,
+  cosmosScanAPI: process.env.COSMOS_SCAN_API,
   database: {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : undefined,

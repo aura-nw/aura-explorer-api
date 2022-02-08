@@ -1,56 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class LiteBlockOutput {
+export class ValidatorOutput {
   @Expose()
   @ApiProperty()
-  height: number;
+  title: string;
 
   @Expose()
   @ApiProperty()
-  block_hash: string;
-
-  @Expose()
-  @ApiProperty()
-  num_txs: number;
-
-  @Expose()
-  @ApiProperty()
-  timestamp: Date;
-}
-
-export class BlockOutput {
-  @Expose()
-  @ApiProperty()
-  block_hash: string;
-
-  @Expose()
-  @ApiProperty()
-  chainid: string;
-
-  @Expose()
-  @ApiProperty()
-  height: number;
-
-  @Expose()
-  @ApiProperty()
-  id: number;
-
-  @Expose()
-  @ApiProperty()
-  identity: string;
-
-  @Expose()
-  @ApiProperty()
-  moniker: string;
-
-  @Expose()
-  @ApiProperty()
-  num_signatures: number;
-
-  @Expose()
-  @ApiProperty()
-  num_txs: number;
+  website: string;
 
   @Expose()
   @ApiProperty()
@@ -58,13 +16,41 @@ export class BlockOutput {
 
   @Expose()
   @ApiProperty()
-  proposer: string;
+  acc_address: string;
 
   @Expose()
   @ApiProperty()
-  timestamp: Date;
+  cons_address: string;
 
   @Expose()
   @ApiProperty()
-  txs: [];
+  percent_power: string;
+
+  @Expose()
+  @ApiProperty()
+  power: string;
+
+  @Expose()
+  @ApiProperty()
+  self_stake: string;
+
+  @Expose()
+  @ApiProperty()
+  fee: string;
+
+  @Expose()
+  @ApiProperty()
+  blocks_proposed: number;
+
+  @Expose()
+  @ApiProperty()
+  delegators: number;
+
+  @Expose()
+  @ApiProperty()
+  power_24_change: string;
+
+  @Expose()
+  @ApiProperty()
+  governance_votes: number;
 }
