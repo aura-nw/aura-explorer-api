@@ -9,6 +9,8 @@ import { TransactionService } from './components/transaction/services/transactio
 
 @Injectable()
 export class AppService {
+  cosmosScanAPI: string;
+
   constructor(
     private logger: AkcLogger,
     private configService: ConfigService,
@@ -16,11 +18,24 @@ export class AppService {
     private txService: TransactionService,
   ) {
     this.logger.setContext(AppService.name);
+    this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
   }
   getHello(): string {
     const ctx = new RequestContext();
     this.logger.log(ctx, 'Hello World!');
     return 'Hello World!';
+  }
+
+  async getDataAPI(api, params, ctx) {
+    this.logger.log(
+      ctx,
+      `${this.getDataAPI.name} was called, to ${api + params}!`,
+    );
+    const data = await lastValueFrom(this.httpService.get(api + params)).then(
+      (rs) => rs.data,
+    );
+
+    return data;
   }
 
   async getStatus(ctx: RequestContext): Promise<StatusOutput> {
@@ -29,23 +44,25 @@ export class AppService {
     this.logger.log(ctx, `calling get latest txs from node`);
     const rpc = this.configService.get<string>('node.rpc');
 
-    // get latest block height
-    let lastHeight;
-    const payloadGetBlockHeight = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'blockchain',
-      params: ['0', '0'],
-    };
-    const dataBlockHeight = await lastValueFrom(
-      this.httpService.post(rpc, payloadGetBlockHeight),
-    ).then((rs) => rs.data);
-    if (typeof dataBlockHeight.error != 'undefined') {
-      throw new InternalServerErrorException();
-    }
-    if (typeof dataBlockHeight.result != 'undefined') {
-      lastHeight = dataBlockHeight.result.last_height;
-    }
+    // get latest metadata
+    const meta = await this.getDataAPI(this.cosmosScanAPI, '/meta', ctx);
+
+    // let lastHeight;
+    // const payloadGetBlockHeight = {
+    //   jsonrpc: '2.0',
+    //   id: 1,
+    //   method: 'blockchain',
+    //   params: ['0', '0'],
+    // };
+    // const dataBlockHeight = await lastValueFrom(
+    //   this.httpService.post(rpc, payloadGetBlockHeight),
+    // ).then((rs) => rs.data);
+    // if (typeof dataBlockHeight.error != 'undefined') {
+    //   throw new InternalServerErrorException();
+    // }
+    // if (typeof dataBlockHeight.result != 'undefined') {
+    //   lastHeight = dataBlockHeight.result.last_height;
+    // }
 
     // get total tx
     const totalTxsNum = await this.txService.getTotalTx();
@@ -56,7 +73,7 @@ export class AppService {
       jsonrpc: '2.0',
       id: 1,
       method: 'validators',
-      params: [`${lastHeight}`, '1', '100'],
+      params: [`${meta.height}`, '1', '100'],
     };
     const dataValidator = await lastValueFrom(
       this.httpService.post(rpc, payloadGetValidator),
@@ -69,9 +86,12 @@ export class AppService {
     }
 
     return {
-      block_height: lastHeight,
+      block_height: meta.height,
       total_txs_num: totalTxsNum,
       total_validator_num: totalValidator,
+      latest_validator: meta.latest_validator,
+      validator_avg_fee: meta.validator_avg_fee,
+      block_time: meta.block_time,
     };
   }
 }

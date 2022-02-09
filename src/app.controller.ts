@@ -32,7 +32,7 @@ export class AppController {
 
   @Get('status')
   @ApiOperation({
-    summary: "Get status of the aura network",
+    summary: 'Get status of the aura network',
   })
   @ApiResponse({
     status: HttpStatus.OK,
