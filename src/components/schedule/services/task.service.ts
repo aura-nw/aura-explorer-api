@@ -127,13 +127,16 @@ export class TaskService {
 
       try {
         // fetching block from node
-        const payloadBlock = {
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'block',
-          params: [`${fetchingBlockHeight}`],
-        };
-        const blockData = await this.postDataRPC(rpc, payloadBlock);
+        const paramsBlock = `block?height=${fetchingBlockHeight}`;
+
+        const blockData = await this.getDataRPC(rpc, paramsBlock);
+        // const payloadBlock = {
+        //   jsonrpc: '2.0',
+        //   id: 1,
+        //   method: 'block',
+        //   params: [`${fetchingBlockHeight}`],
+        // };
+        // const blockData = await this.postDataRPC(rpc, payloadBlock);
 
         // TODO: init write api
         this.influxDbClient.initWriteApi();
@@ -154,9 +157,9 @@ export class TaskService {
             const txHash = sha256(Buffer.from(element, 'base64')).toUpperCase();
 
             // fetch tx data
-            const params = `tx?hash=0x${txHash}&prove=true`;
+            const paramsTx = `tx?hash=0x${txHash}&prove=true`;
 
-            const txData = await this.getDataRPC(rpc, params);
+            const txData = await this.getDataRPC(rpc, paramsTx);
 
             let txType = 'FAILED';
             if (txData.tx_result.code === 0) {
