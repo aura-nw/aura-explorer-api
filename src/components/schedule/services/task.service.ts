@@ -91,7 +91,7 @@ export class TaskService {
     }
   }
 
-  @Interval(100)
+  @Interval(500)
   async handleInterval() {
     // check status
     if (this.isSyncing) {
@@ -155,6 +155,7 @@ export class TaskService {
             const element = blockData.block.data.txs[key];
 
             const txHash = sha256(Buffer.from(element, 'base64')).toUpperCase();
+            this.logger.log(null, `processing tx: ${txHash}`);
 
             // fetch tx data
             const paramsTx = `tx?hash=0x${txHash}&prove=true`;
