@@ -60,7 +60,7 @@ export class BlockService {
     // }
 
     const [blocks, count] = await this.blockRepository.findAndCount({
-      order: { id: 'DESC' },
+      order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
     });

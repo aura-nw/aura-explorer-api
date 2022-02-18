@@ -135,7 +135,7 @@ export class TransactionService {
     // }
 
     const [txs, count] = await this.txRepository.findAndCount({
-      order: { id: 'DESC' },
+      order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
     });
