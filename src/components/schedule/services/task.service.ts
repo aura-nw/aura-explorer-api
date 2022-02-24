@@ -162,19 +162,17 @@ export class TaskService {
 
             const txData = await this.getDataRPC(rpc, paramsTx);
 
-            let txType = 'FAILED';
-            if (txData.tx_result.code === 0) {
-              const txLog = JSON.parse(txData.tx_result.log);
+            let txType = '';
+            const txLog = JSON.parse(txData.tx_result.log);
 
-              const txAttr = txLog[0].events.find(
-                ({ type }) => type === 'message',
-              );
-              const txAction = txAttr.attributes.find(
-                ({ key }) => key === 'action',
-              );
-              const regex = /_/gi;
-              txType = txAction.value.replace(regex, ' ').toUpperCase();
-            }
+            const txAttr = txLog[0].events.find(
+              ({ type }) => type === 'message',
+            );
+            const txAction = txAttr.attributes.find(
+              ({ key }) => key === 'action',
+            );
+            const regex = /_/gi;
+            txType = txAction.value.replace(regex, ' ').toUpperCase();
             let savedBlock;
             try {
               savedBlock = await this.blockRepository.save(newBlock);
@@ -197,6 +195,8 @@ export class TaskService {
             newTx.timestamp = blockData.block.header.time;
             newTx.tx = txData.tx;
             newTx.tx_hash = txData.hash;
+            newTx.fee = txData.fee;
+            newTx.messages = txData.messages;
             newTx.type = txType;
             try {
               await this.txRepository.save(newTx);

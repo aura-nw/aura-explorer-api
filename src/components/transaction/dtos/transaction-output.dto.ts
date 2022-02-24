@@ -17,6 +17,14 @@ export class LiteTransactionOutput {
   @Expose()
   @ApiProperty()
   timestamp: Date;
+
+  @Expose()
+  @ApiProperty()
+  code: string;
+
+  @Expose()
+  @ApiProperty()
+  fee: string;
 }
 
 export class TransactionOutput {

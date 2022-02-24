@@ -6,7 +6,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { AkcLogger, RequestContext, Transaction } from '../../../shared';
 
-import { TxParamsDto } from '../dtos/block-params.dto';
+import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { LiteTransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
 
