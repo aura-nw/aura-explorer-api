@@ -82,4 +82,13 @@ export class BlockService {
 
     return { ...blockOutput, txs };
   }
+
+  async getBlockById(ctx: RequestContext, blockId): Promise<any> {
+    this.logger.log(ctx, `${this.getBlockByHeight.name} was called!`);
+
+    const blockOutput = await this.blockRepository.findOne(blockId);
+    const txs = await this.txService.getTxsByBlockHeight(blockId);
+
+    return { ...blockOutput, txs };
+  }
 }

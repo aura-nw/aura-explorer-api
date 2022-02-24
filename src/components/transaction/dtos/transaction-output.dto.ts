@@ -17,6 +17,10 @@ export class LiteTransactionOutput {
   @Expose()
   @ApiProperty()
   timestamp: Date;
+
+  @Expose()
+  @ApiProperty()
+  blockId: number;
 }
 
 export class TransactionOutput {
