@@ -20,6 +20,14 @@ export class LiteTransactionOutput {
 
   @Expose()
   @ApiProperty()
+  code: string;
+
+  @Expose()
+  @ApiProperty()
+  fee: string;
+
+  @Expose()
+  @ApiProperty()
   blockId: number;
 }
 

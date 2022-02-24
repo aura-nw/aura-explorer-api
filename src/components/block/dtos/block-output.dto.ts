@@ -16,6 +16,14 @@ export class LiteBlockOutput {
 
   @Expose()
   @ApiProperty()
+  proposer: string;
+
+  @Expose()
+  @ApiProperty()
+  operator_address: string;
+
+  @Expose()
+  @ApiProperty()
   timestamp: Date;
 }
 
