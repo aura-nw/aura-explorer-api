@@ -25,6 +25,11 @@ export class LiteTransactionOutput {
   @Expose()
   @ApiProperty()
   fee: string;
+
+  @Expose()
+  @ApiProperty()
+  blockId: number;
+
 }
 
 export class TransactionOutput {

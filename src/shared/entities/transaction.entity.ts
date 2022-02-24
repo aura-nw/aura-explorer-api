@@ -44,6 +44,9 @@ export class Transaction extends BaseEntityIncrementId {
   @Column({ type: 'text' })
   tx: string;
 
+  @Column({ type: 'text' })
+  blockId: number;
+
   @ManyToOne(() => Block, (block) => block.txs, { eager: true })
   block: Block;
 
