@@ -146,7 +146,8 @@ export class TaskService {
         newBlock.chainid = blockData.block.header.chain_id;
         newBlock.height = blockData.block.header.height;
         newBlock.num_txs = blockData.block.data.txs.length;
-        newBlock.proposer = blockData.block.header.proposer_address;
+        newBlock.proposer = blockData.block.header.proposer;
+        newBlock.proposer_address = blockData.block.header.proposer_address;
         newBlock.timestamp = blockData.block.header.time;
 
         if (blockData.block.data.txs && blockData.block.data.txs.length > 0) {

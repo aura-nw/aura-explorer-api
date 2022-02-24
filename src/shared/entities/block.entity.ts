@@ -33,6 +33,9 @@ export class Block extends BaseEntityIncrementId {
   @Column({ default: '' })
   proposer: string;
 
+  @Column({ default: '' })
+  proposer_address: string;
+
   @Column()
   timestamp: Date;
 

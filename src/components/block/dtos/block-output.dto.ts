@@ -16,6 +16,10 @@ export class LiteBlockOutput {
 
   @Expose()
   @ApiProperty()
+  proposer_address: string;
+
+  @Expose()
+  @ApiProperty()
   num_txs: number;
 
   @Expose()
