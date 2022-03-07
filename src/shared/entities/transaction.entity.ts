@@ -42,13 +42,13 @@ export class Transaction extends BaseEntityIncrementId {
   @Column()
   timestamp: Date;
 
-  @Column({ type: 'text' })
-  tx: string;
+  @Column({ type: 'json' })
+  tx: any;
 
   @Column({ type: 'text' })
   blockId: number;
 
-  @Column({ default: '' })
+  @Column({ type: 'text' })
   fee: string;
 
   @Column({ type: 'json' })

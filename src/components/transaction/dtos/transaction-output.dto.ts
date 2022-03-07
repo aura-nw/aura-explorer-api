@@ -29,6 +29,10 @@ export class LiteTransactionOutput {
   @Expose()
   @ApiProperty()
   blockId: number;
+  
+  @Expose()
+  @ApiProperty()
+  messages: any;
 }
 
 export class TransactionOutput {
