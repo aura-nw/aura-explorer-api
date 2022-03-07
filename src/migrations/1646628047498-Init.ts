@@ -1,7 +1,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class trans1646628047498 implements MigrationInterface {
-    name = 'trans1646628047498'
+export class Init1646628047498 implements MigrationInterface {
+    name = 'Init1646628047498'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE \`transactions\` (\`created_at\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`id\` int NOT NULL AUTO_INCREMENT, \`tx_hash\` varchar(255) NOT NULL, \`code\` int NOT NULL DEFAULT '0', \`codespace\` varchar(255) NOT NULL DEFAULT '', \`data\` varchar(255) NOT NULL DEFAULT '', \`gas_used\` int NOT NULL DEFAULT '0', \`gas_wanted\` int NOT NULL DEFAULT '0', \`height\` int NOT NULL, \`info\` varchar(255) NOT NULL DEFAULT '', \`type\` varchar(255) NOT NULL DEFAULT '', \`raw_log\` text NOT NULL, \`timestamp\` datetime NOT NULL, \`tx\` json NOT NULL, \`blockId\` int NOT NULL, \`fee\` text NOT NULL, \`messages\` json NOT NULL, UNIQUE INDEX \`tx_hash\` (\`tx_hash\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);

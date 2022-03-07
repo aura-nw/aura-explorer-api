@@ -136,7 +136,7 @@ export class TaskService {
         // const payloadBlock = {
         //   jsonrpc: '2.0',
         //   id: 1,
-        //   method: 'block', 
+        //   method: 'block',
         //   params: [`${fetchingBlockHeight}`],
         // };
         // const blockData = await this.postDataRPC(rpc, payloadBlock);
