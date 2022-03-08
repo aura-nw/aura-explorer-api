@@ -210,7 +210,6 @@ export class TaskService {
             newTx.tx_hash = txData.hash;
             newTx.type = txType;
             newTx.fee = txDataCosmos.fee;
-            newTx.messages = txDataCosmos.messages;
             try {
               await this.txRepository.save(newTx);
             } catch (error) {
