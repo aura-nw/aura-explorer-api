@@ -67,4 +67,23 @@ export class BlockController {
 
     return { data: block, meta: {} };
   }
+  
+  @Get('id/:blockId')
+  @ApiOperation({ summary: 'Get block by id' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(BlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getBlockById(
+    @ReqContext() ctx: RequestContext,
+    @Param('blockId') blockId: number,
+  ): Promise<any> {
+    // ): Promise<BaseApiResponse<BlockOutput>> {
+    this.logger.log(ctx, `${this.getBlockById.name} was called!`);
+
+    const block = await this.blockService.getBlockById(ctx, blockId);
+
+    return { data: block, meta: {} };
+  }
 }

@@ -16,7 +16,7 @@ import {
   ReqContext,
 } from '../../../shared';
 
-import { TxParamsDto } from '../dtos/block-params.dto';
+import { TxParamsDto } from '../dtos/transaction-params.dto';
 import {
   LiteTransactionOutput,
   TransactionOutput,

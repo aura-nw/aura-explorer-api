@@ -11,12 +11,14 @@ import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { InfluxDBClient } from './influxdb-client';
+import { type } from 'os';
 
 @Injectable()
 export class TaskService {
   isSyncing: boolean;
   currentBlock: number;
   influxDbClient: InfluxDBClient;
+  cosmosScanAPI: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -36,6 +38,7 @@ export class TaskService {
       this.configService.get<string>('influxdb.url'),
       this.configService.get<string>('influxdb.token'),
     );
+    this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
   }
 
   async getCurrentStatus() {
@@ -146,7 +149,8 @@ export class TaskService {
         newBlock.chainid = blockData.block.header.chain_id;
         newBlock.height = blockData.block.header.height;
         newBlock.num_txs = blockData.block.data.txs.length;
-        newBlock.proposer = blockData.block.header.proposer_address;
+        newBlock.proposer = blockData.block.header.proposer;
+        newBlock.operator_address = blockData.block.header.proposer_address;
         newBlock.timestamp = blockData.block.header.time;
 
         if (blockData.block.data.txs && blockData.block.data.txs.length > 0) {
@@ -162,6 +166,10 @@ export class TaskService {
 
             const txData = await this.getDataRPC(rpc, paramsTx);
 
+            const txDataCosmos = await this.getDataAPI(
+              this.cosmosScanAPI,
+              '/transaction/' + txData.hash
+            );
             let txType = 'FAILED';
             if (txData.tx_result.code === 0) {
               const txLog = JSON.parse(txData.tx_result.log);
@@ -173,7 +181,10 @@ export class TaskService {
                 ({ key }) => key === 'action',
               );
               const regex = /_/gi;
-              txType = txAction.value.replace(regex, ' ').toUpperCase();
+              txType = txAction.value.replace(regex, ' ');
+            } else {
+              const txBody = txDataCosmos.messages[0].body;
+              txType = txBody['@type'];
             }
             let savedBlock;
             try {
@@ -198,6 +209,7 @@ export class TaskService {
             newTx.tx = txData.tx;
             newTx.tx_hash = txData.hash;
             newTx.type = txType;
+            newTx.fee = txDataCosmos.fee;
             try {
               await this.txRepository.save(newTx);
             } catch (error) {
