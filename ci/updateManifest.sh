@@ -4,7 +4,7 @@ set -xe
 apk add bash && apk add git && apk add --update curl && rm -rf /var/cache/apk/*
 
 # clone repo manifest
-git clone "https://${PERSONAL_ACCESS_KEY}@${REPO_MANIFEST_URL}"
+git clone "https://${PERSONAL_ACCESS_TOKEN}@${REPO_MANIFEST_URL}"
 cd ./${REPO_MANIFEST_NAME}
 git checkout ${REPO_MANIFEST_BRANCH} && git pull
 
@@ -12,6 +12,10 @@ if [ ${GITHUB_REF_NAME} = "main" ]
 then
   echo 'This is main branch'
   cd ${REPO_MANIFEST_ENV_MAIN}
+elif [ ${GITHUB_REF_NAME} = "dev" ]
+then
+  echo 'This is dev branch'
+  cd ${REPO_MANIFEST_ENV_DEV}
 else
   exit
 fi
