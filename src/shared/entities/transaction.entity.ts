@@ -42,14 +42,17 @@ export class Transaction extends BaseEntityIncrementId {
   @Column()
   timestamp: Date;
 
-  @Column({ type: 'text' })
-  tx: string;
+  @Column({ type: 'json' })
+  tx: any;
 
   @Column({ type: 'text' })
   blockId: number;
 
   @Column({ type: 'text' })
   fee: string;
+
+  @Column({ type: 'json' })
+  messages: any;
 
   @ManyToOne(() => Block, (block) => block.txs, { eager: true })
   block: Block;

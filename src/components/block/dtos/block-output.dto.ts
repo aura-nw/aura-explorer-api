@@ -75,4 +75,16 @@ export class BlockOutput {
   @Expose()
   @ApiProperty()
   txs: [];
+
+  @Expose()
+  @ApiProperty()
+  gas_used: number;
+
+  @Expose()
+  @ApiProperty()
+  gas_wanted: number;
+
+  @Expose()
+  @ApiProperty()
+  round: number;
 }
