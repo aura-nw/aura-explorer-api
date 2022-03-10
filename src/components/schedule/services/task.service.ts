@@ -105,7 +105,7 @@ export class TaskService {
     }
 
     const rpc = this.configService.get<string>('node.rpc');
-    // const api = this.configService.get<string>('node.api');
+    const api = this.configService.get<string>('node.api');
 
     // get latest block height
     const payloadStatus = {
@@ -140,6 +140,13 @@ export class TaskService {
         //   params: [`${fetchingBlockHeight}`],
         // };
         // const blockData = await this.postDataRPC(rpc, payloadBlock);
+        // get validators
+        const paramsValidator = `/cosmos/staking/v1beta1/validators`;
+        const validatorData = await this.getDataAPI(api, paramsValidator);
+        
+        // get validators by height, page and per_page
+        const paramsBlockHeight = `/validators?height=${fetchingBlockHeight}&page=1&per_page=1000`;
+        const blockDetailData = await this.getDataRPC(rpc, paramsBlockHeight);
 
         // TODO: init write api
         this.influxDbClient.initWriteApi();
@@ -149,9 +156,29 @@ export class TaskService {
         newBlock.chainid = blockData.block.header.chain_id;
         newBlock.height = blockData.block.header.height;
         newBlock.num_txs = blockData.block.data.txs.length;
-        newBlock.proposer = blockData.block.header.proposer;
-        newBlock.operator_address = blockData.block.header.proposer_address;
         newBlock.timestamp = blockData.block.header.time;
+        newBlock.round = blockData.block.last_commit.round;
+
+        const operatorAddress = blockData.block.header.proposer_address;
+        let blockGasUsed = 0;
+        let blockGasWanted = 0;
+        let proposerAddress = '';
+        // get pub_key of validators
+        for (const key in blockDetailData.validators) {
+          const data = blockDetailData.validators[key];
+          if (data.address === operatorAddress) {
+            proposerAddress = data.pub_key.value;
+          }
+        }
+
+        // set proposer and operator_address from validators
+        for (const key in validatorData.validators) {
+          const ele = validatorData.validators[key];
+          if (ele.consensus_pubkey['key'] === proposerAddress) {
+            newBlock.proposer = ele.description.moniker;
+            newBlock.operator_address = ele.operator_address;
+          }
+        }
 
         if (blockData.block.data.txs && blockData.block.data.txs.length > 0) {
           // create transaction
@@ -162,17 +189,13 @@ export class TaskService {
             this.logger.log(null, `processing tx: ${txHash}`);
 
             // fetch tx data
-            const paramsTx = `tx?hash=0x${txHash}&prove=true`;
+            const paramsTx = `/cosmos/tx/v1beta1/txs/${txHash}`
 
-            const txData = await this.getDataRPC(rpc, paramsTx);
+            const txData = await this.getDataAPI(api, paramsTx);
 
-            const txDataCosmos = await this.getDataAPI(
-              this.cosmosScanAPI,
-              '/transaction/' + txData.hash
-            );
             let txType = 'FAILED';
-            if (txData.tx_result.code === 0) {
-              const txLog = JSON.parse(txData.tx_result.log);
+            if (txData.tx_response.code === 0) {
+              const txLog = JSON.parse(txData.tx_response.raw_log);
 
               const txAttr = txLog[0].events.find(
                 ({ type }) => type === 'message',
@@ -183,33 +206,42 @@ export class TaskService {
               const regex = /_/gi;
               txType = txAction.value.replace(regex, ' ');
             } else {
-              const txBody = txDataCosmos.messages[0].body;
+              const txBody = txData.tx_response.tx.body.messages[0];
               txType = txBody['@type'];
             }
+            blockGasUsed += txData.tx_response.gas_used;
+            blockGasWanted += txData.tx_response.gas_wanted;
             let savedBlock;
-            try {
-              savedBlock = await this.blockRepository.save(newBlock);
-            } catch (error) {
-              savedBlock = await this.blockRepository.findOne({
-                where: { block_hash: blockData.block_id.hash },
-              });
+            if (parseInt(key) === blockData.block.data.txs.length -1) {
+              newBlock.gas_used = blockGasUsed;
+              newBlock.gas_wanted = blockGasWanted;
+              try {
+                savedBlock = await this.blockRepository.save(newBlock);
+              } catch (error) {
+                savedBlock = await this.blockRepository.findOne({
+                  where: { block_hash: blockData.block_id.hash },
+                });
+              }
             }
             const newTx = new Transaction();
+            const fee = txData.tx_response.tx.auth_info.fee.amount[0];
+            const txFee = (fee['amount'] / 1000000).toFixed(5);
             newTx.block = savedBlock;
-            newTx.code = txData.tx_result.code;
-            newTx.codespace = txData.tx_result.codespace;
+            newTx.code = txData.tx_response.code;
+            newTx.codespace = txData.tx_response.codespace;
             newTx.data =
-              txData.tx_result.code === 0 ? txData.tx_result.data : '';
-            newTx.gas_used = txData.tx_result.gas_used;
-            newTx.gas_wanted = txData.tx_result.gas_wanted;
+              txData.tx_response.code === 0 ? txData.tx_response.data : '';
+            newTx.gas_used = txData.tx_response.gas_used;
+            newTx.gas_wanted = txData.tx_response.gas_wanted;
             newTx.height = fetchingBlockHeight;
-            newTx.info = txData.tx_result.info;
-            newTx.raw_log = txData.tx_result.log;
+            newTx.info = txData.tx_response.info;
+            newTx.raw_log = txData.tx_response.raw_log;
             newTx.timestamp = blockData.block.header.time;
-            newTx.tx = txData.tx;
-            newTx.tx_hash = txData.hash;
+            newTx.tx = JSON.stringify(txData.tx_response);
+            newTx.tx_hash = txData.tx_response.txhash;
             newTx.type = txType;
-            newTx.fee = txDataCosmos.fee;
+            newTx.fee = txFee;
+            newTx.messages = txData.tx_response.tx.body.messages;
             try {
               await this.txRepository.save(newTx);
             } catch (error) {

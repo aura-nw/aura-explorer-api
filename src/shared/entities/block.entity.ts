@@ -36,6 +36,15 @@ export class Block extends BaseEntityIncrementId {
   @Column()
   timestamp: Date;
 
+  @Column({ default: 0 })
+  gas_used: number;
+
+  @Column({ default: 0 })
+  gas_wanted: number;
+
+  @Column({ default: 0 })
+  round: number;
+
   @OneToMany(() => Transaction, (tx) => tx.block)
   txs: Transaction[];
 }
