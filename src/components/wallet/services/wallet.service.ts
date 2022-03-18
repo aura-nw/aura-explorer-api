@@ -31,14 +31,14 @@ export class WalletService {
         //get delegated
         const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
         const delegatedData = await this.getDataAPI(api, paramsDelegated);
-        if (delegatedData && delegatedData.delegationResponses && delegatedData.delegationResponses.length > 0) {
-            walletOutput.delegated = delegatedData.delegationResponses[0].balance.amount;
+        if (delegatedData && delegatedData.delegation_responses && delegatedData.delegation_responses.length > 0) {
+            walletOutput.delegated = delegatedData.delegation_responses[0].balance.amount;
         }
         //get unbonding
         const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
         const unbondingData = await this.getDataAPI(api, paramsUnbonding);
-        if (unbondingData && unbondingData.unbondingResponses && unbondingData.unbondingResponses.length > 0 && unbondingData.unbondingResponses[0].entries.length > 0) {
-            walletOutput.unbonding = unbondingData.unbondingResponses[0].entries[0].balance;
+        if (unbondingData && unbondingData.unbonding_responses && unbondingData.unbonding_responses.length > 0 && unbondingData.unbonding_responses[0].entries.length > 0) {
+            walletOutput.unbonding = unbondingData.unbonding_responses[0].entries[0].balance;
         }
         //get stake_reward
         const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
