@@ -9,6 +9,7 @@ import { ComponentsModule } from './components/components.module';
 import { TransactionModule } from './components/transaction/transaction.module';
 import { BlockModule } from './components/block/block.module';
 import { ValidatorModule } from './components/validator/validator.module';
+import { WalletModule } from './components/wallet/wallet.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ValidatorModule } from './components/validator/validator.module';
     TransactionModule,
     BlockModule,
     ValidatorModule,
+    WalletModule
   ],
   controllers: [AppController],
   providers: [AppService],
