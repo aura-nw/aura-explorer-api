@@ -20,3 +20,5 @@ export * from './auth/constants/role.constant';
 export * from './entities/block.entity';
 export * from './entities/transaction.entity';
 export * from './entities/sync-status.entity';
+export * from './entities/validator.entity';
+export * from './entities/delegation.entity';

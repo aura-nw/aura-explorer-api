@@ -25,6 +25,10 @@ export class LiteBlockOutput {
   @Expose()
   @ApiProperty()
   timestamp: Date;
+
+  @Expose()
+  @ApiProperty()
+  id: number;
 }
 
 export class BlockOutput {

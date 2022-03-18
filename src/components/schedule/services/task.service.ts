@@ -5,20 +5,23 @@ import { Interval } from '@nestjs/schedule';
 import { lastValueFrom } from 'rxjs';
 import { sha256 } from 'js-sha256';
 
-import { AkcLogger, Block, Transaction, SyncStatus } from '../../../shared';
+import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation } from '../../../shared';
 
 import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { InfluxDBClient } from './influxdb-client';
-import { type } from 'os';
+import { tmhash } from 'tendermint/lib/hash';
+import { bech32 } from 'bech32';
+import { Validator } from 'src/shared/entities/validator.entity';
+import { ValidatorRepository } from '../repositories/validator.repository';
+import { DelegationRepository } from '../repositories/delegation.repository';
 
 @Injectable()
 export class TaskService {
   isSyncing: boolean;
   currentBlock: number;
   influxDbClient: InfluxDBClient;
-  cosmosScanAPI: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -27,6 +30,8 @@ export class TaskService {
     private statusRepository: SyncStatusRepository,
     private blockRepository: BlockRepository,
     private txRepository: TransactionRepository,
+    private validatorRepository: ValidatorRepository,
+    private delegationRepository: DelegationRepository,
   ) {
     this.logger.setContext(TaskService.name);
     this.isSyncing = false;
@@ -38,7 +43,6 @@ export class TaskService {
       this.configService.get<string>('influxdb.url'),
       this.configService.get<string>('influxdb.token'),
     );
-    this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
   }
 
   async getCurrentStatus() {
@@ -122,6 +126,93 @@ export class TaskService {
     // get current synced block
     await this.getCurrentStatus();
 
+    // TODO: init write api
+    this.influxDbClient.initWriteApi();
+
+    // get validators
+    const paramsValidator = LINK_API.VALIDATOR;
+    const validatorData = await this.getDataAPI(api, paramsValidator);
+
+    // get staking pool
+    const paramspool = LINK_API.STAKING_POOL;
+    const poolData = await this.getDataAPI(api, paramspool);
+
+    // get slashing param
+    const paramsSlashing =LINK_API.SLASHING_PARAM;
+    const slashingData = await this.getDataAPI(api, paramsSlashing);
+
+    // get slashing signing info
+    const paramsSigning = LINK_API.SIGNING_INFOS;
+    const signingData = await this.getDataAPI(api, paramsSigning);
+
+    if (validatorData) {
+      for (const key in validatorData.validators) {
+        const data = validatorData.validators[key];
+        // create validator
+        const newValidator = new Validator();
+        newValidator.operator_address = data.operator_address;
+        const operator_address = data.operator_address;     
+        const decodeAcc = bech32.decode(operator_address, 1023);
+        const wordsByte = bech32.fromWords(decodeAcc.words);
+        newValidator.acc_address = bech32.encode("cosmos", bech32.toWords(wordsByte));
+        newValidator.title = data.description.moniker;
+        newValidator.jailed = data.jailed;
+        newValidator.commission = Number(data.commission.commission_rates.rate).toFixed(2);
+        newValidator.power = data.tokens;
+        const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
+        newValidator.percent_power = percentPower.toFixed(2);
+        const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
+        const address = this.hexToBech32(pubkey, 'auravalcons');
+        const signingInfo = signingData.info.filter(e => e.address === address);
+        if (signingInfo.length > 0) {
+          const signedBlocksWindow = slashingData.params.signed_blocks_window;
+          const missedBlocksCounter = signingInfo[0].missed_blocks_counter;
+          newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + '%';
+        }
+        newValidator.website = data.description.website;
+        newValidator.details = data.description.details;
+        try {
+          await this.validatorRepository.save(newValidator);
+        } catch (error) {
+          this.logger.error(null, `Validator is already existed!`);
+        }
+        // TODO: Write validator to influxdb
+        this.influxDbClient.writeValidator(
+          newValidator.operator_address,
+          newValidator.title,
+          newValidator.jailed,
+          newValidator.power,
+        );
+
+        // get slashing signing info
+        const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
+        const delegationData = await this.getDataAPI(api, paramDelegation);
+
+        for (const key in delegationData.delegation_responses) {
+          const dataDel = delegationData.delegation_responses[key];
+          // create delegator by validator address
+          const newDelegator = new Delegation();
+          newDelegator.delegator_address = dataDel.delegation.delegator_address;
+          newDelegator.validator_address = dataDel.delegation.validator_address;
+          newDelegator.shares = dataDel.delegation.shares;
+          const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
+          newDelegator.amount = amount;
+          try {
+            await this.delegationRepository.save(newDelegator);
+          } catch (error) {
+            this.logger.error(null, `Delegation is already existed!`);
+          }
+          // TODO: Write delegator to influxdb
+          this.influxDbClient.writeDelegation(
+            newDelegator.delegator_address,
+            newDelegator.validator_address,
+            newDelegator.shares,
+            newDelegator.amount,
+          );
+        }
+      }
+    }
+
     if (latestHeight > this.currentBlock) {
       this.isSyncing = true;
       const fetchingBlockHeight = this.currentBlock + 1;
@@ -131,25 +222,8 @@ export class TaskService {
       try {
         // fetching block from node
         const paramsBlock = `block?height=${fetchingBlockHeight}`;
-
         const blockData = await this.getDataRPC(rpc, paramsBlock);
-        // const payloadBlock = {
-        //   jsonrpc: '2.0',
-        //   id: 1,
-        //   method: 'block',
-        //   params: [`${fetchingBlockHeight}`],
-        // };
-        // const blockData = await this.postDataRPC(rpc, payloadBlock);
-        // get validators
-        const paramsValidator = `/cosmos/staking/v1beta1/validators`;
-        const validatorData = await this.getDataAPI(api, paramsValidator);
-        
-        // get validators by height, page and per_page
-        const paramsBlockHeight = `/validators?height=${fetchingBlockHeight}&page=1&per_page=1000`;
-        const blockDetailData = await this.getDataRPC(rpc, paramsBlockHeight);
 
-        // TODO: init write api
-        this.influxDbClient.initWriteApi();
         // create block
         const newBlock = new Block();
         newBlock.block_hash = blockData.block_id.hash;
@@ -162,19 +236,12 @@ export class TaskService {
         const operatorAddress = blockData.block.header.proposer_address;
         let blockGasUsed = 0;
         let blockGasWanted = 0;
-        let proposerAddress = '';
-        // get pub_key of validators
-        for (const key in blockDetailData.validators) {
-          const data = blockDetailData.validators[key];
-          if (data.address === operatorAddress) {
-            proposerAddress = data.pub_key.value;
-          }
-        }
 
         // set proposer and operator_address from validators
         for (const key in validatorData.validators) {
           const ele = validatorData.validators[key];
-          if (ele.consensus_pubkey['key'] === proposerAddress) {
+          const pubkey = this.getAddressFromPubkey(ele.consensus_pubkey.key);
+          if (pubkey === operatorAddress) {
             newBlock.proposer = ele.description.moniker;
             newBlock.operator_address = ele.operator_address;
           }
@@ -212,7 +279,7 @@ export class TaskService {
             blockGasUsed += txData.tx_response.gas_used;
             blockGasWanted += txData.tx_response.gas_wanted;
             let savedBlock;
-            if (parseInt(key) === blockData.block.data.txs.length -1) {
+            if (parseInt(key) === blockData.block.data.txs.length - 1) {
               newBlock.gas_used = blockGasUsed;
               newBlock.gas_wanted = blockGasWanted;
               try {
@@ -284,5 +351,15 @@ export class TaskService {
         this.logger.error(null, `${error.stack}`);
       }
     }
+  }
+
+  getAddressFromPubkey(pubkey) {
+    var bytes = Buffer.from(pubkey, 'base64');
+    return tmhash(bytes).slice(0, 20).toString('hex').toUpperCase();
+}
+
+  hexToBech32(address, prefix) {
+    let addressBuffer = Buffer.from(address, 'hex');
+    return bech32.encode(prefix, bech32.toWords(addressBuffer));
   }
 }

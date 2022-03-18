@@ -18,6 +18,7 @@ import { TransactionRepository } from '../../transaction/repositories/transactio
 import { InfluxDBClient } from 'src/components/schedule/services/influxdb-client';
 import { AkcLogger, RequestContext } from 'src/shared';
 import { ConfigService } from '@nestjs/config';
+import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 
 @Injectable()
 export class MetricService {
@@ -55,6 +56,19 @@ export class MetricService {
     );
 
     return await this.queryInfluxDb(range, 'txs');
+  }
+
+  async getValidator(
+    ctx: RequestContext,
+    range: Range,
+  ): Promise<MetricOutput[]> {
+    this.logger.log(ctx, `${this.getValidator.name} was called!`);
+    this.logger.log(
+      ctx,
+      `calling ${ValidatorRepository.name}.createQueryBuilder`,
+    );
+
+    return await this.queryInfluxDb(range, 'validators');
   }
 
   private async queryInfluxDb(

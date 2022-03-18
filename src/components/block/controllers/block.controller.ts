@@ -86,4 +86,23 @@ export class BlockController {
 
     return { data: block, meta: {} };
   }
+  
+  @Get(':validatorAddress/validator')
+  @ApiOperation({ summary: 'Get blocks by validator address' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(LiteBlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getBlockByValidatorAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
+    @Query() query: BlockParamsDto,
+  ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
+    this.logger.log(ctx, `${this.getBlockByValidatorAddress.name} was called!`);
+
+    const { blocks, count }  = await this.blockService.getBlockByValidatorAddress(ctx, validatorAddress, query);
+
+    return { data: blocks, meta: {count} };
+  }
 }

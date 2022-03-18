@@ -81,4 +81,23 @@ export class InfluxDBClient {
   private convertDate(timestamp: any): Date {
     return new Date(timestamp.toString());
   }
+  
+  writeValidator(operator_address, title, jailed, power): void {
+    const point = new Point('validators')
+      .stringField('operator_address', operator_address)
+      .stringField('title', title)
+      .stringField('jailed', jailed)
+      .intField('power', power);
+    this.writeApi.writePoint(point);
+  }
+
+  writeDelegation(delegator_address, validator_address, shares, amount): void {
+    const point = new Point('delegation')
+      .stringField('delegator_address', delegator_address)
+      .stringField('validator_address', validator_address)
+      .stringField('shares', shares)
+      .stringField('amount', amount);
+    this.writeApi.writePoint(point);
+  }
+
 }

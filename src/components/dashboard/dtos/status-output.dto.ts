@@ -16,13 +16,21 @@ export class StatusOutput {
 
   @Expose()
   @ApiProperty()
-  latest_validator: string;
+  total_validator_active_num: number;
 
   @Expose()
   @ApiProperty()
-  validator_avg_fee: string;
+  block_time: string;
 
   @Expose()
   @ApiProperty()
-  block_time: number;
+  bonded_tokens: number;
+
+  @Expose()
+  @ApiProperty()
+  inflation: string;
+
+  @Expose()
+  @ApiProperty()
+  community_pool: number;
 }

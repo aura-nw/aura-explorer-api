@@ -8,6 +8,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { LiteBlockOutput } from 'src/components/block/dtos/block-output.dto';
 import {
   AkcLogger,
   BaseApiResponse,
@@ -15,8 +16,9 @@ import {
   SwaggerBaseApiResponse,
   ReqContext,
 } from '../../../shared';
+import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
-import { ValidatorOutput } from '../dtos/validator-output.dto';
+import { DelegationOutput, LiteValidatorOutput, ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
 
 @ApiTags('validators')
@@ -33,12 +35,12 @@ export class ValidatorController {
   @ApiOperation({ summary: 'Get validators info' })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: SwaggerBaseApiResponse(ValidatorOutput),
+    type: SwaggerBaseApiResponse(LiteValidatorOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
   async getValidators(
     @ReqContext() ctx: RequestContext,
-  ): Promise<BaseApiResponse<ValidatorOutput[]>> {
+  ): Promise<BaseApiResponse<LiteValidatorOutput[]>> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
     const { validators, count } = await this.validatorService.getValidators(ctx);
@@ -62,5 +64,24 @@ export class ValidatorController {
     const validator = await this.validatorService.getValidatorByAddress(ctx, address);
 
     return { data: validator, meta: {} };
+  }
+
+  @Get(':validatorAddress/delegations')
+  @ApiOperation({ summary: 'Get delegation by validator address' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(DelegationOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getDelegationByAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
+    @Query() query: DelegationParamsDto,
+  ): Promise<BaseApiResponse<DelegationOutput[]>> {
+    this.logger.log(ctx, `${this.getDelegationByAddress.name} was called!`);
+
+    const { delegations, count } = await this.validatorService.getDelegationByAddress(ctx, validatorAddress, query);
+
+    return { data: delegations, meta: {count} };
   }
 }
