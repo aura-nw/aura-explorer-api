@@ -81,21 +81,10 @@ export class ValidatorService {
     }
     for (const key in validatorsOutput) {
       const data = validatorsOutput[key];
-      const dataBefore = validatorsOutput[parseInt(key) - 1]
       data.rank = parseInt(key) + 1;
       if (data.jailed === '0') {
         data.status_validator = true;
         cntValidatorActive = cntValidatorActive + 1;
-        if (parseInt(key) === 0) {
-          data.cumulative_share_before = '0.00';
-          data.cumulative_share = data.percent_power;
-          data.cumulative_share_after = data.percent_power;
-        } else {
-          data.cumulative_share_before = dataBefore.cumulative_share_after;
-          data.cumulative_share = data.percent_power;
-          const cumulative = parseFloat(data.cumulative_share_before) + parseFloat(data.percent_power);
-          data.cumulative_share_after = cumulative.toFixed(2);
-        }
       } else {
         data.status_validator = false;
       }
