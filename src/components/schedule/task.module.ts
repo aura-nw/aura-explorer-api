@@ -9,6 +9,8 @@ import { BlockRepository } from './repositories/block.repository';
 import { TransactionRepository } from './repositories/transaction.repository';
 import { SyncStatusRepository } from './repositories/syns-status.repository';
 import { TaskService } from './services/task.service';
+import { ValidatorRepository } from './repositories/validator.repository';
+import { DelegationRepository } from './repositories/delegation.repository';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { TaskService } from './services/task.service';
       SyncStatusRepository,
       BlockRepository,
       TransactionRepository,
+      ValidatorRepository,
+      DelegationRepository,
     ]),
     ConfigModule,
   ],

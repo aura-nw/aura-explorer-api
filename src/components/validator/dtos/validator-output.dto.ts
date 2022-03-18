@@ -1,6 +1,56 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
+export class LiteValidatorOutput {
+  @Expose()
+  @ApiProperty()
+  title: string;
+
+  @Expose()
+  @ApiProperty()
+  operator_address: string;
+
+  @Expose()
+  @ApiProperty()
+  rank: number;
+
+  @Expose()
+  @ApiProperty()
+  percent_power: string;
+
+  @Expose()
+  @ApiProperty()
+  power: number;
+
+  @Expose()
+  @ApiProperty()
+  cumulative_share_before: string;
+
+  @Expose()
+  @ApiProperty()
+  cumulative_share: string;
+
+  @Expose()
+  @ApiProperty()
+  cumulative_share_after: string;
+
+  @Expose()
+  @ApiProperty()
+  commission: string;
+
+  @Expose()
+  @ApiProperty()
+  jailed: string;
+  
+  @Expose()
+  @ApiProperty()
+  status_validator: boolean;
+
+  @Expose()
+  @ApiProperty()
+  up_time: string;
+}
+
 export class ValidatorOutput {
   @Expose()
   @ApiProperty()
@@ -36,7 +86,7 @@ export class ValidatorOutput {
 
   @Expose()
   @ApiProperty()
-  fee: string;
+  commission: string;
 
   @Expose()
   @ApiProperty()
@@ -53,4 +103,26 @@ export class ValidatorOutput {
   @Expose()
   @ApiProperty()
   governance_votes: number;
+
+  @Expose()
+  @ApiProperty()
+  jailed: string;
+}
+
+export class DelegationOutput {
+  @Expose()
+  @ApiProperty()
+  delegator_address: string;
+
+  @Expose()
+  @ApiProperty()
+  validator_address: string;
+
+  @Expose()
+  @ApiProperty()
+  shares: string;
+
+  @Expose()
+  @ApiProperty()
+  amount: number;
 }

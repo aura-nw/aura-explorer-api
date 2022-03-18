@@ -24,6 +24,10 @@ export class BlockService {
     this.logger.setContext(BlockService.name);
   }
 
+  async getTotalBlock(): Promise<number> {
+    return await this.blockRepository.count();
+  }
+
   async getBlocks(
     ctx: RequestContext,
     query: BlockParamsDto,
@@ -91,4 +95,46 @@ export class BlockService {
 
     return { ...blockOutput, txs };
   }
+  
+  async getDataBlocks(
+    ctx: RequestContext,
+    limit: number,
+    offset: number,
+  ): Promise<{ blocks: LiteBlockOutput[]; count: number }> {
+    this.logger.log(ctx, `${this.getBlocks.name} was called!`)
+    const [blocks, count] = await this.blockRepository.findAndCount({
+      order: { height: 'DESC' },
+      take: limit,
+      skip: offset,
+    });
+
+    const blocksOutput = plainToClass(LiteBlockOutput, blocks, {
+      excludeExtraneousValues: true,
+    });
+
+    return { blocks: blocksOutput, count };
+  }
+
+  async getBlockByValidatorAddress(
+    ctx: RequestContext,
+    validatorAddress,
+    query: BlockParamsDto,
+  ): Promise<{ blocks: LiteBlockOutput[]; count: number }> {
+    this.logger.log(ctx, `${this.getBlockByValidatorAddress.name} was called!`);
+    query.limit = 5;
+
+    const [blocks, count]  = await this.blockRepository.findAndCount({
+      where: { operator_address: validatorAddress },
+      order: { height: 'DESC' },
+      take: query.limit,
+      skip: query.offset,
+    });
+
+    const blocksOutput = plainToClass(LiteBlockOutput, blocks, {
+      excludeExtraneousValues: true,
+    });
+
+    return { blocks: blocksOutput, count };
+  }
+
 }
