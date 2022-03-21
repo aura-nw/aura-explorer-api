@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 
-import { AkcLogger, LINK_API, RequestContext } from './shared';
+import { AkcLogger, CONST_CHAR, CONST_NUM, LINK_API, RequestContext } from './shared';
 import { StatusOutput } from './components/dashboard/dtos/status-output.dto';
 import { TransactionService } from './components/transaction/services/transaction.service';
 import { BlockService } from './components/block/services/block.service';
@@ -61,7 +61,7 @@ export class AppService {
     const comPoolData = await this.getDataAPI(api, paramComPool, ctx);
 
     // get blocks by limit 2
-    const { blocks } = await this.blockService.getDataBlocks(ctx, 2, 0);
+    const { blocks } = await this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET);
     
     let blockTime;
     let height;
@@ -69,12 +69,12 @@ export class AppService {
     if (blocks.length === 2) {
       const block_first = blocks[0].timestamp.getTime();
       const block_second = blocks[1].timestamp.getTime();
-      blockTime = Math.floor(Math.abs(block_first - block_second) / 1000) + 's';
+      blockTime = Math.floor(Math.abs(block_first - block_second) / 1000) + CONST_CHAR.SECOND;
       height = blocks[0].id;
     }
     
     const bonded_tokens = parseInt(poolData.pool.bonded_tokens);
-    const inflation = (inflationData.inflation * 100).toFixed(2) + '%';
+    const inflation = (inflationData.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
     if (comPoolData) {
       comPool = parseInt(comPoolData.pool[0].amount);
     }

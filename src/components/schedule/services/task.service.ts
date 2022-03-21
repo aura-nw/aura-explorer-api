@@ -5,7 +5,7 @@ import { Interval } from '@nestjs/schedule';
 import { lastValueFrom } from 'rxjs';
 import { sha256 } from 'js-sha256';
 
-import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation } from '../../../shared';
+import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR } from '../../../shared';
 
 import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
@@ -148,17 +148,34 @@ export class TaskService {
     if (validatorData) {
       for (const key in validatorData.validators) {
         const data = validatorData.validators[key];
+
+        // get slashing signing info
+        const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
+        const delegationData = await this.getDataAPI(api, paramDelegation);
+
         // create validator
         const newValidator = new Validator();
         newValidator.operator_address = data.operator_address;
         const operator_address = data.operator_address;     
         const decodeAcc = bech32.decode(operator_address, 1023);
         const wordsByte = bech32.fromWords(decodeAcc.words);
-        newValidator.acc_address = bech32.encode("cosmos", bech32.toWords(wordsByte));
+        newValidator.acc_address = bech32.encode("aura", bech32.toWords(wordsByte));
+        newValidator.cons_address = this.getAddressFromPubkey(data.consensus_pubkey.key);
+        newValidator.cons_pub_key = data.consensus_pubkey.key;
         newValidator.title = data.description.moniker;
         newValidator.jailed = data.jailed;
         newValidator.commission = Number(data.commission.commission_rates.rate).toFixed(2);
+        newValidator.max_commission = data.commission.commission_rates.max_rate;
+        newValidator.max_change_rate = data.commission.commission_rates.max_change_rate;
+        newValidator.min_self_delegation = data.min_self_delegation;
+        newValidator.delegator_shares = data.delegator_shares;
         newValidator.power = data.tokens;
+        newValidator.website = data.description.website;
+        newValidator.details = data.description.details;
+        newValidator.identity = data.description.identity;
+        newValidator.unbonding_height = data.unbonding_height;
+        newValidator.unbonding_time = data.unbonding_time;
+        newValidator.update_time = data.commission.update_time;
         const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
         newValidator.percent_power = percentPower.toFixed(2);
         const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
@@ -167,10 +184,16 @@ export class TaskService {
         if (signingInfo.length > 0) {
           const signedBlocksWindow = slashingData.params.signed_blocks_window;
           const missedBlocksCounter = signingInfo[0].missed_blocks_counter;
-          newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + '%';
+          newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + CONST_CHAR.PERCENT;
         }
-        newValidator.website = data.description.website;
-        newValidator.details = data.description.details;
+        const selfBonded = delegationData.delegation_responses.filter(e => e.delegation.delegator_address === newValidator.acc_address);
+        if (selfBonded.length > 0) {
+          newValidator.self_bonded = selfBonded[0].balance.amount;
+          const percentSelfBonded = (selfBonded[0].balance.amount / data.tokens) * 100;
+          newValidator.percent_self_bonded = percentSelfBonded.toFixed(2) + CONST_CHAR.PERCENT;
+        }
+        
+        // insert into table validator
         try {
           await this.validatorRepository.save(newValidator);
         } catch (error) {
@@ -184,10 +207,6 @@ export class TaskService {
           newValidator.power,
         );
 
-        // get slashing signing info
-        const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
-        const delegationData = await this.getDataAPI(api, paramDelegation);
-
         for (const key in delegationData.delegation_responses) {
           const dataDel = delegationData.delegation_responses[key];
           // create delegator by validator address
@@ -197,6 +216,7 @@ export class TaskService {
           newDelegator.shares = dataDel.delegation.shares;
           const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
           newDelegator.amount = amount;
+          // insert into table delegation
           try {
             await this.delegationRepository.save(newDelegator);
           } catch (error) {
