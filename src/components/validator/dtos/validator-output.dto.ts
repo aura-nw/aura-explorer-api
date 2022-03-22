@@ -82,27 +82,15 @@ export class ValidatorOutput {
 
   @Expose()
   @ApiProperty()
-  self_stake: string;
+  percent_self_bonded: string;
+
+  @Expose()
+  @ApiProperty()
+  self_bonded: number;
 
   @Expose()
   @ApiProperty()
   commission: string;
-
-  @Expose()
-  @ApiProperty()
-  blocks_proposed: number;
-
-  @Expose()
-  @ApiProperty()
-  delegators: number;
-
-  @Expose()
-  @ApiProperty()
-  power_24_change: string;
-
-  @Expose()
-  @ApiProperty()
-  governance_votes: number;
 
   @Expose()
   @ApiProperty()
