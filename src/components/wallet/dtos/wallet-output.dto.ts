@@ -8,17 +8,17 @@ export class WalletOutput {
 
     @Expose()
     @ApiProperty()
-    balance: number = 0;
+    balance: [] = [];
 
     @Expose()
     @ApiProperty()
-    delegated: number = 0;
+    delegated: [] = [];
 
     @Expose()
     @ApiProperty()
-    unbonding: number = 0;
+    unbonding: [] = [];
 
     @Expose()
     @ApiProperty()
-    stake_reward: number = 0;
+    stake_reward: [] = [];
 }
