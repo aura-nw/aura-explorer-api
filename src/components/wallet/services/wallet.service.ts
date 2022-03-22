@@ -12,7 +12,7 @@ export class WalletService {
         private configService: ConfigService,
         private httpService: HttpService,
     ) {
-        
+        this.logger.setContext(WalletService.name);
     }
 
     async getWalletDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -25,26 +25,26 @@ export class WalletService {
         //get balance
         const paramsBalance = `/cosmos/bank/v1beta1/balances/${address}`;
         const balanceData = await this.getDataAPI(api, paramsBalance);
-        if (balanceData && balanceData.balances && balanceData.balances.length > 0) {
-            walletOutput.balance = balanceData.balances[0].amount;
+        if (balanceData) {
+            walletOutput.balance = balanceData;
         }
         //get delegated
         const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
         const delegatedData = await this.getDataAPI(api, paramsDelegated);
-        if (delegatedData && delegatedData.delegation_responses && delegatedData.delegation_responses.length > 0) {
-            walletOutput.delegated = delegatedData.delegation_responses[0].balance.amount;
+        if (delegatedData) {
+            walletOutput.delegated = delegatedData;
         }
         //get unbonding
         const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
         const unbondingData = await this.getDataAPI(api, paramsUnbonding);
-        if (unbondingData && unbondingData.unbonding_responses && unbondingData.unbonding_responses.length > 0 && unbondingData.unbonding_responses[0].entries.length > 0) {
-            walletOutput.unbonding = unbondingData.unbonding_responses[0].entries[0].balance;
+        if (unbondingData) {
+            walletOutput.unbonding = unbondingData;
         }
         //get stake_reward
         const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
         const stakeRewardData = await this.getDataAPI(api, paramsStakeReward);
-        if (stakeRewardData && stakeRewardData.rewards && stakeRewardData.rewards.length > 0 && stakeRewardData.rewards[0].reward.length > 0) {
-            walletOutput.stake_reward = stakeRewardData.rewards[0].reward[0].amount;
+        if (stakeRewardData) {
+            walletOutput.stake_reward = stakeRewardData;
         }
     
         return { ...walletOutput };
