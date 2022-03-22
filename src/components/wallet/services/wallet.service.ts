@@ -46,6 +46,12 @@ export class WalletService {
         if (stakeRewardData) {
             walletOutput.stake_reward = stakeRewardData;
         }
+        //get auth_info
+        const paramsAuthInfo = `auth/accounts/${address}`;
+        const authInfoData = await this.getDataAPI(api, paramsAuthInfo);
+        if (authInfoData) {
+            walletOutput.auth_info = authInfoData;
+        }
     
         return { ...walletOutput };
     }
