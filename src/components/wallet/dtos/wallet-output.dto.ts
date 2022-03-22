@@ -21,4 +21,8 @@ export class WalletOutput {
     @Expose()
     @ApiProperty()
     stake_reward: [] = [];
+
+    @Expose()
+    @ApiProperty()
+    auth_info: [] = [];
 }
