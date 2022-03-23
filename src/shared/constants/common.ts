@@ -12,4 +12,14 @@ export enum LINK_API {
     SLASHING_PARAM = `/cosmos/slashing/v1beta1/params`,
     SIGNING_INFOS = `/cosmos/slashing/v1beta1/signing_infos`,
   }
-  
+
+export enum CONST_NUM {
+  LIMIT_2 = 2,
+  LIMIT_100 = 100,
+  OFFSET = 0,
+}
+
+export enum CONST_CHAR {
+  PERCENT = '%',
+  SECOND = 's',
+}
