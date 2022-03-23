@@ -1,5 +1,5 @@
-import { Controller } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { Controller, Get } from "@nestjs/common";
+import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import { AkcLogger } from "../../../shared";
 import { ProposalService } from "../services/proposal.service";
 
@@ -12,4 +12,8 @@ export class ProposalController {
     ) {
         this.logger.setContext(ProposalController.name);
     }
+
+    // @Get('')
+    // @ApiOperation({ summary: 'Get list proposal' })
+    
 }
