@@ -9,6 +9,9 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LiteBlockOutput } from 'src/components/block/dtos/block-output.dto';
+import { LiteTransactionOutput } from 'src/components/transaction/dtos/transaction-output.dto';
+import { TxParamsDto } from 'src/components/transaction/dtos/transaction-params.dto';
+import { TransactionService } from 'src/components/transaction/services/transaction.service';
 import {
   AkcLogger,
   BaseApiResponse,
@@ -27,6 +30,7 @@ export class ValidatorController {
   constructor(
     private readonly validatorService: ValidatorService,
     private readonly logger: AkcLogger,
+    private readonly transactionService: TransactionService,
   ) {
     this.logger.setContext(ValidatorController.name);
   }
@@ -83,5 +87,24 @@ export class ValidatorController {
     const { delegations, count } = await this.validatorService.getDelegationByAddress(ctx, validatorAddress, query);
 
     return { data: delegations, meta: {count} };
+  }
+
+  @Get('events/:validatorAddress')
+  @ApiOperation({ summary: 'Get transaction by validator address' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(LiteTransactionOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getTransactionByAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
+    @Query() query: TxParamsDto,
+  ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
+    this.logger.log(ctx, `${this.getTransactionByAddress.name} was called!`);
+
+    const { transactions, count } = await this.transactionService.getTransactionByAddress(ctx, validatorAddress, query);
+
+    return { data: transactions, meta: {count} };
   }
 }

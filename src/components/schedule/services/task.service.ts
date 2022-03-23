@@ -215,7 +215,7 @@ export class TaskService {
             }
             const newTx = new Transaction();
             const fee = txData.tx_response.tx.auth_info.fee.amount[0];
-            const txFee = (fee['amount'] / 1000000).toFixed(5);
+            const txFee = (fee['amount'] / 1000000).toFixed(6);
             newTx.block = savedBlock;
             newTx.code = txData.tx_response.code;
             newTx.codespace = txData.tx_response.codespace;
@@ -225,7 +225,7 @@ export class TaskService {
             newTx.gas_wanted = txData.tx_response.gas_wanted;
             newTx.height = fetchingBlockHeight;
             newTx.info = txData.tx_response.info;
-            newTx.raw_log = txData.tx_response.raw_log;
+            newTx.raw_log = JSON.parse(txData.tx_response.raw_log);
             newTx.timestamp = blockData.block.header.time;
             newTx.tx = JSON.stringify(txData.tx_response);
             newTx.tx_hash = txData.tx_response.txhash;
@@ -368,7 +368,7 @@ export class TaskService {
           newDelegator.delegator_address = dataDel.delegation.delegator_address;
           newDelegator.validator_address = dataDel.delegation.validator_address;
           newDelegator.shares = dataDel.delegation.shares;
-          const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
+          const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(6));
           newDelegator.amount = amount;
           // insert into table delegation
           try {

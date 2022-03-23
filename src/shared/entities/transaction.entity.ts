@@ -36,8 +36,8 @@ export class Transaction extends BaseEntityIncrementId {
   @Column({ default: '' })
   type: string;
 
-  @Column({ type: 'text' })
-  raw_log: string;
+  @Column({ type: 'json' })
+  raw_log: any;
 
   @Column()
   timestamp: Date;
