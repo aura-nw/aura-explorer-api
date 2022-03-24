@@ -15,6 +15,7 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
   ReqContext,
+  CONST_NUM,
 } from '../../../shared';
 
 import { BlockOutput, LiteBlockOutput } from '../dtos/block-output.dto';
@@ -104,5 +105,22 @@ export class BlockController {
     const { blocks, count }  = await this.blockService.getBlockByValidatorAddress(ctx, validatorAddress, query);
 
     return { data: blocks, meta: {count} };
+  }
+  
+  @Get('latest/agg')
+  @ApiOperation({ summary: 'Get 100 blocks latest' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(LiteBlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getDataBlocks(
+    @ReqContext() ctx: RequestContext,
+  ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
+    this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
+
+    const { blocks }  = await this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_100, CONST_NUM.OFFSET);
+
+    return { data: blocks, meta: {} };
   }
 }

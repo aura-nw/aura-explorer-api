@@ -5,7 +5,7 @@ import { Interval } from '@nestjs/schedule';
 import { lastValueFrom } from 'rxjs';
 import { sha256 } from 'js-sha256';
 
-import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation } from '../../../shared';
+import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR } from '../../../shared';
 
 import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
@@ -133,85 +133,8 @@ export class TaskService {
     const paramsValidator = LINK_API.VALIDATOR;
     const validatorData = await this.getDataAPI(api, paramsValidator);
 
-    // get staking pool
-    const paramspool = LINK_API.STAKING_POOL;
-    const poolData = await this.getDataAPI(api, paramspool);
-
-    // get slashing param
-    const paramsSlashing =LINK_API.SLASHING_PARAM;
-    const slashingData = await this.getDataAPI(api, paramsSlashing);
-
-    // get slashing signing info
-    const paramsSigning = LINK_API.SIGNING_INFOS;
-    const signingData = await this.getDataAPI(api, paramsSigning);
-
-    if (validatorData) {
-      for (const key in validatorData.validators) {
-        const data = validatorData.validators[key];
-        // create validator
-        const newValidator = new Validator();
-        newValidator.operator_address = data.operator_address;
-        const operator_address = data.operator_address;     
-        const decodeAcc = bech32.decode(operator_address, 1023);
-        const wordsByte = bech32.fromWords(decodeAcc.words);
-        newValidator.acc_address = bech32.encode("cosmos", bech32.toWords(wordsByte));
-        newValidator.title = data.description.moniker;
-        newValidator.jailed = data.jailed;
-        newValidator.commission = Number(data.commission.commission_rates.rate).toFixed(2);
-        newValidator.power = data.tokens;
-        const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
-        newValidator.percent_power = percentPower.toFixed(2);
-        const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
-        const address = this.hexToBech32(pubkey, 'auravalcons');
-        const signingInfo = signingData.info.filter(e => e.address === address);
-        if (signingInfo.length > 0) {
-          const signedBlocksWindow = slashingData.params.signed_blocks_window;
-          const missedBlocksCounter = signingInfo[0].missed_blocks_counter;
-          newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + '%';
-        }
-        newValidator.website = data.description.website;
-        newValidator.details = data.description.details;
-        try {
-          await this.validatorRepository.save(newValidator);
-        } catch (error) {
-          this.logger.error(null, `Validator is already existed!`);
-        }
-        // TODO: Write validator to influxdb
-        this.influxDbClient.writeValidator(
-          newValidator.operator_address,
-          newValidator.title,
-          newValidator.jailed,
-          newValidator.power,
-        );
-
-        // get slashing signing info
-        const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
-        const delegationData = await this.getDataAPI(api, paramDelegation);
-
-        for (const key in delegationData.delegation_responses) {
-          const dataDel = delegationData.delegation_responses[key];
-          // create delegator by validator address
-          const newDelegator = new Delegation();
-          newDelegator.delegator_address = dataDel.delegation.delegator_address;
-          newDelegator.validator_address = dataDel.delegation.validator_address;
-          newDelegator.shares = dataDel.delegation.shares;
-          const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
-          newDelegator.amount = amount;
-          try {
-            await this.delegationRepository.save(newDelegator);
-          } catch (error) {
-            this.logger.error(null, `Delegation is already existed!`);
-          }
-          // TODO: Write delegator to influxdb
-          this.influxDbClient.writeDelegation(
-            newDelegator.delegator_address,
-            newDelegator.validator_address,
-            newDelegator.shares,
-            newDelegator.amount,
-          );
-        }
-      }
-    }
+    // sync data validator
+    this.syncValidator(validatorData, api);
 
     if (latestHeight > this.currentBlock) {
       this.isSyncing = true;
@@ -356,10 +279,112 @@ export class TaskService {
   getAddressFromPubkey(pubkey) {
     var bytes = Buffer.from(pubkey, 'base64');
     return tmhash(bytes).slice(0, 20).toString('hex').toUpperCase();
-}
+  }
 
   hexToBech32(address, prefix) {
     let addressBuffer = Buffer.from(address, 'hex');
     return bech32.encode(prefix, bech32.toWords(addressBuffer));
+  }
+
+  async syncValidator(validatorData, api) {
+    // get staking pool
+    const paramspool = LINK_API.STAKING_POOL;
+    const poolData = await this.getDataAPI(api, paramspool);
+
+    // get slashing param
+    const paramsSlashing =LINK_API.SLASHING_PARAM;
+    const slashingData = await this.getDataAPI(api, paramsSlashing);
+
+    // get slashing signing info
+    const paramsSigning = LINK_API.SIGNING_INFOS;
+    const signingData = await this.getDataAPI(api, paramsSigning);
+
+    if (validatorData) {
+      for (const key in validatorData.validators) {
+        const data = validatorData.validators[key];
+
+        // get slashing signing info
+        const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
+        const delegationData = await this.getDataAPI(api, paramDelegation);
+
+        // create validator
+        const newValidator = new Validator();
+        newValidator.operator_address = data.operator_address;
+        const operator_address = data.operator_address;     
+        const decodeAcc = bech32.decode(operator_address, 1023);
+        const wordsByte = bech32.fromWords(decodeAcc.words);
+        newValidator.acc_address = bech32.encode("aura", bech32.toWords(wordsByte));
+        newValidator.cons_address = this.getAddressFromPubkey(data.consensus_pubkey.key);
+        newValidator.cons_pub_key = data.consensus_pubkey.key;
+        newValidator.title = data.description.moniker;
+        newValidator.jailed = data.jailed;
+        newValidator.commission = Number(data.commission.commission_rates.rate).toFixed(2);
+        newValidator.max_commission = data.commission.commission_rates.max_rate;
+        newValidator.max_change_rate = data.commission.commission_rates.max_change_rate;
+        newValidator.min_self_delegation = data.min_self_delegation;
+        newValidator.delegator_shares = data.delegator_shares;
+        newValidator.power = data.tokens;
+        newValidator.website = data.description.website;
+        newValidator.details = data.description.details;
+        newValidator.identity = data.description.identity;
+        newValidator.unbonding_height = data.unbonding_height;
+        newValidator.unbonding_time = data.unbonding_time;
+        newValidator.update_time = data.commission.update_time;
+        const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
+        newValidator.percent_power = percentPower.toFixed(2);
+        const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
+        const address = this.hexToBech32(pubkey, 'auravalcons');
+        const signingInfo = signingData.info.filter(e => e.address === address);
+        if (signingInfo.length > 0) {
+          const signedBlocksWindow = slashingData.params.signed_blocks_window;
+          const missedBlocksCounter = signingInfo[0].missed_blocks_counter;
+          newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + CONST_CHAR.PERCENT;
+        }
+        const selfBonded = delegationData.delegation_responses.filter(e => e.delegation.delegator_address === newValidator.acc_address);
+        if (selfBonded.length > 0) {
+          newValidator.self_bonded = selfBonded[0].balance.amount;
+          const percentSelfBonded = (selfBonded[0].balance.amount / data.tokens) * 100;
+          newValidator.percent_self_bonded = percentSelfBonded.toFixed(2) + CONST_CHAR.PERCENT;
+        }
+        
+        // insert into table validator
+        try {
+          await this.validatorRepository.save(newValidator);
+        } catch (error) {
+          this.logger.error(null, `Validator is already existed!`);
+        }
+        // TODO: Write validator to influxdb
+        this.influxDbClient.writeValidator(
+          newValidator.operator_address,
+          newValidator.title,
+          newValidator.jailed,
+          newValidator.power,
+        );
+
+        for (const key in delegationData.delegation_responses) {
+          const dataDel = delegationData.delegation_responses[key];
+          // create delegator by validator address
+          const newDelegator = new Delegation();
+          newDelegator.delegator_address = dataDel.delegation.delegator_address;
+          newDelegator.validator_address = dataDel.delegation.validator_address;
+          newDelegator.shares = dataDel.delegation.shares;
+          const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
+          newDelegator.amount = amount;
+          // insert into table delegation
+          try {
+            await this.delegationRepository.save(newDelegator);
+          } catch (error) {
+            this.logger.error(null, `Delegation is already existed!`);
+          }
+          // TODO: Write delegator to influxdb
+          this.influxDbClient.writeDelegation(
+            newDelegator.delegator_address,
+            newDelegator.validator_address,
+            newDelegator.shares,
+            newDelegator.amount,
+          );
+        }
+      }
+    }
   }
 }
