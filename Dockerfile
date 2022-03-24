@@ -7,6 +7,7 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY . .
+RUN npm install
 RUN npm ci && npm cache clean --force
 RUN npm run build
 

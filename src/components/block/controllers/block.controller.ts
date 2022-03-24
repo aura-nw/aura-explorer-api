@@ -15,6 +15,7 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
   ReqContext,
+  CONST_NUM,
 } from '../../../shared';
 
 import { BlockOutput, LiteBlockOutput } from '../dtos/block-output.dto';
@@ -66,5 +67,60 @@ export class BlockController {
     const block = await this.blockService.getBlockByHeight(ctx, height);
 
     return { data: block, meta: {} };
+  }
+  
+  @Get('id/:blockId')
+  @ApiOperation({ summary: 'Get block by id' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(BlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getBlockById(
+    @ReqContext() ctx: RequestContext,
+    @Param('blockId') blockId: number,
+  ): Promise<any> {
+    // ): Promise<BaseApiResponse<BlockOutput>> {
+    this.logger.log(ctx, `${this.getBlockById.name} was called!`);
+
+    const block = await this.blockService.getBlockById(ctx, blockId);
+
+    return { data: block, meta: {} };
+  }
+  
+  @Get(':validatorAddress/validator')
+  @ApiOperation({ summary: 'Get blocks by validator address' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(LiteBlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getBlockByValidatorAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
+    @Query() query: BlockParamsDto,
+  ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
+    this.logger.log(ctx, `${this.getBlockByValidatorAddress.name} was called!`);
+
+    const { blocks, count }  = await this.blockService.getBlockByValidatorAddress(ctx, validatorAddress, query);
+
+    return { data: blocks, meta: {count} };
+  }
+  
+  @Get('latest/agg')
+  @ApiOperation({ summary: 'Get 100 blocks latest' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(LiteBlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getDataBlocks(
+    @ReqContext() ctx: RequestContext,
+  ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
+    this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
+
+    const { blocks }  = await this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_100, CONST_NUM.OFFSET);
+
+    return { data: blocks, meta: {} };
   }
 }

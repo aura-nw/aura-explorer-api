@@ -12,7 +12,7 @@ if [ ${GITHUB_REF_NAME} = "main" ]
 then
   echo 'This is main branch'
   cd ${REPO_MANIFEST_ENV_MAIN}
-elif [ ${GITHUB_REF_NAME} = "dev" ]
+elif [ ${GITHUB_REF_NAME} = "develop" ]
 then
   echo 'This is dev branch'
   cd ${REPO_MANIFEST_ENV_DEV}

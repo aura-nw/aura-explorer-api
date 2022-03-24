@@ -1,3 +1,4 @@
+import { json } from 'stream/consumers';
 import { Column, Entity, ManyToOne, Unique } from 'typeorm';
 
 import { BaseEntityIncrementId } from './base/base.entity';
@@ -41,8 +42,17 @@ export class Transaction extends BaseEntityIncrementId {
   @Column()
   timestamp: Date;
 
+  @Column({ type: 'json' })
+  tx: any;
+
   @Column({ type: 'text' })
-  tx: string;
+  blockId: number;
+
+  @Column({ type: 'text' })
+  fee: string;
+
+  @Column({ type: 'json' })
+  messages: any;
 
   @ManyToOne(() => Block, (block) => block.txs, { eager: true })
   block: Block;

@@ -62,4 +62,22 @@ export class MetricController {
 
     return { data: metrics, meta: null };
   }
+
+  @Get('validators')
+  @ApiOperation({ summary: 'Get validator metric API' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(MetricOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getValidatorMetric(
+    @ReqContext() ctx: RequestContext,
+    @Query() query: MetricParamsDto,
+  ): Promise<BaseApiResponse<MetricOutput[]>> {
+    this.logger.log(ctx, `${this.getValidatorMetric.name} was called!`);
+
+    const metrics = await this.metricService.getValidator(ctx, query.range);
+
+    return { data: metrics, meta: null };
+  }
 }

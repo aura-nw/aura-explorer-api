@@ -16,7 +16,19 @@ export class LiteBlockOutput {
 
   @Expose()
   @ApiProperty()
+  proposer: string;
+
+  @Expose()
+  @ApiProperty()
+  operator_address: string;
+
+  @Expose()
+  @ApiProperty()
   timestamp: Date;
+
+  @Expose()
+  @ApiProperty()
+  id: number;
 }
 
 export class BlockOutput {
@@ -67,4 +79,16 @@ export class BlockOutput {
   @Expose()
   @ApiProperty()
   txs: [];
+
+  @Expose()
+  @ApiProperty()
+  gas_used: number;
+
+  @Expose()
+  @ApiProperty()
+  gas_wanted: number;
+
+  @Expose()
+  @ApiProperty()
+  round: number;
 }
