@@ -5,63 +5,63 @@ export class Proposal {
     @PrimaryGeneratedColumn('increment')
     pro_id: number;
 
-    @Column({ nullable: false })
+    @Column()
     pro_tx_hash: string;
 
-    @Column({ nullable: false })
+    @Column()
     pro_proposer: string;
 
-    @Column({ nullable: false })
+    @Column()
     pro_proposer_address: string;
 
-    @Column({ nullable: false })
+    @Column()
     pro_type: string;
 
-    @Column({ nullable: false })
+    @Column()
     pro_title: string;
 
-    @Column({ nullable: true })
+    @Column()
     pro_description: string;
 
-    @Column({ nullable: true, default: null })
+    @Column({ default: null })
     pro_status: string;
 
-    @Column({ nullable: false, default: 0.00000000 })
+    @Column({ default: 0.00000000 })
     pro_votes_yes: number;
 
-    @Column({ nullable: false, default: 0.00000000 })
+    @Column({ default: 0.00000000 })
     pro_votes_abstain: number;
 
-    @Column({ nullable: false, default: 0.00000000 })
+    @Column({ default: 0.00000000 })
     pro_votes_no: number;
 
-    @Column({ nullable: false })
+    @Column()
     pro_votes_no_with_veto: number;
 
-    @Column({ nullable: false })
+    @Column()
     pro_submit_time: Date;
 
-    @Column({ nullable: false })
+    @Column()
     pro_deposit_end_time: Date;
 
-    @Column({ nullable: false, default: 0.00000000 })
+    @Column({ default: 0.00000000 })
     pro_total_deposits: number;
 
-    @Column({ nullable: false, default: '2000-01-01 00:00:00' })
+    @Column({ default: '2000-01-01 00:00:00' })
     pro_voting_start_time: Date;
 
-    @Column({ nullable: false, default: '2000-01-01 00:00:00' })
+    @Column({ default: '2000-01-01 00:00:00' })
     pro_voting_end_time: Date;
 
-    @Column({ nullable: false, default: 0 })
+    @Column({ default: 0 })
     pro_voters: number;
 
-    @Column({ nullable: false, default: 0.00 })
+    @Column({ default: 0.00 })
     pro_participation_rate: number;
 
-    @Column({ nullable: false, default: 0.00000000 })
+    @Column({ default: 0.00000000 })
     pro_turnout: number;
 
-    @Column({ nullable: false, type: 'json' })
+    @Column({ type: 'json' })
     pro_activity: any;
 }
