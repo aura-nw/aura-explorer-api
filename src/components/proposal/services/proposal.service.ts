@@ -36,53 +36,53 @@ export class ProposalService {
         return { proposals: proposalsOuput, count };
     }
 
-    @Interval(500)
-    async handleInterval() {
-        const api = this.configService.get<string>('node.api');
-        try {
-            //fetching proposals from node
-            const params = `/cosmos/gov/v1beta1/proposals`;
-            const data = await this.getDataAPI(api, params);
-            if (data && data.proposals && data.proposals.length > 0) {
-                for(let i = 0; i < data.proposals.length; i ++) {
-                    const item: any = data.proposals[i];
-                    //create proposal
-                    let proposal = new Proposal();
-                    proposal.pro_id = item.proposal_id;
-                    proposal.pro_title
-                    proposal.pro_status = item.status;
-                    proposal.pro_proposer
-                    proposal.pro_voting_start_time = item.voting_start_time;
-                    proposal.pro_voting_end_time = item.voting_end_time;
-                    proposal.pro_votes_yes = 0.00000000;
-                    proposal.pro_votes_abstain = 0.00000000;
-                    proposal.pro_votes_no = 0.00000000;
-                    proposal.pro_votes_no_with_veto = 0.00000000;
-                    if (item.final_tally_result) {
-                        proposal.pro_votes_yes = item.final_tally_result.yes;
-                        proposal.pro_votes_abstain = item.final_tally_result.abstain;
-                        proposal.pro_votes_no = item.final_tally_result.no;
-                        proposal.pro_votes_no_with_veto = item.final_tally_result.no_with_veto;
-                    }
-                    proposal.pro_submit_time = item.submit_time;
-                    proposal.pro_total_deposits = 0.00000000;
-                    if (item.total_deposit && item.total_deposit.length > 0) {
-                        proposal.pro_total_deposits = item.total_deposit[0].amount
-                    }
+    // @Interval(500)
+    // async handleInterval() {
+    //     const api = this.configService.get<string>('node.api');
+    //     try {
+    //         //fetching proposals from node
+    //         const params = `/cosmos/gov/v1beta1/proposals`;
+    //         const data = await this.getDataAPI(api, params);
+    //         if (data && data.proposals && data.proposals.length > 0) {
+    //             for(let i = 0; i < data.proposals.length; i ++) {
+    //                 const item: any = data.proposals[i];
+    //                 //create proposal
+    //                 let proposal = new Proposal();
+    //                 proposal.pro_id = item.proposal_id;
+    //                 proposal.pro_title = item.content.title;
+    //                 proposal.pro_status = item.status;
+    //                 proposal.pro_proposer = '';
+    //                 proposal.pro_voting_start_time = item.voting_start_time;
+    //                 proposal.pro_voting_end_time = item.voting_end_time;
+    //                 proposal.pro_votes_yes = 0.00000000;
+    //                 proposal.pro_votes_abstain = 0.00000000;
+    //                 proposal.pro_votes_no = 0.00000000;
+    //                 proposal.pro_votes_no_with_veto = 0.00000000;
+    //                 if (item.final_tally_result) {
+    //                     proposal.pro_votes_yes = item.final_tally_result.yes;
+    //                     proposal.pro_votes_abstain = item.final_tally_result.abstain;
+    //                     proposal.pro_votes_no = item.final_tally_result.no;
+    //                     proposal.pro_votes_no_with_veto = item.final_tally_result.no_with_veto;
+    //                 }
+    //                 proposal.pro_submit_time = item.submit_time;
+    //                 proposal.pro_total_deposits = 0.00000000;
+    //                 if (item.total_deposit && item.total_deposit.length > 0) {
+    //                     proposal.pro_total_deposits = item.total_deposit[0].amount
+    //                 }
 
-                    // insert into table proposals
-                    try {
-                        await this.proposalRepository.save(proposal);
-                    } catch (error) {
-                        this.logger.error(null, `Proposal is already existed!`);
-                    }
-                }
-            }
+    //                 // insert into table proposals
+    //                 try {
+    //                     await this.proposalRepository.save(proposal);
+    //                 } catch (error) {
+    //                     this.logger.error(null, `Proposal is already existed!`);
+    //                 }
+    //             }
+    //         }
 
-        } catch(error) {
-            this.logger.error(error, `Sync proposals error`);
-        }
-    }
+    //     } catch(error) {
+    //         this.logger.error(error, `Sync proposals error`);
+    //     }
+    // }
 
     async getDataAPI(api, params) {
         const data = await lastValueFrom(this.httpService.get(api + params)).then(
