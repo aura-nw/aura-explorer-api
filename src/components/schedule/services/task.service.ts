@@ -224,7 +224,7 @@ export class TaskService {
             newTx.gas_wanted = txData.tx_response.gas_wanted;
             newTx.height = fetchingBlockHeight;
             newTx.info = txData.tx_response.info;
-            newTx.raw_log = JSON.parse(txData.tx_response.raw_log);
+            newTx.raw_log = txData.tx_response.raw_log;
             newTx.timestamp = blockData.block.header.time;
             newTx.tx = JSON.stringify(txData.tx_response);
             newTx.tx_hash = txData.tx_response.txhash;
@@ -296,9 +296,6 @@ export class TaskService {
     }
 
     const api = this.configService.get<string>('node.api');
-
-    // TODO: init write api
-    // this.influxDbClient.initWriteApi();
 
     // get validators
     const paramsValidator = LINK_API.VALIDATOR;
@@ -409,10 +406,6 @@ export class TaskService {
               newDelegator.amount,
             );
 
-            /**
-             * TODO: Flush pending writes and close writeApi.
-             */
-            // this.influxDbClient.closeWriteApi();
           }
           this.isSyncValidator = false;
         } catch (error) {
