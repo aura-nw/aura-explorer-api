@@ -7,7 +7,7 @@ import { plainToClass } from 'class-transformer';
 import { Interval } from "@nestjs/schedule";
 import { lastValueFrom } from "rxjs";
 import { HttpService } from "@nestjs/axios";
-import { Proposal } from "src/shared/entities/proposal.entity";
+import { Proposal } from "../../../shared/entities/proposal.entity";
 
 @Injectable()
 export class ProposalService {
