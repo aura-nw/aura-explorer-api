@@ -8,9 +8,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LiteBlockOutput } from 'src/components/block/dtos/block-output.dto';
 import { LiteTransactionOutput } from 'src/components/transaction/dtos/transaction-output.dto';
-import { TxParamsDto } from 'src/components/transaction/dtos/transaction-params.dto';
 import { TransactionService } from 'src/components/transaction/services/transaction.service';
 import {
   AkcLogger,
@@ -99,7 +97,7 @@ export class ValidatorController {
   async getTransactionByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
-    @Query() query: TxParamsDto,
+    @Query() query: DelegationParamsDto,
   ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
     this.logger.log(ctx, `${this.getTransactionByAddress.name} was called!`);
 
