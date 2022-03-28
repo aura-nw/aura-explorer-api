@@ -22,7 +22,7 @@ export class ProposalService {
 
     async getProposals(
         ctx: RequestContext
-    ): Promise<{ proposals: ProposalOutput[]; count: number }> {
+    ): Promise<any> {
         this.logger.log(ctx, `${this.getProposals.name} was called!`);
 
         const [proposals, count] = await this.proposalRepository.findAndCount({
@@ -34,6 +34,24 @@ export class ProposalService {
         });
 
         return { proposals: proposalsOuput, count };
+    }
+
+    async getProposalVote(
+        ctx: RequestContext,
+        proposalId: string,
+        voter: string
+    ): Promise<any> {
+        this.logger.log(ctx, `${this.getProposalVote.name} was called!`);
+        const api = this.configService.get<string>('node.api');
+        //get proposal vote
+        const paramsProposalVote = `/cosmos/gov/v1beta1/proposals/${proposalId}/votes/${voter}`;
+        const proposalVoteData = await this.getDataAPI(api, paramsProposalVote);
+        let proposalVote = {};
+        if (proposalVoteData) {
+            proposalVote = proposalVoteData;
+        }
+
+        return { proposalVote: proposalVote };
     }
 
     // @Interval(500)
