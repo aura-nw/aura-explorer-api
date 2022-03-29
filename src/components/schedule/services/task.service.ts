@@ -199,8 +199,8 @@ export class TaskService {
               const txBody = txData.tx_response.tx.body.messages[0];
               txType = txBody['@type'];
             }
-            blockGasUsed += txData.tx_response.gas_used;
-            blockGasWanted += txData.tx_response.gas_wanted;
+            blockGasUsed += parseInt(txData.tx_response.gas_used);
+            blockGasWanted += parseInt(txData.tx_response.gas_wanted);
             let savedBlock;
             if (parseInt(key) === blockData.block.data.txs.length - 1) {
               newBlock.gas_used = blockGasUsed;
