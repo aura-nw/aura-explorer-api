@@ -2,7 +2,6 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom } from 'rxjs';
 
 import { AkcLogger, RequestContext, Transaction } from '../../../shared';
 
@@ -64,7 +63,6 @@ export class TransactionService {
     query: DelegationParamsDto,
   ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
     this.logger.log(ctx, `${this.getTransactionByAddress.name} was called!`);
-    query.limit = 5;
 
     const [transactions, count]  = await this.txRepository.findAndCount({
       where: (
@@ -79,10 +77,64 @@ export class TransactionService {
       skip: query.offset,
     });
 
+    transactions.forEach(data => {
+      let validatorAddr;
+      if (data.code === 0) {
+        const rawLog = JSON.parse(data.raw_log);
+
+        const txAttr = rawLog[0].events.find(
+          ({ type }) => type === 'delegate' || type === 'unbond',
+        );
+        if (txAttr) {
+          const txAction = txAttr.attributes.find(
+            ({ key }) => key === 'validator',
+          );
+          const regex = /_/gi;
+          validatorAddr = txAction.value.replace(regex, ' ');
+          if (validatorAddr === validatorAddress) {
+            const txActionAmount = txAttr.attributes.find(
+              ({ key }) => key === 'amount',
+            );
+            const amount = txActionAmount.value.replace(regex, ' ');
+            amount.replace('uaura', '');
+            if (txAttr.type === 'delegate') {
+              data.fee = '+ ' + (parseInt(amount) / 1000000).toFixed(6);
+            } else {
+              data.fee = '- ' + (parseInt(amount) / 1000000).toFixed(6);
+            }
+            data.type = txAttr.type;
+          }
+        }
+      }
+
+    });
+
     const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
       excludeExtraneousValues: true,
     });
 
+    return { transactions: transactionsOutput, count };
+  }
+  
+  async getTransactionByDelegatorAddress(
+    ctx: RequestContext,
+    delegatorAddress,
+    query: DelegationParamsDto,
+  ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
+    this.logger.log(ctx, `${this.getTransactionByDelegatorAddress.name} was called!`);
+
+    const [transactions, count]  = await this.txRepository.findAndCount({
+      where: (
+        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${delegatorAddress}')`)}
+      ),
+      order: { height: 'DESC' },
+      take: query.limit,
+      skip: query.offset,
+    });
+
+    const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
+      excludeExtraneousValues: true,
+    });
 
     return { transactions: transactionsOutput, count };
   }

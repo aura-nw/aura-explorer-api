@@ -95,6 +95,14 @@ export class ValidatorOutput {
   @Expose()
   @ApiProperty()
   jailed: string;
+
+  @Expose()
+  @ApiProperty()
+  bonded_height: number;
+
+  @Expose()
+  @ApiProperty()
+  details: string;
 }
 
 export class DelegationOutput {
