@@ -50,4 +50,42 @@ export class ProposalController {
 
         return { data: proposalVote, meta: {} };
     }
+
+    @Get(':id')
+    @ApiOperation({
+        summary: 'Get proposals detail by id',
+    })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        type: SwaggerBaseApiResponse(ProposalOutput),
+    })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getProposalsById(
+        @ReqContext() ctx: RequestContext,
+        @Param('id') id: string,
+    ): Promise<BaseApiResponse<ProposalOutput[]>> {
+        this.logger.log(ctx, `${this.getProposalsById.name} was called!`);
+        const proposals = await this.proposalService.getProposalsById(ctx, id);
+
+        return { data: proposals, meta: { } };
+    }
+
+    @Get(':id/votes')
+    @ApiOperation({
+        summary: 'Get votes list by id',
+    })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        type: SwaggerBaseApiResponse(ProposalOutput),
+    })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getVotesListById(
+        @ReqContext() ctx: RequestContext,
+        @Param('id') id: string,
+    ): Promise<BaseApiResponse<ProposalOutput[]>> {
+        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
+        const proposals = await this.proposalService.getVotesListById(ctx, id);
+
+        return { data: proposals, meta: { } };
+    }
 }
