@@ -5,7 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { SharedModule } from '../../shared/shared.module';
 import { BlockModule } from '../block/block.module';
+import { BlockRepository } from '../block/repositories/block.repository';
 import { DelegationRepository } from '../schedule/repositories/delegation.repository';
+import { TransactionModule } from '../transaction/transaction.module';
 
 import { ValidatorController } from './controllers/validator.controller';
 import { ValidatorRepository } from './repositories/validator.repository';
@@ -17,10 +19,12 @@ import { ValidatorService } from './services/validator.service';
     TypeOrmModule.forFeature([
       ValidatorRepository,
       DelegationRepository,
+      BlockRepository,
     ]),
     HttpModule,
     ConfigModule,
     BlockModule,
+    TransactionModule,
   ],
   providers: [ValidatorService],
   controllers: [ValidatorController],

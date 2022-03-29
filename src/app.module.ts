@@ -10,6 +10,8 @@ import { TransactionModule } from './components/transaction/transaction.module';
 import { BlockModule } from './components/block/block.module';
 import { ValidatorModule } from './components/validator/validator.module';
 import { WalletModule } from './components/wallet/wallet.module';
+import { ProposalModule } from './components/proposal/proposal.module';
+import { AccountModule } from './components/account/account.module';
 
 @Module({
   imports: [
@@ -20,7 +22,9 @@ import { WalletModule } from './components/wallet/wallet.module';
     TransactionModule,
     BlockModule,
     ValidatorModule,
-    WalletModule
+    WalletModule,
+    ProposalModule,
+    AccountModule
   ],
   controllers: [AppController],
   providers: [AppService],
