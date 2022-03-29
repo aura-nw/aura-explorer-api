@@ -70,14 +70,31 @@ export class ProposalService {
         this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
         const api = this.configService.get<string>('node.api');
         const paramsProposalVotes = `/cosmos/gov/v1beta1/proposals/${proposalId}/votes`;
-        const votesOutput = await this.getDataAPI(api, paramsProposalVotes);
+        const proposalVoteData = await this.getDataAPI(api, paramsProposalVotes);
 
         let proposalVotes = {};
-        if (votesOutput) {
-            proposalVotes = votesOutput;
+        if (proposalVoteData) {
+            proposalVotes = proposalVoteData;
         }
         return { proposalVotes: proposalVotes };
     }
+
+    async getDepositListById(
+        ctx: RequestContext,
+        proposalId: string
+        ): Promise<any> {
+        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
+        const api = this.configService.get<string>('node.api');
+        const paramsProposalDeposit = `/cosmos/gov/v1beta1/proposals/${proposalId}/deposits`;
+        const proposalDepositData = await this.getDataAPI(api, paramsProposalDeposit);
+
+        let proposalDeposit = {};
+        if (proposalDepositData) {
+            proposalDeposit = proposalDepositData;
+        }
+        return { proposalDeposit: proposalDeposit };
+    }
+
     // @Interval(500)
     // async handleInterval() {
     //     const api = this.configService.get<string>('node.api');
