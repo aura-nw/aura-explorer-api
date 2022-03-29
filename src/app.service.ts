@@ -70,7 +70,7 @@ export class AppService {
       const block_first = blocks[0].timestamp.getTime();
       const block_second = blocks[1].timestamp.getTime();
       blockTime = Math.floor(Math.abs(block_first - block_second) / 1000) + CONST_CHAR.SECOND;
-      height = blocks[0].id;
+      height = blocks[0].height;
     }
     
     const bonded_tokens = parseInt(poolData.pool.bonded_tokens);
