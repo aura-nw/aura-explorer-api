@@ -1,12 +1,12 @@
+import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { plainToClass } from 'class-transformer';
+import { lastValueFrom } from "rxjs";
 import { AkcLogger, RequestContext } from "../../../shared";
 import { ProposalOutput } from "../dtos/proposal-output.dto";
 import { ProposalRepository } from "../repositories/proposal.repository";
-import { plainToClass } from 'class-transformer';
 import { Interval } from "@nestjs/schedule";
-import { lastValueFrom } from "rxjs";
-import { HttpService } from "@nestjs/axios";
 import { Proposal } from "../../../shared/entities/proposal.entity";
 import { BlockRepository } from "../../../components/block/repositories/block.repository";
 
@@ -54,6 +54,49 @@ export class ProposalService {
         }
 
         return { proposalVote: proposalVote };
+    }
+
+    async getProposalsById(
+        ctx: RequestContext,
+        proposalId: string
+        ): Promise<any> {
+        this.logger.log(ctx, `${this.getProposalsById.name} was called!`);
+        const proposalsOuput = await this.proposalRepository.findOne({
+            where: { pro_id: proposalId },
+          });
+          return proposalsOuput;
+    }
+
+    async getVotesListById(
+        ctx: RequestContext,
+        proposalId: string
+        ): Promise<any> {
+        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
+        const api = this.configService.get<string>('node.api');
+        const paramsProposalVotes = `/cosmos/gov/v1beta1/proposals/${proposalId}/votes`;
+        const proposalVoteData = await this.getDataAPI(api, paramsProposalVotes);
+
+        let proposalVotes = {};
+        if (proposalVoteData) {
+            proposalVotes = proposalVoteData;
+        }
+        return { proposalVotes: proposalVotes };
+    }
+
+    async getDepositListById(
+        ctx: RequestContext,
+        proposalId: string
+        ): Promise<any> {
+        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
+        const api = this.configService.get<string>('node.api');
+        const paramsProposalDeposit = `/cosmos/gov/v1beta1/proposals/${proposalId}/deposits`;
+        const proposalDepositData = await this.getDataAPI(api, paramsProposalDeposit);
+
+        let proposalDeposit = {};
+        if (proposalDepositData) {
+            proposalDeposit = proposalDepositData;
+        }
+        return { proposalDeposit: proposalDeposit };
     }
 
     @Interval(500)
