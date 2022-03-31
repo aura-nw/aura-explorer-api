@@ -12,6 +12,7 @@ import { TaskService } from './services/task.service';
 import { ValidatorRepository } from './repositories/validator.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
+import { MissedBlockRepository } from './repositories/missed-block.repository';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.r
       TransactionRepository,
       ValidatorRepository,
       DelegationRepository,
-      ProposalVoteRepository
+      ProposalVoteRepository,
+      MissedBlockRepository,
     ]),
     ConfigModule,
   ],
