@@ -166,7 +166,7 @@ export class TaskService {
         let blockGasWanted = 0;
 
         // set proposer and operator_address from validators
-        for (const key in validatorData.validators) {
+        for (let key in validatorData.validators) {
           const ele = validatorData.validators[key];
           const pubkey = this.getAddressFromPubkey(ele.consensus_pubkey.key);
           if (pubkey === operatorAddress) {
@@ -177,7 +177,7 @@ export class TaskService {
 
         if (blockData.block.data.txs && blockData.block.data.txs.length > 0) {
           // create transaction
-          for (const key in blockData.block.data.txs) {
+          for (let key in blockData.block.data.txs) {
             const element = blockData.block.data.txs[key];
 
             const txHash = sha256(Buffer.from(element, 'base64')).toUpperCase();
@@ -323,7 +323,7 @@ export class TaskService {
 
     if (validatorData) {
       this.isSyncValidator = true;
-      for (const key in validatorData.validators) {
+      for (let key in validatorData.validators) {
         const data = validatorData.validators[key];
 
         // get slashing signing info
@@ -391,7 +391,7 @@ export class TaskService {
             this.syncUpdateValidator(newValidator, validatorFilter[0]);
           }
           
-          for (const key in delegationData.delegation_responses) {
+          for (let key in delegationData.delegation_responses) {
             const dataDel = delegationData.delegation_responses[key];
             // create delegator by validator address
             const newDelegator = new Delegation();
@@ -503,7 +503,7 @@ export class TaskService {
       }
     }
   }
-  
+
   @Interval(500)
   async syncMissedBlock() {
     // check status
@@ -531,7 +531,7 @@ export class TaskService {
       const validatorsetsData = await this.getDataAPI(api, paramsValidatorsets);
 
       if (validatorsetsData) {
-        for (const key in validatorsetsData.validators) {
+        for (let key in validatorsetsData.validators) {
           const data = validatorsetsData.validators[key];
           const address =  this.getAddressFromPubkey(data.pub_key.key);
 
