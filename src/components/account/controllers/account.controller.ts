@@ -18,8 +18,8 @@ export class AccountController {
     this.logger.setContext(AccountController.name);
   }
 
-  @Get(':delegatorAddress')
-  @ApiOperation({ summary: 'Get account detail by delegator address' })
+  @Get(':address')
+  @ApiOperation({ summary: 'Get account detail by address' })
   @ApiResponse({
       status: HttpStatus.OK,
       type: SwaggerBaseApiResponse(AccountOutput),
@@ -27,17 +27,17 @@ export class AccountController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getAccountDetailByAddress(
       @ReqContext() ctx: RequestContext,
-      @Param('delegatorAddress') delegatorAddress: string,
+      @Param('address') address: string,
   ): Promise<any> {
       this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
 
-      const account = await this.accountService.getAccountDetailByAddress(ctx, delegatorAddress);
+      const account = await this.accountService.getAccountDetailByAddress(ctx, address);
 
       return { data: account, meta: {} };
   }
 
-  @Get(':delegatorAddress/transaction')
-  @ApiOperation({ summary: 'Get transaction by delegator address' })
+  @Get(':address/transaction')
+  @ApiOperation({ summary: 'Get transaction by address' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(LiteTransactionOutput),
@@ -45,12 +45,12 @@ export class AccountController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getTransactionByDelegatorAddress(
     @ReqContext() ctx: RequestContext,
-    @Param('delegatorAddress') delegatorAddress: string,
+    @Param('address') address: string,
     @Query() query: DelegationParamsDto,
   ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
     this.logger.log(ctx, `${this.getTransactionByDelegatorAddress.name} was called!`);
 
-    const { transactions, count } = await this.transactionService.getTransactionByDelegatorAddress(ctx, delegatorAddress, query);
+    const { transactions, count } = await this.transactionService.getTransactionByDelegatorAddress(ctx, address, query);
 
     return { data: transactions, meta: {count} };
   }

@@ -16,6 +16,8 @@ import { bech32 } from 'bech32';
 import { Validator } from 'src/shared/entities/validator.entity';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { DelegationRepository } from '../repositories/delegation.repository';
+import { MissedBlock } from 'src/shared/entities/missed-block.entity';
+import { MissedBlockRepository } from '../repositories/missed-block.repository';
 
 @Injectable()
 export class TaskService {
@@ -33,6 +35,7 @@ export class TaskService {
     private txRepository: TransactionRepository,
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
+    private missedBlockRepository: MissedBlockRepository,
   ) {
     this.logger.setContext(TaskService.name);
     this.isSyncing = false;
@@ -470,6 +473,69 @@ export class TaskService {
     if (validatorData.up_time !== newValidator.up_time) {
       validatorData.up_time = newValidator.up_time;
       this.validatorRepository.save(validatorData);
+    }
+  }
+
+  @Interval(500)
+  async syncMissedBlock() {
+    // check status
+    if (this.isSyncing) {
+      this.logger.log(null, 'already syncing validator... wait');
+      return;
+    } else {
+      this.logger.log(null, 'fetching data validator...');
+    }
+
+    const api = this.configService.get<string>('node.api');
+    
+    // get blocks latest
+    const paramsBlockLatest = `/blocks/latest`;
+    const blockLatestData = await this.getDataAPI(api, paramsBlockLatest);
+    
+    if (blockLatestData) {
+      const heightLatest = blockLatestData.block.header.height;
+      // get block by height
+      const paramsBlock = `/blocks/${heightLatest}`;
+      const blockData = await this.getDataAPI(api, paramsBlock);
+      
+      // get validatorsets
+      const paramsValidatorsets = `/cosmos/base/tendermint/v1beta1/validatorsets/${heightLatest}`;
+      const validatorsetsData = await this.getDataAPI(api, paramsValidatorsets);
+
+      if (validatorsetsData) {
+        for (const key in validatorsetsData.validators) {
+          const data = validatorsetsData.validators[key];
+          const address =  this.getAddressFromPubkey(data.pub_key.key);
+
+          if (blockData) {
+            const signingInfo = blockData.block.last_commit.signatures.filter(e => e.validator_address === address);
+            if (signingInfo.length <= 0) {
+              try {
+                // create missed block
+                const newMissedBlock = new MissedBlock();
+                newMissedBlock.height = blockData.block.header.height;
+                newMissedBlock.validator_address = address;
+                newMissedBlock.timestamp = blockData.block.header.time;
+                
+                // insert into table missed-block
+                try {
+                  await this.missedBlockRepository.save(newMissedBlock);
+                } catch (error) {
+                  this.logger.error(null, `Missed is already existed!`);
+                }
+                // TODO: Write missed block to influxdb
+                this.influxDbClient.writeMissedBlock(
+                  newMissedBlock.validator_address,
+                  newMissedBlock.height,
+                );
+              } catch (error) {
+                this.logger.error(null, `${error.name}: ${error.message}`);
+                this.logger.error(null, `${error.stack}`);
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
