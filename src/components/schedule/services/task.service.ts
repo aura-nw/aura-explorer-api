@@ -5,7 +5,7 @@ import { Interval } from '@nestjs/schedule';
 import { lastValueFrom } from 'rxjs';
 import { sha256 } from 'js-sha256';
 
-import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR, RequestContext } from '../../../shared';
+import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR, RequestContext, CONST_MSG_TYPE } from '../../../shared';
 
 import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
@@ -16,6 +16,8 @@ import { bech32 } from 'bech32';
 import { Validator } from 'src/shared/entities/validator.entity';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { DelegationRepository } from '../repositories/delegation.repository';
+import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
+import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 
 @Injectable()
 export class TaskService {
@@ -33,6 +35,7 @@ export class TaskService {
     private txRepository: TransactionRepository,
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
+    private proposalVoteRepository: ProposalVoteRepository
   ) {
     this.logger.setContext(TaskService.name);
     this.isSyncing = false;
@@ -236,6 +239,8 @@ export class TaskService {
             } catch (error) {
               this.logger.error(null, `Transaction is already existed!`);
             }
+            //sync data proposal-votes
+            await this.syncDataProposalVotes(txData);
             // TODO: Write tx to influxdb
             this.influxDbClient.writeTx(
               newTx.tx_hash,
@@ -470,6 +475,29 @@ export class TaskService {
     if (validatorData.up_time !== newValidator.up_time) {
       validatorData.up_time = newValidator.up_time;
       this.validatorRepository.save(validatorData);
+    }
+  }
+
+  async syncDataProposalVotes(txData) {
+    if (txData.tx.body.messages && txData.tx.body.messages.length > 0) {
+      for (let i = 0; i < txData.tx.body.messages.length; i++) {
+        const message: any = txData.tx.body.messages[i];
+        //check type to sync data
+        const type = message['@type'];
+        if (type != '' && type.substring(type.lastIndexOf('.') + 1) === CONST_MSG_TYPE.MSG_VOTE) {
+          let proposalVote = new ProposalVote();
+          proposalVote.proposal_id = message.proposal_id;
+          proposalVote.voter = message.voter;
+          proposalVote.tx_hash = txData.tx_response.txhash;
+          proposalVote.option = message.option;
+          proposalVote.created_at = txData.tx_response.timestamp;
+          try {
+            await this.proposalVoteRepository.save(proposalVote);
+          } catch (error) {
+            this.logger.error(null, `Proposal vote is already existed!`);
+          }
+        }
+      }
     }
   }
 }
