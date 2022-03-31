@@ -100,4 +100,10 @@ export class InfluxDBClient {
     this.writeApi.writePoint(point);
   }
 
+  writeMissedBlock(validator_address, height): void {
+    const point = new Point('delegation')
+      .stringField('validator_address', validator_address)
+      .stringField('height', height);
+    this.writeApi.writePoint(point);
+  }
 }
