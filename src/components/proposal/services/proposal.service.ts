@@ -9,6 +9,7 @@ import { ProposalRepository } from "../repositories/proposal.repository";
 import { Interval } from "@nestjs/schedule";
 import { Proposal } from "../../../shared/entities/proposal.entity";
 import { BlockRepository } from "../../../components/block/repositories/block.repository";
+import { ProposalVoteRepository } from "../repositories/proposal-vote.repository";
 
 @Injectable()
 export class ProposalService {
@@ -17,7 +18,8 @@ export class ProposalService {
         private configService: ConfigService,
         private httpService: HttpService,
         private proposalRepository: ProposalRepository,
-        private blockRepository: BlockRepository
+        private blockRepository: BlockRepository,
+        private proposalVoteRepository: ProposalVoteRepository
     ) {
         this.logger.setContext(ProposalService.name);
     }
@@ -44,14 +46,9 @@ export class ProposalService {
         voter: string
     ): Promise<any> {
         this.logger.log(ctx, `${this.getProposalVote.name} was called!`);
-        const api = this.configService.get<string>('node.api');
-        //get proposal vote
-        const paramsProposalVote = `/cosmos/gov/v1beta1/proposals/${proposalId}/votes/${voter}`;
-        const proposalVoteData = await this.getDataAPI(api, paramsProposalVote);
-        let proposalVote = {};
-        if (proposalVoteData) {
-            proposalVote = proposalVoteData;
-        }
+        const proposalVote = await this.proposalVoteRepository.findOne({
+            where: { proposal_id: proposalId, voter: voter },
+          });
 
         return { proposalVote: proposalVote };
     }

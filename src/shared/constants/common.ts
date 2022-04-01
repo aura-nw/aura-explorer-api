@@ -24,3 +24,7 @@ export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
 }
+
+export enum CONST_MSG_TYPE {
+  MSG_VOTE = 'MsgVote'
+}
