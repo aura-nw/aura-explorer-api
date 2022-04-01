@@ -57,6 +57,8 @@ export class AccountService {
         }
         balance.denom = data.denom;
         balance.amount = this.changeUauraToAura(data.amount);
+        balance.price = 0;
+        balance.total_price = balance.price * Number(balance.amount);
 
         accountOutput.balances[idx] = balance;
       });

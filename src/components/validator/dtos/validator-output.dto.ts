@@ -12,6 +12,10 @@ export class LiteValidatorOutput {
 
   @Expose()
   @ApiProperty()
+  acc_address: string;
+
+  @Expose()
+  @ApiProperty()
   rank: number;
 
   @Expose()

@@ -13,6 +13,7 @@ import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 import { DelegationOutput, LiteValidatorOutput, ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
+import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 
 @Injectable()
 export class ValidatorService {
@@ -28,6 +29,7 @@ export class ValidatorService {
     private delegationRepository: DelegationRepository,
     private blockRepository: BlockRepository,
     private proposalRepository: ProposalRepository,
+    private proposalVoteRepository: ProposalVoteRepository,
   ) {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
@@ -68,7 +70,7 @@ export class ValidatorService {
     });
 
     // get 50 proposals
-    const [proposals, countProposal] = await this.proposalRepository.findAndCount({
+    const countProposal = await this.proposalRepository.count({
       order: {pro_id: 'DESC'},
       take: CONST_NUM.LIMIT_50,
       skip: CONST_NUM.OFFSET,
@@ -76,9 +78,9 @@ export class ValidatorService {
 
     let cntValidatorActive = 0;
     const validatorActive = validatorsOutput.filter(e => e.jailed !== '0');
-    for (const key in validatorActive) {
+    for (let key in validatorActive) {
       const data = validatorActive[key];
-      const dataBefore = validatorActive[parseInt(key) - 1]
+      const dataBefore = validatorActive[parseInt(key) - 1];
       if (parseInt(key) === 0) {
         data.cumulative_share_before = '0.00';
         data.cumulative_share = data.percent_power;
@@ -90,16 +92,22 @@ export class ValidatorService {
         data.cumulative_share_after = cumulative.toFixed(2);
       }
     }
-    for (const key in validatorsOutput) {
+    for (let key in validatorsOutput) {
       const data = validatorsOutput[key];
       data.rank = parseInt(key) + 1;
-      data.proposal = countProposal;
+      data.target_count = countProposal;
       if (data.jailed === '0') {
         data.status_validator = true;
         cntValidatorActive = cntValidatorActive + 1;
       } else {
         data.status_validator = false;
       }
+      
+      // get count proposal vote by address
+      const countVotes = await this.proposalVoteRepository.count({
+        where: { voter: data.acc_address },
+      });
+      data.vote_count = countVotes;
     }
 
     return { validators: validatorsOutput, count };
