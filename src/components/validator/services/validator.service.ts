@@ -3,10 +3,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom } from 'rxjs';
-import { LiteBlockOutput } from 'src/components/block/dtos/block-output.dto';
-import { BlockParamsDto } from 'src/components/block/dtos/block-params.dto';
-import { BlockRepository } from 'src/components/block/repositories/block.repository';
-import { DelegationRepository } from 'src/components/schedule/repositories/delegation.repository';
+import { BlockRepository } from '../../../components/block/repositories/block.repository';
+import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
 
 import { AkcLogger, RequestContext } from '../../../shared';
