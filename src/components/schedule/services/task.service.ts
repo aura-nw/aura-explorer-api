@@ -13,10 +13,10 @@ import { TransactionRepository } from '../repositories/transaction.repository';
 import { InfluxDBClient } from './influxdb-client';
 import { tmhash } from 'tendermint/lib/hash';
 import { bech32 } from 'bech32';
-import { Validator } from 'src/shared/entities/validator.entity';
+import { Validator } from '../../../shared/entities/validator.entity';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { DelegationRepository } from '../repositories/delegation.repository';
-import { MissedBlock } from 'src/shared/entities/missed-block.entity';
+import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { MissedBlockRepository } from '../repositories/missed-block.repository';
 
 @Injectable()

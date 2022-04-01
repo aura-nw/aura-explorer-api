@@ -2,7 +2,6 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom } from 'rxjs';
 
 import { AkcLogger, RequestContext } from '../../../shared';
 
@@ -13,7 +12,6 @@ import { BlockRepository } from '../repositories/block.repository';
 import { TransactionService } from '../../transaction/services/transaction.service';
 import { MissedBlockRepository } from '../../../components/schedule/repositories/missed-block.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
-import { ValidatorOutput } from 'src/components/validator/dtos/validator-output.dto';
 
 @Injectable()
 export class BlockService {
