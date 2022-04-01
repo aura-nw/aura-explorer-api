@@ -7,11 +7,12 @@ import { BlockRepository } from '../../../components/block/repositories/block.re
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
 
-import { AkcLogger, RequestContext } from '../../../shared';
+import { AkcLogger, CONST_NUM, RequestContext } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import { DelegationOutput, LiteValidatorOutput, ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorRepository } from '../repositories/validator.repository';
+import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
 
 @Injectable()
 export class ValidatorService {
@@ -26,6 +27,7 @@ export class ValidatorService {
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
     private blockRepository: BlockRepository,
+    private proposalRepository: ProposalRepository,
   ) {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
@@ -65,6 +67,13 @@ export class ValidatorService {
       excludeExtraneousValues: true,
     });
 
+    // get 50 proposals
+    const [proposals, countProposal] = await this.proposalRepository.findAndCount({
+      order: {pro_id: 'DESC'},
+      take: CONST_NUM.LIMIT_50,
+      skip: CONST_NUM.OFFSET,
+    });
+
     let cntValidatorActive = 0;
     const validatorActive = validatorsOutput.filter(e => e.jailed !== '0');
     for (const key in validatorActive) {
@@ -84,6 +93,7 @@ export class ValidatorService {
     for (const key in validatorsOutput) {
       const data = validatorsOutput[key];
       data.rank = parseInt(key) + 1;
+      data.proposal = countProposal;
       if (data.jailed === '0') {
         data.status_validator = true;
         cntValidatorActive = cntValidatorActive + 1;

@@ -49,6 +49,14 @@ export class LiteValidatorOutput {
   @Expose()
   @ApiProperty()
   up_time: string;
+
+  @Expose()
+  @ApiProperty()
+  target_count: number;
+
+  @Expose()
+  @ApiProperty()
+  vote_count: number;
 }
 
 export class ValidatorOutput {
