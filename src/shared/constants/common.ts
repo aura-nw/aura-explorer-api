@@ -16,10 +16,15 @@ export enum LINK_API {
 export enum CONST_NUM {
   LIMIT_2 = 2,
   LIMIT_100 = 100,
+  LIMIT_50 = 50,
   OFFSET = 0,
 }
 
 export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
+}
+
+export enum CONST_MSG_TYPE {
+  MSG_VOTE = 'MsgVote'
 }

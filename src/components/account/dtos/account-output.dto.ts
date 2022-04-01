@@ -66,11 +66,11 @@ export class AccountBalance {
 
   @Expose()
   @ApiProperty()
-  price: string;
+  price: number;
 
   @Expose()
   @ApiProperty()
-  total: number;
+  total_price: number;
 }
 
 export class AccountDelegation {

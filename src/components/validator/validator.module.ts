@@ -6,6 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from '../../shared/shared.module';
 import { BlockModule } from '../block/block.module';
 import { BlockRepository } from '../block/repositories/block.repository';
+import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
+import { ProposalRepository } from '../proposal/repositories/proposal.repository';
 import { DelegationRepository } from '../schedule/repositories/delegation.repository';
 import { TransactionModule } from '../transaction/transaction.module';
 
@@ -20,6 +22,8 @@ import { ValidatorService } from './services/validator.service';
       ValidatorRepository,
       DelegationRepository,
       BlockRepository,
+      ProposalRepository,
+      ProposalVoteRepository,
     ]),
     HttpModule,
     ConfigModule,

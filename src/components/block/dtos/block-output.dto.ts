@@ -29,6 +29,10 @@ export class LiteBlockOutput {
   @Expose()
   @ApiProperty()
   id: number;
+
+  @Expose()
+  @ApiProperty()
+  isSync: boolean;
 }
 
 export class BlockOutput {
