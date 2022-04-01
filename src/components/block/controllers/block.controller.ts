@@ -106,20 +106,21 @@ export class BlockController {
 
     return { data: blocks, meta: {count} };
   }
-  
-  @Get('latest/agg')
+
+  @Get(':validatorAddress/latest')
   @ApiOperation({ summary: 'Get 100 blocks latest' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  async getDataBlocks(
+  async getDataBlocksByAddress(
     @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
   ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
-    this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
+    this.logger.log(ctx, `${this.getDataBlocksByAddress.name} was called!`);
 
-    const { blocks }  = await this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_100, CONST_NUM.OFFSET);
+    const { blocks }  = await this.blockService.getDataBlocksByAddress(ctx, validatorAddress, CONST_NUM.LIMIT_100, CONST_NUM.OFFSET);
 
     return { data: blocks, meta: {} };
   }

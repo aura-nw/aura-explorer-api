@@ -9,7 +9,7 @@ import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { LiteTransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { Raw } from 'typeorm/find-options/operator/Raw';
-import { DelegationParamsDto } from 'src/components/validator/dtos/delegation-params.dto';
+import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
 
 @Injectable()
 export class TransactionService {

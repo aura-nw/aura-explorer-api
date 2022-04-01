@@ -8,8 +8,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LiteTransactionOutput } from 'src/components/transaction/dtos/transaction-output.dto';
-import { TransactionService } from 'src/components/transaction/services/transaction.service';
+import { LiteTransactionOutput } from '../../../components/transaction/dtos/transaction-output.dto';
+import { TransactionService } from '../../../components/transaction/services/transaction.service';
 import {
   AkcLogger,
   BaseApiResponse,
