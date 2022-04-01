@@ -16,6 +16,7 @@ export enum LINK_API {
 export enum CONST_NUM {
   LIMIT_2 = 2,
   LIMIT_100 = 100,
+  LIMIT_50 = 50,
   OFFSET = 0,
 }
 
