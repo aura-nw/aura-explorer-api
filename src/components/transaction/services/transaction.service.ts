@@ -6,10 +6,10 @@ import { plainToClass } from 'class-transformer';
 import { AkcLogger, RequestContext, Transaction } from '../../../shared';
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
-import { LiteTransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { Raw } from 'typeorm/find-options/operator/Raw';
 import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
+import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
 
 @Injectable()
 export class TransactionService {

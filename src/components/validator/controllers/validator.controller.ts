@@ -8,7 +8,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LiteTransactionOutput } from '../../../components/transaction/dtos/transaction-output.dto';
+import { LiteTransactionOutput } from '../../../components/transaction/dtos/lite-transaction-output.dto';
 import { TransactionService } from '../../../components/transaction/services/transaction.service';
 import {
   AkcLogger,
@@ -17,9 +17,11 @@ import {
   SwaggerBaseApiResponse,
   ReqContext,
 } from '../../../shared';
+import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
+import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 
-import { DelegationOutput, LiteValidatorOutput, ValidatorOutput } from '../dtos/validator-output.dto';
+import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
 
 @ApiTags('validators')

@@ -10,10 +10,12 @@ import { BlockService } from '../../../components/block/services/block.service';
 import { AkcLogger, CONST_NUM, RequestContext } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
-import { DelegationOutput, LiteValidatorOutput, ValidatorOutput } from '../dtos/validator-output.dto';
+import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
+import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
+import { DelegationOutput } from '../dtos/delegation-output.dto';
 
 @Injectable()
 export class ValidatorService {
