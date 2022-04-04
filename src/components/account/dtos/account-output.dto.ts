@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import { AccountBalance } from './account-balance.dto';
+import { AccountDelegation } from './account-delegation.dto';
+import { AccountRedelegation } from './account-redelegation.dto';
+import { AccountUnbonding } from './account-unbonding.dto';
 
 export class AccountOutput {
   @Expose()
@@ -49,88 +53,4 @@ export class AccountOutput {
   @Expose()
   @ApiProperty()
   redelegations: AccountRedelegation[];
-}
-
-export class AccountBalance {
-  @Expose()
-  @ApiProperty()
-  name: string;
-
-  @Expose()
-  @ApiProperty()
-  denom: string;
-
-  @Expose()
-  @ApiProperty()
-  amount: string;
-
-  @Expose()
-  @ApiProperty()
-  price: number;
-
-  @Expose()
-  @ApiProperty()
-  total_price: number;
-}
-
-export class AccountDelegation {
-  @Expose()
-  @ApiProperty()
-  validator_name: string;
-
-  @Expose()
-  @ApiProperty()
-  validator_address: string;
-
-  @Expose()
-  @ApiProperty()
-  amount: string;
-
-  @Expose()
-  @ApiProperty()
-  reward: string;
-}
-
-export class AccountUnbonding {
-  @Expose()
-  @ApiProperty()
-  validator_name: string;
-
-  @Expose()
-  @ApiProperty()
-  validator_address: string;
-
-  @Expose()
-  @ApiProperty()
-  amount: string;
-
-  @Expose()
-  @ApiProperty()
-  completion_time: string;
-}
-
-export class AccountRedelegation {
-  @Expose()
-  @ApiProperty()
-  validator_src_name: string;
-
-  @Expose()
-  @ApiProperty()
-  validator_src_address: string;
-
-  @Expose()
-  @ApiProperty()
-  validator_dst_name: string;
-
-  @Expose()
-  @ApiProperty()
-  validator_dst_address: string;
-
-  @Expose()
-  @ApiProperty()
-  amount: string;
-
-  @Expose()
-  @ApiProperty()
-  completion_time: string;
 }

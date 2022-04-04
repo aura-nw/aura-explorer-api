@@ -2,11 +2,14 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
-import { TransactionRepository } from '../../../components/transaction/repositories/transaction.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 
-import { AkcLogger, RequestContext } from '../../../shared';
-import { AccountBalance, AccountDelegation, AccountOutput, AccountRedelegation, AccountUnbonding } from '../dtos/account-output.dto';
+import { AkcLogger, CONST_NAME_ASSETS, RequestContext } from '../../../shared';
+import { AccountBalance } from '../dtos/account-balance.dto';
+import { AccountDelegation } from '../dtos/account-delegation.dto';
+import { AccountOutput } from '../dtos/account-output.dto';
+import { AccountRedelegation } from '../dtos/account-redelegation.dto';
+import { AccountUnbonding } from '../dtos/account-unbonding.dto';
 
 @Injectable()
 export class AccountService {
@@ -15,7 +18,6 @@ export class AccountService {
     private httpService: HttpService,
     private configService: ConfigService,
     private validatorRepository: ValidatorRepository,
-    private txRepository: TransactionRepository,
   ) {
     this.logger.setContext(AccountService.name);
   }
@@ -51,7 +53,7 @@ export class AccountService {
       balanceData.balances.forEach((data, idx) => {
         const balance = new AccountBalance();
         if (data.denom === 'uaura') {
-          balance.name = 'AURA';
+          balance.name = CONST_NAME_ASSETS.AURA;
           accountOutput.available = this.changeUauraToAura(data.amount);
           available = parseInt(data.amount);
         }
@@ -81,6 +83,7 @@ export class AccountService {
         const validator = validatorData.filter(e => e.operator_address === validator_address);
         const reward = stakeRewardData.rewards.filter(e => e.validator_address === validator_address);
         const delegation = new AccountDelegation();
+        delegation.reward = '0';
 
         if (validator.length > 0) {
           delegation.validator_name = validator[0].title;
@@ -154,6 +157,7 @@ export class AccountService {
 
     // get validator by delegation address
     const validator = validatorData.filter(e => e.acc_address === address);
+    accountOutput.commission = '0';
     // get commission
     let commission = 0;
     if (validator.length > 0) {

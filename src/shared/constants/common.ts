@@ -28,3 +28,7 @@ export enum CONST_CHAR {
 export enum CONST_MSG_TYPE {
   MSG_VOTE = 'MsgVote'
 }
+
+export enum CONST_NAME_ASSETS {
+  AURA = 'AURA'
+}
