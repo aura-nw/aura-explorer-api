@@ -108,7 +108,7 @@ export class ProposalService {
                     const item: any = data.proposals[i];
                     //create proposal
                     let proposal = new Proposal();
-                    proposal.pro_id = item.proposal_id;
+                    proposal.pro_id = Number(item.proposal_id);
                     proposal.pro_title = item.content['title'];
                     proposal.pro_status = item.status;
                     proposal.pro_proposer = '';
