@@ -159,7 +159,7 @@ export class AccountService {
     const validator = validatorData.filter(e => e.acc_address === address);
     accountOutput.commission = '0';
     // get commission
-    let commission;
+    let commission = '0';
     if (validator.length > 0) {
       const paramsCommisstion = `/cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
       const commissionData = await this.getDataAPI(api, paramsCommisstion, ctx);

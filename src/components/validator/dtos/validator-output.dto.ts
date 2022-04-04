@@ -53,4 +53,8 @@ export class ValidatorOutput {
   @Expose()
   @ApiProperty()
   details: string;
+
+  @Expose()
+  @ApiProperty()
+  up_time: string;
 }
