@@ -9,7 +9,7 @@ import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { LiteTransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { Raw } from 'typeorm/find-options/operator/Raw';
-import { DelegationParamsDto } from 'src/components/validator/dtos/delegation-params.dto';
+import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
 
 @Injectable()
 export class TransactionService {
@@ -66,10 +66,11 @@ export class TransactionService {
 
     const [transactions, count]  = await this.txRepository.findAndCount({
       where: (
-        { raw_log: Raw(() => `(JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].type"), '"delegate"', '$') = 1
-          OR JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].type"), '"unbond"', '$') = 1)
-          AND JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].attributes[*].key"), '"validator"', '$') = 1
-          AND JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].attributes[*].value"), '"${validatorAddress}"', '$') = 1
+        { raw_log: Raw(() => `code = 0 AND
+          (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"delegate"', '$') = 1
+          OR JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"unbond"', '$') = 1)
+          AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"validator"', '$') = 1
+          AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].value"), '"${validatorAddress}"', '$') = 1
           `)}
       ),
       order: { height: 'DESC' },
@@ -118,14 +119,14 @@ export class TransactionService {
   
   async getTransactionByDelegatorAddress(
     ctx: RequestContext,
-    delegatorAddress,
+    address,
     query: DelegationParamsDto,
   ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
     this.logger.log(ctx, `${this.getTransactionByDelegatorAddress.name} was called!`);
 
     const [transactions, count]  = await this.txRepository.findAndCount({
       where: (
-        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${delegatorAddress}')`)}
+        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${address}')`)}
       ),
       order: { height: 'DESC' },
       take: query.limit,
