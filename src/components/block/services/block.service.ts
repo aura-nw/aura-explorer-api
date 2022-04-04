@@ -6,12 +6,12 @@ import { plainToClass } from 'class-transformer';
 import { AkcLogger, RequestContext } from '../../../shared';
 
 import { BlockParamsDto } from '../dtos/block-params.dto';
-import { LiteBlockOutput } from '../dtos/block-output.dto';
 import { BlockRepository } from '../repositories/block.repository';
 
 import { TransactionService } from '../../transaction/services/transaction.service';
 import { MissedBlockRepository } from '../../../components/schedule/repositories/missed-block.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
+import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
 
 @Injectable()
 export class BlockService {
@@ -148,6 +148,9 @@ export class BlockService {
 
     const blocksOutput = plainToClass(LiteBlockOutput, blocks, {
       excludeExtraneousValues: true,
+    });
+    blocksOutput.forEach(element => {
+      element.isSync = false;
     });
 
     // get data on table missed-block

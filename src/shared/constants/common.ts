@@ -23,8 +23,25 @@ export enum CONST_NUM {
 export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
+  UAURA  = 'uaura',
+  DELEGATE  = 'delegate',
+  UNBOND = 'unbond',
+  VALIDATOR = 'validator',
+  AMOUNT = 'amount',
+  UNDEFINED = 'undefined',
+  MESSAGE = 'message',
+  ACTION = 'action',
 }
 
 export enum CONST_MSG_TYPE {
   MSG_VOTE = 'MsgVote'
+}
+
+export enum CONST_NAME_ASSETS {
+  AURA = 'AURA'
+}
+
+export enum CONST_PUBKEY_ADDR {
+  AURAVALCONS = 'auravalcons',
+  AURA = 'aura',
 }
