@@ -23,8 +23,6 @@ export enum CONST_NUM {
 export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
-  PLUS = '+ ',
-  SUBTRACTION = '- ',
   UAURA  = 'uaura',
   DELEGATE  = 'delegate',
   UNBOND = 'unbond',

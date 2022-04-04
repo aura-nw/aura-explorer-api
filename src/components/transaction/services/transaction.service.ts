@@ -99,9 +99,9 @@ export class TransactionService {
             const amount = txActionAmount.value.replace(regex, ' ');
             amount.replace(CONST_CHAR.UAURA, '');
             if (txAttr.type === CONST_CHAR.DELEGATE) {
-              data.fee = CONST_CHAR.PLUS + (parseInt(amount) / 1000000).toFixed(6);
+              data.fee = (parseInt(amount) / 1000000).toFixed(6);
             } else {
-              data.fee = CONST_CHAR.SUBTRACTION + (parseInt(amount) / 1000000).toFixed(6);
+              data.fee = (parseInt(amount) / 1000000).toFixed(6);
             }
             data.type = txAttr.type;
           }
