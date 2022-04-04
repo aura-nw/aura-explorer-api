@@ -5,7 +5,7 @@ import { Interval } from '@nestjs/schedule';
 import { lastValueFrom } from 'rxjs';
 import { sha256 } from 'js-sha256';
 
-import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR, RequestContext, CONST_MSG_TYPE } from '../../../shared';
+import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR, RequestContext, CONST_MSG_TYPE, CONST_PUBKEY_ADDR } from '../../../shared';
 
 import { BlockRepository } from '../repositories/block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
@@ -17,9 +17,9 @@ import { Validator } from '../../../shared/entities/validator.entity';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { DelegationRepository } from '../repositories/delegation.repository';
 import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
-import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { MissedBlockRepository } from '../repositories/missed-block.repository';
+import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 
 @Injectable()
 export class TaskService {
@@ -82,10 +82,10 @@ export class TaskService {
       (rs) => rs.data,
     );
 
-    if (typeof data.error != 'undefined') {
+    if (typeof data.error != CONST_CHAR.UNDEFINED) {
       throw new InternalServerErrorException();
     }
-    if (typeof data.result != 'undefined') {
+    if (typeof data.result != CONST_CHAR.UNDEFINED) {
       return data.result;
     } else {
       return '';
@@ -96,10 +96,10 @@ export class TaskService {
       (rs) => rs.data,
     );
 
-    if (typeof data.error != 'undefined') {
+    if (typeof data.error != CONST_CHAR.UNDEFINED) {
       throw new InternalServerErrorException();
     }
-    if (typeof data.result != 'undefined') {
+    if (typeof data.result != CONST_CHAR.UNDEFINED) {
       return data.result;
     } else {
       return '';
@@ -193,10 +193,10 @@ export class TaskService {
               const txLog = JSON.parse(txData.tx_response.raw_log);
 
               const txAttr = txLog[0].events.find(
-                ({ type }) => type === 'message',
+                ({ type }) => type === CONST_CHAR.MESSAGE,
               );
               const txAction = txAttr.attributes.find(
-                ({ key }) => key === 'action',
+                ({ key }) => key === CONST_CHAR.ACTION,
               );
               const regex = /_/gi;
               txType = txAction.value.replace(regex, ' ');
@@ -220,7 +220,7 @@ export class TaskService {
             }
             const newTx = new Transaction();
             const fee = txData.tx_response.tx.auth_info.fee.amount[0];
-            const txFee = (fee['amount'] / 1000000).toFixed(6);
+            const txFee = (fee[CONST_CHAR.AMOUNT] / 1000000).toFixed(6);
             newTx.block = savedBlock;
             newTx.code = txData.tx_response.code;
             newTx.codespace = txData.tx_response.codespace;
@@ -337,7 +337,7 @@ export class TaskService {
           const operator_address = data.operator_address;     
           const decodeAcc = bech32.decode(operator_address, 1023);
           const wordsByte = bech32.fromWords(decodeAcc.words);
-          newValidator.acc_address = bech32.encode("aura", bech32.toWords(wordsByte));
+          newValidator.acc_address = bech32.encode(CONST_PUBKEY_ADDR.AURA, bech32.toWords(wordsByte));
           newValidator.cons_address = this.getAddressFromPubkey(data.consensus_pubkey.key);
           newValidator.cons_pub_key = data.consensus_pubkey.key;
           newValidator.title = data.description.moniker;
@@ -357,7 +357,7 @@ export class TaskService {
           const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
           newValidator.percent_power = percentPower.toFixed(2);
           const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
-          const address = this.hexToBech32(pubkey, 'auravalcons');
+          const address = this.hexToBech32(pubkey, CONST_PUBKEY_ADDR.AURAVALCONS);
           const signingInfo = signingData.info.filter(e => e.address === address);
           if (signingInfo.length > 0) {
             const signedBlocksWindow = slashingData.params.signed_blocks_window;

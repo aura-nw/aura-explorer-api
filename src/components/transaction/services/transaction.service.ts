@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 
-import { AkcLogger, RequestContext, Transaction } from '../../../shared';
+import { AkcLogger, CONST_CHAR, RequestContext, Transaction } from '../../../shared';
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
@@ -84,24 +84,24 @@ export class TransactionService {
         const rawLog = JSON.parse(data.raw_log);
 
         const txAttr = rawLog[0].events.find(
-          ({ type }) => type === 'delegate' || type === 'unbond',
+          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND,
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(
-            ({ key }) => key === 'validator',
+            ({ key }) => key === CONST_CHAR.VALIDATOR,
           );
           const regex = /_/gi;
           validatorAddr = txAction.value.replace(regex, ' ');
           if (validatorAddr === validatorAddress) {
             const txActionAmount = txAttr.attributes.find(
-              ({ key }) => key === 'amount',
+              ({ key }) => key === CONST_CHAR.AMOUNT,
             );
             const amount = txActionAmount.value.replace(regex, ' ');
-            amount.replace('uaura', '');
-            if (txAttr.type === 'delegate') {
-              data.fee = '+ ' + (parseInt(amount) / 1000000).toFixed(6);
+            amount.replace(CONST_CHAR.UAURA, '');
+            if (txAttr.type === CONST_CHAR.DELEGATE) {
+              data.fee = (parseInt(amount) / 1000000).toFixed(6);
             } else {
-              data.fee = '- ' + (parseInt(amount) / 1000000).toFixed(6);
+              data.fee = (parseInt(amount) / 1000000).toFixed(6);
             }
             data.type = txAttr.type;
           }

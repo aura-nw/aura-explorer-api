@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 
-import { AkcLogger, CONST_NAME_ASSETS, RequestContext } from '../../../shared';
+import { AkcLogger, CONST_CHAR, CONST_NAME_ASSETS, RequestContext } from '../../../shared';
 import { AccountBalance } from '../dtos/account-balance.dto';
 import { AccountDelegation } from '../dtos/account-delegation.dto';
 import { AccountOutput } from '../dtos/account-output.dto';
@@ -52,7 +52,7 @@ export class AccountService {
       accountOutput.balances = new Array(balanceData.balances.length); 
       balanceData.balances.forEach((data, idx) => {
         const balance = new AccountBalance();
-        if (data.denom === 'uaura') {
+        if (data.denom === CONST_CHAR.UAURA) {
           balance.name = CONST_NAME_ASSETS.AURA;
           accountOutput.available = this.changeUauraToAura(data.amount);
           available = parseInt(data.amount);
@@ -90,11 +90,11 @@ export class AccountService {
           delegation.validator_address = validator_address;
         }
         delegation.amount = this.changeUauraToAura(data.balance.amount);
-        if (reward.length > 0 && reward[0].reward.length > 0 && reward[0].reward[0].denom === 'uaura') {
+        if (reward.length > 0 && reward[0].reward.length > 0 && reward[0].reward[0].denom === CONST_CHAR.UAURA) {
           delegation.reward = this.changeUauraToAura(reward[0].reward[0].amount);
         }
         delegatedAmount += parseInt(data.balance.amount);
-        if (stakeRewardData && stakeRewardData.total.length > 0 && stakeRewardData.total[0].denom === 'uaura') {
+        if (stakeRewardData && stakeRewardData.total.length > 0 && stakeRewardData.total[0].denom === CONST_CHAR.UAURA) {
           accountOutput.stake_reward = this.changeUauraToAura(stakeRewardData.total[0].amount);
           stakeReward = parseInt(stakeRewardData.total[0].amount);
 
@@ -159,17 +159,17 @@ export class AccountService {
     const validator = validatorData.filter(e => e.acc_address === address);
     accountOutput.commission = '0';
     // get commission
-    let commission = 0;
+    let commission;
     if (validator.length > 0) {
       const paramsCommisstion = `/cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
       const commissionData = await this.getDataAPI(api, paramsCommisstion, ctx);
-      if (commissionData && commissionData.commission.commission[0].denom === 'uaura') {
+      if (commissionData && commissionData.commission.commission[0].denom === CONST_CHAR.UAURA) {
         commission = commissionData.commission.commission[0].amount;
         accountOutput.commission = this.changeUauraToAura(commissionData.commission.commission[0].amount);
       }
     }
 
-    const total = available + delegatedAmount + unbondingAmount + stakeReward + commission;
+    const total = available + delegatedAmount + unbondingAmount + stakeReward + parseFloat(commission);
     accountOutput.total = this.changeUauraToAura(total);
 
     return { ...accountOutput };
