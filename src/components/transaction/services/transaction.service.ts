@@ -3,13 +3,13 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 
-import { AkcLogger, RequestContext, Transaction } from '../../../shared';
+import { AkcLogger, CONST_CHAR, RequestContext, Transaction } from '../../../shared';
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
-import { LiteTransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
 import { Raw } from 'typeorm/find-options/operator/Raw';
-import { DelegationParamsDto } from 'src/components/validator/dtos/delegation-params.dto';
+import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
+import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
 
 @Injectable()
 export class TransactionService {
@@ -66,10 +66,11 @@ export class TransactionService {
 
     const [transactions, count]  = await this.txRepository.findAndCount({
       where: (
-        { raw_log: Raw(() => `(JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].type"), '"delegate"', '$') = 1
-          OR JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].type"), '"unbond"', '$') = 1)
-          AND JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].attributes[*].key"), '"validator"', '$') = 1
-          AND JSON_CONTAINS(JSON_EXTRACT( (Case when Length(raw_log) = 0 then "[]"else raw_log end), "$[*].events[*].attributes[*].value"), '"${validatorAddress}"', '$') = 1
+        { raw_log: Raw(() => `code = 0 AND
+          (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"delegate"', '$') = 1
+          OR JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"unbond"', '$') = 1)
+          AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"validator"', '$') = 1
+          AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].value"), '"${validatorAddress}"', '$') = 1
           `)}
       ),
       order: { height: 'DESC' },
@@ -83,24 +84,24 @@ export class TransactionService {
         const rawLog = JSON.parse(data.raw_log);
 
         const txAttr = rawLog[0].events.find(
-          ({ type }) => type === 'delegate' || type === 'unbond',
+          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND,
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(
-            ({ key }) => key === 'validator',
+            ({ key }) => key === CONST_CHAR.VALIDATOR,
           );
           const regex = /_/gi;
           validatorAddr = txAction.value.replace(regex, ' ');
           if (validatorAddr === validatorAddress) {
             const txActionAmount = txAttr.attributes.find(
-              ({ key }) => key === 'amount',
+              ({ key }) => key === CONST_CHAR.AMOUNT,
             );
             const amount = txActionAmount.value.replace(regex, ' ');
-            amount.replace('uaura', '');
-            if (txAttr.type === 'delegate') {
-              data.fee = '+ ' + (parseInt(amount) / 1000000).toFixed(6);
+            amount.replace(CONST_CHAR.UAURA, '');
+            if (txAttr.type === CONST_CHAR.DELEGATE) {
+              data.fee = (parseInt(amount) / 1000000).toFixed(6);
             } else {
-              data.fee = '- ' + (parseInt(amount) / 1000000).toFixed(6);
+              data.fee = (parseInt(amount) / 1000000).toFixed(6);
             }
             data.type = txAttr.type;
           }
@@ -118,14 +119,14 @@ export class TransactionService {
   
   async getTransactionByDelegatorAddress(
     ctx: RequestContext,
-    delegatorAddress,
+    address,
     query: DelegationParamsDto,
   ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
     this.logger.log(ctx, `${this.getTransactionByDelegatorAddress.name} was called!`);
 
     const [transactions, count]  = await this.txRepository.findAndCount({
       where: (
-        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${delegatorAddress}')`)}
+        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${address}')`)}
       ),
       order: { height: 'DESC' },
       take: query.limit,

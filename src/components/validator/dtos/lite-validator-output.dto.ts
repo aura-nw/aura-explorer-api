@@ -1,14 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class ValidatorOutput {
+export class LiteValidatorOutput {
   @Expose()
   @ApiProperty()
   title: string;
-
-  @Expose()
-  @ApiProperty()
-  website: string;
 
   @Expose()
   @ApiProperty()
@@ -20,7 +16,7 @@ export class ValidatorOutput {
 
   @Expose()
   @ApiProperty()
-  cons_address: string;
+  rank: number;
 
   @Expose()
   @ApiProperty()
@@ -28,15 +24,19 @@ export class ValidatorOutput {
 
   @Expose()
   @ApiProperty()
-  power: string;
+  power: number;
 
   @Expose()
   @ApiProperty()
-  percent_self_bonded: string;
+  cumulative_share_before: string;
 
   @Expose()
   @ApiProperty()
-  self_bonded: number;
+  cumulative_share: string;
+
+  @Expose()
+  @ApiProperty()
+  cumulative_share_after: string;
 
   @Expose()
   @ApiProperty()
@@ -45,16 +45,20 @@ export class ValidatorOutput {
   @Expose()
   @ApiProperty()
   jailed: string;
-
+  
   @Expose()
   @ApiProperty()
-  bonded_height: number;
-
-  @Expose()
-  @ApiProperty()
-  details: string;
+  status_validator: boolean;
 
   @Expose()
   @ApiProperty()
   up_time: string;
+
+  @Expose()
+  @ApiProperty()
+  target_count: number;
+
+  @Expose()
+  @ApiProperty()
+  vote_count: number;
 }
