@@ -118,9 +118,7 @@ export class ValidatorService {
   async getValidatorByAddress(ctx: RequestContext, address): Promise<any> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
-    const validator = await this.validatorRepository.findOne({
-      where: { operator_address: address },
-    });
+    const validator = await this.validatorRepository.getRankByAddress(address);
 
     const validatorOutput = plainToClass(ValidatorOutput, validator, {
       excludeExtraneousValues: true,
