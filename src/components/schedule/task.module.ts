@@ -13,6 +13,7 @@ import { ValidatorRepository } from './repositories/validator.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { MissedBlockRepository } from './repositories/missed-block.repository';
+import { HistoryProposalRepository } from '../proposal/repositories/history-proposal.reponsitory';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MissedBlockRepository } from './repositories/missed-block.repository';
       DelegationRepository,
       ProposalVoteRepository,
       MissedBlockRepository,
+      HistoryProposalRepository
     ]),
     ConfigModule,
   ],

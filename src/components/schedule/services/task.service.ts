@@ -20,6 +20,8 @@ import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { MissedBlockRepository } from '../repositories/missed-block.repository';
+import { HistoryProposal } from '../../../shared/entities/history-proposal';
+import { HistoryProposalRepository } from '../../proposal/repositories/history-proposal.reponsitory';
 
 @Injectable()
 export class TaskService {
@@ -38,6 +40,7 @@ export class TaskService {
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
     private proposalVoteRepository: ProposalVoteRepository,
+    private historyProposalRepository: HistoryProposalRepository,
     private missedBlockRepository: MissedBlockRepository,
   ) {
     this.logger.setContext(TaskService.name);
@@ -244,6 +247,7 @@ export class TaskService {
             }
             //sync data proposal-votes
             // await this.syncDataProposalVotes(txData);
+            // await this.syncHistoryProposal(txData);
             // TODO: Write tx to influxdb
             this.influxDbClient.writeTx(
               newTx.tx_hash,
@@ -498,6 +502,34 @@ export class TaskService {
             await this.proposalVoteRepository.save(proposalVote);
           } catch (error) {
             this.logger.error(null, `Proposal vote is already existed!`);
+          }
+        }
+      }
+    }
+  }
+
+  async syncHistoryProposal(txData) {
+    if (txData.tx.body.messages && txData.tx.body.messages.length > 0) {
+      for (let i = 0; i < txData.tx.body.messages.length; i++) {
+        const message: any = txData.tx.body.messages[i];
+        //check type to sync data
+        const type = message['@type'];
+        if (type != '' && type.substring(type.lastIndexOf('.') + 1) === CONST_MSG_TYPE.MSG_HISTORY_PROPOSAL) {
+          let proposalHistory = new HistoryProposal();
+          proposalHistory.id = message.id;
+          proposalHistory.tx_hash = txData.tx_response.txhash;
+          proposalHistory.title = message.title;
+          proposalHistory.description = message.description;
+          proposalHistory.recipient = message.recipient;
+          proposalHistory.amount = message.amount;
+          proposalHistory.amount = message.amount;
+          proposalHistory.initial_deposit = message.initial_deposit;
+          proposalHistory.proposer = message.proposer;
+          proposalHistory.created_at = txData.tx_response.timestamp;
+          try {
+            await this.historyProposalRepository.save(proposalHistory);
+          } catch (error) {
+            this.logger.error(null, `History proposal is already existed!`);
           }
         }
       }

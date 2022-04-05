@@ -26,5 +26,6 @@ export enum CONST_CHAR {
 }
 
 export enum CONST_MSG_TYPE {
-  MSG_VOTE = 'MsgVote'
+  MSG_VOTE = 'MsgVote',
+  MSG_HISTORY_PROPOSAL = 'MsgSubmitProposal'
 }
