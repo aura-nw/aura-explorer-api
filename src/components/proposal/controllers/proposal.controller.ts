@@ -1,4 +1,4 @@
-import { ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, UseInterceptors } from "@nestjs/common";
+import { CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
 import { ProposalOutput } from "../dtos/proposal-output.dto";
@@ -23,6 +23,7 @@ export class ProposalController {
         type: SwaggerBaseApiResponse(ProposalOutput),
     })
     @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
     async getProposals(
         @ReqContext() ctx: RequestContext
     ): Promise<any> {
@@ -40,6 +41,7 @@ export class ProposalController {
         status: HttpStatus.OK
     })
     @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
     async getProposalVote(
         @ReqContext() ctx: RequestContext,
         @Param('proposalId') proposalId: string,
@@ -98,6 +100,7 @@ export class ProposalController {
         type: SwaggerBaseApiResponse(ProposalOutput),
     })
     @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
     async getDepositListById(
         @ReqContext() ctx: RequestContext,
         @Param('proposalId') proposalId: string,

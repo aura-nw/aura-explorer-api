@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -38,6 +39,7 @@ export class BlockController {
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
+  @UseInterceptors(CacheInterceptor)
   @UseInterceptors(ClassSerializerInterceptor)
   async getBlocks(
     @ReqContext() ctx: RequestContext,
@@ -95,6 +97,7 @@ export class BlockController {
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getBlockByValidatorAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
@@ -114,6 +117,7 @@ export class BlockController {
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getDataBlocksByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
