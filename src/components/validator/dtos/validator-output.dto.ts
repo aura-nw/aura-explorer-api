@@ -4,6 +4,10 @@ import { Expose } from 'class-transformer';
 export class ValidatorOutput {
   @Expose()
   @ApiProperty()
+  rank: number;
+
+  @Expose()
+  @ApiProperty()
   title: string;
 
   @Expose()
