@@ -4,6 +4,7 @@ import { AccountBalance } from './account-balance.dto';
 import { AccountDelegation } from './account-delegation.dto';
 import { AccountRedelegation } from './account-redelegation.dto';
 import { AccountUnbonding } from './account-unbonding.dto';
+import { AccountVesting } from './account-vesting.dto';
 
 export class AccountOutput {
   @Expose()
@@ -53,4 +54,8 @@ export class AccountOutput {
   @Expose()
   @ApiProperty()
   redelegations: AccountRedelegation[];
+
+  @Expose()
+  @ApiProperty()
+  vesting: AccountVesting;
 }
