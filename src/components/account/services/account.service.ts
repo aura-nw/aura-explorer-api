@@ -176,21 +176,23 @@ export class AccountService {
     let delegatedVesting = 0;
     accountOutput.delegatable_vesting = '0';
     if (authInfoData) {
+      const baseVesting = authInfoData.result.value?.base_vesting_account;
+      if (baseVesting !== undefined) {
         const vesting = new AccountVesting();
         vesting.type = authInfoData.result.type;
-        const originalVesting = authInfoData.result.value.base_vesting_account.original_vesting;
+        const originalVesting = baseVesting.original_vesting || 0;
         if (originalVesting.length > 0) {
           vesting.amount = this.changeUauraToAura(originalVesting[0].amount);
         }
-        const schedule = authInfoData.result.value.base_vesting_account.end_time;
+        const schedule = baseVesting.end_time || 0;
         vesting.vesting_schedule = schedule;
-        const delegated = authInfoData.result.value.base_vesting_account.delegated_vesting;
+        const delegated = baseVesting.delegated_vesting || 0;
         if (delegated.length > 0) {
           delegatedVesting = parseInt(delegated[0].amount);
           accountOutput.delegatable_vesting = this.changeUauraToAura(delegated[0].amount);
         }
-
         accountOutput.vesting = vesting;
+      }
     }
 
     // get total
