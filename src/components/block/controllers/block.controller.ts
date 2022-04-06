@@ -19,8 +19,9 @@ import {
   CONST_NUM,
 } from '../../../shared';
 
-import { BlockOutput, LiteBlockOutput } from '../dtos/block-output.dto';
+import { BlockOutput } from '../dtos/block-output.dto';
 import { BlockParamsDto } from '../dtos/block-params.dto';
+import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
 import { BlockService } from '../services/block.service';
 
 @ApiTags('blocks')

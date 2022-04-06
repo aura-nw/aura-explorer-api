@@ -1,56 +1,64 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class TransactionOutput {
+export class LiteValidatorOutput {
   @Expose()
   @ApiProperty()
-  tx_hash: string;
+  title: string;
 
   @Expose()
   @ApiProperty()
-  code: number;
+  operator_address: string;
 
   @Expose()
   @ApiProperty()
-  codespace: string;
+  acc_address: string;
 
   @Expose()
   @ApiProperty()
-  data: string;
+  rank: number;
 
   @Expose()
   @ApiProperty()
-  gas_used: number;
+  percent_power: string;
 
   @Expose()
   @ApiProperty()
-  gas_wanted: number;
+  power: number;
 
   @Expose()
   @ApiProperty()
-  info: string;
+  cumulative_share_before: string;
 
   @Expose()
   @ApiProperty()
-  height: number;
+  cumulative_share: string;
 
   @Expose()
   @ApiProperty()
-  num_txs: number;
+  cumulative_share_after: string;
 
   @Expose()
   @ApiProperty()
-  type: string;
+  commission: string;
 
   @Expose()
   @ApiProperty()
-  raw_log: string;
+  jailed: string;
+  
+  @Expose()
+  @ApiProperty()
+  status_validator: boolean;
 
   @Expose()
   @ApiProperty()
-  timestamp: Date;
+  up_time: string;
 
   @Expose()
   @ApiProperty()
-  tx: string;
+  target_count: number;
+
+  @Expose()
+  @ApiProperty()
+  vote_count: number;
 }

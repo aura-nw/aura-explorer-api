@@ -65,7 +65,7 @@ export class ProposalController {
     async getProposalsById(
         @ReqContext() ctx: RequestContext,
         @Param('proposalId') proposalId: string,
-    ): Promise<BaseApiResponse<ProposalOutput[]>> {
+    ): Promise<any> {
         this.logger.log(ctx, `${this.getProposalsById.name} was called!`);
         const proposals = await this.proposalService.getProposalsById(ctx, proposalId);
 
@@ -84,7 +84,7 @@ export class ProposalController {
     async getVotesListById(
         @ReqContext() ctx: RequestContext,
         @Param('proposalId') proposalId: string,
-    ): Promise<BaseApiResponse<ProposalOutput[]>> {
+    ): Promise<any> {
         this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
         const proposalsVotes = await this.proposalService.getVotesListById(ctx, proposalId);
 
@@ -104,10 +104,11 @@ export class ProposalController {
     async getDepositListById(
         @ReqContext() ctx: RequestContext,
         @Param('proposalId') proposalId: string,
-    ): Promise<BaseApiResponse<ProposalOutput[]>> {
+    ): Promise<any> {
         this.logger.log(ctx, `${this.getDepositListById.name} was called!`);
         const proposalsDeposit = await this.proposalService.getDepositListById(ctx, proposalId);
 
         return { data: proposalsDeposit, meta: { } };
     }
+
 }
