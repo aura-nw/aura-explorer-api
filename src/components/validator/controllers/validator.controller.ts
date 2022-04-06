@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -42,6 +43,7 @@ export class ValidatorController {
     type: SwaggerBaseApiResponse(LiteValidatorOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getValidators(
     @ReqContext() ctx: RequestContext,
   ): Promise<BaseApiResponse<LiteValidatorOutput[]>> {
@@ -77,6 +79,7 @@ export class ValidatorController {
     type: SwaggerBaseApiResponse(DelegationOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getDelegationByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
@@ -96,6 +99,7 @@ export class ValidatorController {
     type: SwaggerBaseApiResponse(LiteTransactionOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getTransactionByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
