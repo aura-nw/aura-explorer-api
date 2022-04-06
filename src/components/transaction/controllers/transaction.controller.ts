@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -40,6 +41,7 @@ export class TransactionController {
     type: SwaggerBaseApiResponse(LiteTransactionOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getTxs(
     @ReqContext() ctx: RequestContext,
     @Query() query: TxParamsDto,

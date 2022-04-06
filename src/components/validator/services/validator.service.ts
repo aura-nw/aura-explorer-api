@@ -179,11 +179,8 @@ export class ValidatorService {
     //get rewards
     const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
     const rewardData = await this.getDataAPI(api, paramsReward, ctx);
-    delegations.total_staked = '0';
     delegations.delegations = [];
     if (delegatedData && delegatedData.delegation_responses && delegatedData.delegation_responses.length > 0) {
-      delegatedData.delegation_responses.forEach( data => delegations.total_staked = delegations.total_staked + Number(data.balance.amount));
-      delegations.total_staked = delegations.total_staked.substring(1);
       delegations.delegations = delegatedData.delegation_responses;
       for (let i = 0; i < delegatedData.delegation_responses.length; i ++) {
         let item = delegatedData.delegation_responses[0];

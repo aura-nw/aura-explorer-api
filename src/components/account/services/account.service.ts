@@ -10,6 +10,7 @@ import { AccountDelegation } from '../dtos/account-delegation.dto';
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountRedelegation } from '../dtos/account-redelegation.dto';
 import { AccountUnbonding } from '../dtos/account-unbonding.dto';
+import { AccountVesting } from '../dtos/account-vesting.dto';
 
 @Injectable()
 export class AccountService {
@@ -169,7 +170,33 @@ export class AccountService {
       }
     }
 
-    const total = available + delegatedAmount + unbondingAmount + stakeReward + parseFloat(commission);
+    //get auth_info
+    const paramsAuthInfo = `auth/accounts/${address}`;
+    const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
+    let delegatedVesting = 0;
+    accountOutput.delegatable_vesting = '0';
+    if (authInfoData) {
+      const baseVesting = authInfoData.result.value?.base_vesting_account;
+      if (baseVesting !== undefined) {
+        const vesting = new AccountVesting();
+        vesting.type = authInfoData.result.type;
+        const originalVesting = baseVesting.original_vesting || 0;
+        if (originalVesting.length > 0) {
+          vesting.amount = this.changeUauraToAura(originalVesting[0].amount);
+        }
+        const schedule = baseVesting.end_time || 0;
+        vesting.vesting_schedule = schedule;
+        const delegated = baseVesting.delegated_vesting || 0;
+        if (delegated.length > 0) {
+          delegatedVesting = parseInt(delegated[0].amount);
+          accountOutput.delegatable_vesting = this.changeUauraToAura(delegated[0].amount);
+        }
+        accountOutput.vesting = vesting;
+      }
+    }
+
+    // get total
+    const total = available + delegatedAmount + unbondingAmount + stakeReward + parseFloat(commission) + delegatedVesting;
     accountOutput.total = this.changeUauraToAura(total);
 
     return { ...accountOutput };
