@@ -13,6 +13,7 @@ import { ValidatorRepository } from './repositories/validator.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { MissedBlockRepository } from './repositories/missed-block.repository';
+import { ScheduleModule } from 'nest-schedule';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MissedBlockRepository } from './repositories/missed-block.repository';
       MissedBlockRepository,
     ]),
     ConfigModule,
+    ScheduleModule.register()
   ],
   providers: [TaskService],
 })
