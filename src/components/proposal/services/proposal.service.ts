@@ -112,15 +112,11 @@ export class ProposalService {
                     proposal.pro_title = item.content['title'];
                     proposal.pro_status = item.status;
                     proposal.pro_proposer = '';
-                    if (item.content.plan) {
-                        const height = item.content.plan['height'];
-                        const block = await this.blockRepository.findOne({
-                            where: { height: height },
-                        });
-                        if (block) {
-                            proposal.pro_proposer = block.proposer;
-                        }
-                    }
+                    const paramsProposer = `/gov/proposals/${item.proposal_id}/proposer`;
+                    const dataProposer = await this.getDataAPI(api, paramsProposer);
+                    if (dataProposer && dataProposer.result) {
+                        proposal.pro_proposer = dataProposer.result.proposer;
+                    } 
                     proposal.pro_voting_start_time = item.voting_start_time;
                     proposal.pro_voting_end_time = item.voting_end_time;
                     proposal.pro_votes_yes = 0.00000000;
