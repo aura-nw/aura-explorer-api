@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('proposal-votes')
+@Entity('proposal_votes')
 export class ProposalVote {
     @PrimaryGeneratedColumn('increment')
     id: number;
