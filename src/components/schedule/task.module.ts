@@ -14,6 +14,8 @@ import { DelegationRepository } from './repositories/delegation.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { MissedBlockRepository } from './repositories/missed-block.repository';
 import { HistoryProposalRepository } from '../proposal/repositories/history-proposal.reponsitory';
+import { ScheduleModule } from 'nest-schedule';
+import { BlockSyncErrorRepository } from './repositories/block-sync-error.repository';
 
 @Module({
   imports: [
@@ -27,9 +29,11 @@ import { HistoryProposalRepository } from '../proposal/repositories/history-prop
       DelegationRepository,
       ProposalVoteRepository,
       MissedBlockRepository,
-      HistoryProposalRepository
+      HistoryProposalRepository,
+      BlockSyncErrorRepository
     ]),
     ConfigModule,
+    ScheduleModule.register()
   ],
   providers: [TaskService],
 })

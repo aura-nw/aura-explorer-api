@@ -20,13 +20,14 @@ export default (): any => ({
     bucket: process.env.INFLUXDB_BUCKET,
     org: process.env.INFLUXDB_ORG
   },
-  cacheManagement:{
+  cacheManagement: {
     useRedis: process.env.USE_REDIS,
     ttl: process.env.TTL,
-    Redis:{
+    Redis: {
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,
       db: process.env.REDIS_DB,
     }
-  }
+  },
+  threads: process.env.THREADS
 });
