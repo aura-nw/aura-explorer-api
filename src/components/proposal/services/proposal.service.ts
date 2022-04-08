@@ -101,7 +101,7 @@ export class ProposalService {
         const api = this.configService.get<string>('node.api');
         try {
             //fetching proposals from node
-            const params = `/cosmos/gov/v1beta1/proposals`;
+            const params = `cosmos/gov/v1beta1/proposals`;
             const data = await this.getDataAPI(api, params);
             if (data && data.proposals && data.proposals.length > 0) {
                 for(let i = 0; i < data.proposals.length; i++) {
