@@ -57,26 +57,14 @@ export class TransactionService {
     });
   }
 
-  async getTransactionByAddress(
+  async getTransactionsByAddress(
     ctx: RequestContext,
     validatorAddress,
     query: DelegationParamsDto,
   ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
-    this.logger.log(ctx, `${this.getTransactionByAddress.name} was called!`);
+    this.logger.log(ctx, `${this.getTransactionsByAddress.name} was called!`);
 
-    const [transactions, count]  = await this.txRepository.findAndCount({
-      where: (
-        { raw_log: Raw(() => `code = 0 AND
-          (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"delegate"', '$') = 1
-          OR JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"unbond"', '$') = 1)
-          AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"validator"', '$') = 1
-          AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].value"), '"${validatorAddress}"', '$') = 1
-          `)}
-      ),
-      order: { height: 'DESC' },
-      take: query.limit,
-      skip: query.offset,
-    });
+    const { transactions, total } = await this.txRepository.getTransactionsByAddress(validatorAddress, query.limit, query.offset);
 
     transactions.forEach(data => {
       let validatorAddr;
@@ -114,29 +102,22 @@ export class TransactionService {
       excludeExtraneousValues: true,
     });
 
-    return { transactions: transactionsOutput, count };
+    return { transactions: transactionsOutput, count: total };
   }
   
-  async getTransactionByDelegatorAddress(
+  async getTransactionsByDelegatorAddress(
     ctx: RequestContext,
     address,
     query: DelegationParamsDto,
   ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
-    this.logger.log(ctx, `${this.getTransactionByDelegatorAddress.name} was called!`);
+    this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
 
-    const [transactions, count]  = await this.txRepository.findAndCount({
-      where: (
-        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${address}')`)}
-      ),
-      order: { height: 'DESC' },
-      take: query.limit,
-      skip: query.offset,
-    });
+    const { transactions, total } = await this.txRepository.getTransactionsByDelegatorAddress(address, query.limit, query.offset);
 
     const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
       excludeExtraneousValues: true,
     });
 
-    return { transactions: transactionsOutput, count };
+    return { transactions: transactionsOutput, count: total };
   }
 }

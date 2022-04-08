@@ -44,14 +44,14 @@ export class AccountController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @UseInterceptors(CacheInterceptor)
-  async getTransactionByDelegatorAddress(
+  async getTransactionsByDelegatorAddress(
     @ReqContext() ctx: RequestContext,
     @Param('address') address: string,
     @Query() query: DelegationParamsDto,
   ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
-    this.logger.log(ctx, `${this.getTransactionByDelegatorAddress.name} was called!`);
+    this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
 
-    const { transactions, count } = await this.transactionService.getTransactionByDelegatorAddress(ctx, address, query);
+    const { transactions, count } = await this.transactionService.getTransactionsByDelegatorAddress(ctx, address, query);
 
     return { data: transactions, meta: {count} };
   }
