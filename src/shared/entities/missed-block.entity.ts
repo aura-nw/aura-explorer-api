@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from "typeorm";
 
-@Entity('missed-block')
+@Entity('missed_block')
 export class MissedBlock {
   @PrimaryColumn()
   validator_address: string;

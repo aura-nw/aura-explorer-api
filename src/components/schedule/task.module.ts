@@ -14,6 +14,7 @@ import { DelegationRepository } from './repositories/delegation.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { MissedBlockRepository } from './repositories/missed-block.repository';
 import { ScheduleModule } from 'nest-schedule';
+import { BlockSyncErrorRepository } from './repositories/block-sync-error.repository';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ScheduleModule } from 'nest-schedule';
       DelegationRepository,
       ProposalVoteRepository,
       MissedBlockRepository,
+      BlockSyncErrorRepository
     ]),
     ConfigModule,
     ScheduleModule.register()

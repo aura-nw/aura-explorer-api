@@ -1,7 +1,7 @@
 import { Column, Entity } from "typeorm";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
-@Entity('block-sync-error')
+@Entity('block_sync_error')
 export class BlockSyncError extends BaseEntityIncrementId {
     @Column()
     height: number;

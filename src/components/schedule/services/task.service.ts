@@ -22,6 +22,8 @@ import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
 import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { MissedBlockRepository } from '../repositories/missed-block.repository';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
+import { BlockSyncErrorRepository } from '../repositories/block-sync-error.repository';
+import { BlockSyncError } from 'src/shared/entities/block-sync-error.entity';
 
 @Injectable()
 export class TaskService {
@@ -42,6 +44,7 @@ export class TaskService {
     private delegationRepository: DelegationRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private missedBlockRepository: MissedBlockRepository,
+    private blockSyncErrorRepository: BlockSyncErrorRepository,
     @InjectSchedule() private readonly schedule: Schedule
   ) {
     this.logger.setContext(TaskService.name);
@@ -303,7 +306,7 @@ export class TaskService {
     return bech32.encode(prefix, bech32.toWords(addressBuffer));
   }
 
-  // @Interval(500)
+  @Interval(500)
   async syncValidator() {
     // check status
     if (this.isSyncing) {
@@ -514,7 +517,7 @@ export class TaskService {
     }
   }
 
-  // @Interval(500)
+  @Interval(500)
   async syncMissedBlock() {
     // check status
     if (this.isSyncing) {
@@ -627,6 +630,9 @@ export class TaskService {
       let blockGasUsed = 0;
       let blockGasWanted = 0;
 
+      //Insert block error table
+      await this.insertBlockError(newBlock.block_hash, newBlock.height);
+
       // set proposer and operator_address from validators
       for (let key in validatorData.validators) {
         const ele = validatorData.validators[key];
@@ -734,7 +740,7 @@ export class TaskService {
        */
       // this.influxDbClient.closeWriteApi();
 
-      // update current block
+      // Update current block
       let currentBlk = 0;
       const status = await this.statusRepository.findOne();
       if (status) {
@@ -744,6 +750,10 @@ export class TaskService {
       if (syncBlock > currentBlk) {
         await this.updateStatus(fetchingBlockHeight);
       }
+
+      // Delete data on Block sync error table
+      await this.removeBlockError(syncBlock);
+
     } catch (error) {
       this.logger.error(null, `${error.name}: ${error.message}`);
       this.logger.error(null, `${error.stack}`);
@@ -754,10 +764,10 @@ export class TaskService {
    * scheduleTimeoutJob
    * @param height 
    */
-  scheduleTimeoutJob(height: number){
+  scheduleTimeoutJob(height: number) {
     this.logger.log(null, `Class ${TaskService.name}, call scheduleTimeoutJob method with prameters: {currentBlk: ${height}}`);
 
-    this.schedule.scheduleTimeoutJob(`schedule_sync_block_${uuidv4()}`, 10, async () => {   
+    this.schedule.scheduleTimeoutJob(`schedule_sync_block_${uuidv4()}`, 10, async () => {
       try {
         //Update code sync data
         await this.handleSyncData(height);
@@ -793,7 +803,7 @@ export class TaskService {
     let height = 0;
     for (let i = 1; i <= loop; i++) {
       height = currentBlk + i;
-      this.scheduleTimeoutJob(height);     
+      this.scheduleTimeoutJob(height);
     }
 
     // If current block not equal latest block when the symtem will call workerProcess method    
@@ -832,6 +842,37 @@ export class TaskService {
 
     if (blockLatest) {
       this.threadProcess(currentBlk, latestBlk)
+    }
+  }
+
+  /**
+   * insertBlockError
+   * @param block_hash 
+   * @param height 
+   */
+  async insertBlockError(block_hash: string, height: number) {
+    const blockSyncError = new BlockSyncError();
+    blockSyncError.block_hash = block_hash;
+    blockSyncError.height = height;
+    await this.blockSyncErrorRepository.save(blockSyncError);
+  }
+
+  /**
+   * removeBlockError
+   * @param height 
+   */
+  async removeBlockError(height: number) {
+    await this.blockSyncErrorRepository.delete({ height: height });
+  }
+
+  /**
+   * blockSyncError
+   */
+  @Interval(1000)
+  async blockSyncError() {
+    const result: BlockSyncError = await this.blockSyncErrorRepository.findOne({ order: { id: 'DESC' } });
+    if (result) {
+      await this.handleSyncData(result.height);
     }
   }
 }
