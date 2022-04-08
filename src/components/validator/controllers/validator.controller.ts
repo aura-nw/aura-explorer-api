@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -8,7 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LiteTransactionOutput } from '../../../components/transaction/dtos/transaction-output.dto';
+import { LiteTransactionOutput } from '../../../components/transaction/dtos/lite-transaction-output.dto';
 import { TransactionService } from '../../../components/transaction/services/transaction.service';
 import {
   AkcLogger,
@@ -17,9 +18,11 @@ import {
   SwaggerBaseApiResponse,
   ReqContext,
 } from '../../../shared';
+import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
+import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 
-import { DelegationOutput, LiteValidatorOutput, ValidatorOutput } from '../dtos/validator-output.dto';
+import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
 
 @ApiTags('validators')
@@ -40,6 +43,7 @@ export class ValidatorController {
     type: SwaggerBaseApiResponse(LiteValidatorOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getValidators(
     @ReqContext() ctx: RequestContext,
   ): Promise<BaseApiResponse<LiteValidatorOutput[]>> {
@@ -75,6 +79,7 @@ export class ValidatorController {
     type: SwaggerBaseApiResponse(DelegationOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getDelegationByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
@@ -94,6 +99,7 @@ export class ValidatorController {
     type: SwaggerBaseApiResponse(LiteTransactionOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getTransactionByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
@@ -104,5 +110,23 @@ export class ValidatorController {
     const { transactions, count } = await this.transactionService.getTransactionByAddress(ctx, validatorAddress, query);
 
     return { data: transactions, meta: {count} };
+  }
+
+  @Get('delegations/:delegatorAddress')
+  @ApiOperation({
+      summary: 'Get list delegations',
+  })
+  @ApiResponse({
+      status: HttpStatus.OK
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getDelegations(
+      @ReqContext() ctx: RequestContext,
+      @Param('delegatorAddress') delegatorAddress: string
+  ): Promise<any> {
+      this.logger.log(ctx, `${this.getDelegations.name} was called!`);
+      const delegations = await this.validatorService.getDelegations(ctx, delegatorAddress);
+
+      return { data: delegations, meta: {} };
   }
 }

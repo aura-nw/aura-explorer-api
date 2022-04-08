@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -18,8 +19,9 @@ import {
   CONST_NUM,
 } from '../../../shared';
 
-import { BlockOutput, LiteBlockOutput } from '../dtos/block-output.dto';
+import { BlockOutput } from '../dtos/block-output.dto';
 import { BlockParamsDto } from '../dtos/block-params.dto';
+import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
 import { BlockService } from '../services/block.service';
 
 @ApiTags('blocks')
@@ -38,6 +40,7 @@ export class BlockController {
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
+  @UseInterceptors(CacheInterceptor)
   @UseInterceptors(ClassSerializerInterceptor)
   async getBlocks(
     @ReqContext() ctx: RequestContext,
@@ -95,6 +98,7 @@ export class BlockController {
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getBlockByValidatorAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
@@ -114,6 +118,7 @@ export class BlockController {
     type: SwaggerBaseApiResponse(LiteBlockOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getDataBlocksByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,

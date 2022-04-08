@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -17,11 +18,9 @@ import {
 } from '../../../shared';
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
-import {
-  LiteTransactionOutput,
-  TransactionOutput,
-} from '../dtos/transaction-output.dto';
+import { TransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionService } from '../services/transaction.service';
+import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
 
 @ApiTags('transactions')
 @Controller('transactions')
@@ -42,6 +41,7 @@ export class TransactionController {
     type: SwaggerBaseApiResponse(LiteTransactionOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getTxs(
     @ReqContext() ctx: RequestContext,
     @Query() query: TxParamsDto,

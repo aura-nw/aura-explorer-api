@@ -1,9 +1,8 @@
-import { json } from 'stream/consumers';
 import { Column, Entity, Unique } from 'typeorm';
 
 import { BaseEntityIncrementId } from './base/base.entity';
 
-@Entity('delegation')
+@Entity('delegations')
 export class Delegation extends BaseEntityIncrementId {
   @Unique('delegator_address', ['delegator_address'])
   @Column()

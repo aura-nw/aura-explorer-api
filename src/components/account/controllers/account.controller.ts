@@ -1,6 +1,6 @@
-import { ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Query, UseInterceptors } from "@nestjs/common";
+import { CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Query, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LiteTransactionOutput } from "../../../components/transaction/dtos/transaction-output.dto";
+import { LiteTransactionOutput } from "../../../components/transaction/dtos/lite-transaction-output.dto";
 import { TransactionService } from "../../../components/transaction/services/transaction.service";
 import { DelegationParamsDto } from "../../../components/validator/dtos/delegation-params.dto";
 import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
@@ -43,6 +43,7 @@ export class AccountController {
     type: SwaggerBaseApiResponse(LiteTransactionOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getTransactionByDelegatorAddress(
     @ReqContext() ctx: RequestContext,
     @Param('address') address: string,
