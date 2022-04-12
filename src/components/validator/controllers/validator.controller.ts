@@ -100,14 +100,14 @@ export class ValidatorController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @UseInterceptors(CacheInterceptor)
-  async getTransactionByAddress(
+  async getTransactionsByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
     @Query() query: DelegationParamsDto,
   ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
-    this.logger.log(ctx, `${this.getTransactionByAddress.name} was called!`);
+    this.logger.log(ctx, `${this.getTransactionsByAddress.name} was called!`);
 
-    const { transactions, count } = await this.transactionService.getTransactionByAddress(ctx, validatorAddress, query);
+    const { transactions, count } = await this.transactionService.getTransactionsByAddress(ctx, validatorAddress, query);
 
     return { data: transactions, meta: {count} };
   }
@@ -125,8 +125,8 @@ export class ValidatorController {
       @Param('delegatorAddress') delegatorAddress: string
   ): Promise<any> {
       this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-      const delegations = await this.validatorService.getDelegations(ctx, delegatorAddress);
+      const result = await this.validatorService.getDelegations(ctx, delegatorAddress);
 
-      return { data: delegations, meta: {} };
+      return { data: result, meta: {} };
   }
 }

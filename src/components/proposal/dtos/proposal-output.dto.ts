@@ -20,6 +20,10 @@ export class ProposalOutput {
 
     @Expose()
     @ApiProperty()
+    pro_proposer_address: string;
+
+    @Expose()
+    @ApiProperty()
     pro_voting_start_time: Date;
 
     @Expose()
