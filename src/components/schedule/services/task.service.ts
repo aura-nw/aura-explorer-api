@@ -256,7 +256,7 @@ export class TaskService {
               this.logger.error(null, `Transaction is already existed!`);
             }
             //sync data proposal-votes
-            // await this.syncDataProposalVotes(txData);
+            await this.syncDataProposalVotes(txData);
             // TODO: Write tx to influxdb
             this.influxDbClient.writeTx(
               newTx.tx_hash,
@@ -502,7 +502,7 @@ export class TaskService {
         const type = message['@type'];
         if (type != '' && type.substring(type.lastIndexOf('.') + 1) === CONST_MSG_TYPE.MSG_VOTE) {
           let proposalVote = new ProposalVote();
-          proposalVote.proposal_id = message.proposal_id;
+          proposalVote.proposal_id = Number(message.proposal_id);
           proposalVote.voter = message.voter;
           proposalVote.tx_hash = txData.tx_response.txhash;
           proposalVote.option = message.option;
