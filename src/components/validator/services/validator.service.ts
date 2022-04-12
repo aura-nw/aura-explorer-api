@@ -186,6 +186,7 @@ export class ValidatorService {
       for (let i = 0; i < delegationsData.length; i ++) {
         let item = delegationsData[0];
         delegation.amount_staked = item.balance.amount;
+        delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
         if (rewardData && rewardData.rewards && rewardData.rewards.length > 0) {
           const findReward = rewardData.rewards.find(i => i.validator_address === item.delegation.validator_address);
@@ -194,7 +195,7 @@ export class ValidatorService {
             delegation.pending_reward = findReward.reward[0].amount;
           }
         }
-        item.delegation.validator_name = '';
+        delegation.validator_name = '';
         const validator = await this.validatorRepository.findOne({
           where: { operator_address: item.delegation.validator_address },
         });
