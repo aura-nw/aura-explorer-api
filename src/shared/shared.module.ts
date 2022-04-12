@@ -4,7 +4,6 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 import * as redisStore from 'cache-manager-redis-store';
-import type { RedisClientOptions } from 'redis';
 
 import { configModuleOptions } from './configs/module-options';
 import { AllExceptionsFilter } from './filters/all-exception.filter';
