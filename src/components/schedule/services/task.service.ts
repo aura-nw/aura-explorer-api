@@ -711,7 +711,7 @@ export class TaskService {
             this.logger.error(null, `Transaction is already existed!`);
           }
           //sync data proposal-votes
-          // await this.syncDataProposalVotes(txData);
+          await this.syncDataProposalVotes(txData);
           // TODO: Write tx to influxdb
           this.influxDbClient.writeTx(
             newTx.tx_hash,
