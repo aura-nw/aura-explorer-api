@@ -41,7 +41,7 @@ export class AccountService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
     const api = this.configService.get<string>('node.api');
-    
+
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
@@ -50,7 +50,7 @@ export class AccountService {
     const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
     let available = 0;
     if (balanceData.balances) {
-      accountOutput.balances = new Array(balanceData.balances.length); 
+      accountOutput.balances = new Array(balanceData.balances.length);
       balanceData.balances.forEach((data, idx) => {
         const balance = new AccountBalance();
         if (data.denom === CONST_CHAR.UAURA) {
@@ -78,7 +78,7 @@ export class AccountService {
     let delegatedAmount = 0;
     let stakeReward = 0;
     if (delegatedData) {
-      accountOutput.delegations = new Array(delegatedData.delegation_responses.length); 
+      accountOutput.delegations = new Array(delegatedData.delegation_responses.length);
       delegatedData.delegation_responses.forEach((data, idx) => {
         const validator_address = data.delegation.validator_address;
         const validator = validatorData.filter(e => e.operator_address === validator_address);
@@ -100,7 +100,7 @@ export class AccountService {
           stakeReward = parseInt(stakeRewardData.total[0].amount);
 
         }
-        accountOutput.delegations[idx] = delegation; 
+        accountOutput.delegations[idx] = delegation;
       });
       accountOutput.delegated = this.changeUauraToAura(delegatedAmount);
     }
@@ -110,7 +110,7 @@ export class AccountService {
     const unbondingData = await this.getDataAPI(api, paramsUnbonding, ctx);
     let unbondingAmount = 0;
     if (unbondingData) {
-      accountOutput.unbonding_delegations = new Array(unbondingData.unbonding_responses.length); 
+      accountOutput.unbonding_delegations = new Array(unbondingData.unbonding_responses.length);
       unbondingData.unbonding_responses.forEach((data, idx) => {
         const validator_address = data.validator_address;
         const validator = validatorData.filter(e => e.operator_address === validator_address);
@@ -175,21 +175,30 @@ export class AccountService {
     const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
     let delegatedVesting = 0;
     accountOutput.delegatable_vesting = '0';
+    
     if (authInfoData) {
       const baseVesting = authInfoData.result.value?.base_vesting_account;
       if (baseVesting !== undefined) {
         const vesting = new AccountVesting();
         vesting.type = authInfoData.result.type;
-        const originalVesting = baseVesting.original_vesting || 0;
+        const originalVesting = baseVesting.original_vesting || [];
         if (originalVesting.length > 0) {
-          vesting.amount = this.changeUauraToAura(originalVesting[0].amount);
+          let originalAmount = 0;
+          originalVesting.forEach(item => {
+            originalAmount += Number(item.amount);
+          });
+          vesting.amount = this.changeUauraToAura(originalAmount);
         }
+
         const schedule = baseVesting.end_time || 0;
         vesting.vesting_schedule = schedule;
-        const delegated = baseVesting.delegated_vesting || 0;
+        const delegated: Array<any> = baseVesting.delegated_vesting || [];
         if (delegated.length > 0) {
-          delegatedVesting = parseInt(delegated[0].amount);
-          accountOutput.delegatable_vesting = this.changeUauraToAura(delegated[0].amount);
+          let delegatableVesting = 0;
+          delegated.forEach(item => {
+            delegatableVesting += Number(item.amount);
+          });
+          accountOutput.delegatable_vesting = this.changeUauraToAura(delegatableVesting);
         }
         accountOutput.vesting = vesting;
       }

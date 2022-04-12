@@ -33,4 +33,8 @@ export class LiteTransactionOutput {
   @Expose()
   @ApiProperty()
   messages: string;
+
+  @Expose()
+  @ApiProperty()
+  raw_log: string;
 }
