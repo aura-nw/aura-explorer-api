@@ -64,4 +64,7 @@ export class Proposal {
 
     @Column({ type: 'json' })
     pro_activity: any;
+
+    @Column({ default: false })
+    is_delete: boolean;
 }
