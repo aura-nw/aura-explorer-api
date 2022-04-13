@@ -160,12 +160,7 @@ export class ProposalService {
                 }
                 //delete proposal failed
                 const listId = data.proposals.map(i => Number(i.proposal_id));
-                const listFailed = await this.proposalRepository.find({
-                    where: { pro_id: !In(listId) }
-                });
-                if (listFailed.length > 0) {
-                    await this.proposalRepository.deleteProposalsByListId(listId);
-                }
+                await this.proposalRepository.deleteProposalsByListId(listId);
             }
         } catch(error) {
             this.logger.error(error, `Sync proposals error`);
