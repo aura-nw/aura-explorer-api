@@ -125,8 +125,8 @@ export class ValidatorController {
       @Param('delegatorAddress') delegatorAddress: string
   ): Promise<any> {
       this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-      const delegations = await this.validatorService.getDelegations(ctx, delegatorAddress);
+      const result = await this.validatorService.getDelegations(ctx, delegatorAddress);
 
-      return { data: delegations, meta: {} };
+      return { data: result, meta: {} };
   }
 }

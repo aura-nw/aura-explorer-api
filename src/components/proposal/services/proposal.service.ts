@@ -10,6 +10,7 @@ import { Interval } from "@nestjs/schedule";
 import { Proposal } from "../../../shared/entities/proposal.entity";
 import { BlockRepository } from "../../../components/block/repositories/block.repository";
 import { ProposalVoteRepository } from "../repositories/proposal-vote.repository";
+import { ValidatorRepository } from "../../../components/validator/repositories/validator.repository";
 
 @Injectable()
 export class ProposalService {
@@ -19,7 +20,8 @@ export class ProposalService {
         private httpService: HttpService,
         private proposalRepository: ProposalRepository,
         private blockRepository: BlockRepository,
-        private proposalVoteRepository: ProposalVoteRepository
+        private proposalVoteRepository: ProposalVoteRepository,
+        private validatorRepository: ValidatorRepository
     ) {
         this.logger.setContext(ProposalService.name);
     }
@@ -111,11 +113,19 @@ export class ProposalService {
                     proposal.pro_id = Number(item.proposal_id);
                     proposal.pro_title = item.content['title'];
                     proposal.pro_status = item.status;
+                    proposal.pro_proposer_address = '';
                     proposal.pro_proposer = '';
                     const paramsProposer = `/gov/proposals/${item.proposal_id}/proposer`;
                     const dataProposer = await this.getDataAPI(api, paramsProposer);
                     if (dataProposer && dataProposer.result) {
-                        proposal.pro_proposer = dataProposer.result.proposer;
+                        proposal.pro_proposer_address = dataProposer.result.proposer;
+                        //get validator
+                        const validator = await this.validatorRepository.findOne({
+                            where: {acc_address: dataProposer.result.proposer}
+                        });
+                        if (validator) {
+                            proposal.pro_proposer = validator.title;
+                        }
                     } 
                     proposal.pro_voting_start_time = item.voting_start_time;
                     proposal.pro_voting_end_time = item.voting_end_time;

@@ -165,13 +165,13 @@ export class ValidatorService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const api = this.configService.get<string>('node.api');
-    let delegations: any = {};
+    let result: any = {};
     //get available balance
     const paramsBalance = `/cosmos/bank/v1beta1/balances/${delegatorAddress}`;
     const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
-    delegations.available_balance = 0;
+    result.available_balance = 0;
     if (balanceData && balanceData.balances && balanceData.balances.length > 0) {
-      delegations.available_balance = balanceData.balances[0].amount;
+      result.available_balance = balanceData.balances[0].amount;
     }
     //get delegations
     const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
@@ -179,30 +179,35 @@ export class ValidatorService {
     //get rewards
     const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
     const rewardData = await this.getDataAPI(api, paramsReward, ctx);
-    delegations.delegations = [];
+    let delegations: any = [];
     if (delegatedData && delegatedData.delegation_responses && delegatedData.delegation_responses.length > 0) {
-      delegations.delegations = delegatedData.delegation_responses;
-      for (let i = 0; i < delegatedData.delegation_responses.length; i ++) {
-        let item = delegatedData.delegation_responses[0];
-        item.balance.reward = 0;
+      let delegation: any = {};
+      const delegationsData = delegatedData.delegation_responses;
+      for (let i = 0; i < delegationsData.length; i ++) {
+        let item = delegationsData[0];
+        delegation.amount_staked = item.balance.amount;
+        delegation.validator_address = item.delegation.validator_address;
+        delegation.pending_reward = 0;
         if (rewardData && rewardData.rewards && rewardData.rewards.length > 0) {
           const findReward = rewardData.rewards.find(i => i.validator_address === item.delegation.validator_address);
           if (findReward && findReward.reward) {
             //set reward for item
-            item.balance.reward = findReward.reward[0].amount;
+            delegation.pending_reward = findReward.reward[0].amount;
           }
         }
-        item.delegation.validator_name = '';
+        delegation.validator_name = '';
         const validator = await this.validatorRepository.findOne({
           where: { operator_address: item.delegation.validator_address },
         });
         if (validator) {
           //set name for item
-          item.delegation.validator_name = validator.title;
+          delegation.validator_name = validator.title;
         }
+        delegations.push(delegation);
       }
     }
+    result.delegations = delegations;
 
-    return { delegations: delegations };
+    return result;
   }
 }
