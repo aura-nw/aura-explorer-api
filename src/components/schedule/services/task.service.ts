@@ -734,8 +734,6 @@ export class TaskService {
           } catch (error) {
             this.logger.error(null, `Transaction is already existed!`);
           }
-          //sync data proposal-votes
-          await this.syncDataProposalVotes(txData);
           // TODO: Write tx to influxdb
           this.influxDbClient.writeTx(
             newTx.tx_hash,
@@ -743,6 +741,10 @@ export class TaskService {
             newTx.type,
             newTx.timestamp,
           );
+
+          //sync data proposal-votes
+          await this.syncDataProposalVotes(txData);
+          
         }
       } else {
         try {
@@ -759,6 +761,8 @@ export class TaskService {
           newBlock.timestamp,
         );
       }
+
+      
       /**
        * TODO: Flush pending writes and close writeApi.
        */
