@@ -148,7 +148,6 @@ export class ProposalService {
                     }
                     //set value for column not null
                     proposal.pro_tx_hash = '';
-                    proposal.pro_proposer_address = '';
                     proposal.pro_type = item.content['@type'];
                     proposal.pro_deposit_end_time = item.deposit_end_time;
                     proposal.pro_activity = '{"key": "activity", "value": ""}'; //tmp value
