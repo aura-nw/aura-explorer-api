@@ -1,31 +1,31 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
-import { lastValueFrom } from 'rxjs';
+import { bech32 } from 'bech32';
 import { sha256 } from 'js-sha256';
 import { InjectSchedule, Schedule } from 'nest-schedule';
-import { v4 as uuidv4 } from 'uuid';
-
-import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR, RequestContext, CONST_MSG_TYPE, CONST_PUBKEY_ADDR } from '../../../shared';
-
-import { BlockRepository } from '../repositories/block.repository';
-import { SyncStatusRepository } from '../repositories/syns-status.repository';
-import { TransactionRepository } from '../repositories/transaction.repository';
-import { InfluxDBClient } from './influxdb-client';
+import { lastValueFrom } from 'rxjs';
+import { BlockSyncError } from 'src/shared/entities/block-sync-error.entity';
 import { tmhash } from 'tendermint/lib/hash';
-import { bech32 } from 'bech32';
-import { Validator } from '../../../shared/entities/validator.entity';
-import { ValidatorRepository } from '../repositories/validator.repository';
-import { DelegationRepository } from '../repositories/delegation.repository';
-import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
-import { MissedBlock } from '../../../shared/entities/missed-block.entity';
-import { MissedBlockRepository } from '../repositories/missed-block.repository';
+import { v4 as uuidv4 } from 'uuid';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
+import { AkcLogger, Block, CONST_CHAR, CONST_MSG_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
+import { HistoryProposal } from '../../../shared/entities/history-proposal.entity';
+import { MissedBlock } from '../../../shared/entities/missed-block.entity';
+import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
+import { Validator } from '../../../shared/entities/validator.entity';
 import { HistoryProposalRepository } from '../../proposal/repositories/history-proposal.reponsitory';
 import { BlockSyncErrorRepository } from '../repositories/block-sync-error.repository';
-import { BlockSyncError } from 'src/shared/entities/block-sync-error.entity';
-import { HistoryProposal } from '../../../shared/entities/history-proposal.entity';
+import { BlockRepository } from '../repositories/block.repository';
+import { DelegationRepository } from '../repositories/delegation.repository';
+import { MissedBlockRepository } from '../repositories/missed-block.repository';
+import { SyncStatusRepository } from '../repositories/syns-status.repository';
+import { TransactionRepository } from '../repositories/transaction.repository';
+import { ValidatorRepository } from '../repositories/validator.repository';
+import { InfluxDBClient } from './influxdb-client';
+
+
 
 @Injectable()
 export class TaskService {
