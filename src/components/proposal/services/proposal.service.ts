@@ -11,6 +11,7 @@ import { Proposal } from "../../../shared/entities/proposal.entity";
 import { BlockRepository } from "../../../components/block/repositories/block.repository";
 import { ProposalVoteRepository } from "../repositories/proposal-vote.repository";
 import { ValidatorRepository } from "../../../components/validator/repositories/validator.repository";
+import { In } from "typeorm";
 
 @Injectable()
 export class ProposalService {
@@ -32,6 +33,7 @@ export class ProposalService {
         this.logger.log(ctx, `${this.getProposals.name} was called!`);
 
         const [proposals, count] = await this.proposalRepository.findAndCount({
+            where: {is_delete: false},
             order: {pro_id: 'DESC'}
         });
 
@@ -146,7 +148,6 @@ export class ProposalService {
                     }
                     //set value for column not null
                     proposal.pro_tx_hash = '';
-                    proposal.pro_proposer_address = '';
                     proposal.pro_type = item.content['@type'];
                     proposal.pro_deposit_end_time = item.deposit_end_time;
                     proposal.pro_activity = '{"key": "activity", "value": ""}'; //tmp value
@@ -157,8 +158,10 @@ export class ProposalService {
                         this.logger.error(null, `Proposal is already existed!`);
                     }
                 }
+                //delete proposal failed
+                const listId = data.proposals.map(i => Number(i.proposal_id));
+                await this.proposalRepository.deleteProposalsByListId(listId);
             }
-
         } catch(error) {
             this.logger.error(error, `Sync proposals error`);
         }
