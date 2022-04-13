@@ -61,4 +61,8 @@ export class LiteValidatorOutput {
   @Expose()
   @ApiProperty()
   vote_count: number;
+
+  @Expose()
+  @ApiProperty()
+  status: number;
 }

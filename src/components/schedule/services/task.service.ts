@@ -339,6 +339,10 @@ export class TaskService {
       for (let key in validatorData.validators) {
         const data = validatorData.validators[key];
 
+        // get validator detail
+        const validatorUrl = `/staking/validators/${data.operator_address}`;
+        const validatorResponse = await this.getDataAPI(api, validatorUrl);
+
         // get slashing signing info
         const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
         const delegationData = await this.getDataAPI(api, paramDelegation);
@@ -367,6 +371,7 @@ export class TaskService {
           newValidator.unbonding_height = data.unbonding_height;
           newValidator.unbonding_time = data.unbonding_time;
           newValidator.update_time = data.commission.update_time;
+          newValidator.status = Number(validatorResponse.result?.status) || 0;
           const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
           newValidator.percent_power = percentPower.toFixed(2);
           const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
@@ -387,6 +392,7 @@ export class TaskService {
           // insert into table validator
           try {
             await this.validatorRepository.save(newValidator);
+
           } catch (error) {
             this.logger.error(null, `Validator is already existed!`);
           }
@@ -398,10 +404,10 @@ export class TaskService {
             newValidator.power,
           );
 
-          const validators = await this.validatorRepository.find();
-          const validatorFilter = validators.filter(e => e.operator_address === data.operator_address);
+          const validatorFilter = await this.validatorRepository.findOne({ where: { operator_address: data.operator_address } });
+          // const validatorFilter = validators.filter(e => e.operator_address === data.operator_address);
           if (validatorFilter) {
-            this.syncUpdateValidator(newValidator, validatorFilter[0]);
+            this.syncUpdateValidator(newValidator, validatorFilter);
           }
 
           for (let key in delegationData.delegation_responses) {
@@ -439,57 +445,75 @@ export class TaskService {
   }
 
   async syncUpdateValidator(newValidator, validatorData) {
-    if (newValidator.jailed) {
-      newValidator.jailed = '1';
-    } else {
-      newValidator.jailed = '0';
-    }
+    let isSave = false;
+    
     if (validatorData.title !== newValidator.title) {
       validatorData.title = newValidator.title;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.jailed !== newValidator.jailed) {
       validatorData.jailed = newValidator.jailed;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.commission !== newValidator.commission) {
       validatorData.commission = newValidator.commission;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
-    if (validatorData.power !== parseInt(newValidator.power)) {
+
+    if (validatorData.power !== Number(newValidator.power)) {
       validatorData.power = newValidator.power;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.percent_power !== newValidator.percent_power) {
       validatorData.percent_power = newValidator.percent_power;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
-    if (validatorData.self_bonded !== parseInt(newValidator.self_bonded)) {
+
+    if (validatorData.self_bonded !== Number(newValidator.self_bonded)) {
       validatorData.self_bonded = newValidator.self_bonded;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.percent_self_bonded !== newValidator.percent_self_bonded) {
       validatorData.percent_self_bonded = newValidator.percent_self_bonded;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.website !== newValidator.website) {
       validatorData.website = newValidator.website;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.details !== newValidator.details) {
       validatorData.details = newValidator.details;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.identity !== newValidator.identity) {
       validatorData.identity = newValidator.identity;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.unbonding_height !== newValidator.unbonding_height) {
       validatorData.unbonding_height = newValidator.unbonding_height;
-      this.validatorRepository.save(validatorData);
+      isSave = true;
     }
+
     if (validatorData.up_time !== newValidator.up_time) {
       validatorData.up_time = newValidator.up_time;
+      isSave = true;
+    }
+
+    if (validatorData.status !== newValidator.status) {
+      validatorData.status = newValidator.status;
+      isSave = true;
+    }
+
+    if (isSave) {
+      newValidator.id = validatorData.id;
       this.validatorRepository.save(validatorData);
     }
   }

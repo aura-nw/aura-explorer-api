@@ -61,4 +61,8 @@ export class ValidatorOutput {
   @Expose()
   @ApiProperty()
   up_time: string;
+
+  @Expose()
+  @ApiProperty()
+  status: number;
 }
