@@ -35,7 +35,7 @@ export class ProposalController {
 
     @Get(':proposalId/votes/:voter')
     @ApiOperation({
-        summary: 'Get list proposals',
+        summary: 'Get proposal vote by proposal id and voter',
     })
     @ApiResponse({
         status: HttpStatus.OK
@@ -55,21 +55,20 @@ export class ProposalController {
 
     @Get(':proposalId')
     @ApiOperation({
-        summary: 'Get proposals detail by proposalId',
+        summary: 'Get proposal detail by proposalId',
     })
     @ApiResponse({
-        status: HttpStatus.OK,
-        type: SwaggerBaseApiResponse(ProposalOutput),
+        status: HttpStatus.OK
     })
     @UseInterceptors(ClassSerializerInterceptor)
-    async getProposalsById(
+    async getProposalById(
         @ReqContext() ctx: RequestContext,
         @Param('proposalId') proposalId: string,
     ): Promise<any> {
-        this.logger.log(ctx, `${this.getProposalsById.name} was called!`);
-        const proposals = await this.proposalService.getProposalsById(ctx, proposalId);
+        this.logger.log(ctx, `${this.getProposalById.name} was called!`);
+        const proposal = await this.proposalService.getProposalById(ctx, proposalId);
 
-        return { data: proposals, meta: { } };
+        return { data: proposal, meta: { } };
     }
 
     @Get(':proposalId/votes')
