@@ -660,7 +660,7 @@ export class TaskService {
         await this.insertBlockError(newBlock.block_hash, newBlock.height);
 
         // Mark schedule is running
-        this.schedulesSync.push(newBlock.height);
+        this.schedulesSync.push(Number(newBlock.height));
       }
 
       // set proposer and operator_address from validators
