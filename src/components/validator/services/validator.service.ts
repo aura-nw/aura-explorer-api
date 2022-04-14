@@ -43,11 +43,16 @@ export class ValidatorService {
       ctx,
       `${this.getDataAPI.name} was called, to ${api + params}!`,
     );
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
-      (rs) => rs.data,
-    );
+    try {
+      const data = await lastValueFrom(this.httpService.get(api + params)).then(
+        (rs) => rs.data,
+      );
+      return data;
 
-    return data;
+    } catch (err) {
+      return null;
+    }
+
   }
 
   async getTotalValidator(): Promise<number> {
@@ -59,9 +64,9 @@ export class ValidatorService {
   }
 
   async getValidators(ctx: RequestContext
-    ): Promise<{ validators: LiteValidatorOutput[]; count: number }> {
+  ): Promise<{ validators: LiteValidatorOutput[]; count: number }> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
-  
+
     // get all validator
     const [validatorsRes, count] = await this.validatorRepository.findAndCount({
       order: { power: 'DESC' },
@@ -73,7 +78,7 @@ export class ValidatorService {
 
     // get 50 proposals
     const countProposal = await this.proposalRepository.count({
-      order: {pro_id: 'DESC'},
+      order: { pro_id: 'DESC' },
       take: CONST_NUM.LIMIT_50,
       skip: CONST_NUM.OFFSET,
     });
@@ -104,7 +109,7 @@ export class ValidatorService {
       } else {
         data.status_validator = false;
       }
-      
+
       // get count proposal vote by address
       const countVotes = await this.proposalVoteRepository.count({
         where: { voter: data.acc_address },
@@ -114,7 +119,7 @@ export class ValidatorService {
 
     return { validators: validatorsOutput, count };
   }
-  
+
   async getValidatorByAddress(ctx: RequestContext, address): Promise<any> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
@@ -123,8 +128,8 @@ export class ValidatorService {
     const validatorOutput = plainToClass(ValidatorOutput, validator, {
       excludeExtraneousValues: true,
     });
-    
-    const blockFirst =  await this.blockRepository.find({
+
+    const blockFirst = await this.blockRepository.find({
       where: { operator_address: address },
       order: { height: 'ASC' },
       take: 1,
@@ -145,7 +150,7 @@ export class ValidatorService {
   ): Promise<{ delegations: DelegationOutput[]; count: number }> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
-    const [delegations, count]  = await this.delegationRepository.findAndCount({
+    const [delegations, count] = await this.delegationRepository.findAndCount({
       where: { validator_address: validatorAddress },
       order: { amount: 'DESC' },
       take: query.limit,
@@ -183,7 +188,7 @@ export class ValidatorService {
     if (delegatedData && delegatedData.delegation_responses && delegatedData.delegation_responses.length > 0) {
       let delegation: any = {};
       const delegationsData = delegatedData.delegation_responses;
-      for (let i = 0; i < delegationsData.length; i ++) {
+      for (let i = 0; i < delegationsData.length; i++) {
         let item = delegationsData[0];
         delegation.amount_staked = item.balance.amount;
         delegation.validator_address = item.delegation.validator_address;
