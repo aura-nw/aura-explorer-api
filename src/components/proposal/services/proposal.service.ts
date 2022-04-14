@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom } from "rxjs";
-import { AkcLogger, RequestContext } from "../../../shared";
+import { AkcLogger, CONST_PROPOSAL_VOTE_OPTION, RequestContext } from "../../../shared";
 import { ProposalOutput } from "../dtos/proposal-output.dto";
 import { ProposalRepository } from "../repositories/proposal.repository";
 import { Interval } from "@nestjs/schedule";
@@ -13,6 +13,9 @@ import { ProposalVoteRepository } from "../repositories/proposal-vote.repository
 import { ValidatorRepository } from "../../../components/validator/repositories/validator.repository";
 import { In } from "typeorm";
 import { HistoryProposalRepository } from "../repositories/history-proposal.reponsitory";
+import { ProposalVoteByOptionInput } from "../dtos/proposal-vote-by-option-input.dto";
+import { ProposalVoteByValidatorInput } from "../dtos/proposal-vote-by-validator-input.dto";
+import { ProposalDepositRepository } from "../repositories/proposal-deposit.repository";
 
 @Injectable()
 export class ProposalService {
@@ -24,7 +27,8 @@ export class ProposalService {
         private blockRepository: BlockRepository,
         private proposalVoteRepository: ProposalVoteRepository,
         private validatorRepository: ValidatorRepository,
-        private historyProposalRepository: HistoryProposalRepository
+        private historyProposalRepository: HistoryProposalRepository,
+        private proposalDepositRepository: ProposalDepositRepository
     ) {
         this.logger.setContext(ProposalService.name);
     }
@@ -69,43 +73,92 @@ export class ProposalService {
             where: { pro_id: proposalId },
         });
         proposal.initial_deposit = 0;
-        const historyProposal = await this.historyProposalRepository.findOne(proposalId);
+        const historyProposal = await this.historyProposalRepository.findOne({
+            where: { proposal_id: proposalId }
+        });
         if (historyProposal) {
             proposal.initial_deposit = historyProposal.initial_deposit;
         }
         return proposal;
     }
 
-    async getVotesListById(
+    async getVotesListByOption(
         ctx: RequestContext,
-        proposalId: string
+        request: ProposalVoteByOptionInput
         ): Promise<any> {
-        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
-        const api = this.configService.get<string>('node.api');
-        const paramsProposalVotes = `/cosmos/gov/v1beta1/proposals/${proposalId}/votes`;
-        const proposalVoteData = await this.getDataAPI(api, paramsProposalVotes);
-
-        let proposalVotes = {};
-        if (proposalVoteData) {
-            proposalVotes = proposalVoteData;
+        this.logger.log(ctx, `${this.getVotesListByOption.name} was called!`);
+        const proposalVotes = await this.proposalVoteRepository.getProposalVotesByOption(request);
+        let result: any = {};
+        result.proposalVotes = proposalVotes;
+        const votes = await this.proposalVoteRepository.find({
+            where: { proposal_id: request.proposalId }
+        });
+        result.countTotal = votes.length;
+        result.countYes = 0;
+        result.countAbstain = 0;
+        result.countNo = 0;
+        result.countNoWithVeto = 0;
+        if (result.countTotal > 0) {
+            result.countYes = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.YES;
+            }).length;
+            result.countAbstain = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.ABSTAIN;
+            }).length;
+            result.countNo = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.NO;
+            }).length;
+            result.countNoWithVeto = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.NO_WITH_VETO;
+            }).length;
         }
-        return { proposalVotes: proposalVotes };
+
+        return { result: result };
+    }
+
+    async getVotesListByValidator(
+        ctx: RequestContext,
+        request: ProposalVoteByValidatorInput
+        ): Promise<any> {
+        this.logger.log(ctx, `${this.getVotesListByValidator.name} was called!`);
+        const proposalVotes = await this.proposalVoteRepository.getProposalVotesByValidator(request, true);
+        let result: any = {};
+        result.proposalVotes = proposalVotes;
+        const votes = await this.proposalVoteRepository.getProposalVotesByValidator(request, false);
+        result.countTotal = votes.length;
+        result.countYes = 0;
+        result.countAbstain = 0;
+        result.countNo = 0;
+        result.countNoWithVeto = 0;
+        if (result.countTotal > 0) {
+            result.countYes = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.YES;
+            }).length;
+            result.countAbstain = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.ABSTAIN;
+            }).length;
+            result.countNo = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.NO;
+            }).length;
+            result.countNoWithVeto = votes.filter(function(item){
+                return item.option === CONST_PROPOSAL_VOTE_OPTION.NO_WITH_VETO;
+            }).length;
+        }
+
+        return { result: result };
     }
 
     async getDepositListById(
         ctx: RequestContext,
         proposalId: string
         ): Promise<any> {
-        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
-        const api = this.configService.get<string>('node.api');
-        const paramsProposalDeposit = `/cosmos/gov/v1beta1/proposals/${proposalId}/deposits`;
-        const proposalDepositData = await this.getDataAPI(api, paramsProposalDeposit);
+        this.logger.log(ctx, `${this.getDepositListById.name} was called!`);
+        const proposalDeposits = await this.proposalDepositRepository.find({
+            where: { proposal_id: proposalId },
+            order: { created_at: 'DESC' }
+        })
 
-        let proposalDeposit = {};
-        if (proposalDepositData) {
-            proposalDeposit = proposalDepositData;
-        }
-        return { proposalDeposit: proposalDeposit };
+        return { result : proposalDeposits };
     }
 
     @Interval(500)
@@ -122,7 +175,8 @@ export class ProposalService {
                     let proposal = new Proposal();
                     proposal.pro_id = Number(item.proposal_id);
                     proposal.pro_title = item.content['title'];
-                    proposal.pro_status = item.status;
+                    proposal.pro_description = item.content['description'];
+;                    proposal.pro_status = item.status;
                     proposal.pro_proposer_address = '';
                     proposal.pro_proposer = '';
                     const paramsProposer = `/gov/proposals/${item.proposal_id}/proposer`;

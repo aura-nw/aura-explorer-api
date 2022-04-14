@@ -4,6 +4,9 @@ import { BaseEntityIncrementId } from "./base/base.entity";
 @Entity('history_proposals')
 export class HistoryProposal extends BaseEntityIncrementId {
     @Column()
+    proposal_id: number;
+
+    @Column()
     tx_hash: string;
 
     @Column()
