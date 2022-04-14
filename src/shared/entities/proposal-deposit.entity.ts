@@ -7,6 +7,9 @@ export class ProposalDeposit extends BaseEntityIncrementId {
     proposal_id: number;
 
     @Column()
+    tx_hash: string;
+
+    @Column()
     depositor: string;
 
     @Column()

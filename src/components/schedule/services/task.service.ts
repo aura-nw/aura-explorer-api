@@ -548,14 +548,14 @@ export class TaskService {
           let historyProposal = new HistoryProposal();
           const proposalTypeReturn = message.content['@type'];
           const proposalType = proposalTypeReturn.substring(proposalTypeReturn.lastIndexOf('.') + 1);
-          historyProposal.id = 0;
+          historyProposal.proposal_id = 0;
           if (txData.tx_response.logs && txData.tx_response.logs.length > 0
             && txData.tx_response.logs[0].events && txData.tx_response.logs[0].events.length > 0) {
             const events = txData.tx_response.logs[0].events;
             const submitEvent = events.find(i => i.type = 'submit_proposal');
             const attributes = submitEvent.attributes;
             const findId = attributes.find(i => i.key = 'proposal_id');
-            historyProposal.id = Number(findId.value);
+            historyProposal.proposal_id = Number(findId.value);
           }
           historyProposal.recipient = '';
           historyProposal.amount = 0;
@@ -581,6 +581,7 @@ export class TaskService {
         } else if (txType === CONST_MSG_TYPE.MSG_DEPOSIT) {
           let proposalDeposit = new ProposalDeposit();
           proposalDeposit.proposal_id = Number(message.proposal_id);
+          proposalDeposit.tx_hash = txData.tx_response.txhash;
           proposalDeposit.depositor = message.depositor;
           proposalDeposit.amount = Number(message.amount[0].amount);
           proposalDeposit.created_at = txData.tx_response.timestamp;
