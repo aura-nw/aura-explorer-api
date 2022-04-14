@@ -32,6 +32,7 @@ export class TaskService {
   currentBlock: number;
   threads = 0;
   influxDbClient: InfluxDBClient;
+  schedulesSync: Array<number> = [];
 
   constructor(
     private readonly logger: AkcLogger,
@@ -446,7 +447,7 @@ export class TaskService {
 
   async syncUpdateValidator(newValidator, validatorData) {
     let isSave = false;
-    
+
     if (validatorData.title !== newValidator.title) {
       validatorData.title = newValidator.title;
       isSave = true;
@@ -621,7 +622,7 @@ export class TaskService {
    * handleSyncData
    * @param syncBlock 
    */
-  async handleSyncData(syncBlock: number): Promise<any> {
+  async handleSyncData(syncBlock: number, recallSync = false): Promise<any> {
     this.logger.log(null, `Class ${TaskService.name}, call handleSyncData method with prameters: {syncBlock: ${syncBlock}}`);
     // this.logger.log(null, `Already syncing Block: ${syncBlock}`);
 
@@ -655,7 +656,12 @@ export class TaskService {
       let blockGasWanted = 0;
 
       //Insert block error table
-      await this.insertBlockError(newBlock.block_hash, newBlock.height);
+      if (!recallSync) {
+        await this.insertBlockError(newBlock.block_hash, newBlock.height);
+
+        // Mark schedule is running
+        this.schedulesSync.push(newBlock.height);
+      }
 
       // set proposer and operator_address from validators
       for (let key in validatorData.validators) {
@@ -734,8 +740,6 @@ export class TaskService {
           } catch (error) {
             this.logger.error(null, `Transaction is already existed!`);
           }
-          //sync data proposal-votes
-          await this.syncDataProposalVotes(txData);
           // TODO: Write tx to influxdb
           this.influxDbClient.writeTx(
             newTx.tx_hash,
@@ -743,6 +747,10 @@ export class TaskService {
             newTx.type,
             newTx.timestamp,
           );
+
+          //sync data proposal-votes
+          await this.syncDataProposalVotes(txData);
+
         }
       } else {
         try {
@@ -759,6 +767,7 @@ export class TaskService {
           newBlock.timestamp,
         );
       }
+
       /**
        * TODO: Flush pending writes and close writeApi.
        */
@@ -777,10 +786,20 @@ export class TaskService {
 
       // Delete data on Block sync error table
       await this.removeBlockError(syncBlock);
+      
+      const idxSync = this.schedulesSync.indexOf(fetchingBlockHeight);
+      if (idxSync > (-1)) {
+        this.schedulesSync.splice(idxSync, 1);
+      }
 
     } catch (error) {
       this.logger.error(null, `${error.name}: ${error.message}`);
       this.logger.error(null, `${error.stack}`);
+
+      const idxSync = this.schedulesSync.indexOf(fetchingBlockHeight);
+      if (idxSync > (-1)) {
+        this.schedulesSync.splice(idxSync, 1);
+      }
     }
   }
 
@@ -792,20 +811,11 @@ export class TaskService {
     this.logger.log(null, `Class ${TaskService.name}, call scheduleTimeoutJob method with prameters: {currentBlk: ${height}}`);
 
     this.schedule.scheduleTimeoutJob(`schedule_sync_block_${uuidv4()}`, 10, async () => {
-      try {
-        //Update code sync data
-        await this.handleSyncData(height);
+      //Update code sync data
+      await this.handleSyncData(height);
 
-        // Close thread
-        return true;
-
-      } catch (error) {
-        this.logger.error(null, `${error.name}: ${error.message}`);
-        this.logger.error(null, `${error.stack}`);
-
-        // If error thread will restart and run util complete
-        return false;
-      }
+      // Close thread
+      return true;
     });
   }
 
@@ -896,7 +906,13 @@ export class TaskService {
   async blockSyncError() {
     const result: BlockSyncError = await this.blockSyncErrorRepository.findOne({ order: { id: 'DESC' } });
     if (result) {
-      await this.handleSyncData(result.height);
+      const idxSync = this.schedulesSync.indexOf(result.height);
+
+      // Check height has sync or not. If height hasn't sync when we recall handleSyncData method
+      if (idxSync < 0) {
+        await this.handleSyncData(result.height, true);
+        this.schedulesSync.splice(idxSync, 1);
+      }
     }
   }
 }
