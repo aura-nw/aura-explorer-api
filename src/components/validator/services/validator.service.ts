@@ -195,7 +195,7 @@ export class ValidatorService {
         delegation.pending_reward = 0;
         if (rewardData && rewardData.rewards && rewardData.rewards.length > 0) {
           const findReward = rewardData.rewards.find(i => i.validator_address === item.delegation.validator_address);
-          if (findReward && findReward.reward) {
+          if (findReward && findReward.reward.length > 0) {
             //set reward for item
             delegation.pending_reward = findReward.reward[0].amount;
           }
