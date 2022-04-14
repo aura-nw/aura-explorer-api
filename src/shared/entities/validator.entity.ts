@@ -21,8 +21,8 @@ export class Validator extends BaseEntityIncrementId {
   @Column({ default: '' })
   title: string;
 
-  @Column({ default: '' })
-  jailed: string;
+  @Column({ default: false })
+  jailed: boolean;
 
   @Column({ type: 'text' })
   commission: string;
@@ -71,4 +71,7 @@ export class Validator extends BaseEntityIncrementId {
 
   @Column({ default: 0 })
   up_time: string;
+
+  @Column({ default: 0 })
+  status: number;
 }
