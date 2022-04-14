@@ -12,6 +12,7 @@ import { BlockRepository } from "../../../components/block/repositories/block.re
 import { ProposalVoteRepository } from "../repositories/proposal-vote.repository";
 import { ValidatorRepository } from "../../../components/validator/repositories/validator.repository";
 import { In } from "typeorm";
+import { HistoryProposalRepository } from "../repositories/history-proposal.reponsitory";
 
 @Injectable()
 export class ProposalService {
@@ -22,7 +23,8 @@ export class ProposalService {
         private proposalRepository: ProposalRepository,
         private blockRepository: BlockRepository,
         private proposalVoteRepository: ProposalVoteRepository,
-        private validatorRepository: ValidatorRepository
+        private validatorRepository: ValidatorRepository,
+        private historyProposalRepository: HistoryProposalRepository
     ) {
         this.logger.setContext(ProposalService.name);
     }
@@ -57,15 +59,21 @@ export class ProposalService {
         return { proposalVote: proposalVote };
     }
 
-    async getProposalsById(
+    async getProposalById(
         ctx: RequestContext,
         proposalId: string
         ): Promise<any> {
-        this.logger.log(ctx, `${this.getProposalsById.name} was called!`);
-        const proposalsOuput = await this.proposalRepository.findOne({
+        this.logger.log(ctx, `${this.getProposalById.name} was called!`);
+        let proposal: any = {};
+        proposal = await this.proposalRepository.findOne({
             where: { pro_id: proposalId },
-          });
-          return proposalsOuput;
+        });
+        proposal.initial_deposit = 0;
+        const historyProposal = await this.historyProposalRepository.findOne(proposalId);
+        if (historyProposal) {
+            proposal.initial_deposit = historyProposal.initial_deposit;
+        }
+        return proposal;
     }
 
     async getVotesListById(

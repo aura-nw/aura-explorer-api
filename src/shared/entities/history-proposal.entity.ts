@@ -1,7 +1,7 @@
-import { Column, Entity } from "typeorm";
+import { Column, CreateDateColumn, Entity } from "typeorm";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
-@Entity('history-proposal')
+@Entity('history_proposals')
 export class HistoryProposal extends BaseEntityIncrementId {
     @Column()
     tx_hash: string;
@@ -16,12 +16,12 @@ export class HistoryProposal extends BaseEntityIncrementId {
     recipient: string;
 
     @Column()
-    amount: string;
+    amount: number;
 
     @Column()
     initial_deposit: number;
 
     @Column()
-    proposer: number;
+    proposer: string;
 }
 
