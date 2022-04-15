@@ -124,30 +124,22 @@ export class ProposalService {
     const proposalVotes =
       await this.proposalVoteRepository.getProposalVotesByValidator(
         request,
-        true,
+        true
       );
-    //get rank of validator
-    if (proposalVotes.length > 0) {
-      for (let i = 0; i < proposalVotes.length; i ++) {
-        let item = proposalVotes[i];
-        item.rank = '0';
-        const validator = await this.validatorRepository.getRankByAddress(item.operator_address);
-        if (validator) {
-          item.rank = validator.rank;
-        }
-      }
-    }
     let result: any = {};
     result.proposalVotes = proposalVotes;
     const votes = await this.proposalVoteRepository.getProposalVotesByValidator(
       request,
       false
     );
-    result.countTotal = votes.length;
+    result.countTotal = votes.filter(function (item) {
+        return item.option !== null;
+      }).length;
     result.countYes = 0;
     result.countAbstain = 0;
     result.countNo = 0;
     result.countNoWithVeto = 0;
+    result.countDidNotVote = 0;
     if (result.countTotal > 0) {
       result.countYes = votes.filter(function (item) {
         return item.option === CONST_PROPOSAL_VOTE_OPTION.YES;
@@ -162,6 +154,7 @@ export class ProposalService {
         return item.option === CONST_PROPOSAL_VOTE_OPTION.NO_WITH_VETO;
       }).length;
     }
+    result.countDidNotVote = votes.length - (result.countYes + result.countAbstain + result.countNo + result.countNoWithVeto);
 
     return { result: result };
   }
