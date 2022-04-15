@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Catch, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
 import { bech32 } from 'bech32';
@@ -67,7 +67,7 @@ export class TaskService {
     );
 
     // Get number thread from config
-    this.threads = Number(this.configService.get<string>('influxdb.threads')) || 15;
+    this.threads = Number(this.configService.get<string>('influxdb.threads') || 15);
 
     // Call worker to process
     this.workerProcess();
@@ -679,12 +679,17 @@ export class TaskService {
    * @returns 
    */
   async getBlockLatest(): Promise<any> {
-    this.logger.log(null, `Class ${TaskService.name}, call getBlockLatest method`);
+    try {
+      this.logger.log(null, `Class ${TaskService.name}, call getBlockLatest method`);
 
-    const api = this.configService.get<string>('node.api');
-    const paramsBlockLatest = `/blocks/latest`;
-    const results = await this.getDataAPI(api, paramsBlockLatest);
-    return results;
+      const api = this.configService.get<string>('node.api');
+      const paramsBlockLatest = `/blocks/latest`;
+      const results = await this.getDataAPI(api, paramsBlockLatest);
+      return results;
+
+    } catch (error) {
+      return null;
+    }
   }
 
   /**
@@ -855,7 +860,7 @@ export class TaskService {
 
       // Delete data on Block sync error table
       await this.removeBlockError(syncBlock);
-      
+
       const idxSync = this.schedulesSync.indexOf(fetchingBlockHeight);
       if (idxSync > (-1)) {
         this.schedulesSync.splice(idxSync, 1);
@@ -931,21 +936,21 @@ export class TaskService {
     let currentBlk = 0;
     // Get blocks latest
     const blockLatest = await this.getBlockLatest();
-    let latestBlk = Number(blockLatest?.block?.header.height) || 0;
+    let latestBlk = Number(blockLatest?.block?.header?.height || 0);
 
     if (height > 0) {
       currentBlk = height;
     } else {
-      //Get current height
-      const status = await this.statusRepository.findOne();
-      if (status) {
-        currentBlk = status.current_block;
-      }
+      try {
+        //Get current height
+        const status = await this.statusRepository.findOne();
+        if (status) {
+          currentBlk = status.current_block;
+        }
+      } catch (err) { }
     }
 
-    if (blockLatest) {
-      this.threadProcess(currentBlk, latestBlk)
-    }
+    this.threadProcess(currentBlk, latestBlk)
   }
 
   /**
