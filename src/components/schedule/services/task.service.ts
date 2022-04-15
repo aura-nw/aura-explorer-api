@@ -542,7 +542,7 @@ export class TaskService {
           });
           if(findVote) {
             findVote.option = option;
-            findVote.updated_at = txData.tx_response.timestamp;
+            findVote.updated_at = new Date(txData.tx_response.timestamp);
             await this.proposalVoteRepository.update(findVote.id, findVote);
           } else {
             let proposalVote = new ProposalVote();
