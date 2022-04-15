@@ -175,7 +175,7 @@ export class ValidatorService {
     const paramsBalance = `/cosmos/bank/v1beta1/balances/${delegatorAddress}`;
     const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
     result.available_balance = 0;
-    if (balanceData && balanceData.balances && balanceData.balances.length > 0) {
+    if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
       result.available_balance = balanceData.balances[0].amount;
     }
     //get delegations
@@ -185,7 +185,7 @@ export class ValidatorService {
     const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
     const rewardData = await this.getDataAPI(api, paramsReward, ctx);
     let delegations: any = [];
-    if (delegatedData && delegatedData.delegation_responses && delegatedData.delegation_responses.length > 0) {
+    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {
       let delegation: any = {};
       const delegationsData = delegatedData.delegation_responses;
       for (let i = 0; i < delegationsData.length; i++) {
@@ -193,7 +193,7 @@ export class ValidatorService {
         delegation.amount_staked = item.balance.amount;
         delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
-        if (rewardData && rewardData.rewards && rewardData.rewards.length > 0) {
+        if (rewardData && rewardData?.rewards && rewardData?.rewards.length > 0) {
           const findReward = rewardData.rewards.find(i => i.validator_address === item.delegation.validator_address);
           if (findReward && findReward.reward.length > 0) {
             //set reward for item
