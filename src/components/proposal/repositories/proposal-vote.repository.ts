@@ -30,7 +30,7 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
 
     async getProposalVotesByValidator(request: ProposalVoteByValidatorInput, isLimit: boolean) {
         let params = [];
-        let sql = `SELECT v.title AS validator_name, v.acc_address AS validator_address, pv.tx_hash, pv.option, pv.created_at
+        let sql = `SELECT v.title AS validator_name, v.acc_address AS validator_address, pv.tx_hash, pv.option, pv.created_at, v.operator_address
             FROM proposal_votes pv
                 INNER JOIN validators v ON pv.voter = v.acc_address
             WHERE pv.proposal_id = ?`;

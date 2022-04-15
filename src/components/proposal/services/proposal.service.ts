@@ -126,11 +126,22 @@ export class ProposalService {
         request,
         true,
       );
+    //get rank of validator
+    if (proposalVotes.length > 0) {
+      for (let i = 0; i < proposalVotes.length; i ++) {
+        let item = proposalVotes[i];
+        item.rank = '0';
+        const validator = await this.validatorRepository.getRankByAddress(item.operator_address);
+        if (validator) {
+          item.rank = validator.rank;
+        }
+      }
+    }
     let result: any = {};
     result.proposalVotes = proposalVotes;
     const votes = await this.proposalVoteRepository.getProposalVotesByValidator(
       request,
-      false,
+      false
     );
     result.countTotal = votes.length;
     result.countYes = 0;
