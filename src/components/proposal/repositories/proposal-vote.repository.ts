@@ -20,7 +20,7 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
             sql += " AND `option` = ?";
             params.push(request.option);
         }
-        sql += ` ORDER BY created_at DESC`;
+        sql += ` ORDER BY updated_at DESC`;
         sql += ` LIMIT ? OFFSET ?`;
         params.push(request.limit);
         params.push(request.offset * request.limit);
@@ -39,7 +39,7 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
             sql += ` AND pv.option = ?`;
             params.push(request.option);
         }
-        sql += ` ORDER BY pv.created_at DESC`;
+        sql += ` ORDER BY pv.updated_at DESC`;
         if (isLimit) {
             sql += ` LIMIT ? OFFSET ?`;
             params.push(request.limit);

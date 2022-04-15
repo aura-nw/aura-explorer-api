@@ -5,7 +5,7 @@ import { Interval } from '@nestjs/schedule';
 import { bech32 } from 'bech32';
 import { sha256 } from 'js-sha256';
 import { InjectSchedule, Schedule } from 'nest-schedule';
-import { lastValueFrom } from 'rxjs';
+import { find, lastValueFrom } from 'rxjs';
 import { BlockSyncError } from '../../../shared/entities/block-sync-error.entity';
 import { ProposalDeposit } from '../../../shared/entities/proposal-deposit.entity';
 import { tmhash } from 'tendermint/lib/hash';
@@ -533,17 +533,33 @@ export class TaskService {
         const txTypeReturn = message['@type'];
         const txType = txTypeReturn.substring(txTypeReturn.lastIndexOf('.') + 1);
         if (txType === CONST_MSG_TYPE.MSG_VOTE) {
+          const proposalId = Number(message.proposal_id);
+          const voter = message.voter;
+          const option = message.option;
+          //check exist in db
+          let findVote = await this.proposalVoteRepository.findOne({
+            where: { proposal_id: proposalId, voter: voter }
+          });
+          if(findVote) {
+            findVote.option = option;
+            findVote.updated_at = new Date(txData.tx_response.timestamp);
+            await this.proposalVoteRepository.update(findVote.id, findVote);
+          } else {
+            let proposalVote = new ProposalVote();
+            proposalVote.proposal_id = proposalId;
+            proposalVote.voter = voter;
+            proposalVote.tx_hash = txData.tx_response.txhash;
+            proposalVote.option = option;
+            proposalVote.created_at = new Date(txData.tx_response.timestamp);
+            await this.proposalVoteRepository.create(proposalVote);
+          }
           let proposalVote = new ProposalVote();
-          proposalVote.proposal_id = Number(message.proposal_id);
-          proposalVote.voter = message.voter;
+          proposalVote.proposal_id = proposalId;
+          proposalVote.voter = voter;
           proposalVote.tx_hash = txData.tx_response.txhash;
           proposalVote.option = message.option;
-          proposalVote.created_at = txData.tx_response.timestamp;
-          try {
-            await this.proposalVoteRepository.save(proposalVote);
-          } catch (error) {
-            this.logger.error(null, `Proposal vote is already existed!`);
-          }
+          proposalVote.created_at = new Date(txData.tx_response.timestamp);
+          proposalVote.updated_at = new Date(txData.tx_response.timestamp);
         } else if (txType === CONST_MSG_TYPE.MSG_SUBMIT_PROPOSAL) {
           let historyProposal = new HistoryProposal();
           const proposalTypeReturn = message.content['@type'];
@@ -552,7 +568,7 @@ export class TaskService {
           if (txData.tx_response.logs && txData.tx_response.logs.length > 0
             && txData.tx_response.logs[0].events && txData.tx_response.logs[0].events.length > 0) {
             const events = txData.tx_response.logs[0].events;
-            const submitEvent = events.find(i => i.type = 'submit_proposal');
+            const submitEvent = events.find(i => i.type === 'submit_proposal');
             const attributes = submitEvent.attributes;
             const findId = attributes.find(i => i.key = 'proposal_id');
             historyProposal.proposal_id = Number(findId.value);
@@ -562,7 +578,7 @@ export class TaskService {
           historyProposal.initial_deposit = 0;
           if (proposalType === CONST_PROPOSAL_TYPE.COMMUNITY_POOL_SPEND_PROPOSAL) {
             historyProposal.recipient = message.content.recipient;
-            historyProposal.amount = message.content.amount[0].amount;
+            historyProposal.amount = Number(message.content.amount[0].amount);
           } else {
             if (message.initial_deposit.length > 0) {
               historyProposal.initial_deposit = Number(message.initial_deposit[0].amount);
@@ -572,7 +588,7 @@ export class TaskService {
           historyProposal.title = message.content.title;
           historyProposal.description = message.content.description;
           historyProposal.proposer = message.proposer;
-          historyProposal.created_at = txData.tx_response.timestamp;
+          historyProposal.created_at = new Date(txData.tx_response.timestamp);
           try {
             await this.historyProposalRepository.save(historyProposal);
           } catch (error) {
@@ -584,7 +600,7 @@ export class TaskService {
           proposalDeposit.tx_hash = txData.tx_response.txhash;
           proposalDeposit.depositor = message.depositor;
           proposalDeposit.amount = Number(message.amount[0].amount);
-          proposalDeposit.created_at = txData.tx_response.timestamp;
+          proposalDeposit.created_at = new Date(txData.tx_response.timestamp);
           try {
             await this.proposalDepositRepository.save(proposalDeposit);
           } catch (error) {

@@ -1,10 +1,8 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('proposal_votes')
-export class ProposalVote {
-    @PrimaryGeneratedColumn('increment')
-    id: number;
-
+export class ProposalVote extends BaseEntityIncrementId {
     @Column()
     proposal_id: number;
 
@@ -16,12 +14,5 @@ export class ProposalVote {
 
     @Column()
     option: string;
-
-    @CreateDateColumn({
-        type: 'timestamp',
-        name: 'created_at',
-    })
-    created_at: Date;
-    
 }
 
