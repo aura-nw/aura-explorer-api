@@ -185,11 +185,11 @@ export class ValidatorService {
     const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
     const rewardData = await this.getDataAPI(api, paramsReward, ctx);
     let delegations: any = [];
-    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {
-      let delegation: any = {};
+    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {      
       const delegationsData = delegatedData.delegation_responses;
       for (let i = 0; i < delegationsData.length; i++) {
-        let item = delegationsData[0];
+        let delegation: any = {};
+        let item = delegationsData[i];
         delegation.amount_staked = item.balance.amount;
         delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
