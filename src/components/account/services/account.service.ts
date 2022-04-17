@@ -150,7 +150,7 @@ export class AccountService {
           redelegation.validator_dst_address = validator_dst_address;
         }
         redelegation.amount = this.changeUauraToAura(data.entries[0].balance);
-        redelegation.completion_time = data.entries[0].redelegationEntry.completion_time;
+        redelegation.completion_time = data.entries[0].redelegation_entry.completion_time;
 
         accountOutput.redelegations[idx] = redelegation;
       });
