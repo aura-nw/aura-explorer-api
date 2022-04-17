@@ -129,4 +129,20 @@ export class ValidatorController {
 
       return { data: result, meta: {} };
   }
+
+  @Get('delegations/:delegatorAddress/delegators')
+  @ApiOperation({
+      summary: 'Get list delegators',
+  })
+  @ApiResponse({
+      status: HttpStatus.OK
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getDelegators(
+      @ReqContext() ctx: RequestContext,
+      @Param('delegatorAddress') delegatorAddress: string
+  ): Promise<any> {
+      this.logger.log(ctx, `${this.getDelegations.name} was called!`);
+      return await this.validatorService.getDelegators(delegatorAddress);
+  }
 }
