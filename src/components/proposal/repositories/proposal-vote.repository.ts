@@ -38,7 +38,7 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
         params.push(request.proposalId);
         if (request.option !== '') {
             if (request.option === 'null') {
-                sql += ` WHERE pv.option = null`
+                sql += ` WHERE pv.option IS null`
             } else {
                 sql += ` WHERE pv.option = ?`;
                 params.push(request.option);
