@@ -16,6 +16,8 @@ import { ProposalRepository } from '../../../components/proposal/repositories/pr
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
+import { DelegatorOutput } from '../dtos/delegator-output';
+import console from 'console';
 
 @Injectable()
 export class ValidatorService {
@@ -185,7 +187,7 @@ export class ValidatorService {
     const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
     const rewardData = await this.getDataAPI(api, paramsReward, ctx);
     let delegations: any = [];
-    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {      
+    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {
       const delegationsData = delegatedData.delegation_responses;
       for (let i = 0; i < delegationsData.length; i++) {
         let delegation: any = {};
@@ -214,5 +216,21 @@ export class ValidatorService {
     result.delegations = delegations;
 
     return result;
+  }
+
+  /**
+   * getDelegators
+   * @param delegatorAddr 
+   */
+  async getDelegators(delegatorAddress: string) {
+    const delegators = await this.validatorRepository.getDelegators(delegatorAddress);
+    if (delegators.length > 0) {
+      const delegatorOutputs = plainToClass(DelegatorOutput, delegators, {
+        excludeExtraneousValues: true,
+      });
+
+      return { data: delegatorOutputs };
+    }
+    return { data: [] };
   }
 }

@@ -12,6 +12,7 @@ import { ValidatorModule } from './components/validator/validator.module';
 import { WalletModule } from './components/wallet/wallet.module';
 import { ProposalModule } from './components/proposal/proposal.module';
 import { AccountModule } from './components/account/account.module';
+import { DelegationModule } from './components/delegation/delegation.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { AccountModule } from './components/account/account.module';
     ValidatorModule,
     WalletModule,
     ProposalModule,
-    AccountModule
+    AccountModule,
+    DelegationModule
   ],
   controllers: [AppController],
   providers: [AppService],
