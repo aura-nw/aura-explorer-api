@@ -37,8 +37,12 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
                 CROSS JOIN (SELECT @cnt := 0) AS dummy`;
         params.push(request.proposalId);
         if (request.option !== '') {
-            sql += ` WHERE pv.option = ?`;
-            params.push(request.option);
+            if (request.option === 'null') {
+                sql += ` WHERE pv.option = null`
+            } else {
+                sql += ` WHERE pv.option = ?`;
+                params.push(request.option);
+            }
         }
         sql += ` ORDER BY pv.updated_at DESC`;
         if (isLimit) {
