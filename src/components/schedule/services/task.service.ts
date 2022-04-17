@@ -1,29 +1,33 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Catch, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
-import { lastValueFrom } from 'rxjs';
+import { bech32 } from 'bech32';
 import { sha256 } from 'js-sha256';
 import { InjectSchedule, Schedule } from 'nest-schedule';
+import { find, lastValueFrom } from 'rxjs';
+import { BlockSyncError } from '../../../shared/entities/block-sync-error.entity';
+import { ProposalDeposit } from '../../../shared/entities/proposal-deposit.entity';
+import { tmhash } from 'tendermint/lib/hash';
 import { v4 as uuidv4 } from 'uuid';
-
-import { AkcLogger, Block, Transaction, SyncStatus, LINK_API, Delegation, CONST_CHAR, RequestContext, CONST_MSG_TYPE, CONST_PUBKEY_ADDR } from '../../../shared';
-
+import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
+import { AkcLogger, Block, CONST_CHAR, CONST_MSG_TYPE, CONST_PROPOSAL_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
+import { HistoryProposal } from '../../../shared/entities/history-proposal.entity';
+import { MissedBlock } from '../../../shared/entities/missed-block.entity';
+import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
+import { Validator } from '../../../shared/entities/validator.entity';
+import { HistoryProposalRepository } from '../../proposal/repositories/history-proposal.reponsitory';
+import { BlockSyncErrorRepository } from '../repositories/block-sync-error.repository';
 import { BlockRepository } from '../repositories/block.repository';
+import { DelegationRepository } from '../repositories/delegation.repository';
+import { MissedBlockRepository } from '../repositories/missed-block.repository';
 import { SyncStatusRepository } from '../repositories/syns-status.repository';
 import { TransactionRepository } from '../repositories/transaction.repository';
-import { InfluxDBClient } from './influxdb-client';
-import { tmhash } from 'tendermint/lib/hash';
-import { bech32 } from 'bech32';
-import { Validator } from '../../../shared/entities/validator.entity';
 import { ValidatorRepository } from '../repositories/validator.repository';
-import { DelegationRepository } from '../repositories/delegation.repository';
-import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
-import { MissedBlock } from '../../../shared/entities/missed-block.entity';
-import { MissedBlockRepository } from '../repositories/missed-block.repository';
-import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { BlockSyncErrorRepository } from '../repositories/block-sync-error.repository';
-import { BlockSyncError } from 'src/shared/entities/block-sync-error.entity';
+import { InfluxDBClient } from './influxdb-client';
+import { ProposalDepositRepository } from '../../../components/proposal/repositories/proposal-deposit.repository';
+
+
 
 @Injectable()
 export class TaskService {
@@ -44,8 +48,10 @@ export class TaskService {
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
     private proposalVoteRepository: ProposalVoteRepository,
+    private historyProposalRepository: HistoryProposalRepository,
     private missedBlockRepository: MissedBlockRepository,
     private blockSyncErrorRepository: BlockSyncErrorRepository,
+    private proposalDepositRepository: ProposalDepositRepository,
     @InjectSchedule() private readonly schedule: Schedule
   ) {
     this.logger.setContext(TaskService.name);
@@ -61,7 +67,7 @@ export class TaskService {
     );
 
     // Get number thread from config
-    this.threads = Number(this.configService.get<string>('influxdb.threads')) || 15;
+    this.threads = Number(this.configService.get<string>('influxdb.threads') || 15);
 
     // Call worker to process
     this.workerProcess();
@@ -257,7 +263,7 @@ export class TaskService {
               this.logger.error(null, `Transaction is already existed!`);
             }
             //sync data proposal-votes
-            await this.syncDataProposalVotes(txData);
+            await this.syncDataProposals(txData);
             // TODO: Write tx to influxdb
             this.influxDbClient.writeTx(
               newTx.tx_hash,
@@ -519,23 +525,86 @@ export class TaskService {
     }
   }
 
-  async syncDataProposalVotes(txData) {
+  async syncDataProposals(txData) {
     if (txData.tx.body.messages && txData.tx.body.messages.length > 0) {
       for (let i = 0; i < txData.tx.body.messages.length; i++) {
         const message: any = txData.tx.body.messages[i];
         //check type to sync data
-        const type = message['@type'];
-        if (type != '' && type.substring(type.lastIndexOf('.') + 1) === CONST_MSG_TYPE.MSG_VOTE) {
+        const txTypeReturn = message['@type'];
+        const txType = txTypeReturn.substring(txTypeReturn.lastIndexOf('.') + 1);
+        if (txType === CONST_MSG_TYPE.MSG_VOTE) {
+          const proposalId = Number(message.proposal_id);
+          const voter = message.voter;
+          const option = message.option;
+          //check exist in db
+          let findVote = await this.proposalVoteRepository.findOne({
+            where: { proposal_id: proposalId, voter: voter }
+          });
+          if(findVote) {
+            findVote.option = option;
+            findVote.updated_at = new Date(txData.tx_response.timestamp);
+            await this.proposalVoteRepository.update(findVote.id, findVote);
+          } else {
+            let proposalVote = new ProposalVote();
+            proposalVote.proposal_id = proposalId;
+            proposalVote.voter = voter;
+            proposalVote.tx_hash = txData.tx_response.txhash;
+            proposalVote.option = option;
+            proposalVote.created_at = new Date(txData.tx_response.timestamp);
+            await this.proposalVoteRepository.create(proposalVote);
+          }
           let proposalVote = new ProposalVote();
-          proposalVote.proposal_id = Number(message.proposal_id);
-          proposalVote.voter = message.voter;
+          proposalVote.proposal_id = proposalId;
+          proposalVote.voter = voter;
           proposalVote.tx_hash = txData.tx_response.txhash;
           proposalVote.option = message.option;
-          proposalVote.created_at = txData.tx_response.timestamp;
+          proposalVote.created_at = new Date(txData.tx_response.timestamp);
+          proposalVote.updated_at = new Date(txData.tx_response.timestamp);
+        } else if (txType === CONST_MSG_TYPE.MSG_SUBMIT_PROPOSAL) {
+          let historyProposal = new HistoryProposal();
+          const proposalTypeReturn = message.content['@type'];
+          const proposalType = proposalTypeReturn.substring(proposalTypeReturn.lastIndexOf('.') + 1);
+          historyProposal.proposal_id = 0;
+          if (txData.tx_response.logs && txData.tx_response.logs.length > 0
+            && txData.tx_response.logs[0].events && txData.tx_response.logs[0].events.length > 0) {
+            const events = txData.tx_response.logs[0].events;
+            const submitEvent = events.find(i => i.type === 'submit_proposal');
+            const attributes = submitEvent.attributes;
+            const findId = attributes.find(i => i.key = 'proposal_id');
+            historyProposal.proposal_id = Number(findId.value);
+          }
+          historyProposal.recipient = '';
+          historyProposal.amount = 0;
+          historyProposal.initial_deposit = 0;
+          if (proposalType === CONST_PROPOSAL_TYPE.COMMUNITY_POOL_SPEND_PROPOSAL) {
+            historyProposal.recipient = message.content.recipient;
+            historyProposal.amount = Number(message.content.amount[0].amount);
+          } else {
+            if (message.initial_deposit.length > 0) {
+              historyProposal.initial_deposit = Number(message.initial_deposit[0].amount);
+            }
+          }
+          historyProposal.tx_hash = txData.tx_response.txhash;
+          historyProposal.title = message.content.title;
+          historyProposal.description = message.content.description;
+          historyProposal.proposer = message.proposer;
+          historyProposal.created_at = new Date(txData.tx_response.timestamp);
           try {
-            await this.proposalVoteRepository.save(proposalVote);
+            await this.historyProposalRepository.save(historyProposal);
           } catch (error) {
-            this.logger.error(null, `Proposal vote is already existed!`);
+            this.logger.error(null, `History proposal is already existed!`);
+          }
+        } else if (txType === CONST_MSG_TYPE.MSG_DEPOSIT) {
+          let proposalDeposit = new ProposalDeposit();
+          proposalDeposit.proposal_id = Number(message.proposal_id);
+          proposalDeposit.tx_hash = txData.tx_response.txhash;
+          proposalDeposit.depositor = message.depositor;
+          proposalDeposit.amount = Number(message.amount[0].amount);
+          proposalDeposit.created_at = new Date(txData.tx_response.timestamp);
+          try {
+            await this.proposalDepositRepository.save(proposalDeposit);
+          } catch (error) {
+            this.logger.error(null, `Proposal deposit is already existed!`);
           }
         }
       }
@@ -610,12 +679,17 @@ export class TaskService {
    * @returns 
    */
   async getBlockLatest(): Promise<any> {
-    this.logger.log(null, `Class ${TaskService.name}, call getBlockLatest method`);
+    try {
+      this.logger.log(null, `Class ${TaskService.name}, call getBlockLatest method`);
 
-    const api = this.configService.get<string>('node.api');
-    const paramsBlockLatest = `/blocks/latest`;
-    const results = await this.getDataAPI(api, paramsBlockLatest);
-    return results;
+      const api = this.configService.get<string>('node.api');
+      const paramsBlockLatest = `/blocks/latest`;
+      const results = await this.getDataAPI(api, paramsBlockLatest);
+      return results;
+
+    } catch (error) {
+      return null;
+    }
   }
 
   /**
@@ -748,8 +822,8 @@ export class TaskService {
             newTx.timestamp,
           );
 
-          //sync data proposal-votes
-          await this.syncDataProposalVotes(txData);
+          //sync data proposals
+          await this.syncDataProposals(txData);
 
         }
       } else {
@@ -786,7 +860,7 @@ export class TaskService {
 
       // Delete data on Block sync error table
       await this.removeBlockError(syncBlock);
-      
+
       const idxSync = this.schedulesSync.indexOf(fetchingBlockHeight);
       if (idxSync > (-1)) {
         this.schedulesSync.splice(idxSync, 1);
@@ -862,21 +936,21 @@ export class TaskService {
     let currentBlk = 0;
     // Get blocks latest
     const blockLatest = await this.getBlockLatest();
-    let latestBlk = Number(blockLatest?.block?.header.height) || 0;
+    let latestBlk = Number(blockLatest?.block?.header?.height || 0);
 
     if (height > 0) {
       currentBlk = height;
     } else {
-      //Get current height
-      const status = await this.statusRepository.findOne();
-      if (status) {
-        currentBlk = status.current_block;
-      }
+      try {
+        //Get current height
+        const status = await this.statusRepository.findOne();
+        if (status) {
+          currentBlk = status.current_block;
+        }
+      } catch (err) { }
     }
 
-    if (blockLatest) {
-      this.threadProcess(currentBlk, latestBlk)
-    }
+    this.threadProcess(currentBlk, latestBlk)
   }
 
   /**

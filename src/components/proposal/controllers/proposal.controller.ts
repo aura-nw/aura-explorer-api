@@ -1,114 +1,179 @@
-import { CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, UseInterceptors } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
-import { ProposalOutput } from "../dtos/proposal-output.dto";
-import { ProposalService } from "../services/proposal.service";
+import {
+    Body,
+    CacheInterceptor,
+    ClassSerializerInterceptor,
+    Controller,
+    Get,
+    HttpStatus,
+    Param,
+    Post,
+    UseInterceptors
+} from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+    AkcLogger, ReqContext,
+    RequestContext,
+    SwaggerBaseApiResponse
+} from '../../../shared';
+import { ProposalOutput } from '../dtos/proposal-output.dto';
+import { ProposalVoteByOptionInput } from '../dtos/proposal-vote-by-option-input.dto';
+import { ProposalVoteByValidatorInput } from '../dtos/proposal-vote-by-validator-input.dto';
+import { ProposalService } from '../services/proposal.service';
 
 @ApiTags('proposals')
 @Controller('proposals')
 export class ProposalController {
-    constructor(
-        private readonly proposalService: ProposalService,
-        private readonly logger: AkcLogger
-    ) {
-        this.logger.setContext(ProposalController.name);
-    }
+  constructor(
+    private readonly proposalService: ProposalService,
+    private readonly logger: AkcLogger,
+  ) {
+    this.logger.setContext(ProposalController.name);
+  }
 
-    @Get()
-    @ApiOperation({
-        summary: 'Get list proposals',
-    })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        type: SwaggerBaseApiResponse(ProposalOutput),
-    })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getProposals(
-        @ReqContext() ctx: RequestContext
-    ): Promise<any> {
-        this.logger.log(ctx, `${this.getProposals.name} was called!`);
-        const { proposals, count } = await this.proposalService.getProposals(ctx);
+  @Get()
+  @ApiOperation({
+    summary: 'Get list proposals',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(ProposalOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getProposals(@ReqContext() ctx: RequestContext): Promise<any> {
+    this.logger.log(ctx, `${this.getProposals.name} was called!`);
+    const { proposals, count } = await this.proposalService.getProposals(ctx);
 
-        return { data: proposals, meta: { count } };
-    }
+    return { data: proposals, meta: { count } };
+  }
 
-    @Get(':proposalId/votes/:voter')
-    @ApiOperation({
-        summary: 'Get list proposals',
-    })
-    @ApiResponse({
-        status: HttpStatus.OK
-    })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getProposalVote(
-        @ReqContext() ctx: RequestContext,
-        @Param('proposalId') proposalId: string,
-        @Param('voter') voter: string,
-    ): Promise<any> {
-        this.logger.log(ctx, `${this.getProposalVote.name} was called!`);
-        const proposalVote = await this.proposalService.getProposalVote(ctx, proposalId, voter);
+  @Get(':proposalId/votes/:voter')
+  @ApiOperation({
+    summary: 'Get proposal vote by proposal id and voter',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getProposalVote(
+    @ReqContext() ctx: RequestContext,
+    @Param('proposalId') proposalId: string,
+    @Param('voter') voter: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getProposalVote.name} was called!`);
+    const proposalVote = await this.proposalService.getProposalVote(
+      ctx,
+      proposalId,
+      voter,
+    );
 
-        return { data: proposalVote, meta: {} };
-    }
+    return { data: proposalVote, meta: {} };
+  }
 
-    @Get(':proposalId')
-    @ApiOperation({
-        summary: 'Get proposals detail by proposalId',
-    })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        type: SwaggerBaseApiResponse(ProposalOutput),
-    })
-    @UseInterceptors(ClassSerializerInterceptor)
-    async getProposalsById(
-        @ReqContext() ctx: RequestContext,
-        @Param('proposalId') proposalId: string,
-    ): Promise<any> {
-        this.logger.log(ctx, `${this.getProposalsById.name} was called!`);
-        const proposals = await this.proposalService.getProposalsById(ctx, proposalId);
+  @Get(':proposalId')
+  @ApiOperation({
+    summary: 'Get proposal detail by proposalId',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getProposalById(
+    @ReqContext() ctx: RequestContext,
+    @Param('proposalId') proposalId: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getProposalById.name} was called!`);
+    const proposal = await this.proposalService.getProposalById(
+      ctx,
+      proposalId,
+    );
 
-        return { data: proposals, meta: { } };
-    }
+    return { data: proposal, meta: {} };
+  }
 
-    @Get(':proposalId/votes')
-    @ApiOperation({
-        summary: 'Get votes list by proposalId',
-    })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        type: SwaggerBaseApiResponse(ProposalOutput),
-    })
-    @UseInterceptors(ClassSerializerInterceptor)
-    async getVotesListById(
-        @ReqContext() ctx: RequestContext,
-        @Param('proposalId') proposalId: string,
-    ): Promise<any> {
-        this.logger.log(ctx, `${this.getVotesListById.name} was called!`);
-        const proposalsVotes = await this.proposalService.getVotesListById(ctx, proposalId);
+  @Post('votes/get-by-option')
+  @ApiOperation({
+    summary: 'Get votes list by option',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getVotesListByOption(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: ProposalVoteByOptionInput,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getVotesListByOption.name} was called!`);
+    const result = await this.proposalService.getVotesListByOption(
+      ctx,
+      request,
+    );
 
-        return { data: proposalsVotes, meta: { } };
-    }
+    return { data: result, meta: {} };
+  }
 
-    @Get(':proposalId/deposits')
-    @ApiOperation({
-        summary: 'Get deposit list by proposalId',
-    })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        type: SwaggerBaseApiResponse(ProposalOutput),
-    })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getDepositListById(
-        @ReqContext() ctx: RequestContext,
-        @Param('proposalId') proposalId: string,
-    ): Promise<any> {
-        this.logger.log(ctx, `${this.getDepositListById.name} was called!`);
-        const proposalsDeposit = await this.proposalService.getDepositListById(ctx, proposalId);
+  @Post('votes/get-by-validator')
+  @ApiOperation({
+    summary: 'Get votes list by validator',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getVotesListByValidator(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: ProposalVoteByValidatorInput,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getVotesListByValidator.name} was called!`);
+    const result = await this.proposalService.getVotesListByValidator(
+      ctx,
+      request,
+    );
 
-        return { data: proposalsDeposit, meta: { } };
-    }
+    return { data: result, meta: {} };
+  }
 
+  @Get(':proposalId/deposits')
+  @ApiOperation({
+    summary: 'Get deposit list by proposalId',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getDepositListById(
+    @ReqContext() ctx: RequestContext,
+    @Param('proposalId') proposalId: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getDepositListById.name} was called!`);
+    const result = await this.proposalService.getDepositListById(
+      ctx,
+      proposalId,
+    );
+
+    return { data: result, meta: {} };
+  }
+
+  @Get(':proposalId/tally')
+  @ApiOperation({
+    summary: 'Get tally of proposal vote by proposalId',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getProposalVoteTally(
+    @ReqContext() ctx: RequestContext,
+    @Param('proposalId') proposalId: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getProposalVoteTally.name} was called!`);
+    const proposalVoteTally = await this.proposalService.getProposalVoteTally(
+      ctx,
+      proposalId,
+    );
+
+    return { data: proposalVoteTally, meta: {} };
+  }
 }

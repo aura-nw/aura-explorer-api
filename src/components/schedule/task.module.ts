@@ -13,8 +13,10 @@ import { ValidatorRepository } from './repositories/validator.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { MissedBlockRepository } from './repositories/missed-block.repository';
+import { HistoryProposalRepository } from '../proposal/repositories/history-proposal.reponsitory';
 import { ScheduleModule } from 'nest-schedule';
 import { BlockSyncErrorRepository } from './repositories/block-sync-error.repository';
+import { ProposalDepositRepository } from '../proposal/repositories/proposal-deposit.repository';
 
 @Module({
   imports: [
@@ -28,7 +30,9 @@ import { BlockSyncErrorRepository } from './repositories/block-sync-error.reposi
       DelegationRepository,
       ProposalVoteRepository,
       MissedBlockRepository,
-      BlockSyncErrorRepository
+      HistoryProposalRepository,
+      BlockSyncErrorRepository,
+      ProposalDepositRepository
     ]),
     ConfigModule,
     ScheduleModule.register()
