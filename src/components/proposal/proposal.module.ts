@@ -6,6 +6,8 @@ import { SharedModule } from "../../shared";
 import { BlockRepository } from '../block/repositories/block.repository';
 import { ValidatorRepository } from '../validator/repositories/validator.repository';
 import { ProposalController } from './controllers/proposal.controller';
+import { HistoryProposalRepository } from './repositories/history-proposal.reponsitory';
+import { ProposalDepositRepository } from './repositories/proposal-deposit.repository';
 import { ProposalVoteRepository } from './repositories/proposal-vote.repository';
 import { ProposalRepository } from './repositories/proposal.repository';
 import { ProposalService } from './services/proposal.service';
@@ -17,7 +19,9 @@ import { ProposalService } from './services/proposal.service';
         ProposalRepository, 
         BlockRepository, 
         ProposalVoteRepository,
-        ValidatorRepository
+        HistoryProposalRepository,
+        ValidatorRepository,
+        ProposalDepositRepository
       ]),
       HttpModule,
       ConfigModule,
