@@ -2,6 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServiceUtil } from '../../shared/utils/service.util';
 
 import { SharedModule } from '../../shared/shared.module';
 import { BlockModule } from '../block/block.module';
@@ -30,7 +31,7 @@ import { ValidatorService } from './services/validator.service';
     BlockModule,
     TransactionModule,
   ],
-  providers: [ValidatorService],
+  providers: [ValidatorService, ServiceUtil],
   controllers: [ValidatorController],
   exports: [ValidatorService],
 })

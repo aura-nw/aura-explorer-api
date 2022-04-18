@@ -16,12 +16,17 @@ export class ValidatorRepository extends Repository<Validator> {
         ).then(t => t[0]);
     }
 
+  
     /**
      * getDelegators
-     * @param delegatorAddr 
-    */
-    async getDelegators(delegatorAddress: string) {
-        const sql = 'SELECT val.title, val.operator_address, val.acc_address, val.commission FROM validators val WHERE val.OPERATOR_ADDRESS !=(SELECT del.validator_address FROM delegations del WHERE del.delegator_address=?) ';
-        return  await this.query(sql, [delegatorAddress]);
+     * @param operatorAddress 
+     * @param delegatorAddress 
+     * @returns 
+     */
+    async getDelegators(operatorAddress: string, delegatorAddress: string) {
+        const sql = `SELECT val.title, val.operator_address, val.acc_address, val.commission, val.status, val.jailed,
+                    (SELECT del.delegator_address FROM delegations del WHERE del.delegator_address=? AND del.validator_address = val.operator_address) AS staking_address
+            FROM validators val WHERE val.OPERATOR_ADDRESS!=? AND val.status=3`;
+        return await this.query(sql, [delegatorAddress, operatorAddress]);
     }
 }
