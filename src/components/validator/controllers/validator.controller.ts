@@ -20,7 +20,9 @@ import {
 } from '../../../shared';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
+import { DelegatorOutput } from '../dtos/delegator-output';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
+import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
@@ -70,6 +72,40 @@ export class ValidatorController {
     const validator = await this.validatorService.getValidatorByAddress(ctx, address);
 
     return { data: validator, meta: {} };
+  }
+
+    @Get(':operatorAddress/:delegatorAddress/delegators')
+  @ApiOperation({
+    summary: 'Get list delegators',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getDelegators(
+    @ReqContext() ctx: RequestContext,
+    @Param('operatorAddress') operatorAddress: string,
+    @Param('delegatorAddress') delegatorAddress: string
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getDelegations.name} was called!`);
+    return await this.validatorService.getDelegators(operatorAddress, delegatorAddress);
+  }
+
+
+  @Get(':validatorAddr/unbonding-delegations')
+  @ApiOperation({
+    summary: 'Get list Unbonding Delegations',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async unbondingDelegations(
+    @ReqContext() ctx: RequestContext,
+    @Param('validatorAddr') validatorAddr: string
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.unbondingDelegations.name} was called!`);
+    return await this.validatorService.unbondingDelegations(ctx, validatorAddr);
   }
 
   @Get(':validatorAddress/delegations')
@@ -129,39 +165,4 @@ export class ValidatorController {
 
     return { data: result, meta: {} };
   }
-
-  @Get(':operatorAddress/:delegatorAddress/delegators')
-  @ApiOperation({
-    summary: 'Get list delegators',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getDelegators(
-    @ReqContext() ctx: RequestContext,
-    @Param('operatorAddress') operatorAddress: string,
-    @Param('delegatorAddress') delegatorAddress: string
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-    return await this.validatorService.getDelegators(operatorAddress, delegatorAddress);
-  }
-
-
-  @Get(':validatorAddr/unbonding-delegations')
-  @ApiOperation({
-    summary: 'Get list Unbonding Delegations',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async unbondingDelegations(
-    @ReqContext() ctx: RequestContext,
-    @Param('validatorAddr') validatorAddr: string
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.unbondingDelegations.name} was called!`);
-    return await this.validatorService.unbondingDelegations(ctx, validatorAddr);
-  }
-
 }
