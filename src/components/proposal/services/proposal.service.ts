@@ -132,9 +132,7 @@ export class ProposalService {
       request,
       false
     );
-    result.countTotal = votes.filter(function (item) {
-        return item.option !== null;
-      }).length;
+    result.countTotal = votes.length
     result.countYes = 0;
     result.countAbstain = 0;
     result.countNo = 0;
@@ -178,7 +176,7 @@ export class ProposalService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getProposalVoteTally.name} was called!`);
     const api = this.configService.get<string>('node.api');
-    const paramsBalance = `/cosmos/gov/v1beta1/proposal/${proposalId}/tally`;
+    const paramsBalance = `/cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
     const proposalVoteTally = await this.getDataAPI(api, paramsBalance);
     // const proposalVoteTally = await this.proposalRepository.findOne({
     //   where: { proposal_id: proposalId },

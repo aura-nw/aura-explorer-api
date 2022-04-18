@@ -24,7 +24,7 @@ import { AccountModule } from './components/account/account.module';
     ValidatorModule,
     WalletModule,
     ProposalModule,
-    AccountModule
+    AccountModule,
   ],
   controllers: [AppController],
   providers: [AppService],
