@@ -227,8 +227,8 @@ export class ValidatorService {
   * @param delegatorAddress 
   * @returns 
   */
-  async getDelegators(operatorAddress: string, delegatorAddress: string) {
-    const delegators = await this.validatorRepository.getDelegators(operatorAddress, delegatorAddress);
+  async getDelegators(operatorAddr: string, delegatorAddr: string) {
+    const delegators = await this.validatorRepository.getDelegators(operatorAddr, delegatorAddr);
     if (delegators.length > 0) {
       const delegatorOutputs = plainToClass(DelegatorOutput, delegators, {
         excludeExtraneousValues: true,
