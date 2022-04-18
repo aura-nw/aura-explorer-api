@@ -245,9 +245,9 @@ export class ValidatorService {
    * @param validatorAddr 
    * @returns 
    */
-  async unbondingDelegations(ctx: RequestContext, validatorAddr: string){
+  async unbondingDelegations(ctx: RequestContext, delegatorAddr: string){
     const api = this.configService.get<string>('node.api');
-    const params = `/cosmos/staking/v1beta1/validators/${validatorAddr}/unbonding_delegations`;
+    const params = `/cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
     const responses = await this.getDataAPI(api, params, ctx);
     let unbonding_responses = [];
     if(responses){

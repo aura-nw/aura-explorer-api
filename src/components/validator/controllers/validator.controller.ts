@@ -74,7 +74,7 @@ export class ValidatorController {
     return { data: validator, meta: {} };
   }
 
-    @Get(':operatorAddress/:delegatorAddress/delegators')
+    @Get(':operatorAddr/:delegatorAddr/delegators')
   @ApiOperation({
     summary: 'Get list delegators',
   })
@@ -84,15 +84,15 @@ export class ValidatorController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getDelegators(
     @ReqContext() ctx: RequestContext,
-    @Param('operatorAddress') operatorAddress: string,
-    @Param('delegatorAddress') delegatorAddress: string
+    @Param('operatorAddr') operatorAddr: string,
+    @Param('delegatorAddr') delegatorAddr: string
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-    return await this.validatorService.getDelegators(operatorAddress, delegatorAddress);
+    return await this.validatorService.getDelegators(operatorAddr, delegatorAddr);
   }
 
 
-  @Get(':validatorAddr/unbonding-delegations')
+  @Get(':delegatorAddr/unbonding-delegations')
   @ApiOperation({
     summary: 'Get list Unbonding Delegations',
   })
@@ -102,10 +102,10 @@ export class ValidatorController {
   @UseInterceptors(ClassSerializerInterceptor)
   async unbondingDelegations(
     @ReqContext() ctx: RequestContext,
-    @Param('validatorAddr') validatorAddr: string
+    @Param('delegatorAddr') delegatorAddr: string
   ): Promise<any> {
     this.logger.log(ctx, `${this.unbondingDelegations.name} was called!`);
-    return await this.validatorService.unbondingDelegations(ctx, validatorAddr);
+    return await this.validatorService.unbondingDelegations(ctx, delegatorAddr);
   }
 
   @Get(':validatorAddress/delegations')
