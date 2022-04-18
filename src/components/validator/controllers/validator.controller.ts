@@ -130,7 +130,7 @@ export class ValidatorController {
     return { data: result, meta: {} };
   }
 
-  @Get('delegations/:operatorAddress/:delegatorAddress/delegators')
+  @Get(':operatorAddress/:delegatorAddress/delegators')
   @ApiOperation({
     summary: 'Get list delegators',
   })
@@ -148,7 +148,7 @@ export class ValidatorController {
   }
 
 
-  @Get('/:validatorAddr/unbonding-delegations')
+  @Get(':validatorAddr/unbonding-delegations')
   @ApiOperation({
     summary: 'Get list Unbonding Delegations',
   })
