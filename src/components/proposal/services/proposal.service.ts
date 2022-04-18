@@ -176,7 +176,7 @@ export class ProposalService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getProposalVoteTally.name} was called!`);
     const api = this.configService.get<string>('node.api');
-    const paramsBalance = `/cosmos/gov/v1beta1/proposal/${proposalId}/tally`;
+    const paramsBalance = `/cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
     const proposalVoteTally = await this.getDataAPI(api, paramsBalance);
     // const proposalVoteTally = await this.proposalRepository.findOne({
     //   where: { proposal_id: proposalId },
