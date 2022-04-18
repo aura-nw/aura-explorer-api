@@ -17,4 +17,16 @@ export class DelegatorOutput {
     @Expose()
     @ApiProperty()
     commission: number;
+
+    @Expose()
+    @ApiProperty()
+    staking_address: string;
+
+    @Expose()
+    @ApiProperty()
+    status: number;
+
+    @Expose()
+    @ApiProperty()
+    jailed: boolean;
 }
