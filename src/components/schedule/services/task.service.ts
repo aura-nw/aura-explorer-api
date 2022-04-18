@@ -543,7 +543,7 @@ export class TaskService {
           if(findVote) {
             findVote.option = option;
             findVote.updated_at = new Date(txData.tx_response.timestamp);
-            await this.proposalVoteRepository.update(findVote.id, findVote);
+            await this.proposalVoteRepository.save(findVote);
           } else {
             let proposalVote = new ProposalVote();
             proposalVote.proposal_id = proposalId;
@@ -551,15 +551,9 @@ export class TaskService {
             proposalVote.tx_hash = txData.tx_response.txhash;
             proposalVote.option = option;
             proposalVote.created_at = new Date(txData.tx_response.timestamp);
-            await this.proposalVoteRepository.create(proposalVote);
+            proposalVote.updated_at = new Date(txData.tx_response.timestamp);
+            await this.proposalVoteRepository.save(proposalVote);
           }
-          let proposalVote = new ProposalVote();
-          proposalVote.proposal_id = proposalId;
-          proposalVote.voter = voter;
-          proposalVote.tx_hash = txData.tx_response.txhash;
-          proposalVote.option = message.option;
-          proposalVote.created_at = new Date(txData.tx_response.timestamp);
-          proposalVote.updated_at = new Date(txData.tx_response.timestamp);
         } else if (txType === CONST_MSG_TYPE.MSG_SUBMIT_PROPOSAL) {
           let historyProposal = new HistoryProposal();
           const proposalTypeReturn = message.content['@type'];

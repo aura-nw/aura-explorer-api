@@ -16,6 +16,10 @@ import { ProposalRepository } from '../../../components/proposal/repositories/pr
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
+import { DelegatorOutput } from '../dtos/delegator-output';
+import console from 'console';
+import { ServiceUtil } from '../../../shared/utils/service.util';
+import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
 
 @Injectable()
 export class ValidatorService {
@@ -32,6 +36,7 @@ export class ValidatorService {
     private blockRepository: BlockRepository,
     private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
+    private serviceUtil : ServiceUtil
   ) {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
@@ -185,7 +190,7 @@ export class ValidatorService {
     const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
     const rewardData = await this.getDataAPI(api, paramsReward, ctx);
     let delegations: any = [];
-    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {      
+    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {
       const delegationsData = delegatedData.delegation_responses;
       for (let i = 0; i < delegationsData.length; i++) {
         let delegation: any = {};
@@ -214,5 +219,47 @@ export class ValidatorService {
     result.delegations = delegations;
 
     return result;
+  }
+
+ /**
+  * getDelegators
+  * @param operatorAddress 
+  * @param delegatorAddress 
+  * @returns 
+  */
+  async getDelegators(operatorAddress: string, delegatorAddress: string) {
+    const delegators = await this.validatorRepository.getDelegators(operatorAddress, delegatorAddress);
+    if (delegators.length > 0) {
+      const delegatorOutputs = plainToClass(DelegatorOutput, delegators, {
+        excludeExtraneousValues: true,
+      });
+
+      return { data: delegatorOutputs };
+    }
+    return { data: [] };
+  }
+
+  /**
+   * unbondingDelegations
+   * @param ctx 
+   * @param validatorAddr 
+   * @returns 
+   */
+  async unbondingDelegations(ctx: RequestContext, validatorAddr: string){
+    const api = this.configService.get<string>('node.api');
+    const params = `/cosmos/staking/v1beta1/validators/${validatorAddr}/unbonding_delegations`;
+    const responses = await this.getDataAPI(api, params, ctx);
+    let unbonding_responses = [];
+    if(responses){
+      for(let i=0 ; i < responses.unbonding_responses?.length; i++){
+        let unbondingRes: UnbondingDelegationsOutput = {...responses.unbonding_responses[i]};
+        const validator = await this.validatorRepository.findOne({where: {operator_address: unbondingRes.validator_address}});
+        if(validator){
+          unbondingRes.validator_name = validator.title;
+        }
+        unbonding_responses.push(unbondingRes);
+      }
+    }
+    return { data: unbonding_responses };
   }
 }
