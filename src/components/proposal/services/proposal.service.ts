@@ -132,9 +132,7 @@ export class ProposalService {
       request,
       false
     );
-    result.countTotal = votes.filter(function (item) {
-        return item.option !== null;
-      }).length;
+    result.countTotal = votes.length
     result.countYes = 0;
     result.countAbstain = 0;
     result.countNo = 0;
