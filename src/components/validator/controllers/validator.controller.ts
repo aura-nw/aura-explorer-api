@@ -150,7 +150,7 @@ export class ValidatorController {
 
   @Get('/:validatorAddr/unbonding-delegations')
   @ApiOperation({
-    summary: 'Get list delegators',
+    summary: 'Get list Unbonding Delegations',
   })
   @ApiResponse({
     status: HttpStatus.OK
