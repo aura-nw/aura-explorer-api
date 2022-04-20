@@ -16,4 +16,7 @@ export class Delegation extends BaseEntityIncrementId {
 
   @Column({ type: 'float' })
   amount: number;
+
+  @Column()
+  tx_hash: string;
 }

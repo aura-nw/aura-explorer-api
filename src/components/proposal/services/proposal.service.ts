@@ -15,11 +15,11 @@ import { Proposal } from '../../../shared/entities/proposal.entity';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
 import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
-import { In } from 'typeorm';
 import { HistoryProposalRepository } from '../repositories/history-proposal.reponsitory';
 import { ProposalVoteByOptionInput } from '../dtos/proposal-vote-by-option-input.dto';
 import { ProposalVoteByValidatorInput } from '../dtos/proposal-vote-by-validator-input.dto';
 import { ProposalDepositRepository } from '../repositories/proposal-deposit.repository';
+import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 
 @Injectable()
 export class ProposalService {
@@ -33,6 +33,7 @@ export class ProposalService {
     private validatorRepository: ValidatorRepository,
     private historyProposalRepository: HistoryProposalRepository,
     private proposalDepositRepository: ProposalDepositRepository,
+    private delegationRepository: DelegationRepository
   ) {
     this.logger.setContext(ProposalService.name);
   }
@@ -252,6 +253,21 @@ export class ProposalService {
     } catch (error) {
       this.logger.error(error, `Sync proposals error`);
     }
+  }
+
+  async getDelegationsByDelegatorAddress(
+    ctx: RequestContext,
+    delegatorAddress: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getDelegationsByDelegatorAddress.name} was called!`);
+    const api = this.configService.get<string>('node.api');
+    //get delegation first
+    const result = await this.delegationRepository.findOne({
+      where: { delegator_address: delegatorAddress },
+      order: { created_at: 'ASC' }
+    });
+
+    return { result: result };
   }
 
   async getDataAPI(api, params) {

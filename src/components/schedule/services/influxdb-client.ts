@@ -91,12 +91,14 @@ export class InfluxDBClient {
     this.writeApi.writePoint(point);
   }
 
-  writeDelegation(delegator_address, validator_address, shares, amount): void {
+  writeDelegation(delegator_address, validator_address, shares, amount, tx_hash, created_at): void {
     const point = new Point('delegation')
       .stringField('delegator_address', delegator_address)
       .stringField('validator_address', validator_address)
       .stringField('shares', shares)
-      .stringField('amount', amount);
+      .stringField('amount', amount)
+      .stringField('tx_hash', tx_hash)
+      .stringField('created_at', created_at);
     this.writeApi.writePoint(point);
   }
 

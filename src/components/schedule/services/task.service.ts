@@ -262,8 +262,8 @@ export class TaskService {
             } catch (error) {
               this.logger.error(null, `Transaction is already existed!`);
             }
-            //sync data proposal-votes
-            await this.syncDataProposals(txData);
+            //sync data with transactions
+            await this.syncDataWithTransactions(txData);
             // TODO: Write tx to influxdb
             this.influxDbClient.writeTx(
               newTx.tx_hash,
@@ -417,30 +417,30 @@ export class TaskService {
             this.syncUpdateValidator(newValidator, validatorFilter);
           }
 
-          for (let key in delegationData.delegation_responses) {
-            const dataDel = delegationData.delegation_responses[key];
-            // create delegator by validator address
-            const newDelegator = new Delegation();
-            newDelegator.delegator_address = dataDel.delegation.delegator_address;
-            newDelegator.validator_address = dataDel.delegation.validator_address;
-            newDelegator.shares = dataDel.delegation.shares;
-            const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
-            newDelegator.amount = amount;
-            // insert into table delegation
-            try {
-              await this.delegationRepository.save(newDelegator);
-            } catch (error) {
-              this.logger.error(null, `Delegation is already existed!`);
-            }
-            // TODO: Write delegator to influxdb
-            this.influxDbClient.writeDelegation(
-              newDelegator.delegator_address,
-              newDelegator.validator_address,
-              newDelegator.shares,
-              newDelegator.amount,
-            );
+          // for (let key in delegationData.delegation_responses) {
+          //   const dataDel = delegationData.delegation_responses[key];
+          //   // create delegator by validator address
+          //   const newDelegator = new Delegation();
+          //   newDelegator.delegator_address = dataDel.delegation.delegator_address;
+          //   newDelegator.validator_address = dataDel.delegation.validator_address;
+          //   newDelegator.shares = dataDel.delegation.shares;
+          //   const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
+          //   newDelegator.amount = amount;
+          //   // insert into table delegation
+          //   try {
+          //     await this.delegationRepository.save(newDelegator);
+          //   } catch (error) {
+          //     this.logger.error(null, `Delegation is already existed!`);
+          //   }
+          //   // TODO: Write delegator to influxdb
+          //   this.influxDbClient.writeDelegation(
+          //     newDelegator.delegator_address,
+          //     newDelegator.validator_address,
+          //     newDelegator.shares,
+          //     newDelegator.amount,
+          //   );
 
-          }
+          // }
           this.isSyncValidator = false;
         } catch (error) {
           this.isSyncValidator = false;
@@ -525,7 +525,7 @@ export class TaskService {
     }
   }
 
-  async syncDataProposals(txData) {
+  async syncDataWithTransactions(txData) {
     if (txData.tx.body.messages && txData.tx.body.messages.length > 0) {
       for (let i = 0; i < txData.tx.body.messages.length; i++) {
         const message: any = txData.tx.body.messages[i];
@@ -599,6 +599,85 @@ export class TaskService {
             await this.proposalDepositRepository.save(proposalDeposit);
           } catch (error) {
             this.logger.error(null, `Proposal deposit is already existed!`);
+          }
+        } else if (txType === CONST_MSG_TYPE.MSG_DELEGATE) {
+          let delegation = new Delegation();
+          delegation.tx_hash = txData.tx_response.txhash;
+          delegation.delegator_address = message.delegator_address;
+          delegation.validator_address = message.validator_address;
+          delegation.amount = Number(message.amount[0].amount)/1000000;
+          delegation.created_at = new Date(txData.tx_response.timestamp);
+          // TODO: Write delegation to influxdb
+          this.influxDbClient.writeDelegation(
+            delegation.delegator_address,
+            delegation.validator_address,
+            '',
+            delegation.amount,
+            delegation.tx_hash,
+            delegation.created_at
+          );
+          try {
+            await this.delegationRepository.save(delegation);
+          } catch(error) {
+            this.logger.error(null, `Delegation is already existed!`);
+          }
+        } else if (txType === CONST_MSG_TYPE.MSG_UNDELEGATE) {
+          let delegation = new Delegation();
+          delegation.tx_hash = txData.tx_response.txhash;
+          delegation.delegator_address = message.delegator_address;
+          delegation.validator_address = message.validator_address;
+          delegation.amount = (Number(message.amount[0].amount)*(-1))/1000000;
+          delegation.created_at = new Date(txData.tx_response.timestamp);
+          // TODO: Write delegation to influxdb
+          this.influxDbClient.writeDelegation(
+            delegation.delegator_address,
+            delegation.validator_address,
+            '',
+            delegation.amount,
+            delegation.tx_hash,
+            delegation.created_at
+          );
+          try {
+            await this.delegationRepository.save(delegation);
+          } catch(error) {
+            this.logger.error(null, `Delegation is already existed!`);
+          }
+        } else if (txType === CONST_MSG_TYPE.MSG_REDELEGATE) {
+          let delegation1 = new Delegation();
+          delegation1.tx_hash = txData.tx_response.txhash;
+          delegation1.delegator_address = message.delegator_address;
+          delegation1.validator_address = message.validator_src_address;
+          delegation1.amount = (Number(message.amount[0].amount)*(-1))/1000000;
+          delegation1.created_at = new Date(txData.tx_response.timestamp);
+          // TODO: Write delegation to influxdb
+          this.influxDbClient.writeDelegation(
+            delegation1.delegator_address,
+            delegation1.validator_address,
+            '',
+            delegation1.amount,
+            delegation1.tx_hash,
+            delegation1.created_at
+          );
+          let delegation2 = new Delegation();
+          delegation2.tx_hash = txData.tx_response.txhash;
+          delegation2.delegator_address = message.delegator_address;
+          delegation2.validator_address = message.validator_dst_address;
+          delegation2.amount = Number(message.amount[0].amount)/1000000;
+          delegation2.created_at = new Date(txData.tx_response.timestamp);
+          // TODO: Write delegation to influxdb
+          this.influxDbClient.writeDelegation(
+            delegation2.delegator_address,
+            delegation2.validator_address,
+            '',
+            delegation2.amount,
+            delegation2.tx_hash,
+            delegation2.created_at
+          );
+          try {
+            await this.delegationRepository.save(delegation1);
+            await this.delegationRepository.save(delegation2);
+          } catch(error) {
+            this.logger.error(null, `Delegation is already existed!`);
           }
         }
       }
@@ -816,8 +895,8 @@ export class TaskService {
             newTx.timestamp,
           );
 
-          //sync data proposals
-          await this.syncDataProposals(txData);
+          //sync data with transactions
+          await this.syncDataWithTransactions(txData);
 
         }
       } else {
