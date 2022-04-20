@@ -11,7 +11,7 @@ import { ProposalDeposit } from '../../../shared/entities/proposal-deposit.entit
 import { tmhash } from 'tendermint/lib/hash';
 import { v4 as uuidv4 } from 'uuid';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { AkcLogger, Block, CONST_CHAR, CONST_MSG_TYPE, CONST_PROPOSAL_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
+import { AkcLogger, Block, CONST_CHAR, CONST_DELEGATE_TYPE, CONST_MSG_TYPE, CONST_PROPOSAL_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
 import { HistoryProposal } from '../../../shared/entities/history-proposal.entity';
 import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
@@ -605,8 +605,9 @@ export class TaskService {
           delegation.tx_hash = txData.tx_response.txhash;
           delegation.delegator_address = message.delegator_address;
           delegation.validator_address = message.validator_address;
-          delegation.amount = Number(message.amount[0].amount)/1000000;
+          delegation.amount = Number(message.amount.amount)/1000000;
           delegation.created_at = new Date(txData.tx_response.timestamp);
+          delegation.type = CONST_DELEGATE_TYPE.DELEGATE;
           // TODO: Write delegation to influxdb
           this.influxDbClient.writeDelegation(
             delegation.delegator_address,
@@ -614,7 +615,8 @@ export class TaskService {
             '',
             delegation.amount,
             delegation.tx_hash,
-            delegation.created_at
+            delegation.created_at,
+            delegation.type
           );
           try {
             await this.delegationRepository.save(delegation);
@@ -626,8 +628,9 @@ export class TaskService {
           delegation.tx_hash = txData.tx_response.txhash;
           delegation.delegator_address = message.delegator_address;
           delegation.validator_address = message.validator_address;
-          delegation.amount = (Number(message.amount[0].amount)*(-1))/1000000;
+          delegation.amount = (Number(message.amount.amount)*(-1))/1000000;
           delegation.created_at = new Date(txData.tx_response.timestamp);
+          delegation.type = CONST_DELEGATE_TYPE.UNDELEGATE;
           // TODO: Write delegation to influxdb
           this.influxDbClient.writeDelegation(
             delegation.delegator_address,
@@ -635,7 +638,8 @@ export class TaskService {
             '',
             delegation.amount,
             delegation.tx_hash,
-            delegation.created_at
+            delegation.created_at,
+            delegation.type
           );
           try {
             await this.delegationRepository.save(delegation);
@@ -647,8 +651,9 @@ export class TaskService {
           delegation1.tx_hash = txData.tx_response.txhash;
           delegation1.delegator_address = message.delegator_address;
           delegation1.validator_address = message.validator_src_address;
-          delegation1.amount = (Number(message.amount[0].amount)*(-1))/1000000;
+          delegation1.amount = (Number(message.amount.amount)*(-1))/1000000;
           delegation1.created_at = new Date(txData.tx_response.timestamp);
+          delegation1.type = CONST_DELEGATE_TYPE.REDELEGATE;
           // TODO: Write delegation to influxdb
           this.influxDbClient.writeDelegation(
             delegation1.delegator_address,
@@ -656,14 +661,16 @@ export class TaskService {
             '',
             delegation1.amount,
             delegation1.tx_hash,
-            delegation1.created_at
+            delegation1.created_at,
+            delegation1.type
           );
           let delegation2 = new Delegation();
           delegation2.tx_hash = txData.tx_response.txhash;
           delegation2.delegator_address = message.delegator_address;
           delegation2.validator_address = message.validator_dst_address;
-          delegation2.amount = Number(message.amount[0].amount)/1000000;
+          delegation2.amount = Number(message.amount.amount)/1000000;
           delegation2.created_at = new Date(txData.tx_response.timestamp);
+          delegation2.type = CONST_DELEGATE_TYPE.REDELEGATE;
           // TODO: Write delegation to influxdb
           this.influxDbClient.writeDelegation(
             delegation2.delegator_address,
@@ -671,7 +678,8 @@ export class TaskService {
             '',
             delegation2.amount,
             delegation2.tx_hash,
-            delegation2.created_at
+            delegation2.created_at,
+            delegation2.type
           );
           try {
             await this.delegationRepository.save(delegation1);

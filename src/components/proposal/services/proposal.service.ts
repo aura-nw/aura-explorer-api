@@ -5,6 +5,7 @@ import { plainToClass } from 'class-transformer';
 import { lastValueFrom } from 'rxjs';
 import {
   AkcLogger,
+  CONST_DELEGATE_TYPE,
   CONST_PROPOSAL_VOTE_OPTION,
   RequestContext,
 } from '../../../shared';

@@ -4,7 +4,6 @@ import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('delegations')
 export class Delegation extends BaseEntityIncrementId {
-  @Unique('delegator_address', ['delegator_address'])
   @Column()
   delegator_address: string;
 
@@ -19,4 +18,7 @@ export class Delegation extends BaseEntityIncrementId {
 
   @Column()
   tx_hash: string;
+
+  @Column()
+  type: string;
 }

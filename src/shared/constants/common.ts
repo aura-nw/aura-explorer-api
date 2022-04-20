@@ -63,3 +63,9 @@ export enum CONST_PUBKEY_ADDR {
   AURAVALCONS = 'auravalcons',
   AURA = 'aura',
 }
+
+export enum CONST_DELEGATE_TYPE {
+  DELEGATE = 'Delegate',
+  UNDELEGATE = 'Undelegate',
+  REDELEGATE = 'Redelegate'
+}
