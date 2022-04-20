@@ -36,7 +36,10 @@ export enum CONST_CHAR {
 export enum CONST_MSG_TYPE {
   MSG_VOTE = 'MsgVote',
   MSG_SUBMIT_PROPOSAL = 'MsgSubmitProposal',
-  MSG_DEPOSIT = 'MsgDeposit'
+  MSG_DEPOSIT = 'MsgDeposit',
+  MSG_DELEGATE = 'MsgDelegate',
+  MSG_UNDELEGATE = 'MsgUndelegate',
+  MSG_REDELEGATE = 'MsgBeginRedelegate'
 }
 
 export enum CONST_PROPOSAL_TYPE {
@@ -59,4 +62,10 @@ export enum CONST_NAME_ASSETS {
 export enum CONST_PUBKEY_ADDR {
   AURAVALCONS = 'auravalcons',
   AURA = 'aura',
+}
+
+export enum CONST_DELEGATE_TYPE {
+  DELEGATE = 'Delegate',
+  UNDELEGATE = 'Undelegate',
+  REDELEGATE = 'Redelegate'
 }
