@@ -709,11 +709,6 @@ export class TaskService {
                 continue;
               }
             }
-            const events = txData.tx_response.logs[0].events;
-            const rewardEvent = events.find(i => i.type === 'withdraw_rewards');
-            const attributes = rewardEvent.attributes;
-            const findAmount = attributes.find(i => i.key = 'amount');
-            reward.amount = Number(findAmount.value.replace('uaura', ''));
           }
           reward.tx_hash = txData.tx_response.txhash;
           reward.created_at = new Date(txData.tx_response.timestamp);
