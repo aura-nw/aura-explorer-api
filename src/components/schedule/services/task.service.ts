@@ -699,7 +699,7 @@ export class TaskService {
               const events = txData.tx_response.logs[i].events;
               const rewardEvent = events.find(i => i.type === 'withdraw_rewards');
               const attributes = rewardEvent.attributes;
-              const amount = attributes[0].amount;
+              const amount = attributes[0].value;
               const findValidator = attributes.find(i => i.value = message.validator_address);
               if (findValidator) {
                 reward.amount = Number(amount.replace('uaura', ''));
