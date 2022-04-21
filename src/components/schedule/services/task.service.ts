@@ -703,9 +703,6 @@ export class TaskService {
               const findValidator = attributes.find(i => i.value = message.validator_address);
               if (findValidator) {
                 reward.amount = Number(amount.replace('uaura', ''));
-                break;
-              } else {
-                continue;
               }
             }
           }
