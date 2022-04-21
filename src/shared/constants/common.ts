@@ -39,7 +39,8 @@ export enum CONST_MSG_TYPE {
   MSG_DEPOSIT = 'MsgDeposit',
   MSG_DELEGATE = 'MsgDelegate',
   MSG_UNDELEGATE = 'MsgUndelegate',
-  MSG_REDELEGATE = 'MsgBeginRedelegate'
+  MSG_REDELEGATE = 'MsgBeginRedelegate',
+  MSG_WITHDRAW_DELEGATOR_REWARD = 'MsgWithdrawDelegatorReward'
 }
 
 export enum CONST_PROPOSAL_TYPE {

@@ -26,6 +26,8 @@ import { TransactionRepository } from '../repositories/transaction.repository';
 import { ValidatorRepository } from '../repositories/validator.repository';
 import { InfluxDBClient } from './influxdb-client';
 import { ProposalDepositRepository } from '../../../components/proposal/repositories/proposal-deposit.repository';
+import { DelegatorReward } from '../../../shared/entities/delegator-reward.entity';
+import { DelegatorRewardRepository } from '../repositories/delegator-reward.repository';
 
 
 
@@ -52,6 +54,7 @@ export class TaskService {
     private missedBlockRepository: MissedBlockRepository,
     private blockSyncErrorRepository: BlockSyncErrorRepository,
     private proposalDepositRepository: ProposalDepositRepository,
+    private delegatorRewardRepository: DelegatorRewardRepository,
     @InjectSchedule() private readonly schedule: Schedule
   ) {
     this.logger.setContext(TaskService.name);
@@ -686,6 +689,26 @@ export class TaskService {
             await this.delegationRepository.save(delegation2);
           } catch(error) {
             this.logger.error(null, `Delegation is already existed!`);
+          }
+        } else if (txType === CONST_MSG_TYPE.MSG_WITHDRAW_DELEGATOR_REWARD) {
+          let reward = new DelegatorReward();
+          reward.delegator_address = message.delegator_address;
+          reward.validator_address = message.validator_address;
+          reward.amount = 0;
+          if (txData.tx_response.logs && txData.tx_response.logs.length > 0
+            && txData.tx_response.logs[0].events && txData.tx_response.logs[0].events.length > 0) {
+            const events = txData.tx_response.logs[0].events;
+            const rewardEvent = events.find(i => i.type === 'withdraw_rewards');
+            const attributes = rewardEvent.attributes;
+            const findAmount = attributes.find(i => i.key = 'amount');
+            reward.amount = Number(findAmount.value.replace('uaura', ''));
+          }
+          reward.tx_hash = txData.tx_response.txhash;
+          reward.created_at = new Date(txData.tx_response.timestamp);
+          try {
+            await this.delegatorRewardRepository.save(reward);
+          } catch(error) {
+            this.logger.error(null, `Delegator reward is already existed!`);
           }
         }
       }

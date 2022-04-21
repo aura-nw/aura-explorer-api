@@ -15,6 +15,7 @@ import { TransactionModule } from '../transaction/transaction.module';
 import { ValidatorController } from './controllers/validator.controller';
 import { ValidatorRepository } from './repositories/validator.repository';
 import { ValidatorService } from './services/validator.service';
+import { DelegatorRewardRepository } from '../schedule/repositories/delegator-reward.repository';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ValidatorService } from './services/validator.service';
       BlockRepository,
       ProposalRepository,
       ProposalVoteRepository,
+      DelegatorRewardRepository
     ]),
     HttpModule,
     ConfigModule,
