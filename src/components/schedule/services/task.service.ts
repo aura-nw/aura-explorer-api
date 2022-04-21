@@ -540,7 +540,7 @@ export class TaskService {
           let findVote = await this.proposalVoteRepository.findOne({
             where: { proposal_id: proposalId, voter: voter }
           });
-          if(findVote) {
+          if (findVote) {
             findVote.option = option;
             findVote.updated_at = new Date(txData.tx_response.timestamp);
             await this.proposalVoteRepository.save(findVote);
@@ -981,18 +981,24 @@ export class TaskService {
    */
   threadProcess(currentBlk: number, latestBlk: number) {
     let loop = 0;
-    let blockNotSync = latestBlk - currentBlk;
-    if (blockNotSync > this.threads) {
-      loop = this.threads;
-    } else {
-      loop = blockNotSync;
-    }
-
-    // Create 10 thread to sync data
     let height = 0;
-    for (let i = 1; i <= loop; i++) {
-      height = currentBlk + i;
-      this.scheduleTimeoutJob(height);
+    try {
+      let blockNotSync = latestBlk - currentBlk;
+      if (blockNotSync > 0) {
+        if (blockNotSync > this.threads) {
+          loop = this.threads;
+        } else {
+          loop = blockNotSync;
+        }
+
+        // Create 10 thread to sync data      
+        for (let i = 1; i <= loop; i++) {
+          height = currentBlk + i;
+          this.scheduleTimeoutJob(height);
+        }
+      }
+    } catch (error) {
+      this.logger.log(null, `Call threadProcess method error: $${error.message}`);
     }
 
     // If current block not equal latest block when the symtem will call workerProcess method    
@@ -1021,6 +1027,7 @@ export class TaskService {
 
     if (height > 0) {
       currentBlk = height;
+
     } else {
       try {
         //Get current height
