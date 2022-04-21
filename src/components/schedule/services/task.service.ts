@@ -566,7 +566,7 @@ export class TaskService {
             const events = txData.tx_response.logs[0].events;
             const submitEvent = events.find(i => i.type === 'submit_proposal');
             const attributes = submitEvent.attributes;
-            const findId = attributes.find(i => i.key = 'proposal_id');
+            const findId = attributes.find(i => i.key === 'proposal_id');
             historyProposal.proposal_id = Number(findId.value);
           }
           historyProposal.recipient = '';
@@ -700,7 +700,7 @@ export class TaskService {
               const rewardEvent = events.find(i => i.type === 'withdraw_rewards');
               const attributes = rewardEvent.attributes;
               const amount = attributes[0].value;
-              const findValidator = attributes.find(i => i.value = message.validator_address);
+              const findValidator = attributes.find(i => i.value === message.validator_address);
               if (findValidator) {
                 reward.amount = Number(amount.replace('uaura', ''));
               }
