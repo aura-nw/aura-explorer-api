@@ -695,8 +695,20 @@ export class TaskService {
           reward.delegator_address = message.delegator_address;
           reward.validator_address = message.validator_address;
           reward.amount = 0;
-          if (txData.tx_response.logs && txData.tx_response.logs.length > 0
-            && txData.tx_response.logs[0].events && txData.tx_response.logs[0].events.length > 0) {
+          if (txData.tx_response.logs && txData.tx_response.logs.length > 0) {
+            for (let i = 0; i < txData.tx_response.logs.length; i ++) {
+              const events = txData.tx_response.logs[i].events;
+              const rewardEvent = events.find(i => i.type === 'withdraw_rewards');
+              const attributes = rewardEvent.attributes;
+              const amount = attributes[0].value;
+              const findValidator = attributes.find(i => i.value = message.validator_address);
+              if (findValidator) {
+                reward.amount = Number(amount.replace('uaura', ''));
+                break;
+              } else {
+                continue;
+              }
+            }
             const events = txData.tx_response.logs[0].events;
             const rewardEvent = events.find(i => i.type === 'withdraw_rewards');
             const attributes = rewardEvent.attributes;
