@@ -176,4 +176,24 @@ export class ProposalController {
 
     return { data: proposalVoteTally, meta: {} };
   }
+
+  @Get('delegations/:delegatorAddress')
+  @ApiOperation({
+    summary: 'Get delegations by address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getDelegationsByDelegatorAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('delegatorAddress') delegatorAddress: string,
+  ): Promise<any> {
+    const result = await this.proposalService.getDelegationsByDelegatorAddress(
+      ctx,
+      delegatorAddress
+    );
+    return { data: result, meta: {} };
+  }
 }

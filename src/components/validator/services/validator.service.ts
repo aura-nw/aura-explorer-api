@@ -20,6 +20,7 @@ import { DelegatorOutput } from '../dtos/delegator-output';
 import console from 'console';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
+import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
 
 @Injectable()
 export class ValidatorService {
@@ -36,6 +37,7 @@ export class ValidatorService {
     private blockRepository: BlockRepository,
     private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
+    private delegatorRewardRepository: DelegatorRewardRepository,
     private serviceUtil : ServiceUtil
   ) {
     this.logger.setContext(ValidatorService.name);
@@ -181,7 +183,14 @@ export class ValidatorService {
     const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
     result.available_balance = 0;
     if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
-      result.available_balance = balanceData.balances[0].amount;
+      result.available_balance = Number(balanceData.balances[0].amount);
+    }
+    result.claim_reward = 0;
+    const withdrawRewards = await this.delegatorRewardRepository.find({
+      where: { delegator_address: delegatorAddress }
+    });
+    if (withdrawRewards.length > 0) {
+      result.claim_reward = withdrawRewards.reduce((a,curr) => a + curr.amount, 0);
     }
     //get delegations
     const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
@@ -195,7 +204,7 @@ export class ValidatorService {
       for (let i = 0; i < delegationsData.length; i++) {
         let delegation: any = {};
         let item = delegationsData[i];
-        delegation.amount_staked = item.balance.amount;
+        delegation.amount_staked = Number(item.balance.amount);
         delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
         if (rewardData && rewardData?.rewards && rewardData?.rewards.length > 0) {
@@ -227,8 +236,8 @@ export class ValidatorService {
   * @param delegatorAddress 
   * @returns 
   */
-  async getDelegators(operatorAddress: string, delegatorAddress: string) {
-    const delegators = await this.validatorRepository.getDelegators(operatorAddress, delegatorAddress);
+  async getDelegators(operatorAddr: string, delegatorAddr: string) {
+    const delegators = await this.validatorRepository.getDelegators(operatorAddr, delegatorAddr);
     if (delegators.length > 0) {
       const delegatorOutputs = plainToClass(DelegatorOutput, delegators, {
         excludeExtraneousValues: true,
@@ -245,9 +254,9 @@ export class ValidatorService {
    * @param validatorAddr 
    * @returns 
    */
-  async unbondingDelegations(ctx: RequestContext, validatorAddr: string){
+  async unbondingDelegations(ctx: RequestContext, delegatorAddr: string){
     const api = this.configService.get<string>('node.api');
-    const params = `/cosmos/staking/v1beta1/validators/${validatorAddr}/unbonding_delegations`;
+    const params = `/cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
     const responses = await this.getDataAPI(api, params, ctx);
     let unbonding_responses = [];
     if(responses){

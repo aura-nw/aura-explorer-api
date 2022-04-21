@@ -5,6 +5,7 @@ import { plainToClass } from 'class-transformer';
 import { lastValueFrom } from 'rxjs';
 import {
   AkcLogger,
+  CONST_DELEGATE_TYPE,
   CONST_PROPOSAL_VOTE_OPTION,
   RequestContext,
 } from '../../../shared';
@@ -15,14 +16,16 @@ import { Proposal } from '../../../shared/entities/proposal.entity';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
 import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
-import { In } from 'typeorm';
 import { HistoryProposalRepository } from '../repositories/history-proposal.reponsitory';
 import { ProposalVoteByOptionInput } from '../dtos/proposal-vote-by-option-input.dto';
 import { ProposalVoteByValidatorInput } from '../dtos/proposal-vote-by-validator-input.dto';
 import { ProposalDepositRepository } from '../repositories/proposal-deposit.repository';
+import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 
 @Injectable()
 export class ProposalService {
+  isSync = false;
+
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
@@ -33,6 +36,7 @@ export class ProposalService {
     private validatorRepository: ValidatorRepository,
     private historyProposalRepository: HistoryProposalRepository,
     private proposalDepositRepository: ProposalDepositRepository,
+    private delegationRepository: DelegationRepository
   ) {
     this.logger.setContext(ProposalService.name);
   }
@@ -188,10 +192,20 @@ export class ProposalService {
   @Interval(500)
   async handleInterval() {
     const api = this.configService.get<string>('node.api');
+    // check status
+    if (this.isSync) {
+      this.logger.log(null, 'already syncing proposals... wait');
+      return;
+    } else {
+      this.logger.log(null, 'fetching data proposals...');
+    }
     try {
       //fetching proposals from node
       const params = `/cosmos/gov/v1beta1/proposals`;
       const data = await this.getDataAPI(api, params);
+
+      this.isSync = true;
+
       if (data && data.proposals && data.proposals.length > 0) {
         for (let i = 0; i < data.proposals.length; i++) {
           const item: any = data.proposals[i];
@@ -248,10 +262,27 @@ export class ProposalService {
         //delete proposal failed
         const listId = data.proposals.map((i) => Number(i.proposal_id));
         await this.proposalRepository.deleteProposalsByListId(listId);
+        this.isSync = false;
       }
     } catch (error) {
       this.logger.error(error, `Sync proposals error`);
+      this.isSync = false;
     }
+  }
+
+  async getDelegationsByDelegatorAddress(
+    ctx: RequestContext,
+    delegatorAddress: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getDelegationsByDelegatorAddress.name} was called!`);
+    const api = this.configService.get<string>('node.api');
+    //get delegation first
+    const result = await this.delegationRepository.findOne({
+      where: { delegator_address: delegatorAddress },
+      order: { created_at: 'ASC' }
+    });
+
+    return { result: result };
   }
 
   async getDataAPI(api, params) {
