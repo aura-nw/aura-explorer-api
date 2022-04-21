@@ -31,8 +31,9 @@ import { ProposalDepositRepository } from '../../../components/proposal/reposito
 
 @Injectable()
 export class TaskService {
-  isSyncing: boolean;
-  isSyncValidator: boolean;
+  isSyncing = false;
+  isSyncValidator = false;
+  isSyncMissBlock = false;
   currentBlock: number;
   threads = 0;
   influxDbClient: InfluxDBClient;
@@ -55,8 +56,6 @@ export class TaskService {
     @InjectSchedule() private readonly schedule: Schedule
   ) {
     this.logger.setContext(TaskService.name);
-    this.isSyncing = false;
-    this.isSyncValidator = false;
     this.getCurrentStatus();
 
     this.influxDbClient = new InfluxDBClient(
@@ -316,7 +315,7 @@ export class TaskService {
   @Interval(500)
   async syncValidator() {
     // check status
-    if (this.isSyncing) {
+    if (this.isSyncValidator) {
       this.logger.log(null, 'already syncing validator... wait');
       return;
     } else {
@@ -608,38 +607,42 @@ export class TaskService {
   @Interval(500)
   async syncMissedBlock() {
     // check status
-    if (this.isSyncing) {
+    if (this.isSyncMissBlock) {
       this.logger.log(null, 'already syncing validator... wait');
       return;
     } else {
       this.logger.log(null, 'fetching data validator...');
     }
 
-    const api = this.configService.get<string>('node.api');
+    try {
+      const api = this.configService.get<string>('node.api');
 
-    // get blocks latest
-    const paramsBlockLatest = `/blocks/latest`;
-    const blockLatestData = await this.getDataAPI(api, paramsBlockLatest);
+      // get blocks latest
+      const paramsBlockLatest = `/blocks/latest`;
+      const blockLatestData = await this.getDataAPI(api, paramsBlockLatest);
 
-    if (blockLatestData) {
-      const heightLatest = blockLatestData.block.header.height;
-      // get block by height
-      const paramsBlock = `/blocks/${heightLatest}`;
-      const blockData = await this.getDataAPI(api, paramsBlock);
+      if (blockLatestData) {
+        this.isSyncMissBlock = true;
 
-      // get validatorsets
-      const paramsValidatorsets = `/cosmos/base/tendermint/v1beta1/validatorsets/${heightLatest}`;
-      const validatorsetsData = await this.getDataAPI(api, paramsValidatorsets);
+        const heightLatest = blockLatestData.block.header.height;
+        // get block by height
+        const paramsBlock = `/blocks/${heightLatest}`;
+        const blockData = await this.getDataAPI(api, paramsBlock);
 
-      if (validatorsetsData) {
-        for (let key in validatorsetsData.validators) {
-          const data = validatorsetsData.validators[key];
-          const address = this.getAddressFromPubkey(data.pub_key.key);
+        // get validatorsets
+        const paramsValidatorsets = `/cosmos/base/tendermint/v1beta1/validatorsets/${heightLatest}`;
+        const validatorsetsData = await this.getDataAPI(api, paramsValidatorsets);
 
-          if (blockData) {
-            const signingInfo = blockData.block.last_commit.signatures.filter(e => e.validator_address === address);
-            if (signingInfo.length <= 0) {
-              try {
+        if (validatorsetsData) {         
+
+          for (let key in validatorsetsData.validators) {
+            const data = validatorsetsData.validators[key];
+            const address = this.getAddressFromPubkey(data.pub_key.key);
+
+            if (blockData) {
+              const signingInfo = blockData.block.last_commit.signatures.filter(e => e.validator_address === address);
+              if (signingInfo.length <= 0) {
+
                 // create missed block
                 const newMissedBlock = new MissedBlock();
                 newMissedBlock.height = blockData.block.header.height;
@@ -657,14 +660,17 @@ export class TaskService {
                   newMissedBlock.validator_address,
                   newMissedBlock.height,
                 );
-              } catch (error) {
-                this.logger.error(null, `${error.name}: ${error.message}`);
-                this.logger.error(null, `${error.stack}`);
+
               }
             }
-          }
+          }         
         }
       }
+      this.isSyncMissBlock = false;
+    } catch (error) {
+      this.logger.error(null, `${error.name}: ${error.message}`);
+      this.logger.error(null, `${error.stack}`);
+      this.isSyncMissBlock = false;
     }
   }
 
@@ -878,7 +884,7 @@ export class TaskService {
   scheduleTimeoutJob(height: number) {
     this.logger.log(null, `Class ${TaskService.name}, call scheduleTimeoutJob method with prameters: {currentBlk: ${height}}`);
 
-    this.schedule.scheduleTimeoutJob(`schedule_sync_block_${uuidv4()}`, 10, async () => {
+    this.schedule.scheduleTimeoutJob(`schedule_sync_block_${uuidv4()}`, 100, async () => {
       //Update code sync data
       await this.handleSyncData(height);
 
@@ -977,7 +983,7 @@ export class TaskService {
   /**
    * blockSyncError
    */
-  @Interval(1000)
+  @Interval(2000)
   async blockSyncError() {
     const result: BlockSyncError = await this.blockSyncErrorRepository.findOne({ order: { id: 'DESC' } });
     if (result) {

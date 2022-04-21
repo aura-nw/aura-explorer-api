@@ -23,6 +23,8 @@ import { ProposalDepositRepository } from '../repositories/proposal-deposit.repo
 
 @Injectable()
 export class ProposalService {
+  isSync = false;
+
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
@@ -188,10 +190,20 @@ export class ProposalService {
   @Interval(500)
   async handleInterval() {
     const api = this.configService.get<string>('node.api');
+    // check status
+    if (this.isSync) {
+      this.logger.log(null, 'already syncing proposals... wait');
+      return;
+    } else {
+      this.logger.log(null, 'fetching data proposals...');
+    }
     try {
       //fetching proposals from node
       const params = `/cosmos/gov/v1beta1/proposals`;
       const data = await this.getDataAPI(api, params);
+
+      this.isSync = true;
+
       if (data && data.proposals && data.proposals.length > 0) {
         for (let i = 0; i < data.proposals.length; i++) {
           const item: any = data.proposals[i];
@@ -248,9 +260,11 @@ export class ProposalService {
         //delete proposal failed
         const listId = data.proposals.map((i) => Number(i.proposal_id));
         await this.proposalRepository.deleteProposalsByListId(listId);
+        this.isSync = false;
       }
     } catch (error) {
       this.logger.error(error, `Sync proposals error`);
+      this.isSync = false;
     }
   }
 
