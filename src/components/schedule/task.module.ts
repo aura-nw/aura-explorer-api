@@ -17,6 +17,7 @@ import { HistoryProposalRepository } from '../proposal/repositories/history-prop
 import { ScheduleModule } from 'nest-schedule';
 import { BlockSyncErrorRepository } from './repositories/block-sync-error.repository';
 import { ProposalDepositRepository } from '../proposal/repositories/proposal-deposit.repository';
+import { DelegatorRewardRepository } from './repositories/delegator-reward.repository';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { ProposalDepositRepository } from '../proposal/repositories/proposal-dep
       MissedBlockRepository,
       HistoryProposalRepository,
       BlockSyncErrorRepository,
-      ProposalDepositRepository
+      ProposalDepositRepository,
+      DelegatorRewardRepository
     ]),
     ConfigModule,
     ScheduleModule.register()
