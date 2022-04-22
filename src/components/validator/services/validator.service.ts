@@ -222,6 +222,14 @@ export class ValidatorService {
           //set name for item
           delegation.validator_name = validator.title;
         }
+        //set reward by validator address and delegator address
+        const rewards = await this.delegatorRewardRepository.find({
+          where: { delegator_address: delegatorAddress, validator_address: item.delegation.validator_address }
+        });
+        delegation.reward = 0;
+        if(rewards.length > 0) {
+          delegation.reward = rewards.reduce((a,curr) => a + curr.amount, 0);
+        }
         delegations.push(delegation);
       }
     }
