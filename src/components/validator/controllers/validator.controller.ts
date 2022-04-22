@@ -21,6 +21,7 @@ import {
 } from '../../../shared';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
+import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
 import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
 import { DelegatorOutput } from '../dtos/delegator-output';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
@@ -168,19 +169,20 @@ export class ValidatorController {
     return { data: result, meta: {} };
   }
 
-  @Get(':validatorAddress/delegatorByValidatorAddr')
+  @Get(':validatorAddress/delegator-by-validator-addr')
   @ApiOperation({
     summary: 'Get list delegator',
   })
   @ApiResponse({
-    status: HttpStatus.OK
+    status: HttpStatus.OK, //DelegatorByValidatorAddrOutputDto
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @UseInterceptors(CacheInterceptor)
-  async delegatorByValidatorAddr(
+  async getDelegatorByValidatorAddr(
     @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
     @Query() paras: DelegatorByValidatorAddrParamsDto,
   ){
-    return await this.validatorService.getDelegatorByValidatorAddr(paras);
+    return await this.validatorService.getDelegatorByValidatorAddr(ctx, validatorAddress, paras);
   }
 }

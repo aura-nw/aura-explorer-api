@@ -3,10 +3,6 @@ import { Transform } from "class-transformer";
 import { IsNumber, IsString, IsNotEmpty } from "class-validator";
 
 export class DelegatorByValidatorAddrParamsDto{
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty({message: 'Validator address is required'})
-    validatorAddress: string;
 
     @ApiPropertyOptional({
         description: 'Optional, defaults to 5',
