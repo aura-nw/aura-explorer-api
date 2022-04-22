@@ -281,10 +281,10 @@ export class ValidatorService {
    * @param offset 
    */
   async getDelegatorByValidatorAddr(ctx: RequestContext, validatorAddress: string,params : DelegatorByValidatorAddrParamsDto) {
-    const {pageResults, count} = await this.validatorRepository.getDelegatorByValidatorAddr(validatorAddress, params.limit, params.offset);
+    const {pageResults, total} = await this.validatorRepository.getDelegatorByValidatorAddr(validatorAddress, params.limit, params.offset);
      const responses = plainToClass(DelegatorByValidatorAddrOutputDto, pageResults, {
       excludeExtraneousValues: true,
     });
-    return { data: responses, count};
+    return { data: responses, total};
   }
 }
