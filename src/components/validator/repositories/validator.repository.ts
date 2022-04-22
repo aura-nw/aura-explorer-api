@@ -29,4 +29,20 @@ export class ValidatorRepository extends Repository<Validator> {
             FROM validators val WHERE val.OPERATOR_ADDRESS!=? AND val.status=3`;
         return await this.query(sql, [delegatorAddr, operatorAddr]);
     }
+
+    /**
+     * getDelegatorByValidatorAddr
+     * @param validatorAddress 
+     * @param limit 
+     * @param offset 
+     * @returns 
+     */
+    async getDelegatorByValidatorAddr(validatorAddress: string, limit: number, offset: number){
+        limit = (offset === 0)? limit : limit * offset;
+        const sqlSelect = `SELECT delegator_address, SUM(Amount) AS amount FROM delegations WHERE validator_address=? GROUP BY delegator_address ORDER BY SUM(Amount) DESC LIMIT ${limit} OFFSET ${offset}`;
+        const sqlCount = `SELECT COUNT(*) AS total FROM (SELECT COUNT(*) AS total FROM delegations WHERE validator_address=? GROUP BY delegator_address) tbCount`;
+        const pageResults = await this.query(sqlSelect, [validatorAddress]);
+        const count = await this.query(sqlCount, [validatorAddress]);
+        return {pageResults, count};
+    }
 }
