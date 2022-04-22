@@ -277,10 +277,17 @@ export class ProposalService {
     this.logger.log(ctx, `${this.getDelegationsByDelegatorAddress.name} was called!`);
     const api = this.configService.get<string>('node.api');
     //get delegation first
-    const result = await this.delegationRepository.findOne({
+    let result: any = {};
+    result = await this.delegationRepository.findOne({
       where: { delegator_address: delegatorAddress },
       order: { created_at: 'ASC' }
     });
+    const stakeData = await this.delegationRepository.find({
+      where: { delegator_address: delegatorAddress }
+    }); 
+    if (stakeData.length > 0 && stakeData.reduce((a, curr) => a + curr.amount, 0) <= 0) {
+      result = {};
+    }
 
     return { result: result };
   }
