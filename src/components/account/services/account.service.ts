@@ -18,7 +18,7 @@ export class AccountService {
     private readonly logger: AkcLogger,
     private httpService: HttpService,
     private configService: ConfigService,
-    private validatorRepository: ValidatorRepository,
+    private validatorRepository: ValidatorRepository
   ) {
     this.logger.setContext(AccountService.name);
   }
@@ -110,49 +110,53 @@ export class AccountService {
     const unbondingData = await this.getDataAPI(api, paramsUnbonding, ctx);
     let unbondingAmount = 0;
     if (unbondingData) {
-      accountOutput.unbonding_delegations = new Array(unbondingData.unbonding_responses.length);
+      accountOutput.unbonding_delegations = [];
       unbondingData.unbonding_responses.forEach((data, idx) => {
-        const validator_address = data.validator_address;
-        const validator = validatorData.filter(e => e.operator_address === validator_address);
-        const unbonding = new AccountUnbonding();
+        data.entries?.forEach(item => {
+          const validator_address = data.validator_address;
+          const validator = validatorData.filter(e => e.operator_address === validator_address);
+          const unbonding = new AccountUnbonding();
 
-        if (validator.length > 0) {
-          unbonding.validator_name = validator[0].title;
-          unbonding.validator_address = validator_address;
-        }
-        unbonding.amount = this.changeUauraToAura(data.entries[0].balance);
-        unbonding.completion_time = data.entries[0].completion_time;
-        unbondingAmount += parseInt(data.entries[0].balance);
+          if (validator.length > 0) {
+            unbonding.validator_name = validator[0].title;
+            unbonding.validator_address = validator_address;
+          }
+          unbonding.amount = this.changeUauraToAura(item.balance);
+          unbonding.completion_time = item.completion_time;
+          unbondingAmount += parseInt(item.balance);
 
-        accountOutput.unbonding_delegations[idx] = unbonding;
+          accountOutput.unbonding_delegations.push(unbonding);
+        });
+        accountOutput.unbonding = this.changeUauraToAura(unbondingAmount);
       });
-      accountOutput.unbonding = this.changeUauraToAura(unbondingAmount);
     }
 
     // get redelegations
     const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
     const redelegationsData = await this.getDataAPI(api, paramsRedelegations, ctx);
     if (redelegationsData) {
-      accountOutput.redelegations = new Array(redelegationsData.redelegation_responses.length);
+      accountOutput.redelegations = [];
       redelegationsData.redelegation_responses.forEach((data, idx) => {
-        const validator_src_address = data.redelegation.validator_src_address;
-        const validator_dst_address = data.redelegation.validator_dst_address;
-        const validatorSrc = validatorData.filter(e => e.operator_address === validator_src_address);
-        const validatorDst = validatorData.filter(e => e.operator_address === validator_dst_address);
-        const redelegation = new AccountRedelegation();
+        data.entries?.forEach(item => {
+          const validator_src_address = data.redelegation.validator_src_address;
+          const validator_dst_address = data.redelegation.validator_dst_address;
+          const validatorSrc = validatorData.filter(e => e.operator_address === validator_src_address);
+          const validatorDst = validatorData.filter(e => e.operator_address === validator_dst_address);
+          const redelegation = new AccountRedelegation();
 
-        if (validatorSrc.length > 0) {
-          redelegation.validator_src_name = validatorSrc[0].title;
-          redelegation.validator_src_address = validator_src_address;
-        }
-        if (validatorDst.length > 0) {
-          redelegation.validator_dst_name = validatorDst[0].title;
-          redelegation.validator_dst_address = validator_dst_address;
-        }
-        redelegation.amount = this.changeUauraToAura(data.entries[0].balance);
-        redelegation.completion_time = data.entries[0].redelegation_entry.completion_time;
+          if (validatorSrc.length > 0) {
+            redelegation.validator_src_name = validatorSrc[0].title;
+            redelegation.validator_src_address = validator_src_address;
+          }
+          if (validatorDst.length > 0) {
+            redelegation.validator_dst_name = validatorDst[0].title;
+            redelegation.validator_dst_address = validator_dst_address;
+          }
+          redelegation.amount = this.changeUauraToAura(item.balance);
+          redelegation.completion_time = item.redelegation_entry.completion_time;
 
-        accountOutput.redelegations[idx] = redelegation;
+          accountOutput.redelegations.push(redelegation);
+        })
       });
     }
 
@@ -175,7 +179,7 @@ export class AccountService {
     const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
     let delegatedVesting = 0;
     accountOutput.delegatable_vesting = '0';
-    
+
     if (authInfoData) {
       const baseVesting = authInfoData.result.value?.base_vesting_account;
       if (baseVesting !== undefined) {

@@ -29,4 +29,8 @@ export class DelegatorOutput {
     @Expose()
     @ApiProperty()
     jailed: boolean;
+
+    @Expose()
+    @ApiProperty()
+    amount_staked: number;
 }

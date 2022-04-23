@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  Post,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,6 +21,8 @@ import {
 } from '../../../shared';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
+import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
+import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
 import { DelegatorOutput } from '../dtos/delegator-output';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
@@ -164,5 +167,22 @@ export class ValidatorController {
     const result = await this.validatorService.getDelegations(ctx, delegatorAddress);
 
     return { data: result, meta: {} };
+  }
+
+  @Get(':validatorAddress/delegator-by-validator-addr')
+  @ApiOperation({
+    summary: 'Get list delegator',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK, //DelegatorByValidatorAddrOutputDto
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getDelegatorByValidatorAddr(
+    @ReqContext() ctx: RequestContext,
+    @Param('validatorAddress') validatorAddress: string,
+    @Query() paras: DelegatorByValidatorAddrParamsDto,
+  ){
+    return await this.validatorService.getDelegatorByValidatorAddr(ctx, validatorAddress, paras);
   }
 }

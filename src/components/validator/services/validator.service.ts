@@ -21,6 +21,8 @@ import console from 'console';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
 import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
+import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
+import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
 
 @Injectable()
 export class ValidatorService {
@@ -38,7 +40,7 @@ export class ValidatorService {
     private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private delegatorRewardRepository: DelegatorRewardRepository,
-    private serviceUtil : ServiceUtil
+    private serviceUtil: ServiceUtil
   ) {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
@@ -190,7 +192,7 @@ export class ValidatorService {
       where: { delegator_address: delegatorAddress }
     });
     if (withdrawRewards.length > 0) {
-      result.claim_reward = withdrawRewards.reduce((a,curr) => a + curr.amount, 0);
+      result.claim_reward = withdrawRewards.reduce((a, curr) => a + curr.amount, 0);
     }
     //get delegations
     const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
@@ -222,6 +224,14 @@ export class ValidatorService {
           //set name for item
           delegation.validator_name = validator.title;
         }
+        //set reward by validator address and delegator address
+        const rewards = await this.delegatorRewardRepository.find({
+          where: { delegator_address: delegatorAddress, validator_address: item.delegation.validator_address }
+        });
+        delegation.reward = 0;
+        if(rewards.length > 0) {
+          delegation.reward = rewards.reduce((a,curr) => a + curr.amount, 0);
+        }
         delegations.push(delegation);
       }
     }
@@ -230,12 +240,12 @@ export class ValidatorService {
     return result;
   }
 
- /**
-  * getDelegators
-  * @param operatorAddress 
-  * @param delegatorAddress 
-  * @returns 
-  */
+  /**
+   * getDelegators
+   * @param operatorAddress 
+   * @param delegatorAddress 
+   * @returns 
+   */
   async getDelegators(operatorAddr: string, delegatorAddr: string) {
     const delegators = await this.validatorRepository.getDelegators(operatorAddr, delegatorAddr);
     if (delegators.length > 0) {
@@ -254,21 +264,35 @@ export class ValidatorService {
    * @param validatorAddr 
    * @returns 
    */
-  async unbondingDelegations(ctx: RequestContext, delegatorAddr: string){
+  async unbondingDelegations(ctx: RequestContext, delegatorAddr: string) {
     const api = this.configService.get<string>('node.api');
     const params = `/cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
     const responses = await this.getDataAPI(api, params, ctx);
     let unbonding_responses = [];
-    if(responses){
-      for(let i=0 ; i < responses.unbonding_responses?.length; i++){
-        let unbondingRes: UnbondingDelegationsOutput = {...responses.unbonding_responses[i]};
-        const validator = await this.validatorRepository.findOne({where: {operator_address: unbondingRes.validator_address}});
-        if(validator){
+    if (responses) {
+      for (let i = 0; i < responses.unbonding_responses?.length; i++) {
+        let unbondingRes: UnbondingDelegationsOutput = { ...responses.unbonding_responses[i] };
+        const validator = await this.validatorRepository.findOne({ where: { operator_address: unbondingRes.validator_address } });
+        if (validator) {
           unbondingRes.validator_name = validator.title;
         }
         unbonding_responses.push(unbondingRes);
       }
     }
     return { data: unbonding_responses };
+  }
+
+  /**
+   * getDelegatorByValidatorAddr
+   * @param validatorAddress 
+   * @param limit 
+   * @param offset 
+   */
+  async getDelegatorByValidatorAddr(ctx: RequestContext, validatorAddress: string,params : DelegatorByValidatorAddrParamsDto) {
+    const {pageResults, total} = await this.validatorRepository.getDelegatorByValidatorAddr(validatorAddress, params.limit, params.offset);
+     const responses = plainToClass(DelegatorByValidatorAddrOutputDto, pageResults, {
+      excludeExtraneousValues: true,
+    });
+    return { data: responses, total};
   }
 }
