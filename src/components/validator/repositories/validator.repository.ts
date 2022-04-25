@@ -39,11 +39,11 @@ export class ValidatorRepository extends Repository<Validator> {
      * @returns 
      */
     async getDelegatorByValidatorAddr(validatorAddress: string, limit: number, offset: number){
-        limit = (offset === 0)? limit : limit * offset;
+        offset = limit * offset;
         const sqlSelect = `SELECT delegator_address, SUM(Amount) AS amount FROM delegations WHERE validator_address=? GROUP BY delegator_address ORDER BY SUM(Amount) DESC LIMIT ${limit} OFFSET ${offset}`;
         const sqlCount = `SELECT COUNT(*) AS total FROM (SELECT COUNT(*) AS total FROM delegations WHERE validator_address=? GROUP BY delegator_address) tbCount`;
         const pageResults = await this.query(sqlSelect, [validatorAddress]);
-        const count = await this.query(sqlCount, [validatorAddress]);
-        return {pageResults, count};
+        const count = await this.query(sqlCount, [validatorAddress]).then(t => t[0]);
+        return {pageResults, total: count.total};
     }
 }
