@@ -31,10 +31,9 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
     async getProposalVotesByValidator(request: ProposalVoteByValidatorInput, isLimit: boolean) {
         let params = [];
         let sql = `SELECT v.title AS validator_name, v.acc_address AS validator_address, pv.tx_hash, pv.option, pv.created_at, pv.updated_at, v.operator_address,
-            (@cnt := @cnt + 1) AS 'rank'
+                ROW_NUMBER() OVER(ORDER BY v.power DESC ) as 'rank'
             FROM validators v
-                LEFT JOIN proposal_votes pv ON v.acc_address = pv.voter AND pv.proposal_id = ?
-                CROSS JOIN (SELECT @cnt := 0) AS dummy`;
+                LEFT JOIN proposal_votes pv ON v.acc_address = pv.voter AND pv.proposal_id = ?`;
         params.push(request.proposalId);
         if (request.option !== '') {
             if (request.option === 'null') {
@@ -44,7 +43,6 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
                 params.push(request.option);
             }
         }
-        sql += ` ORDER BY pv.updated_at DESC`;
         if (isLimit) {
             sql += ` LIMIT ? OFFSET ?`;
             params.push(request.limit);
