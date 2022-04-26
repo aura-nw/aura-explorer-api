@@ -1,26 +1,23 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Interval } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom } from 'rxjs';
-import {
-  AkcLogger,
-  CONST_DELEGATE_TYPE,
-  CONST_PROPOSAL_VOTE_OPTION,
-  RequestContext,
-} from '../../../shared';
-import { ProposalOutput } from '../dtos/proposal-output.dto';
-import { ProposalRepository } from '../repositories/proposal.repository';
-import { Interval } from '@nestjs/schedule';
-import { Proposal } from '../../../shared/entities/proposal.entity';
-import { BlockRepository } from '../../../components/block/repositories/block.repository';
-import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
+import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
-import { HistoryProposalRepository } from '../repositories/history-proposal.reponsitory';
+import {
+  AkcLogger, CONST_PROPOSAL_VOTE_OPTION,
+  RequestContext
+} from '../../../shared';
+import { Proposal } from '../../../shared/entities/proposal.entity';
+import { ProposalOutput } from '../dtos/proposal-output.dto';
 import { ProposalVoteByOptionInput } from '../dtos/proposal-vote-by-option-input.dto';
 import { ProposalVoteByValidatorInput } from '../dtos/proposal-vote-by-validator-input.dto';
+import { HistoryProposalRepository } from '../repositories/history-proposal.reponsitory';
 import { ProposalDepositRepository } from '../repositories/proposal-deposit.repository';
-import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
+import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
+import { ProposalRepository } from '../repositories/proposal.repository';
 
 @Injectable()
 export class ProposalService {
@@ -31,7 +28,6 @@ export class ProposalService {
     private configService: ConfigService,
     private httpService: HttpService,
     private proposalRepository: ProposalRepository,
-    private blockRepository: BlockRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private validatorRepository: ValidatorRepository,
     private historyProposalRepository: HistoryProposalRepository,
@@ -182,11 +178,23 @@ export class ProposalService {
     const api = this.configService.get<string>('node.api');
     const paramsBalance = `/cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
     const proposalVoteTally = await this.getDataAPI(api, paramsBalance);
-    // const proposalVoteTally = await this.proposalRepository.findOne({
-    //   where: { proposal_id: proposalId },
-    // });
-
     return { proposalVoteTally: proposalVoteTally };
+  }
+
+  async getProposalsFromNode( 
+  ): Promise<any> {
+    let key: string;
+    const api = this.configService.get<string>('node.api');
+    const params = `/cosmos/gov/v1beta1/proposals`;
+    const dataProposal = await this.getDataAPI(api, params);
+    key = dataProposal.pagination.next_key;
+    if (dataProposal.pagination.next_key)
+    {    
+      const params = `/cosmos/gov/v1beta1/proposals?pagination.key=${key}`;
+      const dataProposalNext = await this.getDataAPI(api, params);
+      return dataProposalNext;
+    }
+    return dataProposal;
   }
 
   @Interval(500)
@@ -201,9 +209,7 @@ export class ProposalService {
     }
     try {
       //fetching proposals from node
-      const params = `/cosmos/gov/v1beta1/proposals`;
-      const data = await this.getDataAPI(api, params);
-
+      const data = await this.getProposalsFromNode();
       this.isSync = true;
 
       if (data && data.proposals && data.proposals.length > 0) {
