@@ -72,7 +72,7 @@ export class TaskService {
     this.threads = Number(this.configService.get<string>('influxdb.threads') || 15);
 
     // Call worker to process
-    this.workerProcess();
+    // this.workerProcess();
   }
 
   async getCurrentStatus() {
@@ -315,143 +315,143 @@ export class TaskService {
     return bech32.encode(prefix, bech32.toWords(addressBuffer));
   }
 
-  @Interval(500)
-  async syncValidator() {
-    // check status
-    if (this.isSyncValidator) {
-      this.logger.log(null, 'already syncing validator... wait');
-      return;
-    } else {
-      this.logger.log(null, 'fetching data validator...');
-    }
+  // @Interval(500)
+  // async syncValidator() {
+  //   // check status
+  //   if (this.isSyncValidator) {
+  //     this.logger.log(null, 'already syncing validator... wait');
+  //     return;
+  //   } else {
+  //     this.logger.log(null, 'fetching data validator...');
+  //   }
 
-    const api = this.configService.get<string>('node.api');
+  //   const api = this.configService.get<string>('node.api');
 
-    // get validators
-    const paramsValidator = LINK_API.VALIDATOR;
-    const validatorData = await this.getDataAPI(api, paramsValidator);
+  //   // get validators
+  //   const paramsValidator = LINK_API.VALIDATOR;
+  //   const validatorData = await this.getDataAPI(api, paramsValidator);
 
-    // get staking pool
-    const paramspool = LINK_API.STAKING_POOL;
-    const poolData = await this.getDataAPI(api, paramspool);
+  //   // get staking pool
+  //   const paramspool = LINK_API.STAKING_POOL;
+  //   const poolData = await this.getDataAPI(api, paramspool);
 
-    // get slashing param
-    const paramsSlashing = LINK_API.SLASHING_PARAM;
-    const slashingData = await this.getDataAPI(api, paramsSlashing);
+  //   // get slashing param
+  //   const paramsSlashing = LINK_API.SLASHING_PARAM;
+  //   const slashingData = await this.getDataAPI(api, paramsSlashing);
 
-    // get slashing signing info
-    const paramsSigning = LINK_API.SIGNING_INFOS;
-    const signingData = await this.getDataAPI(api, paramsSigning);
+  //   // get slashing signing info
+  //   const paramsSigning = LINK_API.SIGNING_INFOS;
+  //   const signingData = await this.getDataAPI(api, paramsSigning);
 
-    if (validatorData) {
-      this.isSyncValidator = true;
-      for (let key in validatorData.validators) {
-        const data = validatorData.validators[key];
+  //   if (validatorData) {
+  //     this.isSyncValidator = true;
+  //     for (let key in validatorData.validators) {
+  //       const data = validatorData.validators[key];
 
-        // get validator detail
-        const validatorUrl = `/staking/validators/${data.operator_address}`;
-        const validatorResponse = await this.getDataAPI(api, validatorUrl);
+  //       // get validator detail
+  //       const validatorUrl = `/staking/validators/${data.operator_address}`;
+  //       const validatorResponse = await this.getDataAPI(api, validatorUrl);
 
-        // get slashing signing info
-        const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
-        const delegationData = await this.getDataAPI(api, paramDelegation);
+  //       // get slashing signing info
+  //       const paramDelegation = `/cosmos/staking/v1beta1/validators/${data.operator_address}/delegations`;
+  //       const delegationData = await this.getDataAPI(api, paramDelegation);
 
-        try {
-          // create validator
-          const newValidator = new Validator();
-          newValidator.operator_address = data.operator_address;
-          const operator_address = data.operator_address;
-          const decodeAcc = bech32.decode(operator_address, 1023);
-          const wordsByte = bech32.fromWords(decodeAcc.words);
-          newValidator.acc_address = bech32.encode(CONST_PUBKEY_ADDR.AURA, bech32.toWords(wordsByte));
-          newValidator.cons_address = this.getAddressFromPubkey(data.consensus_pubkey.key);
-          newValidator.cons_pub_key = data.consensus_pubkey.key;
-          newValidator.title = data.description.moniker;
-          newValidator.jailed = data.jailed;
-          newValidator.commission = Number(data.commission.commission_rates.rate).toFixed(2);
-          newValidator.max_commission = data.commission.commission_rates.max_rate;
-          newValidator.max_change_rate = data.commission.commission_rates.max_change_rate;
-          newValidator.min_self_delegation = data.min_self_delegation;
-          newValidator.delegator_shares = data.delegator_shares;
-          newValidator.power = data.tokens;
-          newValidator.website = data.description.website;
-          newValidator.details = data.description.details;
-          newValidator.identity = data.description.identity;
-          newValidator.unbonding_height = data.unbonding_height;
-          newValidator.unbonding_time = data.unbonding_time;
-          newValidator.update_time = data.commission.update_time;
-          newValidator.status = Number(validatorResponse.result?.status) || 0;
-          const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
-          newValidator.percent_power = percentPower.toFixed(2);
-          const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
-          const address = this.hexToBech32(pubkey, CONST_PUBKEY_ADDR.AURAVALCONS);
-          const signingInfo = signingData.info.filter(e => e.address === address);
-          if (signingInfo.length > 0) {
-            const signedBlocksWindow = slashingData.params.signed_blocks_window;
-            const missedBlocksCounter = signingInfo[0].missed_blocks_counter;
-            newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + CONST_CHAR.PERCENT;
-          }
-          const selfBonded = delegationData.delegation_responses.filter(e => e.delegation.delegator_address === newValidator.acc_address);
-          if (selfBonded.length > 0) {
-            newValidator.self_bonded = selfBonded[0].balance.amount;
-            const percentSelfBonded = (selfBonded[0].balance.amount / data.tokens) * 100;
-            newValidator.percent_self_bonded = percentSelfBonded.toFixed(2) + CONST_CHAR.PERCENT;
-          }
+  //       try {
+  //         // create validator
+  //         const newValidator = new Validator();
+  //         newValidator.operator_address = data.operator_address;
+  //         const operator_address = data.operator_address;
+  //         const decodeAcc = bech32.decode(operator_address, 1023);
+  //         const wordsByte = bech32.fromWords(decodeAcc.words);
+  //         newValidator.acc_address = bech32.encode(CONST_PUBKEY_ADDR.AURA, bech32.toWords(wordsByte));
+  //         newValidator.cons_address = this.getAddressFromPubkey(data.consensus_pubkey.key);
+  //         newValidator.cons_pub_key = data.consensus_pubkey.key;
+  //         newValidator.title = data.description.moniker;
+  //         newValidator.jailed = data.jailed;
+  //         newValidator.commission = Number(data.commission.commission_rates.rate).toFixed(2);
+  //         newValidator.max_commission = data.commission.commission_rates.max_rate;
+  //         newValidator.max_change_rate = data.commission.commission_rates.max_change_rate;
+  //         newValidator.min_self_delegation = data.min_self_delegation;
+  //         newValidator.delegator_shares = data.delegator_shares;
+  //         newValidator.power = data.tokens;
+  //         newValidator.website = data.description.website;
+  //         newValidator.details = data.description.details;
+  //         newValidator.identity = data.description.identity;
+  //         newValidator.unbonding_height = data.unbonding_height;
+  //         newValidator.unbonding_time = data.unbonding_time;
+  //         newValidator.update_time = data.commission.update_time;
+  //         newValidator.status = Number(validatorResponse.result?.status) || 0;
+  //         const percentPower = (data.tokens / poolData.pool.bonded_tokens) * 100;
+  //         newValidator.percent_power = percentPower.toFixed(2);
+  //         const pubkey = this.getAddressFromPubkey(data.consensus_pubkey.key);
+  //         const address = this.hexToBech32(pubkey, CONST_PUBKEY_ADDR.AURAVALCONS);
+  //         const signingInfo = signingData.info.filter(e => e.address === address);
+  //         if (signingInfo.length > 0) {
+  //           const signedBlocksWindow = slashingData.params.signed_blocks_window;
+  //           const missedBlocksCounter = signingInfo[0].missed_blocks_counter;
+  //           newValidator.up_time = (signedBlocksWindow - missedBlocksCounter) / signedBlocksWindow * 100 + CONST_CHAR.PERCENT;
+  //         }
+  //         const selfBonded = delegationData.delegation_responses.filter(e => e.delegation.delegator_address === newValidator.acc_address);
+  //         if (selfBonded.length > 0) {
+  //           newValidator.self_bonded = selfBonded[0].balance.amount;
+  //           const percentSelfBonded = (selfBonded[0].balance.amount / data.tokens) * 100;
+  //           newValidator.percent_self_bonded = percentSelfBonded.toFixed(2) + CONST_CHAR.PERCENT;
+  //         }
 
-          // insert into table validator
-          try {
-            await this.validatorRepository.save(newValidator);
+  //         // insert into table validator
+  //         try {
+  //           await this.validatorRepository.save(newValidator);
 
-          } catch (error) {
-            this.logger.error(null, `Validator is already existed!`);
-          }
-          // TODO: Write validator to influxdb
-          this.influxDbClient.writeValidator(
-            newValidator.operator_address,
-            newValidator.title,
-            newValidator.jailed,
-            newValidator.power,
-          );
+  //         } catch (error) {
+  //           this.logger.error(null, `Validator is already existed!`);
+  //         }
+  //         // TODO: Write validator to influxdb
+  //         this.influxDbClient.writeValidator(
+  //           newValidator.operator_address,
+  //           newValidator.title,
+  //           newValidator.jailed,
+  //           newValidator.power,
+  //         );
 
-          const validatorFilter = await this.validatorRepository.findOne({ where: { operator_address: data.operator_address } });
-          // const validatorFilter = validators.filter(e => e.operator_address === data.operator_address);
-          if (validatorFilter) {
-            this.syncUpdateValidator(newValidator, validatorFilter);
-          }
+  //         const validatorFilter = await this.validatorRepository.findOne({ where: { operator_address: data.operator_address } });
+  //         // const validatorFilter = validators.filter(e => e.operator_address === data.operator_address);
+  //         if (validatorFilter) {
+  //           this.syncUpdateValidator(newValidator, validatorFilter);
+  //         }
 
-          // for (let key in delegationData.delegation_responses) {
-          //   const dataDel = delegationData.delegation_responses[key];
-          //   // create delegator by validator address
-          //   const newDelegator = new Delegation();
-          //   newDelegator.delegator_address = dataDel.delegation.delegator_address;
-          //   newDelegator.validator_address = dataDel.delegation.validator_address;
-          //   newDelegator.shares = dataDel.delegation.shares;
-          //   const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
-          //   newDelegator.amount = amount;
-          //   // insert into table delegation
-          //   try {
-          //     await this.delegationRepository.save(newDelegator);
-          //   } catch (error) {
-          //     this.logger.error(null, `Delegation is already existed!`);
-          //   }
-          //   // TODO: Write delegator to influxdb
-          //   this.influxDbClient.writeDelegation(
-          //     newDelegator.delegator_address,
-          //     newDelegator.validator_address,
-          //     newDelegator.shares,
-          //     newDelegator.amount,
-          //   );
+  //         // for (let key in delegationData.delegation_responses) {
+  //         //   const dataDel = delegationData.delegation_responses[key];
+  //         //   // create delegator by validator address
+  //         //   const newDelegator = new Delegation();
+  //         //   newDelegator.delegator_address = dataDel.delegation.delegator_address;
+  //         //   newDelegator.validator_address = dataDel.delegation.validator_address;
+  //         //   newDelegator.shares = dataDel.delegation.shares;
+  //         //   const amount = parseInt((dataDel.balance.amount / 1000000).toFixed(5));
+  //         //   newDelegator.amount = amount;
+  //         //   // insert into table delegation
+  //         //   try {
+  //         //     await this.delegationRepository.save(newDelegator);
+  //         //   } catch (error) {
+  //         //     this.logger.error(null, `Delegation is already existed!`);
+  //         //   }
+  //         //   // TODO: Write delegator to influxdb
+  //         //   this.influxDbClient.writeDelegation(
+  //         //     newDelegator.delegator_address,
+  //         //     newDelegator.validator_address,
+  //         //     newDelegator.shares,
+  //         //     newDelegator.amount,
+  //         //   );
 
-          // }
-          this.isSyncValidator = false;
-        } catch (error) {
-          this.isSyncValidator = false;
-          this.logger.error(null, `${error.name}: ${error.message}`);
-          this.logger.error(null, `${error.stack}`);
-        }
-      }
-    }
-  }
+  //         // }
+  //         this.isSyncValidator = false;
+  //       } catch (error) {
+  //         this.isSyncValidator = false;
+  //         this.logger.error(null, `${error.name}: ${error.message}`);
+  //         this.logger.error(null, `${error.stack}`);
+  //       }
+  //     }
+  //   }
+  // }
 
   async syncUpdateValidator(newValidator, validatorData) {
     let isSave = false;
@@ -764,75 +764,75 @@ export class TaskService {
     }
   }
 
-  @Interval(500)
-  async syncMissedBlock() {
-    // check status
-    if (this.isSyncMissBlock) {
-      this.logger.log(null, 'already syncing validator... wait');
-      return;
-    } else {
-      this.logger.log(null, 'fetching data validator...');
-    }
+  // @Interval(500)
+  // async syncMissedBlock() {
+  //   // check status
+  //   if (this.isSyncMissBlock) {
+  //     this.logger.log(null, 'already syncing validator... wait');
+  //     return;
+  //   } else {
+  //     this.logger.log(null, 'fetching data validator...');
+  //   }
 
-    try {
-      const api = this.configService.get<string>('node.api');
+  //   try {
+  //     const api = this.configService.get<string>('node.api');
 
-      // get blocks latest
-      const paramsBlockLatest = `/blocks/latest`;
-      const blockLatestData = await this.getDataAPI(api, paramsBlockLatest);
+  //     // get blocks latest
+  //     const paramsBlockLatest = `/blocks/latest`;
+  //     const blockLatestData = await this.getDataAPI(api, paramsBlockLatest);
 
-      if (blockLatestData) {
-        this.isSyncMissBlock = true;
+  //     if (blockLatestData) {
+  //       this.isSyncMissBlock = true;
 
-        const heightLatest = blockLatestData.block.header.height;
-        // get block by height
-        const paramsBlock = `/blocks/${heightLatest}`;
-        const blockData = await this.getDataAPI(api, paramsBlock);
+  //       const heightLatest = blockLatestData.block.header.height;
+  //       // get block by height
+  //       const paramsBlock = `/blocks/${heightLatest}`;
+  //       const blockData = await this.getDataAPI(api, paramsBlock);
 
-        // get validatorsets
-        const paramsValidatorsets = `/cosmos/base/tendermint/v1beta1/validatorsets/${heightLatest}`;
-        const validatorsetsData = await this.getDataAPI(api, paramsValidatorsets);
+  //       // get validatorsets
+  //       const paramsValidatorsets = `/cosmos/base/tendermint/v1beta1/validatorsets/${heightLatest}`;
+  //       const validatorsetsData = await this.getDataAPI(api, paramsValidatorsets);
 
-        if (validatorsetsData) {         
+  //       if (validatorsetsData) {         
 
-          for (let key in validatorsetsData.validators) {
-            const data = validatorsetsData.validators[key];
-            const address = this.getAddressFromPubkey(data.pub_key.key);
+  //         for (let key in validatorsetsData.validators) {
+  //           const data = validatorsetsData.validators[key];
+  //           const address = this.getAddressFromPubkey(data.pub_key.key);
 
-            if (blockData) {
-              const signingInfo = blockData.block.last_commit.signatures.filter(e => e.validator_address === address);
-              if (signingInfo.length <= 0) {
+  //           if (blockData) {
+  //             const signingInfo = blockData.block.last_commit.signatures.filter(e => e.validator_address === address);
+  //             if (signingInfo.length <= 0) {
 
-                // create missed block
-                const newMissedBlock = new MissedBlock();
-                newMissedBlock.height = blockData.block.header.height;
-                newMissedBlock.validator_address = address;
-                newMissedBlock.timestamp = blockData.block.header.time;
+  //               // create missed block
+  //               const newMissedBlock = new MissedBlock();
+  //               newMissedBlock.height = blockData.block.header.height;
+  //               newMissedBlock.validator_address = address;
+  //               newMissedBlock.timestamp = blockData.block.header.time;
 
-                // insert into table missed-block
-                try {
-                  await this.missedBlockRepository.save(newMissedBlock);
-                } catch (error) {
-                  this.logger.error(null, `Missed is already existed!`);
-                }
-                // TODO: Write missed block to influxdb
-                this.influxDbClient.writeMissedBlock(
-                  newMissedBlock.validator_address,
-                  newMissedBlock.height,
-                );
+  //               // insert into table missed-block
+  //               try {
+  //                 await this.missedBlockRepository.save(newMissedBlock);
+  //               } catch (error) {
+  //                 this.logger.error(null, `Missed is already existed!`);
+  //               }
+  //               // TODO: Write missed block to influxdb
+  //               this.influxDbClient.writeMissedBlock(
+  //                 newMissedBlock.validator_address,
+  //                 newMissedBlock.height,
+  //               );
 
-              }
-            }
-          }         
-        }
-      }
-      this.isSyncMissBlock = false;
-    } catch (error) {
-      this.logger.error(null, `${error.name}: ${error.message}`);
-      this.logger.error(null, `${error.stack}`);
-      this.isSyncMissBlock = false;
-    }
-  }
+  //             }
+  //           }
+  //         }         
+  //       }
+  //     }
+  //     this.isSyncMissBlock = false;
+  //   } catch (error) {
+  //     this.logger.error(null, `${error.name}: ${error.message}`);
+  //     this.logger.error(null, `${error.stack}`);
+  //     this.isSyncMissBlock = false;
+  //   }
+  // }
 
   /**
    * getBlockLatest
@@ -1053,72 +1053,72 @@ export class TaskService {
     });
   }
 
-  /**
-   * threadProcess
-   * @param currentBlk Current block
-   * @param blockLatest The final block
-   */
-  threadProcess(currentBlk: number, latestBlk: number) {
-    let loop = 0;
-    let height = 0;
-    try {
-      let blockNotSync = latestBlk - currentBlk;
-      if (blockNotSync > 0) {
-        if (blockNotSync > this.threads) {
-          loop = this.threads;
-        } else {
-          loop = blockNotSync;
-        }
+  // /**
+  //  * threadProcess
+  //  * @param currentBlk Current block
+  //  * @param blockLatest The final block
+  //  */
+  // threadProcess(currentBlk: number, latestBlk: number) {
+  //   let loop = 0;
+  //   let height = 0;
+  //   try {
+  //     let blockNotSync = latestBlk - currentBlk;
+  //     if (blockNotSync > 0) {
+  //       if (blockNotSync > this.threads) {
+  //         loop = this.threads;
+  //       } else {
+  //         loop = blockNotSync;
+  //       }
 
-        // Create 10 thread to sync data      
-        for (let i = 1; i <= loop; i++) {
-          height = currentBlk + i;
-          this.scheduleTimeoutJob(height);
-        }
-      }
-    } catch (error) {
-      this.logger.log(null, `Call threadProcess method error: $${error.message}`);
-    }
+  //       // Create 10 thread to sync data      
+  //       for (let i = 1; i <= loop; i++) {
+  //         height = currentBlk + i;
+  //         this.scheduleTimeoutJob(height);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     this.logger.log(null, `Call threadProcess method error: $${error.message}`);
+  //   }
 
-    // If current block not equal latest block when the symtem will call workerProcess method    
-    this.schedule.scheduleIntervalJob(`schedule_recall_${(new Date()).getTime()}`, 1000, async () => {
-      // Update code sync data
-      this.logger.log(null, `Class ${TaskService.name}, recall workerProcess method`);
-      this.workerProcess(height);
+  //   // If current block not equal latest block when the symtem will call workerProcess method    
+  //   this.schedule.scheduleIntervalJob(`schedule_recall_${(new Date()).getTime()}`, 1000, async () => {
+  //     // Update code sync data
+  //     this.logger.log(null, `Class ${TaskService.name}, recall workerProcess method`);
+  //     this.workerProcess(height);
 
-      // Close thread
-      return true;
-    });
-  }
+  //     // Close thread
+  //     return true;
+  //   });
+  // }
 
-  /**
-   * workerProcess
-   * @param height
-   */
-  async workerProcess(height: number = undefined) {
+  // /**
+  //  * workerProcess
+  //  * @param height
+  //  */
+  // async workerProcess(height: number = undefined) {
 
-    this.logger.log(null, `Class ${TaskService.name}, call workerProcess method`);
+  //   this.logger.log(null, `Class ${TaskService.name}, call workerProcess method`);
 
-    let currentBlk = 0;
-    // Get blocks latest
-    const blockLatest = await this.getBlockLatest();
-    let latestBlk = Number(blockLatest?.block?.header?.height || 0);
+  //   let currentBlk = 0;
+  //   // Get blocks latest
+  //   const blockLatest = await this.getBlockLatest();
+  //   let latestBlk = Number(blockLatest?.block?.header?.height || 0);
 
-    if (height > 0) {
-      currentBlk = height;
+  //   if (height > 0) {
+  //     currentBlk = height;
 
-    } else {
-      try {
-        //Get current height
-        const status = await this.statusRepository.findOne();
-        if (status) {
-          currentBlk = status.current_block;
-        }
-      } catch (err) { }
-    }
+  //   } else {
+  //     try {
+  //       //Get current height
+  //       const status = await this.statusRepository.findOne();
+  //       if (status) {
+  //         currentBlk = status.current_block;
+  //       }
+  //     } catch (err) { }
+  //   }
 
-    this.threadProcess(currentBlk, latestBlk)
-  }
+  //   this.threadProcess(currentBlk, latestBlk)
+  // }
 
   /**
    * insertBlockError
@@ -1143,17 +1143,17 @@ export class TaskService {
   /**
    * blockSyncError
    */
-  @Interval(2000)
-  async blockSyncError() {
-    const result: BlockSyncError = await this.blockSyncErrorRepository.findOne({ order: { id: 'DESC' } });
-    if (result) {
-      const idxSync = this.schedulesSync.indexOf(result.height);
+  // @Interval(2000)
+  // async blockSyncError() {
+  //   const result: BlockSyncError = await this.blockSyncErrorRepository.findOne({ order: { id: 'DESC' } });
+  //   if (result) {
+  //     const idxSync = this.schedulesSync.indexOf(result.height);
 
-      // Check height has sync or not. If height hasn't sync when we recall handleSyncData method
-      if (idxSync < 0) {
-        await this.handleSyncData(result.height, true);
-        this.schedulesSync.splice(idxSync, 1);
-      }
-    }
-  }
+  //     // Check height has sync or not. If height hasn't sync when we recall handleSyncData method
+  //     if (idxSync < 0) {
+  //       await this.handleSyncData(result.height, true);
+  //       this.schedulesSync.splice(idxSync, 1);
+  //     }
+  //   }
+  // }
 }
