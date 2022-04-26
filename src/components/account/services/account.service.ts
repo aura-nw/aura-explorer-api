@@ -4,7 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 
-import { AkcLogger, CONST_CHAR, CONST_NAME_ASSETS, RequestContext } from '../../../shared';
+import {
+  AkcLogger,
+  CONST_CHAR,
+  CONST_NAME_ASSETS,
+  RequestContext,
+} from '../../../shared';
 import { AccountBalance } from '../dtos/account-balance.dto';
 import { AccountDelegation } from '../dtos/account-delegation.dto';
 import { AccountOutput } from '../dtos/account-output.dto';
@@ -18,7 +23,7 @@ export class AccountService {
     private readonly logger: AkcLogger,
     private httpService: HttpService,
     private configService: ConfigService,
-    private validatorRepository: ValidatorRepository
+    private validatorRepository: ValidatorRepository,
   ) {
     this.logger.setContext(AccountService.name);
   }
@@ -35,19 +40,38 @@ export class AccountService {
     return data;
   }
 
-  async getAccountDetailByAddress(
-    ctx: RequestContext,
-    address,
-  ): Promise<any> {
+  async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
     this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
     const api = this.configService.get<string>('node.api');
 
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
-    // get balance
     const paramsBalance = `/cosmos/bank/v1beta1/balances/${address}`;
-    const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
+    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
+    const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
+    const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
+    const paramsAuthInfo = `auth/accounts/${address}`;
+
+    const [
+      balanceData,
+      delegatedData,
+      unbondingData,
+      redelegationsData,
+      authInfoData,
+      validatorData,
+    ] = await Promise.all([
+      this.getDataAPI(api, paramsBalance, ctx),
+      this.getDataAPI(api, paramsDelegated, ctx),
+      this.getDataAPI(api, paramsUnbonding, ctx),
+      this.getDataAPI(api, paramsRedelegations, ctx),
+      this.getDataAPI(api, paramsAuthInfo, ctx),
+      this.validatorRepository.find({
+        order: { power: 'DESC' },
+      }),
+    ]);
+
+    // get balance
     let available = 0;
     if (balanceData.balances) {
       accountOutput.balances = new Array(balanceData.balances.length);
@@ -68,21 +92,29 @@ export class AccountService {
     }
 
     // get delegated
-    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
-    const delegatedData = await this.getDataAPI(api, paramsDelegated, ctx);
+
+    // const delegatedData = await this.getDataAPI(api, paramsDelegated, ctx);
     // get all validator
-    const validatorData = await this.validatorRepository.find({ order: { power: 'DESC' } });
+    // const validatorData = await this.validatorRepository.find({
+    //   order: { power: 'DESC' },
+    // });
     // get stake_reward
     const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
     const stakeRewardData = await this.getDataAPI(api, paramsStakeReward, ctx);
     let delegatedAmount = 0;
     let stakeReward = 0;
     if (delegatedData) {
-      accountOutput.delegations = new Array(delegatedData.delegation_responses.length);
+      accountOutput.delegations = new Array(
+        delegatedData.delegation_responses.length,
+      );
       delegatedData.delegation_responses.forEach((data, idx) => {
         const validator_address = data.delegation.validator_address;
-        const validator = validatorData.filter(e => e.operator_address === validator_address);
-        const reward = stakeRewardData.rewards.filter(e => e.validator_address === validator_address);
+        const validator = validatorData.filter(
+          (e) => e.operator_address === validator_address,
+        );
+        const reward = stakeRewardData.rewards.filter(
+          (e) => e.validator_address === validator_address,
+        );
         const delegation = new AccountDelegation();
         delegation.reward = '0';
 
@@ -91,14 +123,25 @@ export class AccountService {
           delegation.validator_address = validator_address;
         }
         delegation.amount = this.changeUauraToAura(data.balance.amount);
-        if (reward.length > 0 && reward[0].reward.length > 0 && reward[0].reward[0].denom === CONST_CHAR.UAURA) {
-          delegation.reward = this.changeUauraToAura(reward[0].reward[0].amount);
+        if (
+          reward.length > 0 &&
+          reward[0].reward.length > 0 &&
+          reward[0].reward[0].denom === CONST_CHAR.UAURA
+        ) {
+          delegation.reward = this.changeUauraToAura(
+            reward[0].reward[0].amount,
+          );
         }
         delegatedAmount += parseInt(data.balance.amount);
-        if (stakeRewardData && stakeRewardData.total.length > 0 && stakeRewardData.total[0].denom === CONST_CHAR.UAURA) {
-          accountOutput.stake_reward = this.changeUauraToAura(stakeRewardData.total[0].amount);
+        if (
+          stakeRewardData &&
+          stakeRewardData.total.length > 0 &&
+          stakeRewardData.total[0].denom === CONST_CHAR.UAURA
+        ) {
+          accountOutput.stake_reward = this.changeUauraToAura(
+            stakeRewardData.total[0].amount,
+          );
           stakeReward = parseInt(stakeRewardData.total[0].amount);
-
         }
         accountOutput.delegations[idx] = delegation;
       });
@@ -106,15 +149,17 @@ export class AccountService {
     }
 
     // get unbonding
-    const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
-    const unbondingData = await this.getDataAPI(api, paramsUnbonding, ctx);
+
+    // const unbondingData = await this.getDataAPI(api, paramsUnbonding, ctx);
     let unbondingAmount = 0;
     if (unbondingData) {
       accountOutput.unbonding_delegations = [];
       unbondingData.unbonding_responses.forEach((data, idx) => {
-        data.entries?.forEach(item => {
+        data.entries?.forEach((item) => {
           const validator_address = data.validator_address;
-          const validator = validatorData.filter(e => e.operator_address === validator_address);
+          const validator = validatorData.filter(
+            (e) => e.operator_address === validator_address,
+          );
           const unbonding = new AccountUnbonding();
 
           if (validator.length > 0) {
@@ -132,16 +177,20 @@ export class AccountService {
     }
 
     // get redelegations
-    const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
-    const redelegationsData = await this.getDataAPI(api, paramsRedelegations, ctx);
+
+    // const redelegationsData = await this.getDataAPI(api, paramsRedelegations, ctx);
     if (redelegationsData) {
       accountOutput.redelegations = [];
       redelegationsData.redelegation_responses.forEach((data, idx) => {
-        data.entries?.forEach(item => {
+        data.entries?.forEach((item) => {
           const validator_src_address = data.redelegation.validator_src_address;
           const validator_dst_address = data.redelegation.validator_dst_address;
-          const validatorSrc = validatorData.filter(e => e.operator_address === validator_src_address);
-          const validatorDst = validatorData.filter(e => e.operator_address === validator_dst_address);
+          const validatorSrc = validatorData.filter(
+            (e) => e.operator_address === validator_src_address,
+          );
+          const validatorDst = validatorData.filter(
+            (e) => e.operator_address === validator_dst_address,
+          );
           const redelegation = new AccountRedelegation();
 
           if (validatorSrc.length > 0) {
@@ -153,30 +202,36 @@ export class AccountService {
             redelegation.validator_dst_address = validator_dst_address;
           }
           redelegation.amount = this.changeUauraToAura(item.balance);
-          redelegation.completion_time = item.redelegation_entry.completion_time;
+          redelegation.completion_time =
+            item.redelegation_entry.completion_time;
 
           accountOutput.redelegations.push(redelegation);
-        })
+        });
       });
     }
 
     // get validator by delegation address
-    const validator = validatorData.filter(e => e.acc_address === address);
+    const validator = validatorData.filter((e) => e.acc_address === address);
     accountOutput.commission = '0';
+
     // get commission
     let commission = '0';
     if (validator.length > 0) {
       const paramsCommisstion = `/cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
       const commissionData = await this.getDataAPI(api, paramsCommisstion, ctx);
-      if (commissionData && commissionData.commission.commission[0].denom === CONST_CHAR.UAURA) {
+      if (
+        commissionData &&
+        commissionData.commission.commission[0].denom === CONST_CHAR.UAURA
+      ) {
         commission = commissionData.commission.commission[0].amount;
-        accountOutput.commission = this.changeUauraToAura(commissionData.commission.commission[0].amount);
+        accountOutput.commission = this.changeUauraToAura(
+          commissionData.commission.commission[0].amount,
+        );
       }
     }
 
     //get auth_info
-    const paramsAuthInfo = `auth/accounts/${address}`;
-    const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
+    // const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
     let delegatedVesting = 0;
     accountOutput.delegatable_vesting = '0';
 
@@ -188,7 +243,7 @@ export class AccountService {
         const originalVesting = baseVesting.original_vesting || [];
         if (originalVesting.length > 0) {
           let originalAmount = 0;
-          originalVesting.forEach(item => {
+          originalVesting.forEach((item) => {
             originalAmount += Number(item.amount);
           });
           vesting.amount = this.changeUauraToAura(originalAmount);
@@ -199,17 +254,24 @@ export class AccountService {
         const delegated: Array<any> = baseVesting.delegated_vesting || [];
         if (delegated.length > 0) {
           let delegatableVesting = 0;
-          delegated.forEach(item => {
+          delegated.forEach((item) => {
             delegatableVesting += Number(item.amount);
           });
-          accountOutput.delegatable_vesting = this.changeUauraToAura(delegatableVesting);
+          accountOutput.delegatable_vesting =
+            this.changeUauraToAura(delegatableVesting);
         }
         accountOutput.vesting = vesting;
       }
     }
 
     // get total
-    const total = available + delegatedAmount + unbondingAmount + stakeReward + parseFloat(commission) + delegatedVesting;
+    const total =
+      available +
+      delegatedAmount +
+      unbondingAmount +
+      stakeReward +
+      parseFloat(commission) +
+      delegatedVesting;
     accountOutput.total = this.changeUauraToAura(total);
 
     return { ...accountOutput };
