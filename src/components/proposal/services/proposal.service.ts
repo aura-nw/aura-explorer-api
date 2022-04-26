@@ -181,20 +181,20 @@ export class ProposalService {
     return { proposalVoteTally: proposalVoteTally };
   }
 
-  async getProposalsFromNode( 
+  async getProposalsFromNode(
   ): Promise<any> {
-    let key: string;
+    let key: string = '';
     const api = this.configService.get<string>('node.api');
     const params = `/cosmos/gov/v1beta1/proposals`;
-    const dataProposal = await this.getDataAPI(api, params);
-    key = dataProposal.pagination.next_key;
-    if (dataProposal.pagination.next_key)
-    {    
+    let result = await this.getDataAPI(api, params);
+    key = result.pagination.next_key;
+    while (key != null) {
       const params = `/cosmos/gov/v1beta1/proposals?pagination.key=${key}`;
-      const dataProposalNext = await this.getDataAPI(api, params);
-      return dataProposalNext;
+      let dataProposal = await this.getDataAPI(api, params);
+      key = dataProposal.pagination.next_key;
+      result = [...result.proposals, ...dataProposal.proposals];
     }
-    return dataProposal;
+    return result;
   }
 
   @Interval(500)
@@ -212,9 +212,9 @@ export class ProposalService {
       const data = await this.getProposalsFromNode();
       this.isSync = true;
 
-      if (data && data.proposals && data.proposals.length > 0) {
-        for (let i = 0; i < data.proposals.length; i++) {
-          const item: any = data.proposals[i];
+      if (data && data && data.length > 0) {
+        for (let i = 0; i < data.length; i++) {
+          const item: any = data[i];
           //create proposal
           let proposal = new Proposal();
           proposal.pro_id = Number(item.proposal_id);
@@ -235,8 +235,8 @@ export class ProposalService {
               proposal.pro_proposer = validator.title;
             }
           }
-          proposal.pro_voting_start_time = item.voting_start_time;
-          proposal.pro_voting_end_time = item.voting_end_time;
+          proposal.pro_voting_start_time = new Date(item.voting_start_time);
+          proposal.pro_voting_end_time = new Date(item.voting_end_time);
           proposal.pro_votes_yes = 0.0;
           proposal.pro_votes_abstain = 0.0;
           proposal.pro_votes_no = 0.0;
@@ -248,7 +248,7 @@ export class ProposalService {
             proposal.pro_votes_no_with_veto =
               item.final_tally_result.no_with_veto;
           }
-          proposal.pro_submit_time = item.submit_time;
+          proposal.pro_submit_time = new Date(item.submit_time);
           proposal.pro_total_deposits = 0.0;
           if (item.total_deposit && item.total_deposit.length > 0) {
             proposal.pro_total_deposits = item.total_deposit[0].amount;
@@ -256,7 +256,7 @@ export class ProposalService {
           //set value for column not null
           proposal.pro_tx_hash = '';
           proposal.pro_type = item.content['@type'];
-          proposal.pro_deposit_end_time = item.deposit_end_time;
+          proposal.pro_deposit_end_time = new Date(item.deposit_end_time);
           proposal.pro_activity = '{"key": "activity", "value": ""}'; //tmp value
           // insert into table proposals
           try {
@@ -266,7 +266,7 @@ export class ProposalService {
           }
         }
         //delete proposal failed
-        const listId = data.proposals.map((i) => Number(i.proposal_id));
+        const listId = data.map((i) => Number(i.proposal_id));
         await this.proposalRepository.deleteProposalsByListId(listId);
         this.isSync = false;
       }
@@ -290,7 +290,7 @@ export class ProposalService {
     });
     const stakeData = await this.delegationRepository.find({
       where: { delegator_address: delegatorAddress }
-    }); 
+    });
     if (stakeData.length > 0 && stakeData.reduce((a, curr) => a + curr.amount, 0) <= 0) {
       result = {};
     }
