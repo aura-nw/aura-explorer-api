@@ -257,6 +257,7 @@ export class ProposalService {
           proposal.pro_tx_hash = '';
           proposal.pro_type = item.content['@type'];
           proposal.pro_deposit_end_time = new Date(item.deposit_end_time);
+          proposal.is_delete = false;
           proposal.pro_activity = '{"key": "activity", "value": ""}'; //tmp value
           // insert into table proposals
           try {
