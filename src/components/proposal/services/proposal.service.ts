@@ -212,7 +212,7 @@ export class ProposalService {
       const data = await this.getProposalsFromNode();
       this.isSync = true;
 
-      if (data && data && data.length > 0) {
+      if (data && data.length > 0) {
         for (let i = 0; i < data.length; i++) {
           const item: any = data[i];
           //create proposal
