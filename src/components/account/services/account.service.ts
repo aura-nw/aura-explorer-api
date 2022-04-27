@@ -52,6 +52,7 @@ export class AccountService {
     const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
     const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
     const paramsAuthInfo = `auth/accounts/${address}`;
+    const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
 
     const [
       balanceData,
@@ -60,6 +61,7 @@ export class AccountService {
       redelegationsData,
       authInfoData,
       validatorData,
+      stakeRewardData
     ] = await Promise.all([
       this.getDataAPI(api, paramsBalance, ctx),
       this.getDataAPI(api, paramsDelegated, ctx),
@@ -69,6 +71,7 @@ export class AccountService {
       this.validatorRepository.find({
         order: { power: 'DESC' },
       }),
+      this.getDataAPI(api, paramsStakeReward, ctx)
     ]);
 
     // get balance
@@ -99,8 +102,8 @@ export class AccountService {
     //   order: { power: 'DESC' },
     // });
     // get stake_reward
-    const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
-    const stakeRewardData = await this.getDataAPI(api, paramsStakeReward, ctx);
+    // const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
+    // const stakeRewardData = await this.getDataAPI(api, paramsStakeReward, ctx);
     let delegatedAmount = 0;
     let stakeReward = 0;
     if (delegatedData) {

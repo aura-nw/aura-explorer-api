@@ -90,7 +90,7 @@ export class ValidatorController {
     @Param('operatorAddr') operatorAddr: string,
     @Param('delegatorAddr') delegatorAddr: string
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getDelegations.name} was called!`);
+    this.logger.log(ctx, `${this.getDelegators.name} was called!`);
     return await this.validatorService.getDelegators(operatorAddr, delegatorAddr);
   }
 
