@@ -145,6 +145,7 @@ export class AccountService {
         }
         accountOutput.delegations[idx] = delegation;
       });
+      accountOutput.delegations = accountOutput.delegations.filter(item => item.amount != '0.000000');
       accountOutput.delegated = this.changeUauraToAura(delegatedAmount);
     }
 
