@@ -27,6 +27,7 @@ export enum CONST_CHAR {
   DELEGATE  = 'delegate',
   UNBOND = 'unbond',
   VALIDATOR = 'validator',
+  SOURCE_VALIDATOR = 'source_validator',
   AMOUNT = 'amount',
   UNDEFINED = 'undefined',
   MESSAGE = 'message',

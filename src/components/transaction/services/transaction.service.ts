@@ -77,7 +77,7 @@ export class TransactionService {
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(
-            ({ key }) => key === CONST_CHAR.VALIDATOR,
+            ({ key }) => key === CONST_CHAR.VALIDATOR ||  key === CONST_CHAR.SOURCE_VALIDATOR
           );
           const regex = /_/gi;
           validatorAddr = txAction.value.replace(regex, ' ');
