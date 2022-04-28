@@ -1,4 +1,4 @@
-import { Column, Entity } from "typeorm";
+import { Column, Entity, Unique } from "typeorm";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('delegator_rewards')
@@ -12,6 +12,7 @@ export class DelegatorReward extends BaseEntityIncrementId {
     @Column()
     amount: number;
 
+    @Unique('tx_hash', ['tx_hash'])
     @Column()
     tx_hash: string;
 }
