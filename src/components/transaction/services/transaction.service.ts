@@ -37,6 +37,7 @@ export class TransactionService {
     this.logger.log(ctx, `${this.getTxs.name} was called!`);
 
     const [txs, count] = await this.txRepository.findAndCount({
+      where: { code: 0 },
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
