@@ -31,6 +31,7 @@ export enum CONST_CHAR {
   UNDEFINED = 'undefined',
   MESSAGE = 'message',
   ACTION = 'action',
+  REDELEGATE  = 'redelegate',
 }
 
 export enum CONST_MSG_TYPE {

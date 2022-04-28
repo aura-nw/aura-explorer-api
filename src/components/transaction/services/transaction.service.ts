@@ -72,7 +72,7 @@ export class TransactionService {
         const rawLog = JSON.parse(data.raw_log);
 
         const txAttr = rawLog[0].events.find(
-          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND,
+          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND || type === CONST_CHAR.REDELEGATE
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(
@@ -86,9 +86,11 @@ export class TransactionService {
             );
             const amount = txActionAmount.value.replace(regex, ' ');
             amount.replace(CONST_CHAR.UAURA, '');
-            if (txAttr.type === CONST_CHAR.DELEGATE) {
+            if (txAttr.type === CONST_CHAR.DELEGATE
+              || txAttr.type === CONST_CHAR.REDELEGATE
+              || txAttr.type ===  CONST_CHAR.UNBOND) {
               data.fee = (parseInt(amount) / 1000000).toFixed(6);
-            } else {
+            }else {
               data.fee = (parseInt(amount) / 1000000).toFixed(6);
             }
             data.type = txAttr.type;
