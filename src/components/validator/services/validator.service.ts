@@ -182,7 +182,17 @@ export class ValidatorService {
     let result: any = {};
     //get available balance
     const paramsBalance = `/cosmos/bank/v1beta1/balances/${delegatorAddress}`;
-    const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
+    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
+    const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
+
+    // Use promise all to improve performance
+    const [balanceData, delegatedData, rewardData] = await Promise.all([
+      this.getDataAPI(api, paramsBalance, ctx),
+      this.getDataAPI(api, paramsDelegated, ctx),
+      this.getDataAPI(api, paramsReward, ctx)
+    ]);
+
+    // const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
     result.available_balance = 0;
     if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
       result.available_balance = Number(balanceData.balances[0].amount);
@@ -194,12 +204,7 @@ export class ValidatorService {
     if (withdrawRewards.length > 0) {
       result.claim_reward = withdrawRewards.reduce((a, curr) => a + curr.amount, 0);
     }
-    //get delegations
-    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
-    const delegatedData = await this.getDataAPI(api, paramsDelegated, ctx);
-    //get rewards
-    const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
-    const rewardData = await this.getDataAPI(api, paramsReward, ctx);
+
     let delegations: any = [];
     if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {
       const delegationsData = delegatedData.delegation_responses;
