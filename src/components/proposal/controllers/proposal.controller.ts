@@ -92,6 +92,27 @@ export class ProposalController {
     return { data: proposal, meta: {} };
   }
 
+  @Get('node/:proposalId')
+  @ApiOperation({
+    summary: 'Get proposal detail by proposalId (node)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getProposalByIdNode(
+    @ReqContext() ctx: RequestContext,
+    @Param('proposalId') proposalId: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getProposalById.name} was called!`);
+    const proposal = await this.proposalService.getProposalByIdNode(
+      ctx,
+      proposalId,
+    );
+
+    return { data: proposal, meta: {} };
+  }
+
   @Post('votes/get-by-option')
   @ApiOperation({
     summary: 'Get votes list by option',
