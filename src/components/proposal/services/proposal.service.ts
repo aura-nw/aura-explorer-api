@@ -81,6 +81,14 @@ export class ProposalService {
     return proposal;
   }
 
+  async getProposalByIdNode(ctx: RequestContext, proposalId: string): Promise<any> {
+    this.logger.log(ctx, `${this.getProposalById.name} was called!`);
+    const api = this.configService.get<string>('node.api');
+    const params = `/cosmos/gov/v1beta1/proposals/${proposalId}`;
+    let data = await this.getDataAPI(api, params);
+    return data.proposal;
+  }
+
   async getVotesListByOption(
     ctx: RequestContext,
     request: ProposalVoteByOptionInput,

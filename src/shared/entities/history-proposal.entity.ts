@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity } from "typeorm";
+import { Column, CreateDateColumn, Entity, Unique } from "typeorm";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('history_proposals')
@@ -6,6 +6,7 @@ export class HistoryProposal extends BaseEntityIncrementId {
     @Column()
     proposal_id: number;
 
+    @Unique('tx_hash', ['tx_hash'])
     @Column()
     tx_hash: string;
 
