@@ -1,6 +1,6 @@
 import { EntityRepository, Raw, Repository } from 'typeorm';
 
-import { Transaction } from '../../../shared';
+import { CONST_CHAR, Transaction } from '../../../shared';
 
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
@@ -12,12 +12,12 @@ export class TransactionRepository extends Repository<Transaction> {
               { raw_log: Raw(() => `code = 0 AND
                 (
                   (
-                    (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"delegate"', '$') = 1
-                    OR JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"unbond"', '$') = 1)
-                              AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"validator"', '$') = 1)
+                    (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"${CONST_CHAR.DELEGATE}"', '$') = 1
+                    OR JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"${CONST_CHAR.UNBOND}"', '$') = 1)
+                              AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"${CONST_CHAR.VALIDATOR}"', '$') = 1)
                        
-                    OR (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"redelegate"', '$') = 1
-                            AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"source_validator"', '$') = 1)
+                    OR (JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].type"), '"${CONST_CHAR.REDELEGATE}"', '$') = 1
+                            AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].key"), '"${CONST_CHAR.SOURCE_VALIDATOR}"', '$') = 1)
                 )                
                 AND JSON_CONTAINS(JSON_EXTRACT( (CASE WHEN LENGTH(raw_log) = 0 THEN "[]" else raw_log END), "$[*].events[*].attributes[*].value"), '"${address}"', '$') = 1
                 `)}
