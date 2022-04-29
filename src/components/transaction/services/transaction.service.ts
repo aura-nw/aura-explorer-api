@@ -66,45 +66,57 @@ export class TransactionService {
 
     const { transactions, total } = await this.txRepository.getTransactionsByAddress(validatorAddress, query.limit, query.offset);
 
+    const lstOutput = [];
     transactions.forEach(data => {
-      let validatorAddr;
+      let validatorAddr = '';
+      let transaction = { ...data };
       if (data.code === 0) {
         const rawLog = JSON.parse(data.raw_log);
 
         const txAttr = rawLog[0].events.find(
-          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND,
+          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND || type === CONST_CHAR.REDELEGATE
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(
-            ({ key }) => key === CONST_CHAR.VALIDATOR,
+            ({ key }) => key === CONST_CHAR.VALIDATOR || key === CONST_CHAR.SOURCE_VALIDATOR
           );
           const regex = /_/gi;
-          validatorAddr = txAction.value.replace(regex, ' ');
-          if (validatorAddr === validatorAddress) {
-            const txActionAmount = txAttr.attributes.find(
-              ({ key }) => key === CONST_CHAR.AMOUNT,
-            );
-            const amount = txActionAmount.value.replace(regex, ' ');
-            amount.replace(CONST_CHAR.UAURA, '');
-            if (txAttr.type === CONST_CHAR.DELEGATE) {
-              data.fee = (parseInt(amount) / 1000000).toFixed(6);
-            } else {
-              data.fee = (parseInt(amount) / 1000000).toFixed(6);
-            }
-            data.type = txAttr.type;
-          }
+          // validatorAddr = txAction.value.replace(regex, ' ');
+          // if (validatorAddr === validatorAddress) {
+          //   const txActionAmount = txAttr.attributes.find(
+          //     ({ key }) => key === CONST_CHAR.AMOUNT,
+          //   );
+          //   let amount = txActionAmount.value.replace(regex, ' ');
+          //   amount = amount.replace(CONST_CHAR.UAURA, '');
+          //   // if (txAttr.type === CONST_CHAR.DELEGATE
+          //   //   || txAttr.type === CONST_CHAR.REDELEGATE
+          //   //   || txAttr.type ===  CONST_CHAR.UNBOND) {
+          //   //   data.fee = (parseInt(amount) / 1000000).toFixed(6);
+          //   // }else {
+          //   //   data.fee = (parseInt(amount) / 1000000).toFixed(6);
+          //   // }
+          //   transaction.amount = (parseInt(amount) / 1000000).toFixed(6);
+          //   transaction.type = txAttr.type;
+          // }
+          const txActionAmount = txAttr.attributes.find(
+            ({ key }) => key === CONST_CHAR.AMOUNT,
+          );
+          let amount = txActionAmount.value.replace(regex, ' ');
+          amount = amount.replace(CONST_CHAR.UAURA, '');
+          transaction["amount"] = (parseInt(amount) / 1000000).toFixed(6);
+          transaction.type = txAttr.type;
         }
       }
-
+      lstOutput.push(transaction);
     });
 
-    const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
+    const transactionsOutput = plainToClass(LiteTransactionOutput, lstOutput, {
       excludeExtraneousValues: true,
     });
 
     return { transactions: transactionsOutput, count: total };
   }
-  
+
   async getTransactionsByDelegatorAddress(
     ctx: RequestContext,
     address,

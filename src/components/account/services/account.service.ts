@@ -94,16 +94,6 @@ export class AccountService {
       });
     }
 
-    // get delegated
-
-    // const delegatedData = await this.getDataAPI(api, paramsDelegated, ctx);
-    // get all validator
-    // const validatorData = await this.validatorRepository.find({
-    //   order: { power: 'DESC' },
-    // });
-    // get stake_reward
-    // const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
-    // const stakeRewardData = await this.getDataAPI(api, paramsStakeReward, ctx);
     let delegatedAmount = 0;
     let stakeReward = 0;
     if (delegatedData) {

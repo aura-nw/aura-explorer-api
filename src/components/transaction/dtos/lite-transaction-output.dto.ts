@@ -20,7 +20,7 @@ export class LiteTransactionOutput {
 
   @Expose()
   @ApiProperty()
-  code: string;
+  code: number;
 
   @Expose()
   @ApiProperty()
@@ -37,4 +37,8 @@ export class LiteTransactionOutput {
   @Expose()
   @ApiProperty()
   raw_log: string;
+
+  @Expose()
+  @ApiProperty()
+  amount?: string;
 }

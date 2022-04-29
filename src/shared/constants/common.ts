@@ -27,10 +27,12 @@ export enum CONST_CHAR {
   DELEGATE  = 'delegate',
   UNBOND = 'unbond',
   VALIDATOR = 'validator',
+  SOURCE_VALIDATOR = 'source_validator',
   AMOUNT = 'amount',
   UNDEFINED = 'undefined',
   MESSAGE = 'message',
   ACTION = 'action',
+  REDELEGATE  = 'redelegate',
 }
 
 export enum CONST_MSG_TYPE {
