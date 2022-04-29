@@ -51,7 +51,7 @@ export class AccountService {
     const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
     const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
     const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
-    const paramsAuthInfo = `auth/accounts/${address}`;
+    const paramsAuthInfo = `/auth/accounts/${address}`;
     const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
 
     const [
@@ -61,7 +61,7 @@ export class AccountService {
       redelegationsData,
       authInfoData,
       validatorData,
-      stakeRewardData
+      stakeRewardData,
     ] = await Promise.all([
       this.getDataAPI(api, paramsBalance, ctx),
       this.getDataAPI(api, paramsDelegated, ctx),
@@ -72,10 +72,9 @@ export class AccountService {
       this.validatorRepository.find({
         order: { power: 'DESC' },
       }),
-      
-      this.getDataAPI(api, paramsStakeReward, ctx)
+
+      this.getDataAPI(api, paramsStakeReward, ctx),
     ]);
-    
 
     // get balance
     let available = 0;
@@ -141,7 +140,9 @@ export class AccountService {
         }
         accountOutput.delegations[idx] = delegation;
       });
-      accountOutput.delegations = accountOutput.delegations.filter(item => item.amount != '0.000000');
+      accountOutput.delegations = accountOutput.delegations.filter(
+        (item) => item.amount != '0.000000',
+      );
       accountOutput.delegated = this.changeUauraToAura(delegatedAmount);
     }
 
