@@ -68,11 +68,9 @@ export class AccountService {
       this.getDataAPI(api, paramsUnbonding, ctx),
       this.getDataAPI(api, paramsRedelegations, ctx),
       this.getDataAPI(api, paramsAuthInfo, ctx),
-
       this.validatorRepository.find({
         order: { power: 'DESC' },
       }),
-
       this.getDataAPI(api, paramsStakeReward, ctx),
     ]);
 
