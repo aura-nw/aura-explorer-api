@@ -27,25 +27,25 @@ export class WalletService {
     const walletOutput = new WalletOutput();
     walletOutput.address = address;
     //get balance
-    const paramsBalance = `/cosmos/bank/v1beta1/balances/${address}`;
+    const paramsBalance = `cosmos/bank/v1beta1/balances/${address}`;
     // const balanceData = await this.getDataAPI(api, paramsBalance);
     // if (balanceData) {
     //     walletOutput.balance = balanceData;
     // }
     //get delegated
-    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
+    const paramsDelegated = `cosmos/staking/v1beta1/delegations/${address}`;
     // const delegatedData = await this.getDataAPI(api, paramsDelegated);
     // if (delegatedData) {
     //     walletOutput.delegated = delegatedData;
     // }
     //get unbonding
-    const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
+    const paramsUnbonding = `cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
     // const unbondingData = await this.getDataAPI(api, paramsUnbonding);
     // if (unbondingData) {
     //     walletOutput.unbonding = unbondingData;
     // }
     //get stake_reward
-    const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
+    const paramsStakeReward = `cosmos/distribution/v1beta1/delegators/${address}/rewards`;
     // const stakeRewardData = await this.getDataAPI(api, paramsStakeReward);
     // if (stakeRewardData) {
     //     walletOutput.stake_reward = stakeRewardData;

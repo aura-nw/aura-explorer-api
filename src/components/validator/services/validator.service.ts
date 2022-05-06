@@ -163,9 +163,9 @@ export class ValidatorService {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     let result: any = {};
     //get available balance
-    const paramsBalance = `/cosmos/bank/v1beta1/balances/${delegatorAddress}`;
-    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
-    const paramsReward = `/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
+    const paramsBalance = `cosmos/bank/v1beta1/balances/${delegatorAddress}`;
+    const paramsDelegated = `cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
+    const paramsReward = `cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
 
     // Use promise all to improve performance
     const [balanceData, delegatedData, rewardData] = await Promise.all([
@@ -252,7 +252,7 @@ export class ValidatorService {
    * @returns 
    */
   async unbondingDelegations(ctx: RequestContext, delegatorAddr: string) {
-    const params = `/cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
+    const params = `cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
     const responses = await this.serviceUtil.getDataAPI(this.api, params, ctx);
     let unbonding_responses = [];
     if (responses) {

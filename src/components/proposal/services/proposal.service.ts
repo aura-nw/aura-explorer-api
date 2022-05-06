@@ -198,7 +198,7 @@ export class ProposalService {
     proposalId: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getProposalVoteTally.name} was called!`);
-    const paramsBalance = `/cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
+    const paramsBalance = `cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
     const proposalVoteTally = await this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx);
     return { proposalVoteTally: proposalVoteTally };
   }

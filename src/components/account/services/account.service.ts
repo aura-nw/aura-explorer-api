@@ -39,12 +39,12 @@ export class AccountService {
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
-    const paramsBalance = `/cosmos/bank/v1beta1/balances/${address}`;
-    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
-    const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
-    const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
-    const paramsAuthInfo = `/auth/accounts/${address}`;
-    const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
+    const paramsBalance = `cosmos/bank/v1beta1/balances/${address}`;
+    const paramsDelegated = `cosmos/staking/v1beta1/delegations/${address}`;
+    const paramsUnbonding = `cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
+    const paramsRedelegations = `cosmos/staking/v1beta1/delegators/${address}/redelegations`;
+    const paramsAuthInfo = `auth/accounts/${address}`;
+    const paramsStakeReward = `cosmos/distribution/v1beta1/delegators/${address}/rewards`;
 
     const [
       balanceData,
@@ -205,7 +205,7 @@ export class AccountService {
     // get commission
     let commission = '0';
     if (validator.length > 0) {
-      const paramsCommisstion = `/cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
+      const paramsCommisstion = `cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
       const commissionData = await this.serviceUtil.getDataAPI(this.api, paramsCommisstion, ctx);
       if (
         commissionData &&
