@@ -68,24 +68,28 @@ export class ProposalService {
   async getProposalById(ctx: RequestContext, proposalId: string): Promise<any> {
     this.logger.log(ctx, `${this.getProposalById.name} was called!`);
     let proposal: any = {};
-    proposal = await this.proposalRepository.findOne({
+    const proposalData = await this.proposalRepository.findOne({
       where: { pro_id: proposalId },
     });
-    proposal.initial_deposit = 0;
-    const historyProposal = await this.historyProposalRepository.findOne({
-      where: { proposal_id: proposalId },
-    });
-    if (historyProposal) {
-      proposal.initial_deposit = historyProposal.initial_deposit;
+    if (proposalData) {
+      proposal = proposalData;
+      proposal.initial_deposit = 0;
+      const historyProposal = await this.historyProposalRepository.findOne({
+        where: { proposal_id: proposalId },
+      });
+      if (historyProposal) {
+        proposal.initial_deposit = historyProposal.initial_deposit;
+      }
+      //get quorum
+      const api = this.configService.get<string>('node.api');
+      const params = `/cosmos/gov/v1beta1/params/tallying`;
+      let data = await this.getDataAPI(api, params);
+      proposal.quorum = 0;
+      if (data && data.tally_params) {
+        proposal.quorum = Number(data.tally_params.quorum) * 100;
+      }
     }
-    //get quorum
-    const api = this.configService.get<string>('node.api');
-    const params = `/cosmos/gov/v1beta1/params/tallying`;
-    let data = await this.getDataAPI(api, params);
-    proposal.quorum = 0;
-    if (data && data.tally_params) {
-      proposal.quorum = Number(data.tally_params.quorum) * 100;
-    }
+    
     return proposal;
   }
 
