@@ -34,34 +34,17 @@ export class ValidatorService {
     private httpService: HttpService,
     private configService: ConfigService,
     private blockService: BlockService,
+    private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
     private blockRepository: BlockRepository,
     private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private delegatorRewardRepository: DelegatorRewardRepository,
-    private serviceUtil: ServiceUtil
   ) {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.api = this.configService.get<string>('node.api');
-  }
-
-  async getDataAPI(api, params, ctx) {
-    this.logger.log(
-      ctx,
-      `${this.getDataAPI.name} was called, to ${api + params}!`,
-    );
-    try {
-      const data = await lastValueFrom(this.httpService.get(api + params)).then(
-        (rs) => rs.data,
-      );
-      return data;
-
-    } catch (err) {
-      return null;
-    }
-
+    this.api = this.configService.get('API');
   }
 
   async getTotalValidator(): Promise<number> {
@@ -178,7 +161,6 @@ export class ValidatorService {
     delegatorAddress: string
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-    const api = this.configService.get<string>('node.api');
     let result: any = {};
     //get available balance
     const paramsBalance = `/cosmos/bank/v1beta1/balances/${delegatorAddress}`;
@@ -187,9 +169,9 @@ export class ValidatorService {
 
     // Use promise all to improve performance
     const [balanceData, delegatedData, rewardData] = await Promise.all([
-      this.getDataAPI(api, paramsBalance, ctx),
-      this.getDataAPI(api, paramsDelegated, ctx),
-      this.getDataAPI(api, paramsReward, ctx)
+      this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsDelegated, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsReward, ctx)
     ]);
 
     // const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
@@ -234,8 +216,8 @@ export class ValidatorService {
           where: { delegator_address: delegatorAddress, validator_address: item.delegation.validator_address }
         });
         delegation.reward = 0;
-        if(rewards.length > 0) {
-          delegation.reward = rewards.reduce((a,curr) => a + curr.amount, 0);
+        if (rewards.length > 0) {
+          delegation.reward = rewards.reduce((a, curr) => a + curr.amount, 0);
         }
         delegations.push(delegation);
       }
@@ -270,9 +252,8 @@ export class ValidatorService {
    * @returns 
    */
   async unbondingDelegations(ctx: RequestContext, delegatorAddr: string) {
-    const api = this.configService.get<string>('node.api');
     const params = `/cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
-    const responses = await this.getDataAPI(api, params, ctx);
+    const responses = await this.serviceUtil.getDataAPI(this.api, params, ctx);
     let unbonding_responses = [];
     if (responses) {
       for (let i = 0; i < responses.unbonding_responses?.length; i++) {
@@ -293,11 +274,11 @@ export class ValidatorService {
    * @param limit 
    * @param offset 
    */
-  async getDelegatorByValidatorAddr(ctx: RequestContext, validatorAddress: string,params : DelegatorByValidatorAddrParamsDto) {
-    const {pageResults, total} = await this.validatorRepository.getDelegatorByValidatorAddr(validatorAddress, params.limit, params.offset);
-     const responses = plainToClass(DelegatorByValidatorAddrOutputDto, pageResults, {
+  async getDelegatorByValidatorAddr(ctx: RequestContext, validatorAddress: string, params: DelegatorByValidatorAddrParamsDto) {
+    const { pageResults, total } = await this.validatorRepository.getDelegatorByValidatorAddr(validatorAddress, params.limit, params.offset);
+    const responses = plainToClass(DelegatorByValidatorAddrOutputDto, pageResults, {
       excludeExtraneousValues: true,
     });
-    return { data: responses, total};
+    return { data: responses, total };
   }
 }

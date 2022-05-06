@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { lastValueFrom } from 'rxjs';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 
 import {
@@ -19,30 +20,21 @@ import { AccountVesting } from '../dtos/account-vesting.dto';
 
 @Injectable()
 export class AccountService {
+  private api;
+
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
     private configService: ConfigService,
+    private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository,
   ) {
     this.logger.setContext(AccountService.name);
-  }
-
-  async getDataAPI(api, params, ctx) {
-    this.logger.log(
-      ctx,
-      `${this.getDataAPI.name} was called, to ${api + params}!`,
-    );
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
-      (rs) => rs.data,
-    );
-
-    return data;
+    this.api = this.configService.get('API');
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
     this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
-    const api = this.configService.get<string>('node.api');
 
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
@@ -63,15 +55,15 @@ export class AccountService {
       validatorData,
       stakeRewardData,
     ] = await Promise.all([
-      this.getDataAPI(api, paramsBalance, ctx),
-      this.getDataAPI(api, paramsDelegated, ctx),
-      this.getDataAPI(api, paramsUnbonding, ctx),
-      this.getDataAPI(api, paramsRedelegations, ctx),
-      this.getDataAPI(api, paramsAuthInfo, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsDelegated, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsUnbonding, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsRedelegations, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsAuthInfo, ctx),
       this.validatorRepository.find({
         order: { power: 'DESC' },
       }),
-      this.getDataAPI(api, paramsStakeReward, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsStakeReward, ctx),
     ]);
 
     // get balance
@@ -214,7 +206,7 @@ export class AccountService {
     let commission = '0';
     if (validator.length > 0) {
       const paramsCommisstion = `/cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
-      const commissionData = await this.getDataAPI(api, paramsCommisstion, ctx);
+      const commissionData = await this.serviceUtil.getDataAPI(this.api, paramsCommisstion, ctx);
       if (
         commissionData &&
         commissionData.commission.commission[0].denom === CONST_CHAR.UAURA

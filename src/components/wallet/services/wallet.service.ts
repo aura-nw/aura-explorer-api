@@ -4,15 +4,19 @@ import { AkcLogger, RequestContext } from '../../../shared';
 import { WalletOutput } from '../dtos/wallet-output.dto';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 
 @Injectable()
 export class WalletService {
+  private api;
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
     private httpService: HttpService,
+    private serviceUtil: ServiceUtil
   ) {
     this.logger.setContext(WalletService.name);
+    this.api = this.configService.get('API');
   }
 
   async getWalletDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -60,11 +64,11 @@ export class WalletService {
       stakeRewardData,
       authInfoData,
     ] = await Promise.all([
-      this.getDataAPI(api, paramsBalance),
-      this.getDataAPI(api, paramsDelegated),
-      this.getDataAPI(api, paramsUnbonding),
-      this.getDataAPI(api, paramsStakeReward),
-      this.getDataAPI(api, paramsAuthInfo),
+      this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsDelegated, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsUnbonding, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsStakeReward, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramsAuthInfo, ctx),
     ]);
     if (balanceData) {
       walletOutput.balance = balanceData;
@@ -82,13 +86,5 @@ export class WalletService {
       walletOutput.auth_info = authInfoData;
     }
     return { ...walletOutput };
-  }
-
-  async getDataAPI(api, params) {
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
-      (rs) => rs.data,
-    );
-
-    return data;
   }
 }

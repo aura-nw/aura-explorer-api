@@ -11,6 +11,10 @@ export enum LINK_API {
     VALIDATOR = `/cosmos/staking/v1beta1/validators`,
     SLASHING_PARAM = `/cosmos/slashing/v1beta1/params`,
     SIGNING_INFOS = `/cosmos/slashing/v1beta1/signing_infos`,
+    PARAM_TALLYING = '/cosmos/gov/v1beta1/params/tallying',
+    PROPOSAL_DETAIL = '/cosmos/gov/v1beta1/proposals/',
+    PROPOSALS = '/cosmos/gov/v1beta1/proposals',
+    LATEST_BLOCK = '/blocks/latest'
   }
 
 export enum CONST_NUM {
