@@ -78,6 +78,14 @@ export class ProposalService {
     if (historyProposal) {
       proposal.initial_deposit = historyProposal.initial_deposit;
     }
+    //get quorum
+    const api = this.configService.get<string>('node.api');
+    const params = `/cosmos/gov/v1beta1/params/tallying`;
+    let data = await this.getDataAPI(api, params);
+    proposal.quorum = 0;
+    if (data && data.tally_params) {
+      proposal.quorum = Number(data.tally_params.quorum) * 100;
+    }
     return proposal;
   }
 
