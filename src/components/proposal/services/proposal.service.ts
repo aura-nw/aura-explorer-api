@@ -1,16 +1,15 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Interval } from '@nestjs/schedule';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom } from 'rxjs';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import {
   AkcLogger, CONST_PROPOSAL_VOTE_OPTION,
+  LINK_API,
   RequestContext
 } from '../../../shared';
-import { Proposal } from '../../../shared/entities/proposal.entity';
 import { ProposalOutput } from '../dtos/proposal-output.dto';
 import { ProposalVoteByOptionInput } from '../dtos/proposal-vote-by-option-input.dto';
 import { ProposalVoteByValidatorInput } from '../dtos/proposal-vote-by-validator-input.dto';
@@ -22,11 +21,13 @@ import { ProposalRepository } from '../repositories/proposal.repository';
 @Injectable()
 export class ProposalService {
   isSync = false;
+  private api;
 
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
     private httpService: HttpService,
+    private serviceUtil: ServiceUtil,
     private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private validatorRepository: ValidatorRepository,
@@ -35,6 +36,7 @@ export class ProposalService {
     private delegationRepository: DelegationRepository
   ) {
     this.logger.setContext(ProposalService.name);
+    this.api = this.configService.get('API');
   }
 
   async getProposals(ctx: RequestContext): Promise<any> {
@@ -67,26 +69,39 @@ export class ProposalService {
 
   async getProposalById(ctx: RequestContext, proposalId: string): Promise<any> {
     this.logger.log(ctx, `${this.getProposalById.name} was called!`);
-    let proposal: any = {};
-    proposal = await this.proposalRepository.findOne({
+    let proposal: any = null;
+    const proposalData = await this.proposalRepository.findOne({
       where: { pro_id: proposalId },
     });
-    proposal.initial_deposit = 0;
-    const historyProposal = await this.historyProposalRepository.findOne({
-      where: { proposal_id: proposalId },
-    });
-    if (historyProposal) {
-      proposal.initial_deposit = historyProposal.initial_deposit;
+    if (proposalData) {
+      proposal = proposalData;
+      proposal.initial_deposit = 0;
+      const historyProposal = await this.historyProposalRepository.findOne({
+        where: { proposal_id: proposalId },
+      });
+      if (historyProposal) {
+        proposal.initial_deposit = historyProposal.initial_deposit;
+      }
+      //get quorum
+      let data = await this.serviceUtil.getDataAPI(this.api, LINK_API.PARAM_TALLYING, ctx);
+      proposal.quorum = 0;
+      if (data && data.tally_params) {
+        proposal.quorum = Number(data.tally_params.quorum) * 100;
+      }
     }
+
     return proposal;
   }
 
   async getProposalByIdNode(ctx: RequestContext, proposalId: string): Promise<any> {
     this.logger.log(ctx, `${this.getProposalById.name} was called!`);
-    const api = this.configService.get<string>('node.api');
-    const params = `/cosmos/gov/v1beta1/proposals/${proposalId}`;
-    let data = await this.getDataAPI(api, params);
-    return data.proposal;
+    const params = LINK_API.PROPOSAL_DETAIL + proposalId;
+    let data = await this.serviceUtil.getDataAPI(this.api, params, ctx);
+    let result = null;
+    if (data && data.proposal) {
+      result = data.proposal;
+    }
+    return result;
   }
 
   async getVotesListByOption(
@@ -183,26 +198,9 @@ export class ProposalService {
     proposalId: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getProposalVoteTally.name} was called!`);
-    const api = this.configService.get<string>('node.api');
-    const paramsBalance = `/cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
-    const proposalVoteTally = await this.getDataAPI(api, paramsBalance);
+    const paramsBalance = `cosmos/gov/v1beta1/proposals/${proposalId}/tally`;
+    const proposalVoteTally = await this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx);
     return { proposalVoteTally: proposalVoteTally };
-  }
-
-  async getProposalsFromNode(
-  ): Promise<any> {
-    let key: string = '';
-    const api = this.configService.get<string>('node.api');
-    const params = `/cosmos/gov/v1beta1/proposals`;
-    let result = await this.getDataAPI(api, params);
-    key = result.pagination.next_key;
-    while (key != null) {
-      const params = `/cosmos/gov/v1beta1/proposals?pagination.key=${key}`;
-      let dataProposal = await this.getDataAPI(api, params);
-      key = dataProposal.pagination.next_key;
-      result = [...result.proposals, ...dataProposal.proposals];
-    }
-    return result;
   }
 
 
@@ -211,7 +209,6 @@ export class ProposalService {
     delegatorAddress: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegationsByDelegatorAddress.name} was called!`);
-    const api = this.configService.get<string>('node.api');
     //get delegation first
     let result: any = {};
     result = await this.delegationRepository.findOne({
@@ -226,13 +223,5 @@ export class ProposalService {
     }
 
     return { result: result };
-  }
-
-  async getDataAPI(api, params) {
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
-      (rs) => rs.data,
-    );
-
-    return data;
   }
 }

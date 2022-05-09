@@ -2,6 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ServiceUtil } from '../../shared/utils/service.util';
 import { SharedModule } from "../../shared";
 import { WalletController } from "./controllers/wallet.controller";
 import { WalletService } from "./services/wallet.service";
@@ -13,7 +14,7 @@ import { WalletService } from "./services/wallet.service";
       HttpModule,
       ConfigModule,
     ],
-    providers: [WalletService],
+    providers: [WalletService, ServiceUtil],
     controllers: [WalletController],
     exports: [WalletService],
   })
