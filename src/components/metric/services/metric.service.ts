@@ -15,8 +15,8 @@ import {
 } from '../utils/utils';
 import { Range } from '../utils/enum';
 import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
-import { InfluxDBClient } from 'src/components/schedule/services/influxdb-client';
-import { AkcLogger, RequestContext } from 'src/shared';
+import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
+import { AkcLogger, RequestContext } from '../../../shared';
 import { ConfigService } from '@nestjs/config';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 

@@ -174,7 +174,6 @@ export class ValidatorService {
       this.serviceUtil.getDataAPI(this.api, paramsReward, ctx)
     ]);
 
-    // const balanceData = await this.getDataAPI(api, paramsBalance, ctx);
     result.available_balance = 0;
     if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
       result.available_balance = Number(balanceData.balances[0].amount);

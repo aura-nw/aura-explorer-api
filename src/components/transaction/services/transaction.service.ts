@@ -81,23 +81,6 @@ export class TransactionService {
             ({ key }) => key === CONST_CHAR.VALIDATOR || key === CONST_CHAR.SOURCE_VALIDATOR
           );
           const regex = /_/gi;
-          // validatorAddr = txAction.value.replace(regex, ' ');
-          // if (validatorAddr === validatorAddress) {
-          //   const txActionAmount = txAttr.attributes.find(
-          //     ({ key }) => key === CONST_CHAR.AMOUNT,
-          //   );
-          //   let amount = txActionAmount.value.replace(regex, ' ');
-          //   amount = amount.replace(CONST_CHAR.UAURA, '');
-          //   // if (txAttr.type === CONST_CHAR.DELEGATE
-          //   //   || txAttr.type === CONST_CHAR.REDELEGATE
-          //   //   || txAttr.type ===  CONST_CHAR.UNBOND) {
-          //   //   data.fee = (parseInt(amount) / 1000000).toFixed(6);
-          //   // }else {
-          //   //   data.fee = (parseInt(amount) / 1000000).toFixed(6);
-          //   // }
-          //   transaction.amount = (parseInt(amount) / 1000000).toFixed(6);
-          //   transaction.type = txAttr.type;
-          // }
           const txActionAmount = txAttr.attributes.find(
             ({ key }) => key === CONST_CHAR.AMOUNT,
           );

@@ -137,8 +137,6 @@ export class AccountService {
     }
 
     // get unbonding
-
-    // const unbondingData = await this.getDataAPI(api, paramsUnbonding, ctx);
     let unbondingAmount = 0;
     if (unbondingData) {
       accountOutput.unbonding_delegations = [];
@@ -165,8 +163,6 @@ export class AccountService {
     }
 
     // get redelegations
-
-    // const redelegationsData = await this.getDataAPI(api, paramsRedelegations, ctx);
     if (redelegationsData) {
       accountOutput.redelegations = [];
       redelegationsData.redelegation_responses.forEach((data, idx) => {
@@ -219,7 +215,6 @@ export class AccountService {
     }
 
     //get auth_info
-    // const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
     let delegatedVesting = 0;
     accountOutput.delegatable_vesting = '0';
 
