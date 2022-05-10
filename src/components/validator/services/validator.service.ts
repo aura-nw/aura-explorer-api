@@ -69,7 +69,7 @@ export class ValidatorService {
   }
 
   async getTotalValidatorActive(): Promise<number> {
-    return await this.validatorRepository.count({ where: { jailed: '0' } });
+    return await this.validatorRepository.count({ where: { status: 3 } });
   }
 
   async getValidators(ctx: RequestContext
