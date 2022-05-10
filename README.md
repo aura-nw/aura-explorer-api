@@ -1,6 +1,6 @@
 # Aura Explorer API
 
-## Prerequisite:
+## Prerequisite
 
 1. INFLUXDB
 
