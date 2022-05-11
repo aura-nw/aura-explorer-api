@@ -47,6 +47,22 @@ export class ProposalController {
     return { data: proposals, meta: { count } };
   }
 
+  @Get(['list/get-by-address/:address', 'list/get-by-address'])
+  @ApiOperation({
+    summary: 'Get list proposals by address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getProposalsByAddress(@ReqContext() ctx: RequestContext, @Param('address') address: string): Promise<any> {
+    this.logger.log(ctx, `${this.getProposalsByAddress.name} was called!`);
+    const { proposals, count } = await this.proposalService.getProposalsByAddress(ctx, address);
+
+    return { data: proposals, meta: { count } };
+  }
+
   @Get(':proposalId/votes/:voter')
   @ApiOperation({
     summary: 'Get proposal vote by proposal id and voter',

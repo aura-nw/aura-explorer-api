@@ -54,6 +54,14 @@ export class ProposalService {
     return { proposals: proposalsOuput, count };
   }
 
+  async getProposalsByAddress(ctx: RequestContext, address: string): Promise<any> {
+    this.logger.log(ctx, `${this.getProposals.name} was called!`);
+
+    const proposals = await this.proposalRepository.getProposalsByAddress(address);
+
+    return { proposals: proposals, count: proposals.length };
+  }
+
   async getProposalVote(
     ctx: RequestContext,
     proposalId: string,
