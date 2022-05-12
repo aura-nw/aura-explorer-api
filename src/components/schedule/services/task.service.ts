@@ -11,7 +11,7 @@ import { ProposalDeposit } from '../../../shared/entities/proposal-deposit.entit
 import { tmhash } from 'tendermint/lib/hash';
 import { v4 as uuidv4 } from 'uuid';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { AkcLogger, Block, CONST_CHAR, CONST_DELEGATE_TYPE, CONST_MSG_TYPE, CONST_PROPOSAL_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
+import { AkcLogger, Block, CONST_CHAR, CONST_DELEGATE_TYPE, CONST_MSG_TYPE, CONST_NUM, CONST_PROPOSAL_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
 import { HistoryProposal } from '../../../shared/entities/history-proposal.entity';
 import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
@@ -294,7 +294,7 @@ export class TaskService {
             delegation.tx_hash = txData.tx_response.txhash;
             delegation.delegator_address = message.delegator_address;
             delegation.validator_address = message.validator_address;
-            delegation.amount = Number(message.amount.amount)/1000000;
+            delegation.amount = Number(message.amount.amount)/CONST_NUM.PRECISION_DIV;
             delegation.created_at = new Date(txData.tx_response.timestamp);
             delegation.type = CONST_DELEGATE_TYPE.DELEGATE;
             // TODO: Write delegation to influxdb
@@ -329,7 +329,7 @@ export class TaskService {
             delegation.tx_hash = txData.tx_response.txhash;
             delegation.delegator_address = message.delegator_address;
             delegation.validator_address = message.validator_address;
-            delegation.amount = (Number(message.amount.amount)*(-1))/1000000;
+            delegation.amount = (Number(message.amount.amount)*(-1))/CONST_NUM.PRECISION_DIV;
             delegation.created_at = new Date(txData.tx_response.timestamp);
             delegation.type = CONST_DELEGATE_TYPE.UNDELEGATE;
             // TODO: Write delegation to influxdb
@@ -364,7 +364,7 @@ export class TaskService {
             delegation1.tx_hash = txData.tx_response.txhash;
             delegation1.delegator_address = message.delegator_address;
             delegation1.validator_address = message.validator_src_address;
-            delegation1.amount = (Number(message.amount.amount)*(-1))/1000000;
+            delegation1.amount = (Number(message.amount.amount)*(-1))/CONST_NUM.PRECISION_DIV;
             delegation1.created_at = new Date(txData.tx_response.timestamp);
             delegation1.type = CONST_DELEGATE_TYPE.REDELEGATE;
             // TODO: Write delegation to influxdb
@@ -381,7 +381,7 @@ export class TaskService {
             delegation2.tx_hash = txData.tx_response.txhash;
             delegation2.delegator_address = message.delegator_address;
             delegation2.validator_address = message.validator_dst_address;
-            delegation2.amount = Number(message.amount.amount)/1000000;
+            delegation2.amount = Number(message.amount.amount)/CONST_NUM.PRECISION_DIV;
             delegation2.created_at = new Date(txData.tx_response.timestamp);
             delegation2.type = CONST_DELEGATE_TYPE.REDELEGATE;
             // TODO: Write delegation to influxdb
@@ -458,7 +458,7 @@ export class TaskService {
       this.logger.log(null, `Class ${TaskService.name}, call getBlockLatest method`);
 
       const api = this.configService.get<string>('node.api');
-      const paramsBlockLatest = `/blocks/latest`;
+      const paramsBlockLatest = `blocks/latest`;
       const results = await this.getDataAPI(api, paramsBlockLatest);
       return results;
 
@@ -531,7 +531,7 @@ export class TaskService {
           this.logger.log(null, `processing tx: ${txHash}`);
 
           // fetch tx data
-          const paramsTx = `/cosmos/tx/v1beta1/txs/${txHash}`
+          const paramsTx = `cosmos/tx/v1beta1/txs/${txHash}`;
 
           const txData = await this.getDataAPI(api, paramsTx);
 
@@ -567,7 +567,7 @@ export class TaskService {
           }
           const newTx = new Transaction();
           const fee = txData.tx_response.tx.auth_info.fee.amount[0];
-          const txFee = (fee[CONST_CHAR.AMOUNT] / 1000000).toFixed(6);
+          const txFee = (fee[CONST_CHAR.AMOUNT] / CONST_NUM.PRECISION_DIV).toFixed(6);
           newTx.block = savedBlock;
           newTx.code = txData.tx_response.code;
           newTx.codespace = txData.tx_response.codespace;

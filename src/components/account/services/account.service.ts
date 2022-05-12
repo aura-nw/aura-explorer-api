@@ -9,6 +9,7 @@ import {
   AkcLogger,
   CONST_CHAR,
   CONST_NAME_ASSETS,
+  CONST_NUM,
   RequestContext,
 } from '../../../shared';
 import { AccountBalance } from '../dtos/account-balance.dto';
@@ -261,6 +262,6 @@ export class AccountService {
   }
 
   changeUauraToAura(amount) {
-    return (amount / 1000000).toFixed(6);
+    return (amount / CONST_NUM.PRECISION_DIV).toFixed(6);
   }
 }
