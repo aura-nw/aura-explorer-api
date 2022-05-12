@@ -11,7 +11,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from 'src/shared';
+import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from '../../../shared';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { MetricParamsDto } from '../dtos/metric-params.dto';
 

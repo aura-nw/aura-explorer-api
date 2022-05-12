@@ -1,6 +1,4 @@
-// import { plainToClass } from 'class-transformer';
 import { Request } from 'express';
-// import { UserAccessTokenClaims } from 'src/auth/auth-token-output.dto';
 
 import {
   FORWARDED_FOR_TOKEN_HEADER,
