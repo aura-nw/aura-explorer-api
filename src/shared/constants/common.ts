@@ -22,6 +22,7 @@ export enum CONST_NUM {
   LIMIT_100 = 100,
   LIMIT_50 = 50,
   OFFSET = 0,
+  PRECISION_DIV = 1000000
 }
 
 export enum CONST_CHAR {
