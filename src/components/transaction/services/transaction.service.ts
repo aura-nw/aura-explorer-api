@@ -3,7 +3,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 
-import { AkcLogger, CONST_CHAR, RequestContext, Transaction } from '../../../shared';
+import { AkcLogger, CONST_CHAR, CONST_NUM, RequestContext, Transaction } from '../../../shared';
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
@@ -86,7 +86,7 @@ export class TransactionService {
           );
           let amount = txActionAmount.value.replace(regex, ' ');
           amount = amount.replace(CONST_CHAR.UAURA, '');
-          transaction["amount"] = (parseInt(amount) / 1000000).toFixed(6);
+          transaction["amount"] = (parseInt(amount) / CONST_NUM.PRECISION_DIV).toFixed(6);
           transaction.type = txAttr.type;
         }
       }
