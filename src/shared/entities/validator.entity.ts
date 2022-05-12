@@ -39,7 +39,7 @@ export class Validator extends BaseEntityIncrementId {
   @Column({ type: 'text' })
   delegator_shares: string;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'double' })
   power: number;
 
   @Column({ default: '' })
