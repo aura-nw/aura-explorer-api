@@ -62,7 +62,7 @@ export class Proposal {
     @Column({ default: 0.00000000 })
     pro_turnout: number;
 
-    @Column({ type: 'json' })
+    @Column({ type: 'json', nullable: true })
     pro_activity: any;
 
     @Column({ default: false })
