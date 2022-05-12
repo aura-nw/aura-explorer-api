@@ -2,6 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { ServiceUtil } from '../../shared/utils/service.util';
 import { SharedModule } from "../../shared";
 import { BlockRepository } from '../block/repositories/block.repository';
 import { DelegationRepository } from '../schedule/repositories/delegation.repository';
@@ -28,7 +29,7 @@ import { ProposalService } from './services/proposal.service';
       HttpModule,
       ConfigModule,
     ],
-    providers: [ProposalService],
+    providers: [ProposalService, ServiceUtil],
     controllers: [ProposalController],
     exports: [ProposalService],
   })

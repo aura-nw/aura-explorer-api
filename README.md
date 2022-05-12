@@ -135,7 +135,7 @@
         INFLUXDB_ORG=aura-dev
 
     ```
-2. Run
+2. Run   
 
     ### Native way
     
