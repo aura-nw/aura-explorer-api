@@ -14,10 +14,12 @@ import { StatusOutput } from './components/dashboard/dtos/status-output.dto';
 import { TransactionService } from './components/transaction/services/transaction.service';
 import { BlockService } from './components/block/services/block.service';
 import { ValidatorService } from './components/validator/services/validator.service';
+import { ServiceUtil } from './shared/utils/service.util';
 
 @Injectable()
 export class AppService {
   cosmosScanAPI: string;
+  private api;
 
   constructor(
     private logger: AkcLogger,
@@ -26,9 +28,11 @@ export class AppService {
     private txService: TransactionService,
     private blockService: BlockService,
     private validatorService: ValidatorService,
+    private serviceUtil: ServiceUtil
   ) {
     this.logger.setContext(AppService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
+    this.api = this.configService.get('API');
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -36,23 +40,9 @@ export class AppService {
     return 'Hello World!';
   }
 
-  async getDataAPI(api, params, ctx) {
-    this.logger.log(
-      ctx,
-      `${this.getDataAPI.name} was called, to ${api + params}!`,
-    );
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
-      (rs) => rs.data,
-    );
-
-    return data;
-  }
-
   async getStatus(ctx: RequestContext): Promise<StatusOutput> {
     this.logger.log(ctx, `${this.getStatus.name} was called!`);
-
     this.logger.log(ctx, `calling get latest txs from node`);
-    const api = this.configService.get<string>('node.api');
 
     // get staking pool
     const paramPool = LINK_API.STAKING_POOL;
@@ -78,9 +68,9 @@ export class AppService {
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
-      this.getDataAPI(api, paramPool, ctx),
-      this.getDataAPI(api, paramInflation, ctx),
-      this.getDataAPI(api, paramComPool, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramPool, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramInflation, ctx),
+      this.serviceUtil.getDataAPI(this.api, paramComPool, ctx),
       this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),

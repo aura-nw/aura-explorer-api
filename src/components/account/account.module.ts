@@ -2,6 +2,7 @@ import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServiceUtil } from '../../shared/utils/service.util';
 
 import { SharedModule } from '../../shared/shared.module';
 import { TransactionRepository } from '../transaction/repositories/transaction.repository';
@@ -22,7 +23,7 @@ import { AccountService } from './services/account.service';
     ]),
     TransactionModule,
   ],
-  providers: [AccountService],
+  providers: [AccountService, ServiceUtil],
   controllers: [AccountController],
   exports: [AccountService],
 })

@@ -12,6 +12,7 @@ import { ValidatorModule } from './components/validator/validator.module';
 import { WalletModule } from './components/wallet/wallet.module';
 import { ProposalModule } from './components/proposal/proposal.module';
 import { AccountModule } from './components/account/account.module';
+import { ServiceUtil } from './shared/utils/service.util';
 
 @Module({
   imports: [
@@ -27,6 +28,6 @@ import { AccountModule } from './components/account/account.module';
     AccountModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ServiceUtil],
 })
 export class AppModule {}
