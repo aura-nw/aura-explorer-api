@@ -61,4 +61,8 @@ export class BlockOutput {
   @Expose()
   @ApiProperty()
   round: number;
+
+  @Expose()
+  @ApiProperty()
+  json_data: any;
 }
