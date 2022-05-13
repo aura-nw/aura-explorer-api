@@ -47,4 +47,11 @@ export class Block extends BaseEntityIncrementId {
 
   @OneToMany(() => Transaction, (tx) => tx.block)
   txs: Transaction[];
+
+  @Column({
+    name: 'json_data',
+    type: 'json',
+    nullable: true
+  })
+  json_data: any;
 }
