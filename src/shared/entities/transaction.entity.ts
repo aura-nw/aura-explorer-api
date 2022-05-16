@@ -39,6 +39,9 @@ export class Transaction extends BaseEntityIncrementId {
   @Column({ type: 'text' })
   raw_log: string;
 
+  @Column({ type: 'text' })
+  raw_log_data: string;
+
   @Column()
   timestamp: Date;
 

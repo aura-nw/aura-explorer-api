@@ -50,6 +50,12 @@ export enum CONST_MSG_TYPE {
   MSG_WITHDRAW_DELEGATOR_REWARD = 'MsgWithdrawDelegatorReward'
 }
 
+export enum CONST_FULL_MSG_TYPE {
+  MSG_DELEGATE = '/cosmos.staking.v1beta1.MsgDelegate',
+  MSG_REDELEGATE = '/cosmos.staking.v1beta1.MsgBeginRedelegate',
+  MSG_UNDELEGATE = '/cosmos.staking.v1beta1.MsgUndelegate',
+}
+
 export enum CONST_PROPOSAL_TYPE {
   SOFTWARE_UPGRADE_PROPOSAL = 'SoftwareUpgradeProposal',
   COMMUNITY_POOL_SPEND_PROPOSAL = 'CommunityPoolSpendProposal',
