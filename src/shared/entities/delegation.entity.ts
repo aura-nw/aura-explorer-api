@@ -3,6 +3,7 @@ import { Column, Entity, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('delegations')
+@Unique(['tx_hash', 'delegator_address', 'validator_address'])
 export class Delegation extends BaseEntityIncrementId {
   @Column()
   delegator_address: string;
