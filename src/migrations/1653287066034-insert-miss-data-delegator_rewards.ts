@@ -11,7 +11,7 @@ export class insertMissDataDelegatorRewards1653287066034 implements MigrationInt
                 FROM delegations WHERE amount < 0) t1
             INNER JOIN
             (SELECT tx_hash, REPLACE(REPLACE(JSON_EXTRACT(raw_log, '$[0].events[4].attributes[2].value'), 'uaura', ''), '\"', '') AS amount
-                FROM transactions) t2
+                FROM transactions WHERE code = 0) t2
             ON t1.tx_hash = t2.tx_hash
             ) WHERE t1.tx_hash IN (
                 SELECT tx_hash from delegations 
