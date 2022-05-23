@@ -12,7 +12,6 @@ export class DelegatorReward extends BaseEntityIncrementId {
     @Column()
     amount: number;
 
-    @Unique('tx_hash', ['tx_hash'])
     @Column()
     tx_hash: string;
 }
