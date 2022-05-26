@@ -57,6 +57,6 @@ export class Transaction extends BaseEntityIncrementId {
   @Column({ type: 'json' })
   messages: any;
 
-  @ManyToOne(() => Block, (block) => block.txs, { eager: true })
+  @ManyToOne(() => Block, (block) => block.txs, { eager: false, lazy: true })
   block: Block;
 }
