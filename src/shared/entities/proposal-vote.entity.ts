@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique } from
 import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('proposal_votes')
+@Unique(['proposal_id', 'voter'])
 export class ProposalVote extends BaseEntityIncrementId {
     @Column()
     proposal_id: number;
@@ -9,7 +10,6 @@ export class ProposalVote extends BaseEntityIncrementId {
     @Column()
     voter: string;
 
-    @Unique('tx_hash', ['tx_hash'])
     @Column()
     tx_hash: string;
 
