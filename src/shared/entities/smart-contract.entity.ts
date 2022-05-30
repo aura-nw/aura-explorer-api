@@ -7,6 +7,12 @@ export class SmartContract extends BaseEntityIncrementId {
     height: number;
 
     @Column()
+    code_id: number;
+
+    @Column()
+    contract_name: string;
+
+    @Column()
     contract_address: string;
 
     @Column()
@@ -16,11 +22,14 @@ export class SmartContract extends BaseEntityIncrementId {
     contract_hash: string;
 
     @Column()
-    schema: string;
-
-    @Column()
     url: string;
 
     @Column()
+    contract_match: string;
+
+    @Column()
     contract_verification: string;
+
+    @Column()
+    compiler_version: string;
 }
