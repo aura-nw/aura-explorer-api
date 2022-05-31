@@ -2,7 +2,6 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom } from 'rxjs';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
@@ -23,6 +22,7 @@ import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output
 import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
 import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
 import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
+import { groupBy } from 'rxjs';
 
 @Injectable()
 export class ValidatorService {
@@ -91,6 +91,8 @@ export class ValidatorService {
         data.cumulative_share_after = cumulative.toFixed(2);
       }
     }
+    
+    let votersAddress: Array<string> = [];
     for (let key in validatorsOutput) {
       const data = validatorsOutput[key];
       data.rank = parseInt(key) + 1;
@@ -102,12 +104,38 @@ export class ValidatorService {
         data.status_validator = false;
       }
 
-      // get count proposal vote by address
-      const countVotes = await this.proposalVoteRepository.count({
-        where: { voter: data.acc_address },
-      });
-      data.vote_count = countVotes;
+      // // get count proposal vote by address
+      // const countVotes = await this.proposalVoteRepository.count({
+      //   where: { voter: data.acc_address },
+      // });
+      // data.vote_count = countVotes;
+
+      votersAddress.push(data.acc_address);
     }
+
+    validatorsOutput.map((map, idx) => {
+      map.rank = idx + 1;
+      map.target_count = countProposal;
+      if (map.jailed === '0') {
+        map.status_validator = true;
+        cntValidatorActive = cntValidatorActive + 1;
+      } else {
+        map.status_validator = false;
+      }
+      votersAddress.push(map.acc_address);
+      return map;
+    })
+
+    const countVotes:[] = await this.proposalVoteRepository.countVoteByAddress(votersAddress);
+    countVotes.forEach((item: any) => {
+        const findValidator = validatorsOutput.find(f => f.acc_address === item.voter);
+        if(findValidator){
+          findValidator.vote_count = Number(item.countVote);
+        }else{
+          findValidator.vote_count = 0;
+        }
+    });
+   
 
     return { validators: validatorsOutput, count };
   }

@@ -52,4 +52,9 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
 
         return await this.repos.query(sql, params);
     }
+
+    async countVoteByAddress(address: Array<string>){
+        const query: string = `SELECT voter, COUNT(1) AS countVote FROM proposal_votes where voter IN (?) GROUP BY  voter`;
+        return await this.query(query, [address]);
+    }
 }
