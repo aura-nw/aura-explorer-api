@@ -1,4 +1,4 @@
-import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Post, UseInterceptors } from "@nestjs/common";
+import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
@@ -24,5 +24,30 @@ export class ContractController {
         const { contracts, count } = await this.contractService.getContracts(ctx, request);
 
         return { data: contracts, meta: { count } };
+    }
+
+    @Get(':contractAddress')
+    @ApiOperation({ summary: 'Get contract detail by contract address' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getContractByAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
+        const proposal = await this.contractService.getContractByAddress(ctx, contractAddress);
+
+        return { data: proposal, meta: {} };
+    }
+
+    @Get('tag/:accountAddress/:contractAddress')
+    @ApiOperation({ summary: 'Get tag by account address and contract address' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getTagByAddress(@ReqContext() ctx: RequestContext,
+        @Param('accountAddress') accountAddress: string,
+        @Param('contractAddress') contractAddress: string
+    ): Promise<any> {
+        this.logger.log(ctx, `${this.getTagByAddress.name} was called!`);
+        const proposal = await this.contractService.getTagByAddress(ctx, accountAddress, contractAddress);
+
+        return { data: proposal, meta: {} };
     }
 }
