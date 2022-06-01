@@ -22,6 +22,9 @@ export class SmartContract extends BaseEntityIncrementId {
     contract_hash: string;
 
     @Column()
+    tx_hash: string;
+
+    @Column()
     url: string;
 
     @Column()
