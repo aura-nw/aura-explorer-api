@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ServiceUtil } from "../../../shared/utils/service.util";
-import { Like, MoreThan } from "typeorm";
+import { Like, MoreThan, Not } from "typeorm";
 import { AkcLogger, CONTRACT_STATUS, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 import { ContractRepository } from "../repositories/contract.repository";
@@ -29,6 +29,7 @@ export class ContractService {
   }
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
+    this.logger.log(ctx, `${this.getContracts.name} was called!`);
     const [contracts, count] = await this.contractRepository.findAndCount({
       where: {
         id: MoreThan(0),
@@ -52,21 +53,14 @@ export class ContractService {
       contract = contractData;
       const codeId = contractData.code_id;
       const balanceParams = `cosmos/bank/v1beta1/balances/${contractAddress}`;
-      const creationCodeParams = `cosmwasm/wasm/v1/code/${codeId}`;
       const [
-        balanceData,
-        creationCodeData
+        balanceData
       ] = await Promise.all([
-        this.serviceUtil.getDataAPI(this.api, balanceParams, ctx),
-        this.serviceUtil.getDataAPI(this.api, creationCodeParams, ctx)
+        this.serviceUtil.getDataAPI(this.api, balanceParams, ctx)
       ]);
       contract.balance = 0;
       if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
         contract.balance = Number(balanceData.balances[0].amount);
-      }
-      contract.creation_code = '';
-      if (creationCodeData && creationCodeData?.data) {
-        contract.creation_code = creationCodeData?.data;
       }
       contract.token_tracker = '';
     }
@@ -83,6 +77,7 @@ export class ContractService {
   }
 
   async verifyContract(ctx: RequestContext, request: VerifyContractParamsDto): Promise<any> {
+    this.logger.log(ctx, `${this.verifyContract.name} was called!`);
     const contract = await this.contractRepository.findOne({
       where: { contract_address: request.contract_address }
     });
@@ -105,5 +100,26 @@ export class ContractService {
     );
 
     return result;
+  }
+
+  async getContractsMatchCreationCode(ctx: RequestContext, contractAddress: string): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsMatchCreationCode.name} was called!`);
+    const contract = await this.contractRepository.findOne({
+      where: { contract_address: contractAddress }
+    });
+    let contracts = [];
+    let count = 0;
+    if (contract) {
+      const contractHash = contract.contract_hash;
+      [contracts, count] = await this.contractRepository.findAndCount({
+        where: {
+          contract_address: Not(contractAddress),
+          contract_hash: contractHash
+        },
+        order: { updated_at: 'DESC' }
+      });
+    }
+
+    return { contracts: contracts, count };
   }
 }

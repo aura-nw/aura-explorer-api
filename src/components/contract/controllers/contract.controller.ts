@@ -58,9 +58,22 @@ export class ContractController {
     @UseInterceptors(ClassSerializerInterceptor)
     @UseInterceptors(CacheInterceptor)
     async verifyContract(@ReqContext() ctx: RequestContext, @Body() request: VerifyContractParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.getContracts.name} was called!`);
+        this.logger.log(ctx, `${this.verifyContract.name} was called!`);
         const result = await this.contractService.verifyContract(ctx, request);
 
         return { data: result, meta: {} };
+    }
+
+    @Get('match-creation-code/:contractAddress')
+    @ApiOperation({ summary: 'Get list contracts match creation code' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getContractsMatchCreationCode(@ReqContext() ctx: RequestContext,
+        @Param('contractAddress') contractAddress: string
+    ): Promise<any> {
+        this.logger.log(ctx, `${this.getContractsMatchCreationCode.name} was called!`);
+        const { contracts, count } = await this.contractService.getContractsMatchCreationCode(ctx, contractAddress);
+
+        return { data: contracts, meta: { count } };
     }
 }
