@@ -2,6 +2,7 @@ import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, Ht
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
+import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { ContractService } from "../services/contract.service";
 
 @ApiTags('contracts')
@@ -49,5 +50,17 @@ export class ContractController {
         const proposal = await this.contractService.getTagByAddress(ctx, accountAddress, contractAddress);
 
         return { data: proposal, meta: {} };
+    }
+
+    @Post('verify-contract')
+    @ApiOperation({ summary: 'Verify contract' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async verifyContract(@ReqContext() ctx: RequestContext, @Body() request: VerifyContractParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getContracts.name} was called!`);
+        const result = await this.contractService.verifyContract(ctx, request);
+
+        return { data: result, meta: {} };
     }
 }

@@ -5,17 +5,17 @@ export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
 export const FORWARDED_FOR_TOKEN_HEADER = 'x-forwarded-for';
 
 export enum LINK_API {
-    STAKING_POOL = 'cosmos/staking/v1beta1/pool',
-    INFLATION = `cosmos/mint/v1beta1/inflation`,
-    COMMUNITY_POOL = `cosmos/distribution/v1beta1/community_pool`,
-    VALIDATOR = `cosmos/staking/v1beta1/validators`,
-    SLASHING_PARAM = `cosmos/slashing/v1beta1/params`,
-    SIGNING_INFOS = `cosmos/slashing/v1beta1/signing_infos`,
-    PARAM_TALLYING = 'cosmos/gov/v1beta1/params/tallying',
-    PROPOSAL_DETAIL = 'cosmos/gov/v1beta1/proposals/',
-    PROPOSALS = 'cosmos/gov/v1beta1/proposals',
-    LATEST_BLOCK = 'blocks/latest'
-  }
+  STAKING_POOL = 'cosmos/staking/v1beta1/pool',
+  INFLATION = `cosmos/mint/v1beta1/inflation`,
+  COMMUNITY_POOL = `cosmos/distribution/v1beta1/community_pool`,
+  VALIDATOR = `cosmos/staking/v1beta1/validators`,
+  SLASHING_PARAM = `cosmos/slashing/v1beta1/params`,
+  SIGNING_INFOS = `cosmos/slashing/v1beta1/signing_infos`,
+  PARAM_TALLYING = 'cosmos/gov/v1beta1/params/tallying',
+  PROPOSAL_DETAIL = 'cosmos/gov/v1beta1/proposals/',
+  PROPOSALS = 'cosmos/gov/v1beta1/proposals',
+  LATEST_BLOCK = 'blocks/latest'
+}
 
 export enum CONST_NUM {
   LIMIT_2 = 2,
@@ -28,8 +28,8 @@ export enum CONST_NUM {
 export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
-  UAURA  = 'uaura',
-  DELEGATE  = 'delegate',
+  UAURA = 'uaura',
+  DELEGATE = 'delegate',
   UNBOND = 'unbond',
   VALIDATOR = 'validator',
   SOURCE_VALIDATOR = 'source_validator',
@@ -37,7 +37,7 @@ export enum CONST_CHAR {
   UNDEFINED = 'undefined',
   MESSAGE = 'message',
   ACTION = 'action',
-  REDELEGATE  = 'redelegate',
+  REDELEGATE = 'redelegate',
 }
 
 export enum CONST_MSG_TYPE {
@@ -82,4 +82,17 @@ export enum CONST_DELEGATE_TYPE {
   DELEGATE = 'Delegate',
   UNDELEGATE = 'Undelegate',
   REDELEGATE = 'Redelegate'
+}
+
+export enum CONTRACT_STATUS {
+  EXACT_MATCH = "EXACT MATCH",
+  SIMILAR_MATCH = "SIMILAR MATCH",
+  UNVERIFIED = "UNVERIFIED"
+}
+
+export const ERROR_MAP = {
+  CONTRACT_VERIFIED: {
+    Code: 'E001',
+    Message: `Contract has been verified`
+  }
 }
