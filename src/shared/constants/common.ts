@@ -90,6 +90,12 @@ export enum CONTRACT_STATUS {
   UNVERIFIED = "UNVERIFIED"
 }
 
+export enum CONTRACT_TRANSACTION_TYPE {
+  IN = "IN",
+  OUT = "OUT",
+  CREATION = "CREATION"
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',

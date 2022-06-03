@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Like, MoreThan, Not } from "typeorm";
-import { AkcLogger, CONTRACT_STATUS, ERROR_MAP, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_STATUS, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 import { ContractRepository } from "../repositories/contract.repository";
 import { ConfigService } from "@nestjs/config";
@@ -11,6 +11,7 @@ import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
+import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
 
 @Injectable()
 export class ContractService {
@@ -22,6 +23,7 @@ export class ContractService {
     private contractRepository: ContractRepository,
     private tagRepository: TagRepository,
     private tokenContractRepository: TokenContractRepository,
+    private transactionRepository: TransactionRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService
@@ -98,7 +100,7 @@ export class ContractService {
       return error;
     }
     const properties = {
-      commit: request.url.split('/').pop(),
+      commit: request.commit,
       compilerVersion: request.compiler_version,
       contractAddress: request.contract_address,
       contractUrl: request.url
@@ -131,4 +133,28 @@ export class ContractService {
 
     return { contracts: contracts, count };
   }
+
+  // async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
+  //   this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
+  //   let conditions = {
+  //     contract_address: request.contract_address
+  //   };
+  //   if (request?.type) {
+  //     if (request.type === CONTRACT_TRANSACTION_TYPE.IN) {
+
+  //     } else if (request.type === CONTRACT_TRANSACTION_TYPE.OUT) {
+
+  //     } else {
+
+  //     }
+  //   }
+  //   const [contracts, count] = await this.transactionRepository.findAndCount({
+  //     where: conditions,
+  //     order: { updated_at: 'DESC' },
+  //     take: request.limit,
+  //     skip: request.offset,
+  //   });
+
+  //   return { contracts: contracts, count };
+  // }
 }
