@@ -8,13 +8,15 @@ import { ContractService } from "./services/contract.service";
 import { ConfigModule } from "@nestjs/config";
 import { TagRepository } from "./repositories/tag.repository";
 import { HttpModule } from "@nestjs/axios";
+import { TokenContractRepository } from "./repositories/token-contract.repository";
 
 @Module({
   imports: [
     SharedModule,
     TypeOrmModule.forFeature([
       ContractRepository,
-      TagRepository
+      TagRepository,
+      TokenContractRepository
     ]),
     ConfigModule,
     HttpModule

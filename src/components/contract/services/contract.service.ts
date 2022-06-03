@@ -9,6 +9,8 @@ import { TagRepository } from "../repositories/tag.repository";
 import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
+import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
+import { TokenContractRepository } from "../repositories/token-contract.repository";
 
 @Injectable()
 export class ContractService {
@@ -19,6 +21,7 @@ export class ContractService {
     private readonly logger: AkcLogger,
     private contractRepository: ContractRepository,
     private tagRepository: TagRepository,
+    private tokenContractRepository: TokenContractRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService
@@ -62,7 +65,13 @@ export class ContractService {
       if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
         contract.balance = Number(balanceData.balances[0].amount);
       }
-      contract.token_tracker = '';
+      contract.token_tracker = null;
+      const tokenTracker = await this.tokenContractRepository.findOne({
+        where: { contract_address: contractAddress }
+      });
+      if (tokenTracker) {
+        contract.token_tracker = tokenTracker;
+      }
     }
     return contract;
   }

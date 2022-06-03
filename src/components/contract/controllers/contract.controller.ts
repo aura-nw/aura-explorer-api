@@ -2,6 +2,7 @@ import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, Ht
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
+import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { ContractService } from "../services/contract.service";
 
