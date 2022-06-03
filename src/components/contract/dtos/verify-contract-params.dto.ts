@@ -5,6 +5,10 @@ export class VerifyContractParamsDto {
     @ApiProperty()
     @IsNotEmpty()
     contract_address: string;
+    
+    @ApiProperty()
+    @IsString()
+    commit: string;
 
     @ApiProperty()
     @IsString()

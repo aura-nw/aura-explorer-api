@@ -9,6 +9,7 @@ import { ConfigModule } from "@nestjs/config";
 import { TagRepository } from "./repositories/tag.repository";
 import { HttpModule } from "@nestjs/axios";
 import { TokenContractRepository } from "./repositories/token-contract.repository";
+import { TransactionRepository } from "../transaction/repositories/transaction.repository";
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { TokenContractRepository } from "./repositories/token-contract.repositor
     TypeOrmModule.forFeature([
       ContractRepository,
       TagRepository,
-      TokenContractRepository
+      TokenContractRepository,
+      TransactionRepository
     ]),
     ConfigModule,
     HttpModule
