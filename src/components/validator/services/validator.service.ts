@@ -211,7 +211,7 @@ export class ValidatorService {
       where: { delegator_address: delegatorAddress }
     });
     if (withdrawRewards.length > 0) {
-      result.claim_reward = withdrawRewards.reduce((a, curr) => a + curr.amount, 0);
+      result.claim_reward = withdrawRewards.reduce((a, curr) => Number(a) + Number(curr.amount), 0);
     }
 
     let delegations: any = [];
@@ -244,7 +244,7 @@ export class ValidatorService {
         });
         delegation.reward = 0;
         if (rewards.length > 0) {
-          delegation.reward = rewards.reduce((a, curr) => a + curr.amount, 0);
+          delegation.reward = rewards.reduce((a, curr) => Number(a) + Number(curr.amount), 0);
         }
         delegations.push(delegation);
       }
