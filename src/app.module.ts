@@ -13,6 +13,7 @@ import { WalletModule } from './components/wallet/wallet.module';
 import { ProposalModule } from './components/proposal/proposal.module';
 import { AccountModule } from './components/account/account.module';
 import { ServiceUtil } from './shared/utils/service.util';
+import { ContractModule } from './components/contract/contract.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ServiceUtil } from './shared/utils/service.util';
     WalletModule,
     ProposalModule,
     AccountModule,
+    ContractModule
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil],
