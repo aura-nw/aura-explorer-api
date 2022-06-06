@@ -78,15 +78,15 @@ export class ContractController {
         return { data: contracts, meta: { count } };
     }
 
-    // @Post('search-transactions')
-    // @ApiOperation({ summary: 'Get contract transactions' })
-    // @ApiResponse({ status: HttpStatus.OK })
-    // @UseInterceptors(ClassSerializerInterceptor)
-    // @UseInterceptors(CacheInterceptor)
-    // async searchTransactions(@ReqContext() ctx: RequestContext, @Body() request: SearchTransactionParamsDto): Promise<any> {
-    //     this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-    //     const { transactions, count } = await this.contractService.searchTransactions(ctx, request);
+    @Post('search-transactions')
+    @ApiOperation({ summary: 'Get contract transactions' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async searchTransactions(@ReqContext() ctx: RequestContext, @Body() request: SearchTransactionParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
+        const { transactions, count } = await this.contractService.searchTransactions(ctx, request);
 
-    //     return { data: transactions, meta: { count } };
-    // }
+        return { data: transactions, meta: { count } };
+    }
 }

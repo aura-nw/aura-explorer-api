@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Like, MoreThan, Not } from "typeorm";
-import { AkcLogger, CONTRACT_STATUS, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_STATUS, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 import { ContractRepository } from "../repositories/contract.repository";
 import { ConfigService } from "@nestjs/config";
@@ -134,27 +134,30 @@ export class ContractService {
     return { contracts: contracts, count };
   }
 
-  // async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
-  //   this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-  //   let conditions = {
-  //     contract_address: request.contract_address
-  //   };
-  //   if (request?.type) {
-  //     if (request.type === CONTRACT_TRANSACTION_TYPE.IN) {
+  async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
+    this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
+    let conditions: any = {contract_address: request.contract_address};
+    if (request?.label) {
+      if (request.label === CONTRACT_TRANSACTION_LABEL.IN) {
+        conditions = {
+          contract_address: request.contract_address,
+          type: CONTRACT_TRANSACTION_TYPE.EXECUTE
+        };
+      } else if (request.label === CONTRACT_TRANSACTION_LABEL.CREATION) {
+        conditions = {
+          contract_address: request.contract_address,
+          // deploy contract
+          type: CONTRACT_TRANSACTION_TYPE.INSTANTIATE
+        };
+      }
+    }
+    const [transactions, count] = await this.transactionRepository.findAndCount({
+      where: conditions,
+      order: { height: 'DESC' },
+      take: request.limit,
+      skip: request.offset
+    });
 
-  //     } else if (request.type === CONTRACT_TRANSACTION_TYPE.OUT) {
-
-  //     } else {
-
-  //     }
-  //   }
-  //   const [contracts, count] = await this.transactionRepository.findAndCount({
-  //     where: conditions,
-  //     order: { updated_at: 'DESC' },
-  //     take: request.limit,
-  //     skip: request.offset,
-  //   });
-
-  //   return { contracts: contracts, count };
-  // }
+    return { transactions: transactions, count };
+  }
 }
