@@ -90,10 +90,14 @@ export enum CONTRACT_STATUS {
   UNVERIFIED = "UNVERIFIED"
 }
 
-export enum CONTRACT_TRANSACTION_TYPE {
+export enum CONTRACT_TRANSACTION_LABEL {
   IN = "IN",
-  OUT = "OUT",
   CREATION = "CREATION"
+}
+
+export enum CONTRACT_TRANSACTION_TYPE {
+  INSTANTIATE = "/cosmwasm.wasm.v1.MsgInstantiateContract",
+  EXECUTE = "/cosmwasm.wasm.v1.MsgExecuteContract"
 }
 
 export const ERROR_MAP = {

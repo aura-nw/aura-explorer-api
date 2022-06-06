@@ -8,7 +8,7 @@ export class SearchTransactionParamsDto {
 
     @ApiProperty()
     @IsString()
-    type: string;
+    label: string;
 
     @ApiProperty({ default: 25})
     @IsNumber()
