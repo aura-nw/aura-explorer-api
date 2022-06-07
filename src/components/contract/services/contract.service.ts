@@ -12,10 +12,13 @@ import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
+import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 @Injectable()
 export class ContractService {
   private api;
+  private rpc;
   private verifyContractUrl;
 
   constructor(
@@ -30,6 +33,7 @@ export class ContractService {
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
+    this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
   }
 
@@ -136,7 +140,7 @@ export class ContractService {
 
   async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-    let conditions: any = {contract_address: request.contract_address};
+    let conditions: any = { contract_address: request.contract_address };
     if (request?.label) {
       if (request.label === CONTRACT_TRANSACTION_LABEL.IN) {
         conditions = {
@@ -149,6 +153,8 @@ export class ContractService {
           // deploy contract
           type: CONTRACT_TRANSACTION_TYPE.INSTANTIATE
         };
+      } else {
+        return { transactions: [], count: 0 };
       }
     }
     const [transactions, count] = await this.transactionRepository.findAndCount({
@@ -159,5 +165,13 @@ export class ContractService {
     });
 
     return { transactions: transactions, count };
+  }
+
+  async readContract(ctx: RequestContext, request: ReadContractParamsDto): Promise<any> {
+    this.logger.log(ctx, `${this.readContract.name} was called!`);
+    const client = await SigningCosmWasmClient.connect(this.rpc);
+    const result = await client.queryContractSmart(request.contract_address, JSON.parse(request.query_msg));
+
+    return result;
   }
 }

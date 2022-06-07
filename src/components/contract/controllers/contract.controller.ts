@@ -2,6 +2,7 @@ import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, Ht
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
+import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { ContractService } from "../services/contract.service";
@@ -88,5 +89,17 @@ export class ContractController {
         const { transactions, count } = await this.contractService.searchTransactions(ctx, request);
 
         return { data: transactions, meta: { count } };
+    }
+
+    @Post('read')
+    @ApiOperation({ summary: 'Read contract' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async readContract(@ReqContext() ctx: RequestContext, @Body() request: ReadContractParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.readContract.name} was called!`);
+        const result = await this.contractService.readContract(ctx, request);
+
+        return { data: result, meta: { } };
     }
 }
