@@ -140,31 +140,12 @@ export class ContractService {
 
   async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-    let conditions: any = { contract_address: request.contract_address };
-    if (request?.label) {
-      if (request.label === CONTRACT_TRANSACTION_LABEL.IN) {
-        conditions = {
-          contract_address: request.contract_address,
-          type: CONTRACT_TRANSACTION_TYPE.EXECUTE
-        };
-      } else if (request.label === CONTRACT_TRANSACTION_LABEL.CREATION) {
-        conditions = {
-          contract_address: request.contract_address,
-          // deploy contract
-          type: CONTRACT_TRANSACTION_TYPE.INSTANTIATE
-        };
-      } else {
-        return { transactions: [], count: 0 };
-      }
+    if (request?.label && !(<any>Object).values(CONTRACT_TRANSACTION_LABEL).includes(request.label)) {
+      return { transactions: [], count: 0 };
     }
-    const [transactions, count] = await this.transactionRepository.findAndCount({
-      where: conditions,
-      order: { height: 'DESC' },
-      take: request.limit,
-      skip: request.offset
-    });
+    const result = await this.transactionRepository.searchContractTransactions(request);
 
-    return { transactions: transactions, count };
+    return { transactions: result[0], count: result[1][0].total };
   }
 
   async readContract(ctx: RequestContext, request: ReadContractParamsDto): Promise<any> {
