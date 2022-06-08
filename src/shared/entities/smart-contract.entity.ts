@@ -27,13 +27,13 @@ export class SmartContract extends BaseEntityIncrementId {
     @Column()
     url: string;
 
-    @Column()
+    @Column({ type: 'text' })
     instantiate_msg_schema: string;
 
-    @Column()
+    @Column({ type: 'text' })
     query_msg_schema: string;
 
-    @Column()
+    @Column({ type: 'text' })
     execute_msg_schema: string;
 
     @Column()
