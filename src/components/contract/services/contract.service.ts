@@ -12,7 +12,7 @@ import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
-import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
+// import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
 import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 @Injectable()
@@ -148,11 +148,11 @@ export class ContractService {
     return { transactions: result[0], count: result[1][0].total };
   }
 
-  async readContract(ctx: RequestContext, request: ReadContractParamsDto): Promise<any> {
-    this.logger.log(ctx, `${this.readContract.name} was called!`);
-    const client = await SigningCosmWasmClient.connect(this.rpc);
-    const result = await client.queryContractSmart(request.contract_address, JSON.parse(request.query_msg));
+  // async readContract(ctx: RequestContext, request: ReadContractParamsDto): Promise<any> {
+  //   this.logger.log(ctx, `${this.readContract.name} was called!`);
+  //   const client = await SigningCosmWasmClient.connect(this.rpc);
+  //   const result = await client.queryContractSmart(request.contract_address, JSON.parse(request.query_msg));
 
-    return result;
-  }
+  //   return result;
+  // }
 }
