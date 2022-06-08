@@ -140,6 +140,9 @@ export class ContractService {
 
   async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
+    if (request?.label && !(<any>Object).values(CONTRACT_TRANSACTION_LABEL).includes(request.label)) {
+      return { transactions: [], count: 0 };
+    }
     const result = await this.transactionRepository.searchContractTransactions(request);
 
     return { transactions: result[0], count: result[1][0].total };
