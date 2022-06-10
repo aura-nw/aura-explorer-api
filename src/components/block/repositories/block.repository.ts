@@ -6,8 +6,10 @@ import { Block } from '../../../shared';
 export class BlockRepository extends Repository<Block> {
     public getMinHeight = async (operator_address: string) =>{
         const result = await this.createQueryBuilder()
-        .select("MIN(height) AS height")
+        .select("height")
         .where({operator_address })
+        .limit(1)
+        .addOrderBy("height")
         .getRawOne();
 
         return result;
