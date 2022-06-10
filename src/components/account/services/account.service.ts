@@ -46,6 +46,7 @@ export class AccountService {
     const paramsRedelegations = `cosmos/staking/v1beta1/delegators/${address}/redelegations`;
     const paramsAuthInfo = `auth/accounts/${address}`;
     const paramsStakeReward = `cosmos/distribution/v1beta1/delegators/${address}/rewards`;
+    const parasSpendableBalances = `cosmos/bank/v1beta1/spendable_balances/${address}`;
 
     const [
       balanceData,
@@ -55,6 +56,7 @@ export class AccountService {
       authInfoData,
       validatorData,
       stakeRewardData,
+      spendableBalances
     ] = await Promise.all([
       this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx),
       this.serviceUtil.getDataAPI(this.api, paramsDelegated, ctx),
@@ -65,28 +67,41 @@ export class AccountService {
         order: { power: 'DESC' },
       }),
       this.serviceUtil.getDataAPI(this.api, paramsStakeReward, ctx),
+      this.serviceUtil.getDataAPI(this.api, parasSpendableBalances, ctx),
     ]);
 
-    // get balance
-    let available = 0;
+    // get balance    
+    let balancesAmount = 0;
     if (balanceData.balances) {
       accountOutput.balances = new Array(balanceData.balances.length);
       balanceData.balances.forEach((data, idx) => {
         const balance = new AccountBalance();
         if (data.denom === CONST_CHAR.UAURA) {
           balance.name = CONST_NAME_ASSETS.AURA;
-          accountOutput.available = this.changeUauraToAura(data.amount);
-          available = parseInt(data.amount);
+          balance.denom = data.denom;
+          balance.amount = this.changeUauraToAura(data.amount);
+          balance.price = 0;
+          balance.total_price = balance.price * Number(balance.amount);
+          balancesAmount = parseFloat(data.amount)
+          accountOutput.balances.push(balance);
         }
-        balance.denom = data.denom;
-        balance.amount = this.changeUauraToAura(data.amount);
-        balance.price = 0;
-        balance.total_price = balance.price * Number(balance.amount);
-
-        accountOutput.balances[idx] = balance;
       });
     }
 
+    // Get available
+    let available = 0;
+    accountOutput.available = this.changeUauraToAura(available);
+    if (spendableBalances?.balances?.length > 0) {
+      const uaura = spendableBalances.balances.find(f => f.denom === CONST_CHAR.UAURA);
+      if (uaura) {
+        const amount = uaura.amount;
+        accountOutput.available = this.changeUauraToAura(amount);
+        available = parseFloat(amount);
+      }
+    }
+
+
+    // Get delegate
     let delegatedAmount = 0;
     let stakeReward = 0;
     if (delegatedData) {
@@ -218,7 +233,12 @@ export class AccountService {
     //get auth_info
     let delegatedVesting = 0;
     accountOutput.delegatable_vesting = '0';
+    if (balancesAmount > 0) {
+      delegatedVesting = (balancesAmount - available);
+      accountOutput.delegatable_vesting = this.changeUauraToAura(delegatedVesting);
+    }
 
+    // Get vesting
     if (authInfoData) {
       const baseVesting = authInfoData.result.value?.base_vesting_account;
       if (baseVesting !== undefined) {
@@ -235,15 +255,15 @@ export class AccountService {
 
         const schedule = baseVesting.end_time || 0;
         vesting.vesting_schedule = schedule;
-        const delegated: Array<any> = baseVesting.delegated_vesting || [];
-        if (delegated.length > 0) {
-          let delegatableVesting = 0;
-          delegated.forEach((item) => {
-            delegatableVesting += Number(item.amount);
-          });
-          accountOutput.delegatable_vesting =
-            this.changeUauraToAura(delegatableVesting);
-        }
+        // const delegated: Array<any> = baseVesting.delegated_vesting || [];
+        // if (delegated.length > 0) {
+        //   let delegatableVesting = 0;
+        //   delegated.forEach((item) => {
+        //     delegatableVesting += Number(item.amount);
+        //   });
+        //   accountOutput.delegatable_vesting =
+        //     this.changeUauraToAura(delegatableVesting);
+        // }
         accountOutput.vesting = vesting;
       }
     }
