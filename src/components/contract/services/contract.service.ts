@@ -13,7 +13,7 @@ import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dt
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
 // import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+// import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 @Injectable()
 export class ContractService {
