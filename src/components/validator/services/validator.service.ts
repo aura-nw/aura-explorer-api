@@ -140,7 +140,7 @@ export class ValidatorService {
     return { validators: validatorsOutput, count };
   }
 
-  async getValidatorByAddress(ctx: RequestContext, address): Promise<any> {
+  async getValidatorByAddress(ctx: RequestContext, address: string): Promise<any> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
     const validator = await this.validatorRepository.getRankByAddress(address);
@@ -149,15 +149,11 @@ export class ValidatorService {
       excludeExtraneousValues: true,
     });
 
-    const blockFirst = await this.blockRepository.find({
-      where: { operator_address: address },
-      order: { height: 'ASC' },
-      take: 1,
-      skip: 0,
-    });
+    const minHeight = await this.blockRepository.getMinHeight(address);
 
-    if (blockFirst.length > 0) {
-      validatorOutput.bonded_height = blockFirst[0].height;
+    validatorOutput.bonded_height = 1;
+    if (minHeight.height > 0) {
+      validatorOutput.bonded_height = minHeight.height;
     }
 
     return validatorOutput;
