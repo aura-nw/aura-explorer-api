@@ -39,6 +39,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getBlocks.name} was called!`);
 
     const [blocks, count] = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -122,6 +123,7 @@ export class BlockService {
     query.limit = 100;
 
     const [blocks, count]  = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -143,6 +145,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
 
     const [blocks, count] = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: limit,
       skip: offset,
