@@ -23,6 +23,7 @@ import { DelegatorRewardRepository } from '../../../components/schedule/reposito
 import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
 import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
 import { groupBy } from 'rxjs';
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class ValidatorService {
@@ -61,6 +62,7 @@ export class ValidatorService {
 
     // get all validator
     const [validatorsRes, count] = await this.validatorRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { power: 'DESC' },
     });
 
