@@ -10,6 +10,7 @@ import { TransactionRepository } from '../repositories/transaction.repository';
 import { Raw } from 'typeorm/find-options/operator/Raw';
 import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
 import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class TransactionService {
@@ -37,6 +38,7 @@ export class TransactionService {
     this.logger.log(ctx, `${this.getTxs.name} was called!`);
 
     const [txs, count] = await this.txRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
