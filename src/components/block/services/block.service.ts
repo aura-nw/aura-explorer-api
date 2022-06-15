@@ -12,6 +12,7 @@ import { TransactionService } from '../../transaction/services/transaction.servi
 import { MissedBlockRepository } from '../../../components/schedule/repositories/missed-block.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
+import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class BlockService {
@@ -38,6 +39,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getBlocks.name} was called!`);
 
     const [blocks, count] = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -78,6 +80,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
 
     const [blocks, count] = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: limit,
       skip: offset,
@@ -120,6 +123,7 @@ export class BlockService {
     query.limit = 100;
 
     const [blocks, count]  = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -141,6 +145,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
 
     const [blocks, count] = await this.blockRepository.findAndCount({
+      where: { id: MoreThan(0) },
       order: { height: 'DESC' },
       take: limit,
       skip: offset,
