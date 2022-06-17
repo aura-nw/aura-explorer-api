@@ -43,7 +43,6 @@ export class ContractService {
     this.logger.log(ctx, `${this.getContracts.name} was called!`);
     const [contracts, count] = await this.contractRepository.findAndCount({
       where: {
-        id: MoreThan(0),
         ...(request?.keyword && { contract_name: Like(`%${request.keyword}%`) })
       },
       order: { updated_at: 'DESC' },
