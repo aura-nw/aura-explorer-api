@@ -20,6 +20,7 @@ export class ContractService {
   private api;
   private rpc;
   private verifyContractUrl;
+  private verifyContractStatusUrl;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -35,6 +36,7 @@ export class ContractService {
     this.api = this.configService.get('API');
     this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
+    this.verifyContractStatusUrl = this.configService.get('VERIFY_CONTRACT_STATUS_URL');
   }
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
@@ -148,11 +150,23 @@ export class ContractService {
     return { transactions: result[0], count: result[1][0].total };
   }
 
-  // async readContract(ctx: RequestContext, request: ReadContractParamsDto): Promise<any> {
-  //   this.logger.log(ctx, `${this.readContract.name} was called!`);
-  //   const client = await SigningCosmWasmClient.connect(this.rpc);
-  //   const result = await client.queryContractSmart(request.contract_address, JSON.parse(request.query_msg));
+  async verifyContractStatus(ctx: RequestContext, contractAddress: string): Promise<any> {
+    this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
+    const contract = await this.contractRepository.findOne({
+      where: { contract_address: contractAddress }
+    });
+    if (contract) {
+      const result = await lastValueFrom(this.httpService.get(this.verifyContractStatusUrl + contractAddress)).then(
+        (rs) => rs.data,
+      );
 
-  //   return result;
-  // }
+      return result;
+    } else {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
+        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message
+      };
+      return error;
+    }
+  }
 }
