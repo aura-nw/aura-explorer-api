@@ -91,15 +91,15 @@ export class ContractController {
         return { data: transactions, meta: { count } };
     }
 
-    // @Post('read')
-    // @ApiOperation({ summary: 'Read contract' })
-    // @ApiResponse({ status: HttpStatus.OK })
-    // @UseInterceptors(ClassSerializerInterceptor)
-    // @UseInterceptors(CacheInterceptor)
-    // async readContract(@ReqContext() ctx: RequestContext, @Body() request: ReadContractParamsDto): Promise<any> {
-    //     this.logger.log(ctx, `${this.readContract.name} was called!`);
-    //     const result = await this.contractService.readContract(ctx, request);
+    @Get('verify/status/:contractAddress')
+    @ApiOperation({ summary: 'Verify contract status' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async verifyContractStatus(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
+        const result = await this.contractService.verifyContractStatus(ctx, contractAddress);
 
-    //     return { data: result, meta: { } };
-    // }
+        return { data: result, meta: {} };
+    }
 }

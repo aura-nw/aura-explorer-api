@@ -106,5 +106,9 @@ export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',
     Message: `Contract has been verified`
-  }
+  },
+  CONTRACT_NOT_EXIST: {
+    Code: 'E002',
+    Message: `Contract isn't existed`
+  },
 }
