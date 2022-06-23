@@ -9,7 +9,6 @@ import { ComponentsModule } from './components/components.module';
 import { TransactionModule } from './components/transaction/transaction.module';
 import { BlockModule } from './components/block/block.module';
 import { ValidatorModule } from './components/validator/validator.module';
-import { WalletModule } from './components/wallet/wallet.module';
 import { ProposalModule } from './components/proposal/proposal.module';
 import { AccountModule } from './components/account/account.module';
 import { ServiceUtil } from './shared/utils/service.util';
@@ -24,7 +23,6 @@ import { ContractModule } from './components/contract/contract.module';
     TransactionModule,
     BlockModule,
     ValidatorModule,
-    WalletModule,
     ProposalModule,
     AccountModule,
     ContractModule

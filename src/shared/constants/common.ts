@@ -92,17 +92,23 @@ export enum CONTRACT_STATUS {
 
 export enum CONTRACT_TRANSACTION_LABEL {
   IN = "IN",
+  OUT = "OUT",
   CREATION = "CREATION"
 }
 
 export enum CONTRACT_TRANSACTION_TYPE {
   INSTANTIATE = "/cosmwasm.wasm.v1.MsgInstantiateContract",
-  EXECUTE = "/cosmwasm.wasm.v1.MsgExecuteContract"
+  EXECUTE = "/cosmwasm.wasm.v1.MsgExecuteContract",
+  SEND = "/cosmos.bank.v1beta1.MsgSend"
 }
 
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',
     Message: `Contract has been verified`
-  }
+  },
+  CONTRACT_NOT_EXIST: {
+    Code: 'E002',
+    Message: `Contract isn't existed`
+  },
 }

@@ -3,7 +3,7 @@ import { IsNotEmpty, Min } from "class-validator";
 
 export class ContractParamsDto {
     @ApiProperty({ default: 20})
-    @Min(1)
+    @Min(0)
     limit: number;
 
     @ApiProperty({default: 0})

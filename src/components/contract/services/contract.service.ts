@@ -12,11 +12,15 @@ import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
+// import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
+// import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 @Injectable()
 export class ContractService {
   private api;
+  private rpc;
   private verifyContractUrl;
+  private verifyContractStatusUrl;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -30,14 +34,15 @@ export class ContractService {
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
+    this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
+    this.verifyContractStatusUrl = this.configService.get('VERIFY_CONTRACT_STATUS_URL');
   }
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.getContracts.name} was called!`);
     const [contracts, count] = await this.contractRepository.findAndCount({
       where: {
-        id: MoreThan(0),
         ...(request?.keyword && { contract_name: Like(`%${request.keyword}%`) })
       },
       order: { updated_at: 'DESC' },
@@ -136,28 +141,31 @@ export class ContractService {
 
   async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-    let conditions: any = {contract_address: request.contract_address};
-    if (request?.label) {
-      if (request.label === CONTRACT_TRANSACTION_LABEL.IN) {
-        conditions = {
-          contract_address: request.contract_address,
-          type: CONTRACT_TRANSACTION_TYPE.EXECUTE
-        };
-      } else if (request.label === CONTRACT_TRANSACTION_LABEL.CREATION) {
-        conditions = {
-          contract_address: request.contract_address,
-          // deploy contract
-          type: CONTRACT_TRANSACTION_TYPE.INSTANTIATE
-        };
-      }
+    if (request?.label && !(<any>Object).values(CONTRACT_TRANSACTION_LABEL).includes(request.label)) {
+      return { transactions: [], count: 0 };
     }
-    const [transactions, count] = await this.transactionRepository.findAndCount({
-      where: conditions,
-      order: { height: 'DESC' },
-      take: request.limit,
-      skip: request.offset
-    });
+    const result = await this.transactionRepository.searchContractTransactions(request);
 
-    return { transactions: transactions, count };
+    return { transactions: result[0], count: result[1][0].total };
+  }
+
+  async verifyContractStatus(ctx: RequestContext, contractAddress: string): Promise<any> {
+    this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
+    const contract = await this.contractRepository.findOne({
+      where: { contract_address: contractAddress }
+    });
+    if (contract) {
+      const result = await lastValueFrom(this.httpService.get(this.verifyContractStatusUrl + contractAddress)).then(
+        (rs) => rs.data,
+      );
+
+      return result;
+    } else {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
+        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message
+      };
+      return error;
+    }
   }
 }

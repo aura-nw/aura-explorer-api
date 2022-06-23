@@ -53,10 +53,13 @@ export class TransactionService {
 
   async getTxByHash(ctx: RequestContext, hash): Promise<any> {
     this.logger.log(ctx, `${this.getTxByHash.name} was called!`);
-
-    return await this.txRepository.findOne({
+    const transaction = await this.txRepository.findOne({
       where: { tx_hash: hash },
     });
+    const block = await transaction.block;
+    const chainid = block.chainid;
+
+    return {...transaction, chainid};
   }
 
   async getTransactionsByAddress(
