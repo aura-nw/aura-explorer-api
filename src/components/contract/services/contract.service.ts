@@ -94,28 +94,40 @@ export class ContractService {
 
   async verifyContract(ctx: RequestContext, request: VerifyContractParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.verifyContract.name} was called!`);
-    const contract = await this.contractRepository.findOne({
-      where: { contract_address: request.contract_address }
-    });
-    if (!contract || (contract && contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)) {
-      const error = {
-        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
-        Message: ERROR_MAP.CONTRACT_VERIFIED.Message
-      };
-      return error;
+    try {
+      const contract = await this.contractRepository.findOne({
+        where: { contract_address: request.contract_address }
+      });
+      if (!contract || (contract && contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)) {
+        const error = {
+          Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
+          Message: ERROR_MAP.CONTRACT_VERIFIED.Message
+        };
+        return error;
+      }
+    } catch (err) {
+      this.logger.log(ctx, `FindOne Smart contract error:${err.message}`);
+      this.logger.log(ctx, `${err.stack}`);
+      throw new Error(err.stack);
     }
-    const properties = {
-      commit: request.commit,
-      compilerVersion: request.compiler_version,
-      contractAddress: request.contract_address,
-      contractUrl: request.url
+    try {
+      const properties = {
+        commit: request.commit,
+        compilerVersion: request.compiler_version,
+        contractAddress: request.contract_address,
+        contractUrl: request.url
 
+      }
+      const result = await lastValueFrom(this.httpService.post(this.verifyContractUrl, properties)).then(
+        (rs) => rs.data,
+      );
+
+      return result;
+    } catch (err) {
+      this.logger.log(ctx, `verifyContractUrl error:${err.message}`);
+      this.logger.log(ctx, `${err.stack}`);
+      throw new Error(err.stack);
     }
-    const result = await lastValueFrom(this.httpService.post(this.verifyContractUrl, properties)).then(
-      (rs) => rs.data,
-    );
-
-    return result;
   }
 
   async getContractsMatchCreationCode(ctx: RequestContext, contractAddress: string): Promise<any> {
