@@ -70,4 +70,13 @@ export class ContractCodeService {
             };
         }
     }
+
+    async getContractCodeByCodeId(ctx: RequestContext, codeId: number): Promise<any> {
+        this.logger.log(ctx, `${this.getContractCodeByCodeId.name} was called!`);
+        
+        const contractCode = await this.contractCodeRepository.findOne({
+            where: { code_id: codeId },
+        });
+        return contractCode ? contractCode : null;
+    }
 }
