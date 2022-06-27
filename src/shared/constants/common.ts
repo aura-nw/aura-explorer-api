@@ -102,6 +102,11 @@ export enum CONTRACT_TRANSACTION_TYPE {
   SEND = "/cosmos.bank.v1beta1.MsgSend"
 }
 
+export enum CONTRACT_TYPE {
+  CW20 = "CW20",
+  CW721 = "CW721"
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',
