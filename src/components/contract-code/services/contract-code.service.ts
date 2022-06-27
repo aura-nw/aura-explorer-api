@@ -1,16 +1,25 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Like } from "typeorm";
-import { AkcLogger, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_CODE_RESULT, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
+import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
 import { ContractCodeRepository } from "../repositories/contract-code.repository";
+import { SmartContractCode } from "../../../shared/entities/smart-contract-code.entity";
 
 @Injectable()
 export class ContractCodeService {
+    private api;
+
     constructor(
         private readonly logger: AkcLogger,
-        private contractCodeRepository: ContractCodeRepository
+        private contractCodeRepository: ContractCodeRepository,
+        private configService: ConfigService,
+        private serviceUtil: ServiceUtil
     ) {
         this.logger.setContext(ContractCodeService.name);
+        this.api = this.configService.get('API');
     }
 
     async getContractCodes(ctx: RequestContext, request: ContractCodeParamsDto): Promise<any> {
@@ -25,5 +34,40 @@ export class ContractCodeService {
         });
 
         return { contract_codes: contract_codes, count };
+    }
+
+    async registerContractCode(ctx: RequestContext, request: RegisterContractCodeParamsDto): Promise<any> {
+        //check exist code id in node
+        const contractCodeParams = `cosmwasm/wasm/v1/code/${request.code_id}`;
+        const contractCodeNode = await this.serviceUtil.getDataAPI(this.api, contractCodeParams, ctx);
+        if (contractCodeNode && contractCodeNode?.code_info) {
+            //check exist code id in db
+            const contractCodeDb = await this.contractCodeRepository.findOne({
+                where: { code_id: request.code_id }
+            });
+            if (contractCodeDb) {
+                return {
+                    Code: ERROR_MAP.CONTRACT_CODE_ID_EXIST.Code,
+                    Message: ERROR_MAP.CONTRACT_CODE_ID_EXIST.Message
+                };
+            }
+            //check creator
+            if (contractCodeNode.code_info.creator != request.account_address) {
+                return {
+                    Code: ERROR_MAP.NOT_CONTRACT_CREATOR.Code,
+                    Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
+                };
+            }
+            let contractCode = new SmartContractCode();
+            contractCode.code_id = request.code_id;
+            contractCode.type = request.type;
+            contractCode.result = CONTRACT_CODE_RESULT.TBD;
+            return await this.contractCodeRepository.save(contractCode);
+        } else {
+            return {
+                Code: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Code,
+                Message: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Message
+            };
+        }
     }
 }

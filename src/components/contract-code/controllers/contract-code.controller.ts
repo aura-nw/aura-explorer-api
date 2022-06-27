@@ -2,6 +2,7 @@ import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, HttpSta
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
+import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
 import { ContractCodeService } from "../services/contract-code.service";
 
 @ApiTags('contract-codes')
@@ -14,7 +15,7 @@ export class ContractCodeController {
         this.logger.setContext(ContractCodeController.name);
     }
 
-    @Post()
+    @Post('list')
     @ApiOperation({ summary: 'Get list contract codes' })
     @ApiResponse({ status: HttpStatus.OK })
     @UseInterceptors(ClassSerializerInterceptor)
@@ -24,5 +25,17 @@ export class ContractCodeController {
         const { contract_codes, count } = await this.contractCodeService.getContractCodes(ctx, request);
 
         return { data: contract_codes, meta: { count } };
+    }
+
+    @Post('')
+    @ApiOperation({ summary: 'Register contract code' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async registerContractCode(@ReqContext() ctx: RequestContext, @Body() request: RegisterContractCodeParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.registerContractCode.name} was called!`);
+        const contract_code = await this.contractCodeService.registerContractCode(ctx, request);
+
+        return { data: contract_code, meta: {} };
     }
 }

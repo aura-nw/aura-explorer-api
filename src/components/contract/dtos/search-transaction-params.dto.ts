@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsString, Min } from "class-validator";
 
 export class SearchTransactionParamsDto {
     @ApiProperty()
-    @IsNotEmpty()
+    @IsNotEmpty({ message: 'Contract address is required' })
     contract_address: string;
 
     @ApiProperty()
