@@ -12,8 +12,6 @@ import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
-// import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
-// import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 @Injectable()
 export class ContractService {
@@ -41,16 +39,9 @@ export class ContractService {
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const [contracts, count] = await this.contractRepository.findAndCount({
-      where: {
-        ...(request?.keyword && { contract_name: Like(`%${request.keyword}%`) })
-      },
-      order: { updated_at: 'DESC' },
-      take: request.limit,
-      skip: request.offset,
-    });
+    const result = await this.contractRepository.getContracts(request);
 
-    return { contracts: contracts, count };
+    return { contracts: result[0], count: result[1][0].total };
   }
 
   async getContractByAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
