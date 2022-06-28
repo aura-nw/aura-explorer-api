@@ -19,7 +19,7 @@ import { ServiceUtil } from './shared/utils/service.util';
 @Injectable()
 export class AppService {
   cosmosScanAPI: string;
-  private api;
+  private indexer_status;
 
   constructor(
     private logger: AkcLogger,
@@ -32,7 +32,7 @@ export class AppService {
   ) {
     this.logger.setContext(AppService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.api = this.configService.get('API');
+    this.indexer_status = this.configService.get('INDEXER_STATUS');
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -44,33 +44,14 @@ export class AppService {
     this.logger.log(ctx, `${this.getStatus.name} was called!`);
     this.logger.log(ctx, `calling get latest txs from node`);
 
-    // get staking pool
-    const paramPool = LINK_API.STAKING_POOL;
-    // const poolData = await this.getDataAPI(api, paramPool, ctx);
-
-    // get inflation
-    const paramInflation = LINK_API.INFLATION;
-    // const inflationData = await this.getDataAPI(api, paramInflation, ctx);
-
-    // get community pool
-    const paramComPool = LINK_API.COMMUNITY_POOL;
-    // const comPoolData = await this.getDataAPI(api, paramComPool, ctx);
-
-    // get blocks by limit 2
-    // const { blocks } = await this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET);
-
     const [
-      poolData,
-      inflationData,
-      comPoolData,
+      statusData,
       { blocks },
       totalValidatorNum,
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(this.api, paramPool, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramInflation, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramComPool, ctx),
+      this.serviceUtil.getDataAPI(this.indexer_status, '', ctx),
       this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
@@ -88,19 +69,12 @@ export class AppService {
         CONST_CHAR.SECOND;
       height = blocks[0].height;
     }
-
-    const bonded_tokens = parseInt(poolData.pool.bonded_tokens);
-    const inflation =
-      (inflationData.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
-    if (comPoolData) {
-      comPool = parseInt(comPoolData.pool[0].amount);
+    const data = statusData.data;
+    const bonded_tokens = parseInt(data.pool.bonded_tokens);
+    const inflation = (data.inflation.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
+    if (data?.communityPool && data.communityPool?.pool && data.communityPool.pool.length > 0) {
+      comPool = parseInt(data.communityPool.pool[0].amount);
     }
-    // get total validator
-    // const totalValidatorNum = await this.validatorService.getTotalValidator();
-    // get total validator active
-    // const totalValidatorActiveNum = await this.validatorService.getTotalValidatorActive();
-    // get total tx
-    // const totalTxsNum = await this.txService.getTotalTx();
 
     return {
       block_height: height,
