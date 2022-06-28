@@ -107,6 +107,12 @@ export enum CONTRACT_TYPE {
   CW721 = "CW721"
 }
 
+export enum CONTRACT_CODE_RESULT {
+  TBD = "TBD",
+  CORRECT = "Correct",
+  INCORRECT = "Incorrect"
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',
@@ -116,4 +122,20 @@ export const ERROR_MAP = {
     Code: 'E002',
     Message: `Contract isn't existed`
   },
+  CONTRACT_CODE_ID_EXIST: {
+    Code: 'E003',
+    Message: `Code ID registered type contract`
+  },
+  CONTRACT_CODE_ID_NOT_EXIST: {
+    Code: 'E004',
+    Message: `Code ID does not exist`
+  },
+  NOT_CONTRACT_CREATOR: {
+    Code: 'E005',
+    Message: `You are not the contract owner/creator`
+  },
+  CANNOT_UPDATE_CONTRACT_CODE: {
+    Code: 'E006',
+    Message: `Result is correct, you cannot update this record`
+  }
 }
