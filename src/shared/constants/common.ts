@@ -133,5 +133,9 @@ export const ERROR_MAP = {
   NOT_CONTRACT_CREATOR: {
     Code: 'E005',
     Message: `You are not the contract owner/creator`
+  },
+  CANNOT_UPDATE_CONTRACT_CODE: {
+    Code: 'E006',
+    Message: `Result is correct, you cannot update this record`
   }
 }

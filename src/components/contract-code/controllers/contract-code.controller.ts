@@ -1,8 +1,9 @@
-import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, UseInterceptors } from "@nestjs/common";
+import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, Put, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
 import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
+import { UpdateContractCodeParamsDto } from "../dtos/update-contract-code-params.dto";
 import { ContractCodeService } from "../services/contract-code.service";
 
 @ApiTags('contract-codes')
@@ -46,6 +47,17 @@ export class ContractCodeController {
     async getContractCodeByCodeId(@ReqContext() ctx: RequestContext, @Param('codeId') codeId: number): Promise<any> {
         this.logger.log(ctx, `${this.getContractCodeByCodeId.name} was called!`);
         const contract_code = await this.contractCodeService.getContractCodeByCodeId(ctx, codeId);
+
+        return { data: contract_code, meta: {} };
+    }
+
+    @Put(':codeId')
+    @ApiOperation({ summary: 'Update contract code' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async updateContractCode(@ReqContext() ctx: RequestContext, @Param('codeId') codeId: number, @Body() request: UpdateContractCodeParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.updateContractCode.name} was called!`);
+        const contract_code = await this.contractCodeService.updateContractCode(ctx, codeId, request);
 
         return { data: contract_code, meta: {} };
     }

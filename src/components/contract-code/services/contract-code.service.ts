@@ -7,6 +7,7 @@ import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
 import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
 import { ContractCodeRepository } from "../repositories/contract-code.repository";
 import { SmartContractCode } from "../../../shared/entities/smart-contract-code.entity";
+import { UpdateContractCodeParamsDto } from "../dtos/update-contract-code-params.dto";
 
 @Injectable()
 export class ContractCodeService {
@@ -78,5 +79,32 @@ export class ContractCodeService {
             where: { code_id: codeId },
         });
         return contractCode ? contractCode : null;
+    }
+
+    async updateContractCode(ctx: RequestContext, codeId: number, request: UpdateContractCodeParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.updateContractCode.name} was called!`);
+        //check exist code id in db
+        const contractCode = await this.contractCodeRepository.findOne({
+            where: { code_id: codeId },
+        });
+        if (contractCode) {
+            //check result
+            const result = contractCode.result;
+            if (result !== CONTRACT_CODE_RESULT.CORRECT) {
+                contractCode.type = request.type;
+                contractCode.result = CONTRACT_CODE_RESULT.TBD;
+                return this.contractCodeRepository.save(contractCode);
+            } else {
+                return {
+                    Code: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Code,
+                    Message: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Message
+                };
+            }
+        } else {
+            return {
+                Code: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Code,
+                Message: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Message
+            };
+        }
     }
 }
