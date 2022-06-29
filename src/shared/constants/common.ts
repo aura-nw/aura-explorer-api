@@ -38,6 +38,7 @@ export enum CONST_CHAR {
   MESSAGE = 'message',
   ACTION = 'action',
   REDELEGATE = 'redelegate',
+  CREATE_VALIDATOR = 'create_validator'
 }
 
 export enum CONST_MSG_TYPE {
@@ -54,6 +55,7 @@ export enum CONST_FULL_MSG_TYPE {
   MSG_DELEGATE = '/cosmos.staking.v1beta1.MsgDelegate',
   MSG_REDELEGATE = '/cosmos.staking.v1beta1.MsgBeginRedelegate',
   MSG_UNDELEGATE = '/cosmos.staking.v1beta1.MsgUndelegate',
+  MSG_CREATE_VALIDATOR = '/cosmos.staking.v1beta1.MsgCreateValidator'
 }
 
 export enum CONST_PROPOSAL_TYPE {
