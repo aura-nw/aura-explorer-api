@@ -27,6 +27,7 @@ export class ContractCodeService {
         this.logger.log(ctx, `${this.getContractCodes.name} was called!`);
         const [contract_codes, count] = await this.contractCodeRepository.findAndCount({
             where: {
+                creator: request.account_address,
                 ...(request?.keyword && { code_id: Like(`%${request.keyword}%`) })
             },
             order: { updated_at: 'DESC' },
@@ -63,6 +64,7 @@ export class ContractCodeService {
             contractCode.code_id = request.code_id;
             contractCode.type = request.type;
             contractCode.result = CONTRACT_CODE_RESULT.TBD;
+            contractCode.creator = contractCodeNode.code_info.creator;
             return await this.contractCodeRepository.save(contractCode);
         } else {
             return {
