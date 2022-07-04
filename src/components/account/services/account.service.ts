@@ -22,16 +22,20 @@ import { AccountVesting } from '../dtos/account-vesting.dto';
 @Injectable()
 export class AccountService {
   private api;
+  private indexer_url;
+  private indexer_chain_id;
 
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
     private configService: ConfigService,
     private serviceUtil: ServiceUtil,
-    private validatorRepository: ValidatorRepository,
+    private validatorRepository: ValidatorRepository
   ) {
     this.logger.setContext(AccountService.name);
     this.api = this.configService.get('API');
+    this.indexer_url = this.configService.get('INDEXER_URL');
+    this.indexer_chain_id = this.configService.get('INDEXER_CHAIN_ID');
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -40,49 +44,30 @@ export class AccountService {
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
-    const paramsBalance = `cosmos/bank/v1beta1/balances/${address}`;
-    const paramsDelegated = `cosmos/staking/v1beta1/delegations/${address}`;
-    const paramsUnbonding = `cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
-    const paramsRedelegations = `cosmos/staking/v1beta1/delegators/${address}/redelegations`;
-    const paramsAuthInfo = `auth/accounts/${address}`;
-    const paramsStakeReward = `cosmos/distribution/v1beta1/delegators/${address}/rewards`;
-    const parasSpendableBalances = `cosmos/bank/v1beta1/spendable_balances/${address}`;
-
     const [
-      balanceData,
-      delegatedData,
-      unbondingData,
-      redelegationsData,
-      authInfoData,
-      validatorData,
-      stakeRewardData,
-      spendableBalances
+      accountData,
+      validatorData
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramsDelegated, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramsUnbonding, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramsRedelegations, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramsAuthInfo, ctx),
+      this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info?address=${address}&chainId=${this.indexer_chain_id}`, '', ctx),
       this.validatorRepository.find({
         order: { power: 'DESC' },
-      }),
-      this.serviceUtil.getDataAPI(this.api, paramsStakeReward, ctx),
-      this.serviceUtil.getDataAPI(this.api, parasSpendableBalances, ctx),
+      })
     ]);
-
+    const data = accountData.data;
     // get balance    
     let balancesAmount = 0;
-    if (balanceData.balances) {
-      accountOutput.balances = new Array(balanceData.balances.length);
-      balanceData.balances.forEach((data, idx) => {
+    if (data?.account_balances && data.account_balances?.balances) {
+      const balances = data.account_balances.balances;
+      accountOutput.balances = new Array(balances.length);
+      balances.forEach((item, idx) => {
         const balance = new AccountBalance();
-        if (data.denom === CONST_CHAR.UAURA) {
+        if (item.denom === CONST_CHAR.UAURA) {
           balance.name = CONST_NAME_ASSETS.AURA;
-          balance.denom = data.denom;
-          balance.amount = this.changeUauraToAura(data.amount);
+          balance.denom = item.denom;
+          balance.amount = this.changeUauraToAura(item.amount);
           balance.price = 0;
           balance.total_price = balance.price * Number(balance.amount);
-          balancesAmount = parseFloat(data.amount)
+          balancesAmount = parseFloat(item.amount)
           accountOutput.balances.push(balance);
         }
       });
@@ -91,8 +76,8 @@ export class AccountService {
     // Get available
     let available = 0;
     accountOutput.available = this.changeUauraToAura(available);
-    if (spendableBalances?.balances?.length > 0) {
-      const uaura = spendableBalances.balances.find(f => f.denom === CONST_CHAR.UAURA);
+    if (data?.account_spendable_balances && data.account_spendable_balances?.spendable_balances) {
+      const uaura = data.account_spendable_balances?.spendable_balances.find(f => f.denom === CONST_CHAR.UAURA);
       if (uaura) {
         const amount = uaura.amount;
         accountOutput.available = this.changeUauraToAura(amount);
@@ -104,16 +89,16 @@ export class AccountService {
     // Get delegate
     let delegatedAmount = 0;
     let stakeReward = 0;
-    if (delegatedData) {
+    if (data?.account_delegations && data.account_delegations?.delegation_responses) {
       accountOutput.delegations = new Array(
-        delegatedData.delegation_responses.length,
+        data.account_delegations.delegation_responses.length,
       );
-      delegatedData.delegation_responses.forEach((data, idx) => {
-        const validator_address = data.delegation.validator_address;
+      data.account_delegations?.delegation_responses.forEach((item, idx) => {
+        const validator_address = item.delegation.validator_address;
         const validator = validatorData.filter(
           (e) => e.operator_address === validator_address,
         );
-        const reward = stakeRewardData.rewards.filter(
+        const reward = data.account_delegate_rewards.rewards.filter(
           (e) => e.validator_address === validator_address,
         );
         const delegation = new AccountDelegation();
@@ -123,7 +108,7 @@ export class AccountService {
           delegation.validator_name = validator[0].title;
           delegation.validator_address = validator_address;
         }
-        delegation.amount = this.changeUauraToAura(data.balance.amount);
+        delegation.amount = this.changeUauraToAura(item.balance.amount);
         if (
           reward.length > 0 &&
           reward[0].reward.length > 0 &&
@@ -133,16 +118,17 @@ export class AccountService {
             reward[0].reward[0].amount,
           );
         }
-        delegatedAmount += parseInt(data.balance.amount);
+        delegatedAmount += parseInt(item.balance.amount);
         if (
-          stakeRewardData &&
-          stakeRewardData.total.length > 0 &&
-          stakeRewardData.total[0].denom === CONST_CHAR.UAURA
+          data?.account_delegate_rewards &&
+          data.account_delegate_rewards?.total &&
+          data.account_delegate_rewards.total.length > 0 &&
+          data.account_delegate_rewards.total[0].denom === CONST_CHAR.UAURA
         ) {
           accountOutput.stake_reward = this.changeUauraToAura(
-            stakeRewardData.total[0].amount,
+            data.account_delegate_rewards?.total[0].amount,
           );
-          stakeReward = parseInt(stakeRewardData.total[0].amount);
+          stakeReward = parseInt(data.account_delegate_rewards?.total[0].amount);
         }
         accountOutput.delegations[idx] = delegation;
       });
@@ -154,11 +140,11 @@ export class AccountService {
 
     // get unbonding
     let unbondingAmount = 0;
-    if (unbondingData) {
+    if (data?.account_unbonds && data.account_unbonds?.unbonding_responses) {
       accountOutput.unbonding_delegations = [];
-      unbondingData.unbonding_responses.forEach((data, idx) => {
-        data.entries?.forEach((item) => {
-          const validator_address = data.validator_address;
+      data.account_unbonds?.unbonding_responses.forEach((item, idx) => {
+        item.entries?.forEach((item) => {
+          const validator_address = item.validator_address;
           const validator = validatorData.filter(
             (e) => e.operator_address === validator_address,
           );
@@ -179,12 +165,12 @@ export class AccountService {
     }
 
     // get redelegations
-    if (redelegationsData) {
+    if (data?.account_redelegations && data.account_redelegations?.redelegation_responses) {
       accountOutput.redelegations = [];
-      redelegationsData.redelegation_responses.forEach((data, idx) => {
-        data.entries?.forEach((item) => {
-          const validator_src_address = data.redelegation.validator_src_address;
-          const validator_dst_address = data.redelegation.validator_dst_address;
+      data.account_redelegations.redelegation_responses.forEach((item, idx) => {
+        item.entries?.forEach((item) => {
+          const validator_src_address = item.redelegation.validator_src_address;
+          const validator_dst_address = item.redelegation.validator_dst_address;
           const validatorSrc = validatorData.filter(
             (e) => e.operator_address === validator_src_address,
           );
@@ -239,11 +225,11 @@ export class AccountService {
     }
 
     // Get vesting
-    if (authInfoData) {
-      const baseVesting = authInfoData.result.value?.base_vesting_account;
+    if (data?.account_auth && data.account_auth?.account) {
+      const baseVesting = data.account_auth.account.result?.value?.base_vesting_account;
       if (baseVesting !== undefined) {
         const vesting = new AccountVesting();
-        vesting.type = authInfoData.result.type;
+        vesting.type = data.account_auth.account.result.type;
         const originalVesting = baseVesting.original_vesting || [];
         if (originalVesting.length > 0) {
           let originalAmount = 0;
@@ -255,15 +241,6 @@ export class AccountService {
 
         const schedule = baseVesting.end_time || 0;
         vesting.vesting_schedule = schedule;
-        // const delegated: Array<any> = baseVesting.delegated_vesting || [];
-        // if (delegated.length > 0) {
-        //   let delegatableVesting = 0;
-        //   delegated.forEach((item) => {
-        //     delegatableVesting += Number(item.amount);
-        //   });
-        //   accountOutput.delegatable_vesting =
-        //     this.changeUauraToAura(delegatableVesting);
-        // }
         accountOutput.vesting = vesting;
       }
     }
