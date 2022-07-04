@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
@@ -16,19 +16,19 @@ import { ProposalVoteRepository } from '../../../components/proposal/repositorie
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegatorOutput } from '../dtos/delegator-output';
-import console from 'console';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
 import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
 import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
 import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
-import { groupBy } from 'rxjs';
 import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class ValidatorService {
   cosmosScanAPI: string;
   api: string;
+  private indexer_url;
+  private indexer_chain_id;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -46,6 +46,8 @@ export class ValidatorService {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
     this.api = this.configService.get('API');
+    this.indexer_url = this.configService.get('INDEXER_URL');
+    this.indexer_chain_id = this.configService.get('INDEXER_CHAIN_ID');
   }
 
   async getTotalValidator(): Promise<number> {
@@ -189,20 +191,13 @@ export class ValidatorService {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     let result: any = {};
     //get available balance
-    const paramsBalance = `cosmos/bank/v1beta1/balances/${delegatorAddress}`;
-    const paramsDelegated = `cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
-    const paramsReward = `cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
 
     // Use promise all to improve performance
-    const [balanceData, delegatedData, rewardData] = await Promise.all([
-      this.serviceUtil.getDataAPI(this.api, paramsBalance, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramsDelegated, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramsReward, ctx)
-    ]);
-
+    const accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexer_chain_id}`, '', ctx);
+    const data = accountData.data;
     result.available_balance = 0;
-    if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
-      result.available_balance = Number(balanceData.balances[0].amount);
+    if (data?.account_balances && data.account_balances?.balances && data.account_balances.balances.length > 0) {
+      result.available_balance = Number(data.account_balances.balances[0].amount);
     }
     result.claim_reward = 0;
     const withdrawRewards = await this.delegatorRewardRepository.find({
@@ -213,16 +208,16 @@ export class ValidatorService {
     }
 
     let delegations: any = [];
-    if (delegatedData && delegatedData?.delegation_responses && delegatedData?.delegation_responses.length > 0) {
-      const delegationsData = delegatedData.delegation_responses;
+    if (data?.account_delegations && data.account_delegations?.delegation_responses) {
+      const delegationsData = data.account_delegations?.delegation_responses;
       for (let i = 0; i < delegationsData.length; i++) {
         let delegation: any = {};
         let item = delegationsData[i];
         delegation.amount_staked = Number(item.balance.amount);
         delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
-        if (rewardData && rewardData?.rewards && rewardData?.rewards.length > 0) {
-          const findReward = rewardData.rewards.find(i => i.validator_address === item.delegation.validator_address);
+        if (data?.account_delegate_rewards && data.account_delegate_rewards?.rewards) {
+          const findReward = data.account_delegate_rewards?.rewards.find(i => i.validator_address === item.delegation.validator_address);
           if (findReward && findReward.reward.length > 0) {
             //set reward for item
             delegation.pending_reward = findReward.reward[0].amount;
