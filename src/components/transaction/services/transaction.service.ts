@@ -79,7 +79,7 @@ export class TransactionService {
         const rawLog = JSON.parse(data.raw_log);
 
         const txAttr = rawLog[0].events.find(
-          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND || type === CONST_CHAR.REDELEGATE
+          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND || type === CONST_CHAR.REDELEGATE || type === CONST_CHAR.CREATE_VALIDATOR
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(
