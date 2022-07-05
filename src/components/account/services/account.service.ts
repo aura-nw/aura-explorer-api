@@ -44,7 +44,7 @@ export class AccountService {
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
-    const [
+    let [
       accountData,
       validatorData
     ] = await Promise.all([
@@ -53,6 +53,9 @@ export class AccountService {
         order: { power: 'DESC' },
       })
     ]);
+    if (accountData.data === null) {
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info?address=${address}&chainId=${this.indexer_chain_id}`, '', ctx);
+    }
     const data = accountData.data;
     // get balance    
     let balancesAmount = 0;
