@@ -193,7 +193,10 @@ export class ValidatorService {
     //get available balance
 
     // Use promise all to improve performance
-    const accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexer_chain_id}`, '', ctx);
+    let accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexer_chain_id}`, '', ctx);
+    if (accountData.data === null) {
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexer_chain_id}`, '', ctx);
+    }
     const data = accountData.data;
     result.available_balance = 0;
     if (data?.account_balances && data.account_balances?.balances && data.account_balances.balances.length > 0) {
