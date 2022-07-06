@@ -5,27 +5,32 @@ import { Like } from "typeorm";
 import { AkcLogger, CONTRACT_CODE_RESULT, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
 import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
-import { ContractCodeRepository } from "../repositories/contract-code.repository";
+import { SmartContractCodeRepository } from "../repositories/smart-contract-code.repository";
 import { SmartContractCode } from "../../../shared/entities/smart-contract-code.entity";
 import { UpdateContractCodeParamsDto } from "../dtos/update-contract-code-params.dto";
+import { lastValueFrom } from "rxjs";
+import { HttpService } from "@nestjs/axios";
 
 @Injectable()
 export class ContractCodeService {
     private api;
+    private indexerUrl;
 
     constructor(
         private readonly logger: AkcLogger,
-        private contractCodeRepository: ContractCodeRepository,
+        private smartContractCodeRepository: SmartContractCodeRepository,
         private configService: ConfigService,
-        private serviceUtil: ServiceUtil
+        private serviceUtil: ServiceUtil,
+        private httpService: HttpService
     ) {
         this.logger.setContext(ContractCodeService.name);
         this.api = this.configService.get('API');
+        this.indexerUrl = this.configService.get('INDEXER_URL');
     }
 
     async getContractCodes(ctx: RequestContext, request: ContractCodeParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getContractCodes.name} was called!`);
-        const [contract_codes, count] = await this.contractCodeRepository.findAndCount({
+        const [contract_codes, count] = await this.smartContractCodeRepository.findAndCount({
             where: {
                 creator: request.account_address,
                 ...(request?.keyword && { code_id: Like(`%${request.keyword}%`) })
@@ -44,7 +49,7 @@ export class ContractCodeService {
         const contractCodeNode = await this.serviceUtil.getDataAPI(this.api, contractCodeParams, ctx);
         if (contractCodeNode && contractCodeNode?.code_info) {
             //check exist code id in db
-            const contractCodeDb = await this.contractCodeRepository.findOne({
+            const contractCodeDb = await this.smartContractCodeRepository.findOne({
                 where: { code_id: request.code_id }
             });
             if (contractCodeDb) {
@@ -60,12 +65,20 @@ export class ContractCodeService {
                     Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
                 };
             }
+            //register indexer
+            const properties = {
+                code_id: request.code_id
+
+            }
+            await lastValueFrom(this.httpService.post(`${this.indexerUrl}api/v1/asset/indexAsset`, properties)).then(
+                (rs) => rs.data,
+            );
             let contractCode = new SmartContractCode();
             contractCode.code_id = request.code_id;
             contractCode.type = request.type;
             contractCode.result = CONTRACT_CODE_RESULT.TBD;
             contractCode.creator = contractCodeNode.code_info.creator;
-            return await this.contractCodeRepository.save(contractCode);
+            return await this.smartContractCodeRepository.save(contractCode);
         } else {
             return {
                 Code: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Code,
@@ -76,8 +89,8 @@ export class ContractCodeService {
 
     async getContractCodeByCodeId(ctx: RequestContext, codeId: number): Promise<any> {
         this.logger.log(ctx, `${this.getContractCodeByCodeId.name} was called!`);
-        
-        const contractCode = await this.contractCodeRepository.findOne({
+
+        const contractCode = await this.smartContractCodeRepository.findOne({
             where: { code_id: codeId },
         });
         return contractCode ? contractCode : null;
@@ -86,7 +99,7 @@ export class ContractCodeService {
     async updateContractCode(ctx: RequestContext, codeId: number, request: UpdateContractCodeParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.updateContractCode.name} was called!`);
         //check exist code id in db
-        const contractCode = await this.contractCodeRepository.findOne({
+        const contractCode = await this.smartContractCodeRepository.findOne({
             where: { code_id: codeId },
         });
         if (contractCode) {
@@ -95,7 +108,7 @@ export class ContractCodeService {
             if (result !== CONTRACT_CODE_RESULT.CORRECT) {
                 contractCode.type = request.type;
                 contractCode.result = CONTRACT_CODE_RESULT.TBD;
-                return this.contractCodeRepository.save(contractCode);
+                return this.smartContractCodeRepository.save(contractCode);
             } else {
                 return {
                     Code: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Code,

@@ -18,8 +18,8 @@ import { ServiceUtil } from './shared/utils/service.util';
 @Injectable()
 export class AppService {
   cosmosScanAPI: string;
-  private indexer_url;
-  private indexer_chain_id;
+  private indexerUrl;
+  private indexerChainId;
 
   constructor(
     private logger: AkcLogger,
@@ -32,8 +32,8 @@ export class AppService {
   ) {
     this.logger.setContext(AppService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.indexer_url = this.configService.get('INDEXER_URL');
-    this.indexer_chain_id = this.configService.get('INDEXER_CHAIN_ID');
+    this.indexerUrl = this.configService.get('INDEXER_URL');
+    this.indexerChainId = this.configService.get('INDEXER_CHAIN_ID');
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -52,7 +52,7 @@ export class AppService {
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/network/status?chainid=${this.indexer_chain_id}`, '', ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/network/status?chainid=${this.indexerChainId}`, '', ctx),
       this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),

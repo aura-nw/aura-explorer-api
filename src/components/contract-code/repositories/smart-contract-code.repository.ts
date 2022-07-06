@@ -3,7 +3,7 @@ import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 
 @EntityRepository(SmartContractCode)
-export class ContractCodeRepository extends Repository<SmartContractCode> {
+export class SmartContractCodeRepository extends Repository<SmartContractCode> {
     constructor(@InjectRepository(SmartContractCode) private readonly repos: Repository<ObjectLiteral>) {
         super();
     }

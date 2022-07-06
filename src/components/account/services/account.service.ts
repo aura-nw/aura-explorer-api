@@ -22,8 +22,8 @@ import { AccountVesting } from '../dtos/account-vesting.dto';
 @Injectable()
 export class AccountService {
   private api;
-  private indexer_url;
-  private indexer_chain_id;
+  private indexerUrl;
+  private indexerChainId;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -34,8 +34,8 @@ export class AccountService {
   ) {
     this.logger.setContext(AccountService.name);
     this.api = this.configService.get('API');
-    this.indexer_url = this.configService.get('INDEXER_URL');
-    this.indexer_chain_id = this.configService.get('INDEXER_CHAIN_ID');
+    this.indexerUrl = this.configService.get('INDEXER_URL');
+    this.indexerChainId = this.configService.get('INDEXER_CHAIN_ID');
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -48,13 +48,13 @@ export class AccountService {
       accountData,
       validatorData
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info?address=${address}&chainId=${this.indexer_chain_id}`, '', ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info?address=${address}&chainId=${this.indexerChainId}`, '', ctx),
       this.validatorRepository.find({
         order: { power: 'DESC' },
       })
     ]);
     if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info?address=${address}&chainId=${this.indexer_chain_id}`, '', ctx);
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info?address=${address}&chainId=${this.indexerChainId}`, '', ctx);
     }
     const data = accountData.data;
     // get balance    

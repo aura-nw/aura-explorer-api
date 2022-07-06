@@ -3,7 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ServiceUtil } from "../../shared/utils/service.util";
 import { SharedModule } from "../../shared";
 import { ContractController } from "./controllers/contract.controller";
-import { ContractRepository } from "./repositories/contract.repository";
+import { SmartContractRepository } from "./repositories/smart-contract.repository";
 import { ContractService } from "./services/contract.service";
 import { ConfigModule } from "@nestjs/config";
 import { TagRepository } from "./repositories/tag.repository";
@@ -15,7 +15,7 @@ import { TransactionRepository } from "../transaction/repositories/transaction.r
   imports: [
     SharedModule,
     TypeOrmModule.forFeature([
-      ContractRepository,
+      SmartContractRepository,
       TagRepository,
       TokenContractRepository,
       TransactionRepository

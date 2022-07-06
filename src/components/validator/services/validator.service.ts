@@ -27,8 +27,8 @@ import { MoreThan } from 'typeorm';
 export class ValidatorService {
   cosmosScanAPI: string;
   api: string;
-  private indexer_url;
-  private indexer_chain_id;
+  private indexerUrl;
+  private indexerChainId;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -46,8 +46,8 @@ export class ValidatorService {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
     this.api = this.configService.get('API');
-    this.indexer_url = this.configService.get('INDEXER_URL');
-    this.indexer_chain_id = this.configService.get('INDEXER_CHAIN_ID');
+    this.indexerUrl = this.configService.get('INDEXER_URL');
+    this.indexerChainId = this.configService.get('INDEXER_CHAIN_ID');
   }
 
   async getTotalValidator(): Promise<number> {
@@ -193,9 +193,9 @@ export class ValidatorService {
     //get available balance
 
     // Use promise all to improve performance
-    let accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexer_chain_id}`, '', ctx);
+    let accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexerChainId}`, '', ctx);
     if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexer_url}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexer_chain_id}`, '', ctx);
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexerChainId}`, '', ctx);
     }
     const data = accountData.data;
     result.available_balance = 0;

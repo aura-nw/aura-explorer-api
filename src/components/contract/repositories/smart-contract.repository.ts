@@ -4,7 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 
 @EntityRepository(SmartContract)
-export class ContractRepository extends Repository<SmartContract> {
+export class SmartContractRepository extends Repository<SmartContract> {
     constructor(@InjectRepository(SmartContract) private readonly repos: Repository<ObjectLiteral>) {
         super();
     }

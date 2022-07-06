@@ -4,7 +4,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ServiceUtil } from "../../shared/utils/service.util";
 import { SharedModule } from "../../shared";
 import { ContractCodeController } from "./controllers/contract-code.controller";
-import { ContractCodeRepository } from "./repositories/contract-code.repository";
+import { SmartContractCodeRepository } from "./repositories/smart-contract-code.repository";
 import { ContractCodeService } from "./services/contract-code.service";
 import { HttpModule } from "@nestjs/axios";
 
@@ -12,7 +12,7 @@ import { HttpModule } from "@nestjs/axios";
     imports: [
       SharedModule,
       TypeOrmModule.forFeature([
-        ContractCodeRepository
+        SmartContractCodeRepository
       ]),
       ConfigModule,
       HttpModule
