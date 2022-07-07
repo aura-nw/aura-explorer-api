@@ -11,6 +11,7 @@ import { UpdateContractCodeParamsDto } from "../dtos/update-contract-code-params
 import { lastValueFrom } from "rxjs";
 import { HttpService } from "@nestjs/axios";
 import { MappingDataHelper } from "../../../shared/helpers/mapping-data.helper";
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class ContractCodeService {
@@ -25,8 +26,8 @@ export class ContractCodeService {
         private httpService: HttpService
     ) {
         this.logger.setContext(ContractCodeService.name);
-        this.api = this.configService.get('API');
-        this.indexerUrl = this.configService.get<string>('indexer.url');
+        this.api = appConfig.default().node.api;
+        this.indexerUrl = appConfig.default().indexer.url;
     }
 
     async getContractCodes(ctx: RequestContext, request: ContractCodeParamsDto): Promise<any> {

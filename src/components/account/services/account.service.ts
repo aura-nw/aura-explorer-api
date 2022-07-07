@@ -19,6 +19,7 @@ import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountRedelegation } from '../dtos/account-redelegation.dto';
 import { AccountUnbonding } from '../dtos/account-unbonding.dto';
 import { AccountVesting } from '../dtos/account-vesting.dto';
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class AccountService {
@@ -35,9 +36,9 @@ export class AccountService {
     private validatorRepository: ValidatorRepository
   ) {
     this.logger.setContext(AccountService.name);
-    this.api = this.configService.get('API');
-    this.indexerUrl = this.configService.get<string>('indexer.url');
-    this.indexerChainId = this.configService.get<string>('indexer.chainId');
+    this.api = appConfig.default().node.api;
+    this.indexerUrl = appConfig.default().indexer.url;
+    this.indexerChainId = appConfig.default().indexer.chainId;
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {

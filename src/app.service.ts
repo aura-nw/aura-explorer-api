@@ -15,6 +15,7 @@ import { TransactionService } from './components/transaction/services/transactio
 import { BlockService } from './components/block/services/block.service';
 import { ValidatorService } from './components/validator/services/validator.service';
 import { ServiceUtil } from './shared/utils/service.util';
+import * as appConfig from './shared/configs/configuration';
 
 @Injectable()
 export class AppService {
@@ -33,9 +34,9 @@ export class AppService {
     private serviceUtil: ServiceUtil
   ) {
     this.logger.setContext(AppService.name);
-    this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.indexerUrl = this.configService.get<string>('indexer.url');
-    this.indexerChainId = this.configService.get<string>('indexer.chainId');
+    this.cosmosScanAPI = appConfig.default().cosmosScanAPI;
+    this.indexerUrl = appConfig.default().indexer.url;
+    this.indexerChainId = appConfig.default().indexer.chainId;
   }
   getHello(): string {
     const ctx = new RequestContext();

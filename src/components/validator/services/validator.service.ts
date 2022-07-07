@@ -22,6 +22,7 @@ import { DelegatorRewardRepository } from '../../../components/schedule/reposito
 import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
 import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
 import { MoreThan } from 'typeorm';
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class ValidatorService {
@@ -45,10 +46,10 @@ export class ValidatorService {
     private delegatorRewardRepository: DelegatorRewardRepository,
   ) {
     this.logger.setContext(ValidatorService.name);
-    this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.api = this.configService.get('API');
-    this.indexerUrl = this.configService.get<string>('indexer.url');
-    this.indexerChainId = this.configService.get<string>('indexer.chainId');
+    this.cosmosScanAPI = appConfig.default().cosmosScanAPI;
+    this.api = appConfig.default().node.api;
+    this.indexerUrl = appConfig.default().indexer.url;
+    this.indexerChainId = appConfig.default().indexer.chainId;
   }
 
   async getTotalValidator(): Promise<number> {
