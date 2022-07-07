@@ -65,7 +65,7 @@ export class ContractCodeService {
                     Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
                 };
             }
-            //register indexer
+            //register in indexer
             const properties = {
                 code_id: request.code_id
 
@@ -106,6 +106,14 @@ export class ContractCodeService {
             //check result
             const result = contractCode.result;
             if (result !== CONTRACT_CODE_RESULT.CORRECT) {
+                //register in indexer
+                const properties = {
+                    code_id: codeId
+
+                }
+                await lastValueFrom(this.httpService.post(`${this.indexerUrl}api/v1/asset/indexAsset`, properties)).then(
+                    (rs) => rs.data,
+                );
                 contractCode.type = request.type;
                 contractCode.result = CONTRACT_CODE_RESULT.TBD;
                 return this.smartContractCodeRepository.save(contractCode);
