@@ -16,13 +16,13 @@ import { BlockService } from './components/block/services/block.service';
 import { ValidatorService } from './components/validator/services/validator.service';
 import { ServiceUtil } from './shared/utils/service.util';
 import * as appConfig from './shared/configs/configuration';
+import * as util from 'util';
 
 @Injectable()
 export class AppService {
   cosmosScanAPI: string;
   private indexerUrl;
   private indexerChainId;
-  private util = require('util');
 
   constructor(
     private logger: AkcLogger,
@@ -55,7 +55,7 @@ export class AppService {
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
       this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),

@@ -20,13 +20,13 @@ import { AccountRedelegation } from '../dtos/account-redelegation.dto';
 import { AccountUnbonding } from '../dtos/account-unbonding.dto';
 import { AccountVesting } from '../dtos/account-vesting.dto';
 import * as appConfig from '../../../shared/configs/configuration';
+import * as util from 'util';
 
 @Injectable()
 export class AccountService {
   private api;
   private indexerUrl;
   private indexerChainId;
-  private util = require('util');
 
   constructor(
     private readonly logger: AkcLogger,
@@ -51,13 +51,13 @@ export class AccountService {
       accountData,
       validatorData
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_INFO, address, this.indexerChainId)}`, '', ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.ACCOUNT_INFO, address, this.indexerChainId)}`, '', ctx),
       this.validatorRepository.find({
         order: { power: 'DESC' },
       })
     ]);
     if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_INFO, address, this.indexerChainId)}`, '', ctx);
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.ACCOUNT_INFO, address, this.indexerChainId)}`, '', ctx);
     }
     const data = accountData.data;
     // get balance    

@@ -23,6 +23,7 @@ import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validato
 import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
 import { MoreThan } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
+import * as util from 'util';
 
 @Injectable()
 export class ValidatorService {
@@ -30,7 +31,6 @@ export class ValidatorService {
   api: string;
   private indexerUrl;
   private indexerChainId;
-  private util = require('util');
 
   constructor(
     private readonly logger: AkcLogger,
@@ -195,9 +195,9 @@ export class ValidatorService {
     //get available balance
 
     // Use promise all to improve performance
-    let accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
+    let accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
     if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
     }
     const data = accountData.data;
     result.available_balance = 0;
