@@ -115,6 +115,13 @@ export enum CONTRACT_CODE_RESULT {
   INCORRECT = "Incorrect"
 }
 
+export enum INDEXER_API {
+  STATUS = "api/v1/network/status?chainid=%s",
+  ACCOUNT_INFO = "api/v1/account-info?address=%s&chainId=%s",
+  REGISTER_CODE_ID = "api/v1/asset/indexAsset",
+  ACCOUNT_DELEGATIONS = "api/v1/account-info/delegations?address=%s&chainId=%s"
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',

@@ -1,4 +1,4 @@
-export default (): any => ({
+export default () => ({
   apiPrefix: process.env.API_PREFIX,
   port: process.env.PORT,
   startHeight: process.env.START_HEIGHT,
@@ -29,5 +29,9 @@ export default (): any => ({
       db: process.env.REDIS_DB,
     }
   },
-  threads: process.env.THREADS
+  threads: process.env.THREADS,
+  indexer: {
+    url: process.env.INDEXER_URL,
+    chainId: process.env.INDEXER_CHAIN_ID
+  }
 });

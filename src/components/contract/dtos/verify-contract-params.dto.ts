@@ -17,4 +17,8 @@ export class VerifyContractParamsDto {
     @ApiProperty()
     @IsString()
     compiler_version: string;
+
+    @ApiProperty()
+    @IsString()
+    wasm_file: string;
 }
