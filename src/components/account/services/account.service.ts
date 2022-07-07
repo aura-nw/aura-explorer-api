@@ -10,6 +10,7 @@ import {
   CONST_CHAR,
   CONST_NAME_ASSETS,
   CONST_NUM,
+  INDEXER_API,
   RequestContext,
 } from '../../../shared';
 import { AccountBalance } from '../dtos/account-balance.dto';
@@ -24,6 +25,7 @@ export class AccountService {
   private api;
   private indexerUrl;
   private indexerChainId;
+  private util = require('util');
 
   constructor(
     private readonly logger: AkcLogger,
@@ -34,8 +36,8 @@ export class AccountService {
   ) {
     this.logger.setContext(AccountService.name);
     this.api = this.configService.get('API');
-    this.indexerUrl = this.configService.get('INDEXER_URL');
-    this.indexerChainId = this.configService.get('INDEXER_CHAIN_ID');
+    this.indexerUrl = this.configService.get<string>('indexer.url');
+    this.indexerChainId = this.configService.get<string>('indexer.chainId');
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -48,13 +50,13 @@ export class AccountService {
       accountData,
       validatorData
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info?address=${address}&chainId=${this.indexerChainId}`, '', ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_INFO, address, this.indexerChainId)}`, '', ctx),
       this.validatorRepository.find({
         order: { power: 'DESC' },
       })
     ]);
     if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info?address=${address}&chainId=${this.indexerChainId}`, '', ctx);
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_INFO, address, this.indexerChainId)}`, '', ctx);
     }
     const data = accountData.data;
     // get balance    

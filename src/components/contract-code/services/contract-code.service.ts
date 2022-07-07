@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Like } from "typeorm";
-import { AkcLogger, CONTRACT_CODE_RESULT, ERROR_MAP, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_CODE_RESULT, ERROR_MAP, INDEXER_API, RequestContext } from "../../../shared";
 import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
 import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
 import { SmartContractCodeRepository } from "../repositories/smart-contract-code.repository";
@@ -10,6 +10,7 @@ import { SmartContractCode } from "../../../shared/entities/smart-contract-code.
 import { UpdateContractCodeParamsDto } from "../dtos/update-contract-code-params.dto";
 import { lastValueFrom } from "rxjs";
 import { HttpService } from "@nestjs/axios";
+import { MappingDataHelper } from "../../../shared/helpers/mapping-data.helper";
 
 @Injectable()
 export class ContractCodeService {
@@ -25,7 +26,7 @@ export class ContractCodeService {
     ) {
         this.logger.setContext(ContractCodeService.name);
         this.api = this.configService.get('API');
-        this.indexerUrl = this.configService.get('INDEXER_URL');
+        this.indexerUrl = this.configService.get<string>('indexer.url');
     }
 
     async getContractCodes(ctx: RequestContext, request: ContractCodeParamsDto): Promise<any> {
@@ -59,25 +60,27 @@ export class ContractCodeService {
                 };
             }
             //check creator
-            if (contractCodeNode.code_info.creator != request.account_address) {
+            if (contractCodeNode.code_info.creator !== request.account_address) {
                 return {
                     Code: ERROR_MAP.NOT_CONTRACT_CREATOR.Code,
                     Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
                 };
             }
-            //register in indexer
+            //register in indexerp
             const properties = {
                 code_id: request.code_id
 
             }
-            await lastValueFrom(this.httpService.post(`${this.indexerUrl}api/v1/asset/indexAsset`, properties)).then(
+            await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
                 (rs) => rs.data,
             );
-            let contractCode = new SmartContractCode();
-            contractCode.code_id = request.code_id;
+            const contractCode = MappingDataHelper.mappingContractCode(
+                request.code_id,
+                CONTRACT_CODE_RESULT.TBD,
+                contractCodeNode.code_info.creator
+            );
             contractCode.type = request.type;
-            contractCode.result = CONTRACT_CODE_RESULT.TBD;
-            contractCode.creator = contractCodeNode.code_info.creator;
+
             return await this.smartContractCodeRepository.save(contractCode);
         } else {
             return {
@@ -111,7 +114,7 @@ export class ContractCodeService {
                     code_id: codeId
 
                 }
-                await lastValueFrom(this.httpService.post(`${this.indexerUrl}api/v1/asset/indexAsset`, properties)).then(
+                await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
                     (rs) => rs.data,
                 );
                 contractCode.type = request.type;

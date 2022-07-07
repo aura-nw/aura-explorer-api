@@ -6,7 +6,7 @@ import { BlockRepository } from '../../../components/block/repositories/block.re
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
 
-import { AkcLogger, CONST_NUM, RequestContext } from '../../../shared';
+import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
@@ -29,6 +29,7 @@ export class ValidatorService {
   api: string;
   private indexerUrl;
   private indexerChainId;
+  private util = require('util');
 
   constructor(
     private readonly logger: AkcLogger,
@@ -46,8 +47,8 @@ export class ValidatorService {
     this.logger.setContext(ValidatorService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
     this.api = this.configService.get('API');
-    this.indexerUrl = this.configService.get('INDEXER_URL');
-    this.indexerChainId = this.configService.get('INDEXER_CHAIN_ID');
+    this.indexerUrl = this.configService.get<string>('indexer.url');
+    this.indexerChainId = this.configService.get<string>('indexer.chainId');
   }
 
   async getTotalValidator(): Promise<number> {
@@ -193,9 +194,9 @@ export class ValidatorService {
     //get available balance
 
     // Use promise all to improve performance
-    let accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexerChainId}`, '', ctx);
+    let accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
     if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/account-info/delegations?address=${delegatorAddress}&chainId=${this.indexerChainId}`, '', ctx);
+      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
     }
     const data = accountData.data;
     result.available_balance = 0;

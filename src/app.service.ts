@@ -6,6 +6,7 @@ import {
   AkcLogger,
   CONST_CHAR,
   CONST_NUM,
+  INDEXER_API,
   LINK_API,
   RequestContext,
 } from './shared';
@@ -20,6 +21,7 @@ export class AppService {
   cosmosScanAPI: string;
   private indexerUrl;
   private indexerChainId;
+  private util = require('util');
 
   constructor(
     private logger: AkcLogger,
@@ -32,8 +34,8 @@ export class AppService {
   ) {
     this.logger.setContext(AppService.name);
     this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.indexerUrl = this.configService.get('INDEXER_URL');
-    this.indexerChainId = this.configService.get('INDEXER_CHAIN_ID');
+    this.indexerUrl = this.configService.get<string>('indexer.url');
+    this.indexerChainId = this.configService.get<string>('indexer.chainId');
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -52,7 +54,7 @@ export class AppService {
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexerUrl}api/v1/network/status?chainid=${this.indexerChainId}`, '', ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}${this.util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
       this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
