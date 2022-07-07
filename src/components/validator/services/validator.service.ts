@@ -46,10 +46,11 @@ export class ValidatorService {
     private delegatorRewardRepository: DelegatorRewardRepository,
   ) {
     this.logger.setContext(ValidatorService.name);
-    this.cosmosScanAPI = appConfig.default().cosmosScanAPI;
-    this.api = appConfig.default().node.api;
-    this.indexerUrl = appConfig.default().indexer.url;
-    this.indexerChainId = appConfig.default().indexer.chainId;
+    const appParams = appConfig.default();
+    this.cosmosScanAPI = appParams.cosmosScanAPI;
+    this.api = appParams.node.api;
+    this.indexerUrl = appParams.indexer.url;
+    this.indexerChainId = appParams.indexer.chainId;
   }
 
   async getTotalValidator(): Promise<number> {

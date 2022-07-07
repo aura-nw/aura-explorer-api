@@ -26,8 +26,9 @@ export class ContractCodeService {
         private httpService: HttpService
     ) {
         this.logger.setContext(ContractCodeService.name);
-        this.api = appConfig.default().node.api;
-        this.indexerUrl = appConfig.default().indexer.url;
+        const appParams = appConfig.default();
+        this.api = appParams.node.api;
+        this.indexerUrl = appParams.indexer.url;
     }
 
     async getContractCodes(ctx: RequestContext, request: ContractCodeParamsDto): Promise<any> {
