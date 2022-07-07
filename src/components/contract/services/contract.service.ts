@@ -99,7 +99,8 @@ export class ContractService {
       commit: request.commit,
       compilerVersion: request.compiler_version,
       contractAddress: request.contract_address,
-      contractUrl: request.url
+      contractUrl: request.url,
+      wasmFile: request.wasm_file
 
     }
     const result = await lastValueFrom(this.httpService.post(this.verifyContractUrl, properties)).then(
