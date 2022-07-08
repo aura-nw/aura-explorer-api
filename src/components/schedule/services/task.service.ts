@@ -11,7 +11,7 @@ import { ProposalDeposit } from '../../../shared/entities/proposal-deposit.entit
 import { tmhash } from 'tendermint/lib/hash';
 import { v4 as uuidv4 } from 'uuid';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { AkcLogger, Block, CONST_CHAR, CONST_DELEGATE_TYPE, CONST_MSG_TYPE, CONST_NUM, CONST_PROPOSAL_TYPE, CONST_PUBKEY_ADDR, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
+import { AkcLogger, Block, CONST_CHAR, CONST_DELEGATE_TYPE, CONST_MSG_TYPE, CONST_NUM, CONST_PROPOSAL_TYPE, Delegation, LINK_API, SyncStatus, Transaction } from '../../../shared';
 import { HistoryProposal } from '../../../shared/entities/history-proposal.entity';
 import { MissedBlock } from '../../../shared/entities/missed-block.entity';
 import { ProposalVote } from '../../../shared/entities/proposal-vote.entity';
@@ -28,8 +28,7 @@ import { InfluxDBClient } from './influxdb-client';
 import { ProposalDepositRepository } from '../../../components/proposal/repositories/proposal-deposit.repository';
 import { DelegatorReward } from '../../../shared/entities/delegator-reward.entity';
 import { DelegatorRewardRepository } from '../repositories/delegator-reward.repository';
-
-
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class TaskService {
@@ -40,7 +39,9 @@ export class TaskService {
   threads = 0;
   influxDbClient: InfluxDBClient;
   schedulesSync: Array<number> = [];
-  denom = '';
+  minimalDenom = '';
+  precisionDiv = 0;
+  decimals = 0;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -68,7 +69,10 @@ export class TaskService {
       this.configService.get<string>('influxdb.url'),
       this.configService.get<string>('influxdb.token'),
     );
-    this.denom = this.configService.get<string>('denom');
+    const appParams = appConfig.default();
+    this.minimalDenom = appParams.chainInfo.coinMinimalDenom;
+    this.precisionDiv = appParams.chainInfo.precisionDiv;
+    this.decimals = appParams.chainInfo.coinDecimals;
 
     // Get number thread from config
     this.threads = Number(this.configService.get<string>('influxdb.threads') || 15);
@@ -296,7 +300,7 @@ export class TaskService {
             delegation.tx_hash = txData.tx_response.txhash;
             delegation.delegator_address = message.delegator_address;
             delegation.validator_address = message.validator_address;
-            delegation.amount = Number(message.amount.amount)/CONST_NUM.PRECISION_DIV;
+            delegation.amount = Number(message.amount.amount)/this.precisionDiv;
             delegation.created_at = new Date(txData.tx_response.timestamp);
             delegation.type = CONST_DELEGATE_TYPE.DELEGATE;
             // TODO: Write delegation to influxdb
@@ -321,7 +325,7 @@ export class TaskService {
               const claimEvent = events.find(i => i.type === 'transfer');
               if(claimEvent) {
                 const attributes = claimEvent.attributes;
-                reward.amount = Number(attributes[2].value.replace(this.denom, ''));
+                reward.amount = Number(attributes[2].value.replace(this.minimalDenom, ''));
               }
             }
             reward.tx_hash = txData.tx_response.txhash;
@@ -331,7 +335,7 @@ export class TaskService {
             delegation.tx_hash = txData.tx_response.txhash;
             delegation.delegator_address = message.delegator_address;
             delegation.validator_address = message.validator_address;
-            delegation.amount = (Number(message.amount.amount)*(-1))/CONST_NUM.PRECISION_DIV;
+            delegation.amount = (Number(message.amount.amount)*(-1))/this.precisionDiv;
             delegation.created_at = new Date(txData.tx_response.timestamp);
             delegation.type = CONST_DELEGATE_TYPE.UNDELEGATE;
             // TODO: Write delegation to influxdb
@@ -356,7 +360,7 @@ export class TaskService {
               const claimEvent = events.find(i => i.type === 'transfer');
               if(claimEvent) {
                 const attributes = claimEvent.attributes;
-                reward.amount = Number(attributes[2].value.replace(this.denom, ''));
+                reward.amount = Number(attributes[2].value.replace(this.minimalDenom, ''));
               }
             }
             reward.tx_hash = txData.tx_response.txhash;
@@ -366,7 +370,7 @@ export class TaskService {
             delegation1.tx_hash = txData.tx_response.txhash;
             delegation1.delegator_address = message.delegator_address;
             delegation1.validator_address = message.validator_src_address;
-            delegation1.amount = (Number(message.amount.amount)*(-1))/CONST_NUM.PRECISION_DIV;
+            delegation1.amount = (Number(message.amount.amount)*(-1))/this.precisionDiv;
             delegation1.created_at = new Date(txData.tx_response.timestamp);
             delegation1.type = CONST_DELEGATE_TYPE.REDELEGATE;
             // TODO: Write delegation to influxdb
@@ -383,7 +387,7 @@ export class TaskService {
             delegation2.tx_hash = txData.tx_response.txhash;
             delegation2.delegator_address = message.delegator_address;
             delegation2.validator_address = message.validator_dst_address;
-            delegation2.amount = Number(message.amount.amount)/CONST_NUM.PRECISION_DIV;
+            delegation2.amount = Number(message.amount.amount)/this.precisionDiv;
             delegation2.created_at = new Date(txData.tx_response.timestamp);
             delegation2.type = CONST_DELEGATE_TYPE.REDELEGATE;
             // TODO: Write delegation to influxdb
@@ -407,8 +411,8 @@ export class TaskService {
               const claimEvent = events.find(i => i.type === 'transfer');
               if(claimEvent) {
                 const attributes = claimEvent.attributes;
-                amount1 = Number(attributes[2].value.replace(this.denom, ''));
-                amount2 = Number(attributes[5].value.replace(this.denom, ''));
+                amount1 = Number(attributes[2].value.replace(this.minimalDenom, ''));
+                amount2 = Number(attributes[5].value.replace(this.minimalDenom, ''));
               }
             }
             let reward1 = new DelegatorReward();
@@ -436,7 +440,7 @@ export class TaskService {
                 const amount = attributes[0].value;
                 const findValidator = attributes.find(i => i.value === message.validator_address);
                 if (findValidator) {
-                  reward.amount = Number(amount.replace(this.denom, ''));
+                  reward.amount = Number(amount.replace(this.minimalDenom, ''));
                 }
               }
             }
@@ -569,7 +573,7 @@ export class TaskService {
           }
           const newTx = new Transaction();
           const fee = txData.tx_response.tx.auth_info.fee.amount[0];
-          const txFee = (fee[CONST_CHAR.AMOUNT] / CONST_NUM.PRECISION_DIV).toFixed(6);
+          const txFee = (fee[CONST_CHAR.AMOUNT] / this.precisionDiv).toFixed(this.decimals);
           newTx.block = savedBlock;
           newTx.code = txData.tx_response.code;
           newTx.codespace = txData.tx_response.codespace;

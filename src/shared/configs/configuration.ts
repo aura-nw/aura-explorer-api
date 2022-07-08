@@ -34,5 +34,10 @@ export default () => ({
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID
   },
-  denom: process.env.DENOM
+  chainInfo: {
+    coinDenom: process.env.COIN_DENOM,
+    coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,
+    coinDecimals: Number(process.env.COIN_DECIMALS),
+    precisionDiv: Math.pow(10, Number(process.env.COIN_DECIMALS))
+  }
 });

@@ -8,7 +8,6 @@ import { ValidatorRepository } from '../../../components/validator/repositories/
 import {
   AkcLogger,
   CONST_CHAR,
-  CONST_NAME_ASSETS,
   CONST_NUM,
   INDEXER_API,
   RequestContext,
@@ -28,6 +27,9 @@ export class AccountService {
   private indexerUrl;
   private indexerChainId;
   private denom;
+  private minimalDenom;
+  private precisionDiv;
+  private decimals;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -41,7 +43,10 @@ export class AccountService {
     this.api = appParams.node.api;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
-    this.denom = this.configService.get<string>('denom');
+    this.minimalDenom = appParams.chainInfo.coinMinimalDenom;
+    this.denom = appParams.chainInfo.coinDenom;
+    this.precisionDiv = appParams.chainInfo.precisionDiv;
+    this.decimals = appParams.chainInfo.coinDecimals;
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -70,8 +75,8 @@ export class AccountService {
       accountOutput.balances = new Array(balances.length);
       balances.forEach((item, idx) => {
         const balance = new AccountBalance();
-        if (item.denom === this.denom) {
-          balance.name = CONST_NAME_ASSETS.AURA;
+        if (item.denom === this.minimalDenom) {
+          balance.name = this.denom;
           balance.denom = item.denom;
           balance.amount = this.changeUauraToAura(item.amount);
           balance.price = 0;
@@ -86,7 +91,7 @@ export class AccountService {
     let available = 0;
     accountOutput.available = this.changeUauraToAura(available);
     if (data?.account_spendable_balances && data.account_spendable_balances?.spendable_balances) {
-      const uaura = data.account_spendable_balances?.spendable_balances.find(f => f.denom === this.denom);
+      const uaura = data.account_spendable_balances?.spendable_balances.find(f => f.denom === this.minimalDenom);
       if (uaura) {
         const amount = uaura.amount;
         accountOutput.available = this.changeUauraToAura(amount);
@@ -121,7 +126,7 @@ export class AccountService {
         if (
           reward.length > 0 &&
           reward[0].reward.length > 0 &&
-          reward[0].reward[0].denom === this.denom
+          reward[0].reward[0].denom === this.minimalDenom
         ) {
           delegation.reward = this.changeUauraToAura(
             reward[0].reward[0].amount,
@@ -132,7 +137,7 @@ export class AccountService {
           data?.account_delegate_rewards &&
           data.account_delegate_rewards?.total &&
           data.account_delegate_rewards.total.length > 0 &&
-          data.account_delegate_rewards.total[0].denom === this.denom
+          data.account_delegate_rewards.total[0].denom === this.minimalDenom
         ) {
           accountOutput.stake_reward = this.changeUauraToAura(
             data.account_delegate_rewards?.total[0].amount,
@@ -216,7 +221,7 @@ export class AccountService {
       const commissionData = await this.serviceUtil.getDataAPI(this.api, paramsCommisstion, ctx);
       if (
         commissionData &&
-        commissionData.commission.commission[0].denom === this.denom
+        commissionData.commission.commission[0].denom === this.minimalDenom
       ) {
         commission = commissionData.commission.commission[0].amount;
         accountOutput.commission = this.changeUauraToAura(
@@ -268,6 +273,6 @@ export class AccountService {
   }
 
   changeUauraToAura(amount) {
-    return (amount / CONST_NUM.PRECISION_DIV).toFixed(6);
+    return (amount / this.precisionDiv).toFixed(this.decimals);
   }
 }
