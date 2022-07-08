@@ -33,5 +33,11 @@ export default () => ({
   indexer: {
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID
+  },
+  chainInfo: {
+    coinDenom: process.env.COIN_DENOM,
+    coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,
+    coinDecimals: Number(process.env.COIN_DECIMALS),
+    precisionDiv: Math.pow(10, Number(process.env.COIN_DECIMALS))
   }
 });

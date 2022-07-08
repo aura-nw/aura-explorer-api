@@ -7,13 +7,17 @@ import { AkcLogger, CONST_CHAR, CONST_NUM, RequestContext, Transaction } from '.
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
-import { Raw } from 'typeorm/find-options/operator/Raw';
 import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
 import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
 import { MoreThan } from 'typeorm';
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class TransactionService {
+  private minimalDenom;
+  private precisionDiv;
+  private decimals;
+
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
@@ -21,6 +25,10 @@ export class TransactionService {
     private txRepository: TransactionRepository,
   ) {
     this.logger.setContext(TransactionService.name);
+    const appParams = appConfig.default();
+    this.minimalDenom = appParams.chainInfo.coinMinimalDenom;
+    this.precisionDiv = appParams.chainInfo.precisionDiv;
+    this.decimals = appParams.chainInfo.coinDecimals;
   }
 
   async getTotalTx(): Promise<number> {
@@ -90,8 +98,8 @@ export class TransactionService {
             ({ key }) => key === CONST_CHAR.AMOUNT,
           );
           let amount = txActionAmount.value.replace(regex, ' ');
-          amount = amount.replace(CONST_CHAR.UAURA, '');
-          transaction["amount"] = (parseInt(amount) / CONST_NUM.PRECISION_DIV).toFixed(6);
+          amount = amount.replace(this.minimalDenom, '');
+          transaction["amount"] = (parseInt(amount) / this.precisionDiv).toFixed(this.decimals);
           transaction.type = txAttr.type;
         }
       }
