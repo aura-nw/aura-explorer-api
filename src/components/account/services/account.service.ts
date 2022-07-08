@@ -175,7 +175,7 @@ export class AccountService {
     if (data?.account_redelegations && data.account_redelegations?.redelegation_responses) {
       accountOutput.redelegations = [];
       data.account_redelegations.redelegation_responses.forEach((item, idx) => {
-        item.entries?.forEach((item) => {
+        item.entries?.forEach((item1) => {
           const validator_src_address = item.redelegation.validator_src_address;
           const validator_dst_address = item.redelegation.validator_dst_address;
           const validatorSrc = validatorData.filter(
@@ -194,9 +194,9 @@ export class AccountService {
             redelegation.validator_dst_name = validatorDst[0].title;
             redelegation.validator_dst_address = validator_dst_address;
           }
-          redelegation.amount = this.changeUauraToAura(item.balance);
+          redelegation.amount = this.changeUauraToAura(item1.balance);
           redelegation.completion_time =
-            item.redelegation_entry.completion_time;
+            item1.redelegation_entry.completion_time;
 
           accountOutput.redelegations.push(redelegation);
         });
