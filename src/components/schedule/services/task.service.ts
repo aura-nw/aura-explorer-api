@@ -40,6 +40,7 @@ export class TaskService {
   threads = 0;
   influxDbClient: InfluxDBClient;
   schedulesSync: Array<number> = [];
+  denom = '';
 
   constructor(
     private readonly logger: AkcLogger,
@@ -67,6 +68,7 @@ export class TaskService {
       this.configService.get<string>('influxdb.url'),
       this.configService.get<string>('influxdb.token'),
     );
+    this.denom = this.configService.get<string>('denom');
 
     // Get number thread from config
     this.threads = Number(this.configService.get<string>('influxdb.threads') || 15);
@@ -319,7 +321,7 @@ export class TaskService {
               const claimEvent = events.find(i => i.type === 'transfer');
               if(claimEvent) {
                 const attributes = claimEvent.attributes;
-                reward.amount = Number(attributes[2].value.replace('uaura', ''));
+                reward.amount = Number(attributes[2].value.replace(this.denom, ''));
               }
             }
             reward.tx_hash = txData.tx_response.txhash;
@@ -354,7 +356,7 @@ export class TaskService {
               const claimEvent = events.find(i => i.type === 'transfer');
               if(claimEvent) {
                 const attributes = claimEvent.attributes;
-                reward.amount = Number(attributes[2].value.replace('uaura', ''));
+                reward.amount = Number(attributes[2].value.replace(this.denom, ''));
               }
             }
             reward.tx_hash = txData.tx_response.txhash;
@@ -405,8 +407,8 @@ export class TaskService {
               const claimEvent = events.find(i => i.type === 'transfer');
               if(claimEvent) {
                 const attributes = claimEvent.attributes;
-                amount1 = Number(attributes[2].value.replace('uaura', ''));
-                amount2 = Number(attributes[5].value.replace('uaura', ''));
+                amount1 = Number(attributes[2].value.replace(this.denom, ''));
+                amount2 = Number(attributes[5].value.replace(this.denom, ''));
               }
             }
             let reward1 = new DelegatorReward();
@@ -434,7 +436,7 @@ export class TaskService {
                 const amount = attributes[0].value;
                 const findValidator = attributes.find(i => i.value === message.validator_address);
                 if (findValidator) {
-                  reward.amount = Number(amount.replace('uaura', ''));
+                  reward.amount = Number(amount.replace(this.denom, ''));
                 }
               }
             }

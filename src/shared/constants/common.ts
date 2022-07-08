@@ -28,7 +28,6 @@ export enum CONST_NUM {
 export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
-  UAURA = 'uaura',
   DELEGATE = 'delegate',
   UNBOND = 'unbond',
   VALIDATOR = 'validator',

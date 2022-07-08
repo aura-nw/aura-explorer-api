@@ -14,6 +14,8 @@ import { MoreThan } from 'typeorm';
 
 @Injectable()
 export class TransactionService {
+  private denom;
+
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
@@ -21,6 +23,7 @@ export class TransactionService {
     private txRepository: TransactionRepository,
   ) {
     this.logger.setContext(TransactionService.name);
+    this.denom = this.configService.get<string>('denom');
   }
 
   async getTotalTx(): Promise<number> {
@@ -90,7 +93,7 @@ export class TransactionService {
             ({ key }) => key === CONST_CHAR.AMOUNT,
           );
           let amount = txActionAmount.value.replace(regex, ' ');
-          amount = amount.replace(CONST_CHAR.UAURA, '');
+          amount = amount.replace(this.denom, '');
           transaction["amount"] = (parseInt(amount) / CONST_NUM.PRECISION_DIV).toFixed(6);
           transaction.type = txAttr.type;
         }

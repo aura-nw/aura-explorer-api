@@ -27,6 +27,7 @@ export class AccountService {
   private api;
   private indexerUrl;
   private indexerChainId;
+  private denom;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -40,6 +41,7 @@ export class AccountService {
     this.api = appParams.node.api;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
+    this.denom = this.configService.get<string>('denom');
   }
 
   async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
@@ -68,7 +70,7 @@ export class AccountService {
       accountOutput.balances = new Array(balances.length);
       balances.forEach((item, idx) => {
         const balance = new AccountBalance();
-        if (item.denom === CONST_CHAR.UAURA) {
+        if (item.denom === this.denom) {
           balance.name = CONST_NAME_ASSETS.AURA;
           balance.denom = item.denom;
           balance.amount = this.changeUauraToAura(item.amount);
@@ -84,7 +86,7 @@ export class AccountService {
     let available = 0;
     accountOutput.available = this.changeUauraToAura(available);
     if (data?.account_spendable_balances && data.account_spendable_balances?.spendable_balances) {
-      const uaura = data.account_spendable_balances?.spendable_balances.find(f => f.denom === CONST_CHAR.UAURA);
+      const uaura = data.account_spendable_balances?.spendable_balances.find(f => f.denom === this.denom);
       if (uaura) {
         const amount = uaura.amount;
         accountOutput.available = this.changeUauraToAura(amount);
@@ -119,7 +121,7 @@ export class AccountService {
         if (
           reward.length > 0 &&
           reward[0].reward.length > 0 &&
-          reward[0].reward[0].denom === CONST_CHAR.UAURA
+          reward[0].reward[0].denom === this.denom
         ) {
           delegation.reward = this.changeUauraToAura(
             reward[0].reward[0].amount,
@@ -130,7 +132,7 @@ export class AccountService {
           data?.account_delegate_rewards &&
           data.account_delegate_rewards?.total &&
           data.account_delegate_rewards.total.length > 0 &&
-          data.account_delegate_rewards.total[0].denom === CONST_CHAR.UAURA
+          data.account_delegate_rewards.total[0].denom === this.denom
         ) {
           accountOutput.stake_reward = this.changeUauraToAura(
             data.account_delegate_rewards?.total[0].amount,
@@ -214,7 +216,7 @@ export class AccountService {
       const commissionData = await this.serviceUtil.getDataAPI(this.api, paramsCommisstion, ctx);
       if (
         commissionData &&
-        commissionData.commission.commission[0].denom === CONST_CHAR.UAURA
+        commissionData.commission.commission[0].denom === this.denom
       ) {
         commission = commissionData.commission.commission[0].amount;
         accountOutput.commission = this.changeUauraToAura(

@@ -33,5 +33,6 @@ export default () => ({
   indexer: {
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID
-  }
+  },
+  denom: process.env.DENOM
 });
