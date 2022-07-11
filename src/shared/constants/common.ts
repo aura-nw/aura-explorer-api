@@ -21,14 +21,12 @@ export enum CONST_NUM {
   LIMIT_2 = 2,
   LIMIT_100 = 100,
   LIMIT_50 = 50,
-  OFFSET = 0,
-  PRECISION_DIV = 1000000
+  OFFSET = 0
 }
 
 export enum CONST_CHAR {
   PERCENT = '%',
   SECOND = 's',
-  UAURA = 'uaura',
   DELEGATE = 'delegate',
   UNBOND = 'unbond',
   VALIDATOR = 'validator',
@@ -67,15 +65,6 @@ export enum CONST_PROPOSAL_VOTE_OPTION {
   ABSTAIN = 'VOTE_OPTION_ABSTAIN',
   NO = 'VOTE_OPTION_NO',
   NO_WITH_VETO = 'VOTE_OPTION_NO_WITH_VETO'
-}
-
-export enum CONST_NAME_ASSETS {
-  AURA = 'AURA'
-}
-
-export enum CONST_PUBKEY_ADDR {
-  AURAVALCONS = 'auravalcons',
-  AURA = 'aura',
 }
 
 export enum CONST_DELEGATE_TYPE {
