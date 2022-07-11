@@ -1,4 +1,4 @@
-export default (): any => ({
+export default () => ({
   apiPrefix: process.env.API_PREFIX,
   port: process.env.PORT,
   startHeight: process.env.START_HEIGHT,
@@ -29,5 +29,11 @@ export default (): any => ({
       db: process.env.REDIS_DB,
     }
   },
-  threads: process.env.THREADS
+  threads: process.env.THREADS,
+  chainInfo: {
+    coinDenom: process.env.COIN_DENOM,
+    coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,
+    coinDecimals: Number(process.env.COIN_DECIMALS),
+    precisionDiv: Math.pow(10, Number(process.env.COIN_DECIMALS))
+  }
 });
