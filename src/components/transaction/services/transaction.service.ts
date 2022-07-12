@@ -64,10 +64,14 @@ export class TransactionService {
     const transaction = await this.txRepository.findOne({
       where: { tx_hash: hash },
     });
-    const block = await transaction.block;
-    const chainid = block.chainid;
+    let result = null;
+    if (transaction) {
+      result = transaction;
+      const block = await transaction.block;
+      result.chainid = block.chainid;
+    }
 
-    return {...transaction, chainid};
+    return result;
   }
 
   async getTransactionsByAddress(
