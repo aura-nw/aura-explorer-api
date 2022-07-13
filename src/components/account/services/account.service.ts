@@ -157,7 +157,7 @@ export class AccountService {
     if (data?.account_unbonds && data.account_unbonds?.unbonding_responses) {
       accountOutput.unbonding_delegations = [];
       data.account_unbonds?.unbonding_responses.forEach((item, idx) => {
-        item.entries?.forEach((item) => {
+        item.entries?.forEach((item1) => {
           const validator_address = item.validator_address;
           const validator = validatorData.filter(
             (e) => e.operator_address === validator_address,
@@ -168,9 +168,9 @@ export class AccountService {
             unbonding.validator_name = validator[0].title;
             unbonding.validator_address = validator_address;
           }
-          unbonding.amount = this.changeUauraToAura(item.balance);
-          unbonding.completion_time = item.completion_time;
-          unbondingAmount += parseInt(item.balance);
+          unbonding.amount = this.changeUauraToAura(item1.balance);
+          unbonding.completion_time = item1.completion_time;
+          unbondingAmount += parseInt(item1.balance);
 
           accountOutput.unbonding_delegations.push(unbonding);
         });
