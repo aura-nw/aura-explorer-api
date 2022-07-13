@@ -66,6 +66,7 @@ export class AppService {
     let blockTime;
     let height;
     let comPool;
+    let supply;
     if (blocks.length === 2) {
       const block_first = blocks[0].timestamp.getTime();
       const block_second = blocks[1].timestamp.getTime();
@@ -80,6 +81,9 @@ export class AppService {
     if (data?.communityPool && data.communityPool?.pool && data.communityPool.pool.length > 0) {
       comPool = parseInt(data.communityPool.pool[0].amount);
     }
+    if (data?.supply && data.supply?.supply && data.supply.supply.length > 0) {
+      supply = parseInt(data.supply.supply[0].amount);
+    }
 
     return {
       block_height: height,
@@ -90,6 +94,7 @@ export class AppService {
       bonded_tokens: bonded_tokens,
       inflation: inflation,
       community_pool: comPool,
+      supply: supply
     };
   }
 }
