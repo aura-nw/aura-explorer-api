@@ -17,6 +17,7 @@ import * as appConfig from '../../../shared/configs/configuration';
 export class ContractCodeService {
     private api;
     private indexerUrl;
+    private indexerChainId;
 
     constructor(
         private readonly logger: AkcLogger,
@@ -29,6 +30,7 @@ export class ContractCodeService {
         const appParams = appConfig.default();
         this.api = appParams.node.api;
         this.indexerUrl = appParams.indexer.url;
+        this.indexerChainId = appParams.indexer.chainId;
     }
 
     async getContractCodes(ctx: RequestContext, request: ContractCodeParamsDto): Promise<any> {
@@ -68,9 +70,11 @@ export class ContractCodeService {
                     Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
                 };
             }
-            //register in indexerp
+            //register in indexer
             const properties = {
-                code_id: request.code_id
+                codeId: request.code_id,
+                contractType: request.type,
+                chainId: this.indexerChainId
 
             }
             await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
