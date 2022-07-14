@@ -107,7 +107,7 @@ export enum CONTRACT_CODE_RESULT {
 export enum INDEXER_API {
   STATUS = "api/v1/network/status?chainid=%s",
   ACCOUNT_INFO = "api/v1/account-info?address=%s&chainId=%s",
-  REGISTER_CODE_ID = "api/v1/asset/indexAsset",
+  REGISTER_CODE_ID = "api/v1/asset/index",
   ACCOUNT_DELEGATIONS = "api/v1/account-info/delegations?address=%s&chainId=%s"
 }
 
