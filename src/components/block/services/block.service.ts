@@ -98,7 +98,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getBlockByValidatorAddress.name} was called!`);
     query.limit = 5;
 
-    const [blocks, count]  = await this.blockRepository.findAndCount({
+    const [blocks, count] = await this.blockRepository.findAndCount({
       where: { operator_address: validatorAddress },
       order: { height: 'DESC' },
       take: query.limit,
@@ -119,7 +119,7 @@ export class BlockService {
     this.logger.log(ctx, `${this.getBlockLatest.name} was called!`);
     query.limit = 100;
 
-    const [blocks, count]  = await this.blockRepository.findAndCount({
+    const [blocks, count] = await this.blockRepository.findAndCount({
       order: { height: 'DESC' },
       take: query.limit,
       skip: query.offset,
@@ -132,52 +132,24 @@ export class BlockService {
     return { blocks: blocksOutput, count };
   }
 
+  /**
+   * Get latest top 100 blocks and latest missing 100 blocks by validator address for uptime detection
+   * @param address: Validator address
+   * @returns 
+   */
   async getDataBlocksByAddress(
     ctx: RequestContext,
-    validatorAddress,
-    limit: number,
-    offset: number,
-  ): Promise<{ blocks: LiteBlockOutput[]; count: number }> {
-    this.logger.log(ctx, `${this.getDataBlocks.name} was called!`);
+    validatorAddress: string,
+  ): Promise<{ blocks: LiteBlockOutput[] }> {
+    this.logger.log(ctx, `${this.getDataBlocks.name} was called with Validator address: ${validatorAddress}`);
 
-    const [blocks, count] = await this.blockRepository.findAndCount({
-      order: { height: 'DESC' },
-      take: limit,
-      skip: offset,
+    const results: [] = await this.blockRepository.getBlockUptime(validatorAddress, 100);
+    let outputs = [];
+
+    outputs = results.map((item: any) => {
+      return { height: item.height, block_hash: item.block_hash, isMissed: Number(item.isMissed) };
     });
 
-    const blocksOutput = plainToClass(LiteBlockOutput, blocks, {
-      excludeExtraneousValues: true,
-    });
-    blocksOutput.forEach(element => {
-      element.isSync = false;
-    });
-
-    // get data on table missed-block
-    const missedBlocks = await this.missedBlockRepository.find({
-      order: { height: 'DESC' }
-    });
-
-    for (let key in missedBlocks) {
-      const data = missedBlocks[key];
-      // get data of validator by validator address
-      const validatorData = await this.validatorRepository.find({
-        where: { cons_address: data.validator_address },
-      });
-
-      for (let keyValidator in validatorData) {
-        const dataValidator = validatorData[keyValidator];
-        if (dataValidator.operator_address === validatorAddress) {
-          const blocksData = blocksOutput.filter(e => e.height === data.height);
-          if (blocksData.length > 0) {
-            blocksData[0].isSync = true;
-          }
-        }
-
-      }
-    }
-
-    return { blocks: blocksOutput, count };
+    return { blocks: outputs };
   }
-
 }
