@@ -12,7 +12,7 @@ export class TransactionRepository extends Repository<Transaction> {
       where: (
         {
           messages: Raw(() => `code = 0 AND messages LIKE '%${address}%'
-                  AND (type = '${CONST_FULL_MSG_TYPE.MSG_DELEGATE}' OR type = '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}' OR type = '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}')`),
+                  AND type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}')`),
         }
       ),
       order: { height: 'DESC' },

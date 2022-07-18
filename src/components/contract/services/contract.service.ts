@@ -3,7 +3,7 @@ import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Like, MoreThan, Not } from "typeorm";
 import { AkcLogger, CONTRACT_STATUS, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
-import { ContractRepository } from "../repositories/contract.repository";
+import { SmartContractRepository } from "../repositories/smart-contract.repository";
 import { ConfigService } from "@nestjs/config";
 import { TagRepository } from "../repositories/tag.repository";
 import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
@@ -12,8 +12,6 @@ import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
-// import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
-// import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 
 @Injectable()
 export class ContractService {
@@ -24,7 +22,7 @@ export class ContractService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private contractRepository: ContractRepository,
+    private smartContractRepository: SmartContractRepository,
     private tagRepository: TagRepository,
     private tokenContractRepository: TokenContractRepository,
     private transactionRepository: TransactionRepository,
@@ -41,22 +39,15 @@ export class ContractService {
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const [contracts, count] = await this.contractRepository.findAndCount({
-      where: {
-        ...(request?.keyword && { contract_name: Like(`%${request.keyword}%`) })
-      },
-      order: { updated_at: 'DESC' },
-      take: request.limit,
-      skip: request.offset,
-    });
+    const result = await this.smartContractRepository.getContracts(request);
 
-    return { contracts: contracts, count };
+    return { contracts: result[0], count: result[1][0].total };
   }
 
   async getContractByAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
     this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
     let contract: any = null;
-    const contractData = await this.contractRepository.findOne({
+    const contractData = await this.smartContractRepository.findOne({
       where: { contract_address: contractAddress },
     });
     if (contractData) {
@@ -94,52 +85,41 @@ export class ContractService {
 
   async verifyContract(ctx: RequestContext, request: VerifyContractParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.verifyContract.name} was called!`);
-    try {
-      const contract = await this.contractRepository.findOne({
-        where: { contract_address: request.contract_address }
-      });
-      if (!contract || (contract && contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)) {
-        const error = {
-          Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
-          Message: ERROR_MAP.CONTRACT_VERIFIED.Message
-        };
-        return error;
-      }
-    } catch (err) {
-      this.logger.log(ctx, `FindOne Smart contract error:${err.message}`);
-      this.logger.log(ctx, `${err.stack}`);
-      throw new Error(err.stack);
+    const contract = await this.smartContractRepository.findOne({
+      where: { contract_address: request.contract_address }
+    });
+    if (!contract || (contract && contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
+        Message: ERROR_MAP.CONTRACT_VERIFIED.Message
+      };
+      return error;
     }
-    try {
-      const properties = {
-        commit: request.commit,
-        compilerVersion: request.compiler_version,
-        contractAddress: request.contract_address,
-        contractUrl: request.url
+    const properties = {
+      commit: request.commit,
+      compilerVersion: request.compiler_version,
+      contractAddress: request.contract_address,
+      contractUrl: request.url,
+      wasmFile: request.wasm_file
 
-      }
-      const result = await lastValueFrom(this.httpService.post(this.verifyContractUrl, properties)).then(
-        (rs) => rs.data,
-      );
-
-      return result;
-    } catch (err) {
-      this.logger.log(ctx, `verifyContractUrl error:${err.message}`);
-      this.logger.log(ctx, `${err.stack}`);
-      throw new Error(err.stack);
     }
+    const result = await lastValueFrom(this.httpService.post(this.verifyContractUrl, properties)).then(
+      (rs) => rs.data,
+    );
+
+    return result;
   }
 
   async getContractsMatchCreationCode(ctx: RequestContext, contractAddress: string): Promise<any> {
     this.logger.log(ctx, `${this.getContractsMatchCreationCode.name} was called!`);
-    const contract = await this.contractRepository.findOne({
+    const contract = await this.smartContractRepository.findOne({
       where: { contract_address: contractAddress }
     });
     let contracts = [];
     let count = 0;
     if (contract) {
       const contractHash = contract.contract_hash;
-      [contracts, count] = await this.contractRepository.findAndCount({
+      [contracts, count] = await this.smartContractRepository.findAndCount({
         where: {
           contract_address: Not(contractAddress),
           contract_hash: contractHash
@@ -163,7 +143,7 @@ export class ContractService {
 
   async verifyContractStatus(ctx: RequestContext, contractAddress: string): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.contractRepository.findOne({
+    const contract = await this.smartContractRepository.findOne({
       where: { contract_address: contractAddress }
     });
     if (contract) {
