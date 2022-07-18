@@ -12,6 +12,7 @@ import { TransactionService } from '../../transaction/services/transaction.servi
 import { MissedBlockRepository } from '../../../components/schedule/repositories/missed-block.repository';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
+import { BlockLatestDto } from '../dtos/block-latest-params.dto';
 
 @Injectable()
 export class BlockService {
@@ -151,5 +152,23 @@ export class BlockService {
     });
 
     return { blocks: outputs };
+  }
+
+  async getTopBlocks(
+    ctx: RequestContext,
+    query: BlockLatestDto,
+  ): Promise<{ blocks: LiteBlockOutput[]}> {
+    this.logger.log(ctx, `${this.getBlocks.name} was called!`);
+
+    const blocks = await this.blockRepository.find({
+      order: { height: 'DESC' },
+      take: query.limit,
+    });
+
+    const blocksOutput = plainToClass(LiteBlockOutput, blocks, {
+      excludeExtraneousValues: true,
+    });
+
+    return { blocks: blocksOutput};
   }
 }
