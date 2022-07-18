@@ -13,6 +13,7 @@ import { ProposalModule } from './components/proposal/proposal.module';
 import { AccountModule } from './components/account/account.module';
 import { ServiceUtil } from './shared/utils/service.util';
 import { ContractModule } from './components/contract/contract.module';
+import { ContractCodeModule } from './components/contract-code/contract-code.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { ContractModule } from './components/contract/contract.module';
     ValidatorModule,
     ProposalModule,
     AccountModule,
-    ContractModule
+    ContractModule,
+    ContractCodeModule
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil],

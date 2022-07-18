@@ -125,7 +125,7 @@ export class BlockController {
   ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
     this.logger.log(ctx, `${this.getDataBlocksByAddress.name} was called!`);
 
-    const { blocks }  = await this.blockService.getDataBlocksByAddress(ctx, validatorAddress, CONST_NUM.LIMIT_100, CONST_NUM.OFFSET);
+    const { blocks }  = await this.blockService.getDataBlocksByAddress(ctx, validatorAddress);
 
     return { data: blocks, meta: {} };
   }

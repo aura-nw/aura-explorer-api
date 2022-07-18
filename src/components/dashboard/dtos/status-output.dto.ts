@@ -33,4 +33,8 @@ export class StatusOutput {
   @Expose()
   @ApiProperty()
   community_pool: number;
+
+  @Expose()
+  @ApiProperty()
+  supply: number;
 }
