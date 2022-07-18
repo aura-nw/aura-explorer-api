@@ -18,6 +18,7 @@ import {
   ReqContext,
   CONST_NUM,
 } from '../../../shared';
+import { BlockLatestDto } from '../dtos/block-latest-params.dto';
 
 import { BlockOutput } from '../dtos/block-output.dto';
 import { BlockParamsDto } from '../dtos/block-params.dto';
@@ -53,6 +54,25 @@ export class BlockController {
     return { data: blocks, meta: { count } };
   }
 
+  @Get('get-blocks-latest')
+  @ApiOperation({ summary: 'Get blocks latest' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(LiteBlockOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getBlocksLatest(
+    @ReqContext() ctx: RequestContext,
+    @Query() query: BlockLatestDto,
+  ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
+    this.logger.log(ctx, `${this.getDataBlocksByAddress.name} was called!`);
+
+    const { blocks } = await this.blockService.getTopBlocks(ctx, query);
+
+    return { data: blocks, meta: {} };
+  }
+
   @Get(':height')
   @ApiOperation({ summary: 'Get block by height' })
   @ApiResponse({
@@ -71,7 +91,7 @@ export class BlockController {
 
     return { data: block, meta: {} };
   }
-  
+
   @Get('id/:blockId')
   @ApiOperation({ summary: 'Get block by id' })
   @ApiResponse({
@@ -90,7 +110,7 @@ export class BlockController {
 
     return { data: block, meta: {} };
   }
-  
+
   @Get(':validatorAddress/validator')
   @ApiOperation({ summary: 'Get blocks by validator address' })
   @ApiResponse({
@@ -106,9 +126,9 @@ export class BlockController {
   ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
     this.logger.log(ctx, `${this.getBlockByValidatorAddress.name} was called!`);
 
-    const { blocks, count }  = await this.blockService.getBlockByValidatorAddress(ctx, validatorAddress, query);
+    const { blocks, count } = await this.blockService.getBlockByValidatorAddress(ctx, validatorAddress, query);
 
-    return { data: blocks, meta: {count} };
+    return { data: blocks, meta: { count } };
   }
 
   @Get(':validatorAddress/latest')
@@ -125,7 +145,7 @@ export class BlockController {
   ): Promise<BaseApiResponse<LiteBlockOutput[]>> {
     this.logger.log(ctx, `${this.getDataBlocksByAddress.name} was called!`);
 
-    const { blocks }  = await this.blockService.getDataBlocksByAddress(ctx, validatorAddress);
+    const { blocks } = await this.blockService.getDataBlocksByAddress(ctx, validatorAddress);
 
     return { data: blocks, meta: {} };
   }
