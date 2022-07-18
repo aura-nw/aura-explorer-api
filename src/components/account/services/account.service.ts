@@ -49,7 +49,7 @@ export class AccountService {
     this.decimals = appParams.chainInfo.coinDecimals;
   }
 
-  async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
+  async getAccountDetailByAddress(ctx: RequestContext, address: string): Promise<any> {
     this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
 
     const accountOutput = new AccountOutput();
@@ -73,12 +73,13 @@ export class AccountService {
     if (data?.account_balances && data.account_balances?.balances) {
       const balances = data.account_balances.balances;
       accountOutput.balances = new Array(balances.length);
-      balances.forEach((item, idx) => {
+      balances.forEach((item) => {
         const balance = new AccountBalance();
         if (item.denom === this.minimalDenom) {
           balance.name = this.denom;
           balance.denom = item.denom;
           balance.amount = this.changeUauraToAura(item.amount);
+          // todo
           balance.price = 0;
           balance.total_price = balance.price * Number(balance.amount);
           balancesAmount = parseFloat(item.amount)
@@ -98,7 +99,6 @@ export class AccountService {
         available = parseFloat(amount);
       }
     }
-
 
     // Get delegate
     let delegatedAmount = 0;
@@ -156,7 +156,7 @@ export class AccountService {
     let unbondingAmount = 0;
     if (data?.account_unbonds && data.account_unbonds?.unbonding_responses) {
       accountOutput.unbonding_delegations = [];
-      data.account_unbonds?.unbonding_responses.forEach((item, idx) => {
+      data.account_unbonds?.unbonding_responses.forEach((item) => {
         item.entries?.forEach((item1) => {
           const validator_address = item.validator_address;
           const validator = validatorData.filter(
@@ -181,7 +181,7 @@ export class AccountService {
     // get redelegations
     if (data?.account_redelegations && data.account_redelegations?.redelegation_responses) {
       accountOutput.redelegations = [];
-      data.account_redelegations.redelegation_responses.forEach((item, idx) => {
+      data.account_redelegations.redelegation_responses.forEach((item) => {
         item.entries?.forEach((item1) => {
           const validator_src_address = item.redelegation.validator_src_address;
           const validator_dst_address = item.redelegation.validator_dst_address;
