@@ -36,6 +36,7 @@ export enum CONST_CHAR {
   MESSAGE = 'message',
   ACTION = 'action',
   REDELEGATE = 'redelegate',
+  CREATE_VALIDATOR = 'create_validator'
 }
 
 export enum CONST_MSG_TYPE {
@@ -52,6 +53,7 @@ export enum CONST_FULL_MSG_TYPE {
   MSG_DELEGATE = '/cosmos.staking.v1beta1.MsgDelegate',
   MSG_REDELEGATE = '/cosmos.staking.v1beta1.MsgBeginRedelegate',
   MSG_UNDELEGATE = '/cosmos.staking.v1beta1.MsgUndelegate',
+  MSG_CREATE_VALIDATOR = '/cosmos.staking.v1beta1.MsgCreateValidator'
 }
 
 export enum CONST_PROPOSAL_TYPE {
@@ -91,6 +93,24 @@ export enum CONTRACT_TRANSACTION_TYPE {
   SEND = "/cosmos.bank.v1beta1.MsgSend"
 }
 
+export enum CONTRACT_TYPE {
+  CW20 = "CW20",
+  CW721 = "CW721"
+}
+
+export enum CONTRACT_CODE_RESULT {
+  TBD = "TBD",
+  CORRECT = "Correct",
+  INCORRECT = "Incorrect"
+}
+
+export enum INDEXER_API {
+  STATUS = "api/v1/network/status?chainid=%s",
+  ACCOUNT_INFO = "api/v1/account-info?address=%s&chainId=%s",
+  REGISTER_CODE_ID = "api/v1/asset/index",
+  ACCOUNT_DELEGATIONS = "api/v1/account-info/delegations?address=%s&chainId=%s"
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',
@@ -100,4 +120,20 @@ export const ERROR_MAP = {
     Code: 'E002',
     Message: `Contract isn't existed`
   },
+  CONTRACT_CODE_ID_EXIST: {
+    Code: 'E003',
+    Message: `Code ID registered type contract`
+  },
+  CONTRACT_CODE_ID_NOT_EXIST: {
+    Code: 'E004',
+    Message: `Code ID does not exist`
+  },
+  NOT_CONTRACT_CREATOR: {
+    Code: 'E005',
+    Message: `You are not the contract owner/creator`
+  },
+  CANNOT_UPDATE_CONTRACT_CODE: {
+    Code: 'E006',
+    Message: `Result is correct, you cannot update this record`
+  }
 }

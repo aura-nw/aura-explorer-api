@@ -93,8 +93,12 @@ export class ProposalService {
       //get quorum
       let data = await this.serviceUtil.getDataAPI(this.api, LINK_API.PARAM_TALLYING, ctx);
       proposal.quorum = 0;
+      proposal.threshold = 0;
+      proposal.veto_threshold = 0;
       if (data && data.tally_params) {
         proposal.quorum = Number(data.tally_params.quorum) * 100;
+        proposal.threshold = Number(data.tally_params.threshold) * 100;
+        proposal.veto_threshold = Number(data.tally_params.veto_threshold) * 100;
       }
     }
 

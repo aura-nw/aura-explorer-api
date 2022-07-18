@@ -4,28 +4,21 @@ import {
   Controller,
   Get,
   HttpStatus,
-  Param,
-  Post,
-  Query,
-  UseInterceptors,
+  Param, Query,
+  UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LiteTransactionOutput } from '../../../components/transaction/dtos/lite-transaction-output.dto';
 import { TransactionService } from '../../../components/transaction/services/transaction.service';
 import {
   AkcLogger,
-  BaseApiResponse,
-  RequestContext,
-  SwaggerBaseApiResponse,
-  ReqContext,
+  BaseApiResponse, ReqContext, RequestContext,
+  SwaggerBaseApiResponse
 } from '../../../shared';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
-import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
 import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
-import { DelegatorOutput } from '../dtos/delegator-output';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
-import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorService } from '../services/validator.service';
@@ -77,7 +70,7 @@ export class ValidatorController {
     return { data: validator, meta: {} };
   }
 
-    @Get(':operatorAddr/:delegatorAddr/delegators')
+  @Get(':operatorAddr/:delegatorAddr/delegators')
   @ApiOperation({
     summary: 'Get list delegators',
   })
@@ -182,7 +175,7 @@ export class ValidatorController {
     @ReqContext() ctx: RequestContext,
     @Param('validatorAddress') validatorAddress: string,
     @Query() paras: DelegatorByValidatorAddrParamsDto,
-  ){
+  ) {
     return await this.validatorService.getDelegatorByValidatorAddr(ctx, validatorAddress, paras);
   }
 }
