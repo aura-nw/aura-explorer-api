@@ -25,7 +25,7 @@ export class AppService {
   private indexerChainId;
 
   constructor(
-    private logger: AkcLogger,
+    private readonly logger: AkcLogger,
     private configService: ConfigService,
     private httpService: HttpService,
     private txService: TransactionService,
