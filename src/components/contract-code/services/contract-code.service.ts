@@ -106,7 +106,7 @@ export class ContractCodeService {
     }
 
     async updateContractCode(ctx: RequestContext, codeId: number, request: UpdateContractCodeParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.updateContractCode.name} was called!`);
+        this.logger.log(ctx, `${this.updateContractCode.name} was called! ${codeId} ${request.type} ${this.indexerChainId}`);
         try {
             //check exist code id in db
             const contractCode = await this.smartContractCodeRepository.findOne({
@@ -123,7 +123,7 @@ export class ContractCodeService {
                         chainId: this.indexerChainId
 
                     }
-                    this.logger.debug(ctx, `Call Indexer with parameter indexer: ${JSON.stringify(properties)}`)
+                    this.logger.log(ctx, `Call Indexer with parameter indexer: ${JSON.stringify(properties)}`)
                     await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
                         (rs) => rs.data,
                     );
