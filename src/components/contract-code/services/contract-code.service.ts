@@ -118,7 +118,7 @@ export class ContractCodeService {
                 if (result !== CONTRACT_CODE_RESULT.CORRECT) {
                     //register in indexer
                     const properties = {
-                        code_id: Number(codeId),
+                        codeId: Number(codeId),
                         contractType: request.type,
                         chainId: this.indexerChainId
 
