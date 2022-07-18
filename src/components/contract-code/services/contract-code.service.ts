@@ -117,7 +117,9 @@ export class ContractCodeService {
             if (result !== CONTRACT_CODE_RESULT.CORRECT) {
                 //register in indexer
                 const properties = {
-                    code_id: codeId
+                    code_id: codeId,
+                    contractType: request.type,
+                    chainId: this.indexerChainId
 
                 }
                 await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
