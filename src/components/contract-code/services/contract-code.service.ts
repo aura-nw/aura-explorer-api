@@ -12,7 +12,6 @@ import { lastValueFrom } from "rxjs";
 import { HttpService } from "@nestjs/axios";
 import { MappingDataHelper } from "../../../shared/helpers/mapping-data.helper";
 import * as appConfig from '../../../shared/configs/configuration';
-import { MetricService } from "../../metric/services/metric.service";
 
 @Injectable()
 export class ContractCodeService {
@@ -144,7 +143,7 @@ export class ContractCodeService {
                 };
             }
         }catch(err){
-            this.logger.error(ctx, `Class ${MetricService.name} call updateContractCode method error: ${err.stack}`);
+            this.logger.error(ctx, `Class ${ContractCodeService.name} call updateContractCode method error: ${err.stack}`);
             throw err;            
         }
     }
