@@ -106,39 +106,45 @@ export class ContractCodeService {
     }
 
     async updateContractCode(ctx: RequestContext, codeId: number, request: UpdateContractCodeParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.updateContractCode.name} was called!`);
-        //check exist code id in db
-        const contractCode = await this.smartContractCodeRepository.findOne({
-            where: { code_id: codeId },
-        });
-        if (contractCode) {
-            //check result
-            const result = contractCode.result;
-            if (result !== CONTRACT_CODE_RESULT.CORRECT) {
-                //register in indexer
-                const properties = {
-                    code_id: codeId,
-                    contractType: request.type,
-                    chainId: this.indexerChainId
+        this.logger.log(ctx, `${this.updateContractCode.name} was called! ${codeId} ${request.type} ${this.indexerChainId}`);
+        try {
+            //check exist code id in db
+            const contractCode = await this.smartContractCodeRepository.findOne({
+                where: { code_id: codeId },
+            });
+            if (contractCode) {
+                //check result
+                const result = contractCode.result;
+                if (result !== CONTRACT_CODE_RESULT.CORRECT) {
+                    //register in indexer
+                    const properties = {
+                        codeId: Number(codeId),
+                        contractType: request.type,
+                        chainId: this.indexerChainId
 
+                    }
+                    this.logger.log(ctx, `Call Indexer with parameter indexer: ${properties}`)
+                    await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
+                        (rs) => rs.data,
+                    );
+                    contractCode.type = request.type;
+                    contractCode.result = CONTRACT_CODE_RESULT.TBD;
+                    return this.smartContractCodeRepository.save(contractCode);
+                } else {
+                    return {
+                        Code: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Code,
+                        Message: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Message
+                    };
                 }
-                await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
-                    (rs) => rs.data,
-                );
-                contractCode.type = request.type;
-                contractCode.result = CONTRACT_CODE_RESULT.TBD;
-                return this.smartContractCodeRepository.save(contractCode);
             } else {
                 return {
-                    Code: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Code,
-                    Message: ERROR_MAP.CANNOT_UPDATE_CONTRACT_CODE.Message
+                    Code: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Code,
+                    Message: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Message
                 };
             }
-        } else {
-            return {
-                Code: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Code,
-                Message: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Message
-            };
+        }catch(err){
+            this.logger.error(ctx, `Class ${ContractCodeService.name} call updateContractCode method error: ${err.stack}`);
+            throw err;            
         }
     }
 }
