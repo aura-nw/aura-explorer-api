@@ -23,6 +23,7 @@ export class AppService {
   cosmosScanAPI: string;
   private indexerUrl;
   private indexerChainId;
+  private minimalDenom;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -38,6 +39,7 @@ export class AppService {
     this.cosmosScanAPI = appParams.cosmosScanAPI;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
+    this.minimalDenom = appParams.chainInfo.coinMinimalDenom;
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -66,7 +68,7 @@ export class AppService {
     let blockTime;
     let height;
     let comPool;
-    let supply;
+    let supply = 0;
     if (blocks.length === 2) {
       const block_first = blocks[0].timestamp.getTime();
       const block_second = blocks[1].timestamp.getTime();
@@ -82,7 +84,10 @@ export class AppService {
       comPool = parseInt(data.communityPool.pool[0].amount);
     }
     if (data?.supply && data.supply?.supply && data.supply.supply.length > 0) {
-      supply = parseInt(data.supply.supply[0].amount);
+      const supplyDenom = data.supply.supply.find(f => f.denom === this.minimalDenom);
+      if (supplyDenom) {
+        supply = parseInt(supplyDenom.amount);
+      }
     }
 
     return {
