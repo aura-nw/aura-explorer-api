@@ -17,12 +17,14 @@ import { ValidatorService } from './components/validator/services/validator.serv
 import { ServiceUtil } from './shared/utils/service.util';
 import * as appConfig from './shared/configs/configuration';
 import * as util from 'util';
+import { SyncStatusRepository } from './components/schedule/repositories/syns-status.repository';
 
 @Injectable()
 export class AppService {
   cosmosScanAPI: string;
   private indexerUrl;
   private indexerChainId;
+  private appParams;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -31,13 +33,14 @@ export class AppService {
     private txService: TransactionService,
     private blockService: BlockService,
     private validatorService: ValidatorService,
-    private serviceUtil: ServiceUtil
+    private serviceUtil: ServiceUtil,
+    private syncStatusRepos : SyncStatusRepository
   ) {
     this.logger.setContext(AppService.name);
-    const appParams = appConfig.default();
-    this.cosmosScanAPI = appParams.cosmosScanAPI;
-    this.indexerUrl = appParams.indexer.url;
-    this.indexerChainId = appParams.indexer.chainId;
+    this.appParams = appConfig.default();
+    this.cosmosScanAPI = this.appParams.cosmosScanAPI;
+    this.indexerUrl = this.appParams.indexer.url;
+    this.indexerChainId = this.appParams.indexer.chainId;
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -51,13 +54,14 @@ export class AppService {
 
     const [
       statusData,
-      { blocks },
+      blocks,
       totalValidatorNum,
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
       this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
-      this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
+      this.syncStatusRepos.findOne(),
+      // this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
       this.txService.getTotalTx(),
@@ -67,22 +71,32 @@ export class AppService {
     let height;
     let comPool;
     let supply;
-    if (blocks.length === 2) {
-      const block_first = blocks[0].timestamp.getTime();
-      const block_second = blocks[1].timestamp.getTime();
-      blockTime =
-        Math.floor(Math.abs(block_first - block_second) / 1000) +
-        CONST_CHAR.SECOND;
-      height = blocks[0].height;
+    if (blocks) {
+      // const block_first = blocks[0].timestamp.getTime();
+      // const block_second = blocks[1].timestamp.getTime();
+      // blockTime =
+      //   Math.floor(Math.abs(block_first - block_second) / 1000) +
+      //   CONST_CHAR.SECOND;
+      height = blocks.current_block;
     }
+
     const data = statusData.data;
-    const bonded_tokens = parseInt(data.pool.bonded_tokens);
+    const bonded_tokens = Number(data.pool.bonded_tokens);
     const inflation = (data.inflation.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
-    if (data?.communityPool && data.communityPool?.pool && data.communityPool.pool.length > 0) {
-      comPool = parseInt(data.communityPool.pool[0].amount);
+    const communityPool = data?.communityPool;
+    const supplyData = data?.supply?.supply;
+
+    if (communityPool && communityPool?.pool && communityPool.pool.length > 0) {
+      const filterCommunityPool = communityPool.pool.filter( f => String(f.denom) === this.appParams.chainInfo.coinMinimalDenom);
+      if(filterCommunityPool){
+        comPool = Number(filterCommunityPool[0].amount);
+      }
     }
-    if (data?.supply && data.supply?.supply && data.supply.supply.length > 0) {
-      supply = parseInt(data.supply.supply[0].amount);
+    if (supplyData && supplyData.length > 0) {
+      const filterSupply = supplyData.filter( f => String(f.denom) === this.appParams.chainInfo.coinMinimalDenom);
+      if(filterSupply){
+        supply = Number(filterSupply[0].amount);
+      }
     }
 
     return {
@@ -90,7 +104,7 @@ export class AppService {
       total_txs_num: totalTxsNum,
       total_validator_num: totalValidatorNum,
       total_validator_active_num: totalValidatorActiveNum,
-      block_time: blockTime,
+      block_time: '',
       bonded_tokens: bonded_tokens,
       inflation: inflation,
       community_pool: comPool,
