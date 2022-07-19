@@ -7,7 +7,6 @@ import { AkcLogger, CONST_CHAR, CONST_NUM, RequestContext, Transaction } from '.
 
 import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { TransactionRepository } from '../repositories/transaction.repository';
-import { Raw } from 'typeorm/find-options/operator/Raw';
 import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
 import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
 import { MoreThan } from 'typeorm';
@@ -65,10 +64,14 @@ export class TransactionService {
     const transaction = await this.txRepository.findOne({
       where: { tx_hash: hash },
     });
-    const block = await transaction.block;
-    const chainid = block.chainid;
+    let result = null;
+    if (transaction) {
+      result = transaction;
+      const block = await transaction.block;
+      result.chainid = block.chainid;
+    }
 
-    return {...transaction, chainid};
+    return result;
   }
 
   async getTransactionsByAddress(
@@ -88,7 +91,7 @@ export class TransactionService {
         const rawLog = JSON.parse(data.raw_log);
 
         const txAttr = rawLog[0].events.find(
-          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND || type === CONST_CHAR.REDELEGATE
+          ({ type }) => type === CONST_CHAR.DELEGATE || type === CONST_CHAR.UNBOND || type === CONST_CHAR.REDELEGATE || type === CONST_CHAR.CREATE_VALIDATOR
         );
         if (txAttr) {
           const txAction = txAttr.attributes.find(

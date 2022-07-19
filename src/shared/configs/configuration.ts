@@ -30,6 +30,10 @@ export default () => ({
     }
   },
   threads: process.env.THREADS,
+  indexer: {
+    url: process.env.INDEXER_URL,
+    chainId: process.env.INDEXER_CHAIN_ID
+  },
   chainInfo: {
     coinDenom: process.env.COIN_DENOM,
     coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,

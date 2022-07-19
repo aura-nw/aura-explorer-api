@@ -1,12 +1,12 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
 
 import {
   AkcLogger,
   CONST_CHAR,
   CONST_NUM,
+  INDEXER_API,
   LINK_API,
   RequestContext,
 } from './shared';
@@ -15,14 +15,17 @@ import { TransactionService } from './components/transaction/services/transactio
 import { BlockService } from './components/block/services/block.service';
 import { ValidatorService } from './components/validator/services/validator.service';
 import { ServiceUtil } from './shared/utils/service.util';
+import * as appConfig from './shared/configs/configuration';
+import * as util from 'util';
 
 @Injectable()
 export class AppService {
   cosmosScanAPI: string;
-  private api;
+  private indexerUrl;
+  private indexerChainId;
 
   constructor(
-    private logger: AkcLogger,
+    private readonly logger: AkcLogger,
     private configService: ConfigService,
     private httpService: HttpService,
     private txService: TransactionService,
@@ -31,8 +34,10 @@ export class AppService {
     private serviceUtil: ServiceUtil
   ) {
     this.logger.setContext(AppService.name);
-    this.cosmosScanAPI = this.configService.get<string>('cosmosScanAPI');
-    this.api = this.configService.get('API');
+    const appParams = appConfig.default();
+    this.cosmosScanAPI = appParams.cosmosScanAPI;
+    this.indexerUrl = appParams.indexer.url;
+    this.indexerChainId = appParams.indexer.chainId;
   }
   getHello(): string {
     const ctx = new RequestContext();
@@ -44,33 +49,14 @@ export class AppService {
     this.logger.log(ctx, `${this.getStatus.name} was called!`);
     this.logger.log(ctx, `calling get latest txs from node`);
 
-    // get staking pool
-    const paramPool = LINK_API.STAKING_POOL;
-    // const poolData = await this.getDataAPI(api, paramPool, ctx);
-
-    // get inflation
-    const paramInflation = LINK_API.INFLATION;
-    // const inflationData = await this.getDataAPI(api, paramInflation, ctx);
-
-    // get community pool
-    const paramComPool = LINK_API.COMMUNITY_POOL;
-    // const comPoolData = await this.getDataAPI(api, paramComPool, ctx);
-
-    // get blocks by limit 2
-    // const { blocks } = await this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET);
-
     const [
-      poolData,
-      inflationData,
-      comPoolData,
+      statusData,
       { blocks },
       totalValidatorNum,
       totalValidatorActiveNum,
       totalTxsNum,
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(this.api, paramPool, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramInflation, ctx),
-      this.serviceUtil.getDataAPI(this.api, paramComPool, ctx),
+      this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
       this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
@@ -80,6 +66,7 @@ export class AppService {
     let blockTime;
     let height;
     let comPool;
+    let supply;
     if (blocks.length === 2) {
       const block_first = blocks[0].timestamp.getTime();
       const block_second = blocks[1].timestamp.getTime();
@@ -88,19 +75,15 @@ export class AppService {
         CONST_CHAR.SECOND;
       height = blocks[0].height;
     }
-
-    const bonded_tokens = parseInt(poolData.pool.bonded_tokens);
-    const inflation =
-      (inflationData.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
-    if (comPoolData) {
-      comPool = parseInt(comPoolData.pool[0].amount);
+    const data = statusData.data;
+    const bonded_tokens = parseInt(data.pool.bonded_tokens);
+    const inflation = (data.inflation.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
+    if (data?.communityPool && data.communityPool?.pool && data.communityPool.pool.length > 0) {
+      comPool = parseInt(data.communityPool.pool[0].amount);
     }
-    // get total validator
-    // const totalValidatorNum = await this.validatorService.getTotalValidator();
-    // get total validator active
-    // const totalValidatorActiveNum = await this.validatorService.getTotalValidatorActive();
-    // get total tx
-    // const totalTxsNum = await this.txService.getTotalTx();
+    if (data?.supply && data.supply?.supply && data.supply.supply.length > 0) {
+      supply = parseInt(data.supply.supply[0].amount);
+    }
 
     return {
       block_height: height,
@@ -111,6 +94,7 @@ export class AppService {
       bonded_tokens: bonded_tokens,
       inflation: inflation,
       community_pool: comPool,
+      supply: supply
     };
   }
 }
