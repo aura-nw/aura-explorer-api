@@ -14,6 +14,8 @@ import { AccountModule } from './components/account/account.module';
 import { ServiceUtil } from './shared/utils/service.util';
 import { ContractModule } from './components/contract/contract.module';
 import { ContractCodeModule } from './components/contract-code/contract-code.module';
+import { SyncStatusRepository } from './components/schedule/repositories/syns-status.repository';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
@@ -27,7 +29,8 @@ import { ContractCodeModule } from './components/contract-code/contract-code.mod
     ProposalModule,
     AccountModule,
     ContractModule,
-    ContractCodeModule
+    ContractCodeModule,
+    TypeOrmModule.forFeature([SyncStatusRepository])
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil],
