@@ -6,7 +6,7 @@ import { BlockRepository } from '../../../components/block/repositories/block.re
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
 
-import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext } from '../../../shared';
+import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext, Validator } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
@@ -66,12 +66,8 @@ export class ValidatorService {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
     // get all validator
-    const [validatorsRes, count] = await this.validatorRepository.findAndCount({
-      where: { id: MoreThan(0) },
-      order: {
-        status: 'DESC', power: 'DESC'
-      },
-    });
+    const validatorsRes: Validator[] = await this.validatorRepository.getValidators();
+    const count = validatorsRes.length;
 
     const validatorsOutput = plainToClass(LiteValidatorOutput, validatorsRes, {
       excludeExtraneousValues: true,
