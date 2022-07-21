@@ -25,8 +25,7 @@ export class BlockRepository extends Repository<Block> {
     async getBlockUptime(address: string, topBlock: number){
         const sql = `
         SELECT tmpBlock.height, tmpBlock.block_hash, (CASE WHEN tmpMiss.height = tmpBlock.height THEN 1 ELSE 0 END) isMissed FROM(
-        SELECT height, block_hash, operator_address FROM blocks 
-                    WHERE operator_address =? ORDER BY height DESC LIMIT ${topBlock}
+        SELECT height, block_hash, operator_address FROM blocks ORDER BY height DESC LIMIT ${topBlock}
         ) AS tmpBlock
             LEFT OUTER JOIN(
                 SELECT validator_address, height FROM missed_block 
