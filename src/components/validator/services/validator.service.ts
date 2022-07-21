@@ -68,7 +68,9 @@ export class ValidatorService {
     // get all validator
     const [validatorsRes, count] = await this.validatorRepository.findAndCount({
       where: { id: MoreThan(0) },
-      order: { power: 'DESC' },
+      order: {
+        status: 'DESC', power: 'DESC'
+      },
     });
 
     const validatorsOutput = plainToClass(LiteValidatorOutput, validatorsRes, {
@@ -98,7 +100,7 @@ export class ValidatorService {
         data.cumulative_share_after = cumulative.toFixed(2);
       }
     }
-    
+
     let votersAddress: Array<string> = [];
     for (let key in validatorsOutput) {
       const data = validatorsOutput[key];
@@ -133,16 +135,16 @@ export class ValidatorService {
       return map;
     })
 
-    const countVotes:[] = await this.proposalVoteRepository.countVoteByAddress(votersAddress);
+    const countVotes: [] = await this.proposalVoteRepository.countVoteByAddress(votersAddress);
     countVotes.forEach((item: any) => {
-        const findValidator = validatorsOutput.find(f => f.acc_address === item.voter);
-        if(findValidator){
-          findValidator.vote_count = Number(item.countVote);
-        }else{
-          findValidator.vote_count = 0;
-        }
+      const findValidator = validatorsOutput.find(f => f.acc_address === item.voter);
+      if (findValidator) {
+        findValidator.vote_count = Number(item.countVote);
+      } else {
+        findValidator.vote_count = 0;
+      }
     });
-   
+
 
     return { validators: validatorsOutput, count };
   }
