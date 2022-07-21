@@ -6,7 +6,7 @@ import { BlockRepository } from '../../../components/block/repositories/block.re
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
 
-import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext } from '../../../shared';
+import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext, Validator } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
@@ -66,10 +66,8 @@ export class ValidatorService {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
     // get all validator
-    const [validatorsRes, count] = await this.validatorRepository.findAndCount({
-      where: { id: MoreThan(0) },
-      order: { power: 'DESC' },
-    });
+    const validatorsRes: Validator[] = await this.validatorRepository.getValidators();
+    const count = validatorsRes.length;
 
     const validatorsOutput = plainToClass(LiteValidatorOutput, validatorsRes, {
       excludeExtraneousValues: true,
@@ -98,7 +96,7 @@ export class ValidatorService {
         data.cumulative_share_after = cumulative.toFixed(2);
       }
     }
-    
+
     let votersAddress: Array<string> = [];
     for (let key in validatorsOutput) {
       const data = validatorsOutput[key];
@@ -133,16 +131,16 @@ export class ValidatorService {
       return map;
     })
 
-    const countVotes:[] = await this.proposalVoteRepository.countVoteByAddress(votersAddress);
+    const countVotes: [] = await this.proposalVoteRepository.countVoteByAddress(votersAddress);
     countVotes.forEach((item: any) => {
-        const findValidator = validatorsOutput.find(f => f.acc_address === item.voter);
-        if(findValidator){
-          findValidator.vote_count = Number(item.countVote);
-        }else{
-          findValidator.vote_count = 0;
-        }
+      const findValidator = validatorsOutput.find(f => f.acc_address === item.voter);
+      if (findValidator) {
+        findValidator.vote_count = Number(item.countVote);
+      } else {
+        findValidator.vote_count = 0;
+      }
     });
-   
+
 
     return { validators: validatorsOutput, count };
   }
