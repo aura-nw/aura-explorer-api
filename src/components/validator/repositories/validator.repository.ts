@@ -9,14 +9,13 @@ export class ValidatorRepository extends Repository<Validator> {
         return await this.query(`
             SELECT * FROM (
                 SELECT *,
-                RANK() OVER(ORDER BY power DESC) as 'rank'
-                FROM validators 
+                RANK() OVER(ORDER BY status DESC, power DESC) as 'rank'
+                FROM validators ORDER BY status DESC, power DESC
             ) SUB
             WHERE SUB.operator_address = ?`, [address]
         ).then(t => t[0]);
     }
 
-  
     /**
      * getDelegators
      * @param operatorAddress 
