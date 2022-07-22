@@ -45,7 +45,7 @@ export class Validator extends BaseEntityIncrementId {
   @Column({ default: '' })
   percent_power: string;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'double' })
   self_bonded: number;
 
   @Column({ default: '' })

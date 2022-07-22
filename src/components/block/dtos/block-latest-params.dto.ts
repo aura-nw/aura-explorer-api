@@ -9,6 +9,6 @@ export class BlockLatestDto {
   })
   @IsNumber()
   @IsOptional()
-  @Transform(({ value }) => parseInt(value, 20), { toClassOnly: true })
+  @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
   limit = 20;
 }
