@@ -109,4 +109,41 @@ export class InfluxDBClient {
       .stringField('height', height);
     this.writeApi.writePoint(point);
   }
+
+  /**
+   * Sum data by column
+   * @param measurement 
+   * @param statTime 
+   * @param step 
+   * @param column 
+   * @returns 
+   */
+  sumData(measurement: string, statTime:string, step:string, column: string) {
+    const results: {
+      total: string;
+      timestamp: string;
+    }[] = [];
+    const query = `from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()`;
+    const output = new Promise((resolve) => {
+      this.queryApi.queryRows(query, {
+        next(row, tableMeta) {
+          const o = tableMeta.toObject(row);
+          results.push({
+            timestamp: o._start,
+            total: String(o._value),
+          });
+        },
+        error(error) {
+          console.error(error);
+          console.log('Finished ERROR');
+          return resolve(results);
+        },
+        complete() {
+          console.log('Finished SUCCESS');
+          return resolve(results);
+        },
+      });
+    });
+    return output;
+  }
 }

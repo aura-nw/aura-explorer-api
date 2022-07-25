@@ -14,6 +14,7 @@ import {
 import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from '../../../shared';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { MetricParamsDto } from '../dtos/metric-params.dto';
+import { MetricTransactionOutput } from '../dtos/metric-transaction-output.dto';
 
 import { MetricService } from '../services/metric.service';
 
@@ -55,7 +56,7 @@ export class MetricController {
   async getTransactionMetric(
     @ReqContext() ctx: RequestContext,
     @Query() query: MetricParamsDto,
-  ): Promise<BaseApiResponse<MetricOutput[]>> {
+  ): Promise<BaseApiResponse<MetricTransactionOutput[]>> {
     this.logger.log(ctx, `${this.getTransactionMetric.name} was called!`);
 
     const metrics = await this.metricService.getTransaction(ctx, query.range);

@@ -1,24 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
-import {
-  InfluxDB,
-  Point,
-  QueryApi,
-  WriteApi,
-} from '@influxdata/influxdb-client';
+import { ConfigService } from '@nestjs/config';
+import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
+import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
+import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
+import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
+import { MetricTransactionOutput } from '../dtos/metric-transaction-output.dto';
+import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
-  mergeByProperty,
+  mergeByProperty
 } from '../utils/utils';
-import { Range } from '../utils/enum';
-import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
-import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
-import { AkcLogger, RequestContext } from '../../../shared';
-import { ConfigService } from '@nestjs/config';
-import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 
 @Injectable()
 export class MetricService {
@@ -48,14 +42,18 @@ export class MetricService {
   async getTransaction(
     ctx: RequestContext,
     range: Range,
-  ): Promise<MetricOutput[]> {
+  ): Promise<MetricTransactionOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
+    const { amount, step, fluxType } = buildCondition(range);
+    const startTime = `-${amount}${fluxType}`;
+    const queryStep = `${step}${fluxType}`;
+    const metrices = await this.influxDbClient.sumData( 'blocks', startTime, queryStep, 'num_txs') as MetricTransactionOutput[];
 
-    return await this.queryInfluxDb(range, 'txs');
+    return metrices;
   }
 
   async getValidator(
