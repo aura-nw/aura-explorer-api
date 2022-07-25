@@ -48,7 +48,10 @@ export class MetricService {
       ctx,
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
-    const metrices = await this.influxDbClient.sumData( 'blocks', range, '1d', 'num_txs') as MetricTransactionOutput[];
+    const { amount, step, fluxType } = buildCondition(range);
+    const startTime = `-${amount}${fluxType}`;
+    const queryStep = `${step}${fluxType}`;
+    const metrices = await this.influxDbClient.sumData( 'blocks', startTime, queryStep, 'num_txs') as MetricTransactionOutput[];
 
     return metrices;
   }
