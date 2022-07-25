@@ -9,8 +9,8 @@ export class ValidatorRepository extends Repository<Validator> {
         return await this.query(`
             SELECT * FROM (
                 SELECT *,
-                RANK() OVER(ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC) as 'rank'
-                FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC
+                RANK() OVER(ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC) as 'rank'
+                FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC
             ) SUB
             WHERE SUB.operator_address = ?`, [address]
         ).then(t => t[0]);
@@ -47,7 +47,7 @@ export class ValidatorRepository extends Repository<Validator> {
     }
 
     async getValidators() {
-        const sql = `SELECT * FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC`;
+        const sql = `SELECT * FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC`;
         return await this.query(sql, []);
     }
 }

@@ -228,12 +228,12 @@ export class ValidatorService {
           }
         }
         delegation.validator_name = '';
-        const validator = await this.validatorRepository.findOne({
-          where: { operator_address: item.delegation.validator_address },
-        });
+        delegation.validator_rank = 0;
+        const validator = await this.validatorRepository.getRankByAddress(item.delegation.validator_address);
         if (validator) {
           //set name for item
           delegation.validator_name = validator.title;
+          delegation.validator_rank = validator.rank;
         }
         //set reward by validator address and delegator address
         const rewards = await this.delegatorRewardRepository.find({
