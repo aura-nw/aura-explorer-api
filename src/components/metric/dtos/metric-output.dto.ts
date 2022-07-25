@@ -4,7 +4,7 @@ import { Expose } from 'class-transformer';
 export class MetricOutput {
   @Expose()
   @ApiProperty()
-  count: string;
+  total: string;
 
   @Expose()
   @ApiProperty()

@@ -6,7 +6,6 @@ import { BlockRepository } from '../../block/repositories/block.repository';
 import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
-import { MetricTransactionOutput } from '../dtos/metric-transaction-output.dto';
 import { Range } from '../utils/enum';
 import {
   buildCondition,
@@ -42,7 +41,7 @@ export class MetricService {
   async getTransaction(
     ctx: RequestContext,
     range: Range,
-  ): Promise<MetricTransactionOutput[]> {
+  ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
@@ -51,9 +50,10 @@ export class MetricService {
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metrices = await this.influxDbClient.sumData( 'blocks', startTime, queryStep, 'num_txs') as MetricTransactionOutput[];
+    const metricData = await this.influxDbClient.sumData('blocks', startTime, queryStep, 'num_txs') as MetricOutput[];
+    const series = generateSeries(range);
 
-    return metrices;
+    return mergeByProperty(metricData, series);;
   }
 
   async getValidator(
