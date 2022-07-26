@@ -176,7 +176,7 @@ export class AccountService {
         });
         accountOutput.unbonding = this.changeUauraToAura(unbondingAmount);
       });
-      accountOutput.unbonding_delegations.sort((a,b) => Date.parse(b.completion_time) - Date.parse(a.completion_time));
+      accountOutput.unbonding_delegations.sort((a,b) => Date.parse(a.completion_time) - Date.parse(b.completion_time));
     }
 
     // get redelegations
