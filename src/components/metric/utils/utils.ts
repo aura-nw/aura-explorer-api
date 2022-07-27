@@ -4,7 +4,7 @@ import { Range, TypeDate } from './enum';
 
 const makeData = (date: Date): MetricOutput => {
   const data = new MetricOutput();
-  data.count = '0';
+  data.total = '0';
   data.timestamp = date.toISOString().split('.')[0]+"Z";
   return data;
 };

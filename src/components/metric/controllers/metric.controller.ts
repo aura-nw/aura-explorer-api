@@ -4,17 +4,16 @@ import {
   Get,
   HttpStatus,
   Query,
-  UseInterceptors,
+  UseInterceptors
 } from '@nestjs/common';
 import {
   ApiOperation,
   ApiResponse,
-  ApiTags,
+  ApiTags
 } from '@nestjs/swagger';
 import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from '../../../shared';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { MetricParamsDto } from '../dtos/metric-params.dto';
-
 import { MetricService } from '../services/metric.service';
 
 @ApiTags('metrics')
