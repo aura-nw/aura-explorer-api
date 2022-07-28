@@ -50,7 +50,7 @@ export class MetricService {
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks', startTime, queryStep, 'num_txs') as MetricOutput[];
+    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
     const series = generateSeries(range);
 
     return mergeByProperty(metricData, series);;
