@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, Max } from 'class-validator';
 
 export class BlockLatestDto {
   @ApiPropertyOptional({
@@ -10,5 +10,6 @@ export class BlockLatestDto {
   @IsNumber()
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
+  @Max(100)
   limit = 20;
 }
