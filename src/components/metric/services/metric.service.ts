@@ -1,24 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { plainToClass } from 'class-transformer';
-import {
-  InfluxDB,
-  Point,
-  QueryApi,
-  WriteApi,
-} from '@influxdata/influxdb-client';
+import { ConfigService } from '@nestjs/config';
+import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
+import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
+import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
+import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
+import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
-  mergeByProperty,
+  mergeByProperty
 } from '../utils/utils';
-import { Range } from '../utils/enum';
-import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
-import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
-import { AkcLogger, RequestContext } from '../../../shared';
-import { ConfigService } from '@nestjs/config';
-import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 
 @Injectable()
 export class MetricService {
@@ -54,8 +47,13 @@ export class MetricService {
       ctx,
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
+    const { amount, step, fluxType } = buildCondition(range);
+    const startTime = `-${amount}${fluxType}`;
+    const queryStep = `${step}${fluxType}`;
+    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
+    const series = generateSeries(range);
 
-    return await this.queryInfluxDb(range, 'txs');
+    return mergeByProperty(metricData, series);;
   }
 
   async getValidator(
