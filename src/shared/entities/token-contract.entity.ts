@@ -4,6 +4,9 @@ import { BaseEntityIncrementId } from "./base/base.entity";
 @Entity('token_contracts')
 export class TokenContract extends BaseEntityIncrementId {
     @Column()
+    asset_id: string;
+
+    @Column()
     name: string;
 
     @Column()
@@ -19,11 +22,14 @@ export class TokenContract extends BaseEntityIncrementId {
     contract_address: string;
 
     @Column()
-    decimal: number;
+    decimals: number;
 
     @Column()
-    max_total_supply: number;
+    total_supply: number;
 
     @Column()
-    is_main_token: boolean;
+    balance: number;
+
+    @Column()
+    owner: string;
 }

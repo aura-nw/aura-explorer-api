@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { AkcLogger, RequestContext } from "../../../shared";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
 import * as appConfig from '../../../shared/configs/configuration';
+import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
+import { Like } from "typeorm";
 
 @Injectable()
 export class Cw20TokenService {
@@ -10,7 +12,8 @@ export class Cw20TokenService {
     private indexerChainId;
 
     constructor(
-        private readonly logger: AkcLogger
+        private readonly logger: AkcLogger,
+        private tokenContractRepository: TokenContractRepository,
     ) {
         this.logger.setContext(Cw20TokenService.name);
         const appParams = appConfig.default();
@@ -21,8 +24,20 @@ export class Cw20TokenService {
 
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
-        
+        const [tokens, count] = await this.tokenContractRepository.findAndCount({
+            where: [
+                {
+                    ...(request?.keyword && { contract_address: Like(`%${request.keyword}%`) })
+                },
+                {
+                    ...(request?.keyword && { name: Like(`%${request.keyword}%`) })
+                }
+            ],
+            order: { updated_at: 'DESC' },
+            take: request.limit,
+            skip: request.offset
+        });
 
-        return { contracts: [], count: 0 };
+        return { tokens: tokens, count: count };
     }
 }
