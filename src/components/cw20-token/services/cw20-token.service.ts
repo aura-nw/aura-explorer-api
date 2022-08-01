@@ -40,4 +40,13 @@ export class Cw20TokenService {
 
         return { tokens: tokens, count: count };
     }
+
+    async getTokenByContractAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
+        const token = await this.tokenContractRepository.findOne({
+            where: { contract_address: contractAddress },
+        });
+
+        return token ? token : null;
+    }
 }

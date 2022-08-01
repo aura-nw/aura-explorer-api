@@ -1,4 +1,4 @@
-import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, HttpStatus, Post, UseInterceptors } from "@nestjs/common";
+import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
@@ -24,5 +24,16 @@ export class Cw20TokenController {
         const { tokens, count } = await this.cw20TokenService.getCw20Tokens(ctx, request);
 
         return { data: tokens, meta: { count } };
+    }
+
+    @Get(':contractAddress')
+    @ApiOperation({ summary: 'Get token detail by contract address' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getTokenByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
+        const token = await this.cw20TokenService.getTokenByContractAddress(ctx, contractAddress);
+
+        return { data: token, meta: {} };
     }
 }
