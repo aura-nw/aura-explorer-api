@@ -54,7 +54,7 @@ export class Validator extends BaseEntityIncrementId {
   @Column({ default: '' })
   website: string;
 
-  @Column({ default: '' })
+  @Column({nullable: true, type: 'text'})
   details: string;
 
   @Column({ default: '' })

@@ -13,7 +13,7 @@ export class HistoryProposal extends BaseEntityIncrementId {
     @Column()
     title: string;
 
-    @Column()
+    @Column({nullable: true, type: 'text'})
     description: string;
 
     @Column()
