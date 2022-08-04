@@ -41,19 +41,34 @@ export class MetricService {
   async getTransaction(
     ctx: RequestContext,
     range: Range,
+    timezone: string
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
+
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
+    let metricData: MetricOutput[] = [];
+    const results = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', timezone) as MetricOutput[];
     const series = generateSeries(range);
+    if (range === Range.day || range === Range.month) {
+      metricData = results.map((item) => {
+        const date = new Date(new Date(item.timestamp).setUTCHours(0, 0, 0, 0));       
+        if (range === Range.month) {
+          date.setDate(1)
+        }
+        const timestamp = date.toISOString().split('.')[0] + "Z";
+        return { total: item.total, timestamp: timestamp }
+      });
+    } else {
+      metricData = results;
+    }
 
-    return mergeByProperty(metricData, series);;
+    return mergeByProperty(metricData, series);
   }
 
   async getValidator(
