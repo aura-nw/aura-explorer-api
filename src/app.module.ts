@@ -17,6 +17,7 @@ import { ContractCodeModule } from './components/contract-code/contract-code.mod
 import { SyncStatusRepository } from './components/schedule/repositories/syns-status.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
+import { Cw721TokenModule } from './components/cw721-token/cw721-token.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
     ContractModule,
     ContractCodeModule,
     Cw20TokenModule,
+    Cw721TokenModule,
     TypeOrmModule.forFeature([SyncStatusRepository])
   ],
   controllers: [AppController],

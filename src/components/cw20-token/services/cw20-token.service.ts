@@ -1,25 +1,16 @@
 import { Injectable } from "@nestjs/common";
-import { AkcLogger, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_TYPE, RequestContext } from "../../../shared";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
-import * as appConfig from '../../../shared/configs/configuration';
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
 import { Like } from "typeorm";
 
 @Injectable()
 export class Cw20TokenService {
-    private api;
-    private indexerUrl;
-    private indexerChainId;
-
     constructor(
         private readonly logger: AkcLogger,
         private tokenContractRepository: TokenContractRepository,
     ) {
         this.logger.setContext(Cw20TokenService.name);
-        const appParams = appConfig.default();
-        this.api = appParams.node.api;
-        this.indexerUrl = appParams.indexer.url;
-        this.indexerChainId = appParams.indexer.chainId;
     }
 
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
@@ -27,9 +18,11 @@ export class Cw20TokenService {
         const [tokens, count] = await this.tokenContractRepository.findAndCount({
             where: [
                 {
+                    type: CONTRACT_TYPE.CW20,
                     ...(request?.keyword && { contract_address: Like(`%${request.keyword}%`) })
                 },
                 {
+                    type: CONTRACT_TYPE.CW20,
                     ...(request?.keyword && { name: Like(`%${request.keyword}%`) })
                 }
             ],
@@ -44,7 +37,10 @@ export class Cw20TokenService {
     async getTokenByContractAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
         this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
         const token = await this.tokenContractRepository.findOne({
-            where: { contract_address: contractAddress },
+            where: {
+                type: CONTRACT_TYPE.CW20,
+                contract_address: contractAddress
+            },
         });
 
         return token ? token : null;

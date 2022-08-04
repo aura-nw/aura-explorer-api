@@ -1,8 +1,15 @@
 import { Column, Entity } from "typeorm";
+import { CONTRACT_TYPE } from "../constants";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('token_contracts')
 export class TokenContract extends BaseEntityIncrementId {
+    @Column({
+        type: 'enum',
+        enum: CONTRACT_TYPE
+    })
+    type: CONTRACT_TYPE;
+
     @Column()
     name: string;
 
