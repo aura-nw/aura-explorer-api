@@ -6,13 +6,15 @@ import { SharedModule } from "../../shared";
 import { ServiceUtil } from "../../shared/utils/service.util";
 import { TokenContractRepository } from "../contract/repositories/token-contract.repository";
 import { Cw721TokenController } from "./controllers/cw721-token.controller";
+import { NftRepository } from "./repositories/nft.repository";
 import { Cw721TokenService } from "./services/cw721-token.service";
 
 @Module({
     imports: [
       SharedModule,
       TypeOrmModule.forFeature([
-        TokenContractRepository
+        TokenContractRepository,
+        NftRepository
       ]),
       ConfigModule,
       HttpModule
