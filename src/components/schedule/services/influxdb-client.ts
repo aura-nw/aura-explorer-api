@@ -81,7 +81,7 @@ export class InfluxDBClient {
   private convertDate(timestamp: any): Date {
     return new Date(timestamp.toString());
   }
-  
+
   writeValidator(operator_address, title, jailed, power): void {
     const point = new Point('validators')
       .stringField('operator_address', operator_address)
@@ -118,12 +118,16 @@ export class InfluxDBClient {
    * @param column 
    * @returns 
    */
-  sumData(measurement: string, statTime:string, step:string, column: string) {
+  sumData(measurement: string, statTime: string, step: string, column: string, timezone: string) {
     const results: {
       total: string;
       timestamp: string;
     }[] = [];
-    const query = `from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()`;
+    const query = `
+      import "timezone"
+      option location = timezone.location(name: "${timezone}")
+      from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()
+    `;
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {

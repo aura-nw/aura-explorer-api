@@ -11,7 +11,12 @@ export class MetricParamsDto {
     default: Range.hour,
   })
   @IsEnum(Range)
-  @IsOptional()
   @ApiProperty()
   readonly range: Range = Range.hour;
+
+  @ApiPropertyOptional({
+    description: 'Optional, defaults to 0s',
+    default: 'Asia/Bangkok',
+  })
+  timezone: string = 'Asia/Bangkok';
 }

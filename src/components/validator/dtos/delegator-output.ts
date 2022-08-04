@@ -32,5 +32,5 @@ export class DelegatorOutput {
 
     @Expose()
     @ApiProperty()
-    amount_staked: number;
+    isStaking: number;
 }
