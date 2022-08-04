@@ -124,8 +124,8 @@ export class InfluxDBClient {
       timestamp: string;
     }[] = [];
     const query = `
-      import "timezone"
-      option location = timezone.fixed(offset: ${timezone}m)
+      // import "timezone"
+      // option location = timezone.fixed(offset: ${timezone}m)
       from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()
     `;
     const output = new Promise((resolve) => {
