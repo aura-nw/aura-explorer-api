@@ -41,7 +41,7 @@ export class MetricService {
   async getTransaction(
     ctx: RequestContext,
     range: Range,
-    timezone: string
+    timezone: number
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
@@ -75,7 +75,7 @@ export class MetricService {
         return { total: item.total, timestamp: timestamp }
       });
     }
-    return mergeByProperty(metricData, series);
+     return mergeByProperty(metricData, series);
   }
 
   async getValidator(

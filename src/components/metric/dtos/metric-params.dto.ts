@@ -16,7 +16,7 @@ export class MetricParamsDto {
 
   @ApiPropertyOptional({
     description: 'Optional, defaults to 0s',
-    default: 'Asia/Bangkok',
+    default: 0,
   })
-  timezone: string = 'Asia/Bangkok';
+  timezone: number = 0;
 }
