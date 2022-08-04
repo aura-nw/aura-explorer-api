@@ -55,19 +55,26 @@ export class MetricService {
     let metricData: MetricOutput[] = [];
     const results = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', timezone) as MetricOutput[];
     const series = generateSeries(range);
-    if (range === Range.day || range === Range.month) {
+
+    if (results) {
       metricData = results.map((item) => {
-        const date = new Date(new Date(item.timestamp).setUTCHours(0, 0, 0, 0));       
-        if (range === Range.month) {
-          date.setDate(1)
+        let date = new Date();
+        if (range === Range.day || range === Range.month) {
+          date = new Date(new Date(item.timestamp).setUTCHours(0, 0, 0, 0));
+          if (range === Range.month) {
+            date.setDate(1);
+          }
         }
+        else if (range === Range.hour) {
+          date = new Date(new Date(item.timestamp).setMinutes(0, 0, 0));
+        } else {
+          date = new Date(new Date(item.timestamp).setSeconds(0, 0));
+        }
+
         const timestamp = date.toISOString().split('.')[0] + "Z";
         return { total: item.total, timestamp: timestamp }
       });
-    } else {
-      metricData = results;
     }
-
     return mergeByProperty(metricData, series);
   }
 
