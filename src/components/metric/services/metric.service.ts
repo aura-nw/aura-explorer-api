@@ -52,29 +52,28 @@ export class MetricService {
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    let metricData: MetricOutput[] = [];
-    const results = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', timezone) as MetricOutput[];
+    let metricData: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', timezone) as MetricOutput[];
     const series = generateSeries(range);
 
-    if (results) {
-      metricData = results.map((item) => {
-        let date = new Date();
-        if (range === Range.day || range === Range.month) {
-          date = new Date(new Date(item.timestamp).setUTCHours(0, 0, 0, 0));
-          if (range === Range.month) {
-            date.setDate(1);
-          }
-        }
-        else if (range === Range.hour) {
-          date = new Date(new Date(item.timestamp).setMinutes(0, 0, 0));
-        } else {
-          date = new Date(new Date(item.timestamp).setSeconds(0, 0));
-        }
+    // if (results) {
+    //   metricData = results.map((item) => {
+    //     let date = new Date();
+    //     if (range === Range.day || range === Range.month) {
+    //       date = new Date(new Date(item.timestamp).setUTCHours(0, 0, 0, 0));
+    //       if (range === Range.month) {
+    //         date.setDate(1);
+    //       }
+    //     }
+    //     else if (range === Range.hour) {
+    //       date = new Date(new Date(item.timestamp).setMinutes(0, 0, 0));
+    //     } else {
+    //       date = new Date(new Date(item.timestamp).setSeconds(0, 0));
+    //     }
 
-        const timestamp = date.toISOString().split('.')[0] + "Z";
-        return { total: item.total, timestamp: timestamp }
-      });
-    }
+    //     const timestamp = date.toISOString().split('.')[0] + "Z";
+    //     return { total: item.total, timestamp: timestamp }
+    //   });
+    // }
      return mergeByProperty(metricData, series);
   }
 
