@@ -38,7 +38,6 @@ export class Cw20TokenService {
         this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
         const token = await this.tokenContractRepository.findOne({
             where: {
-                type: CONTRACT_TYPE.CW20,
                 contract_address: contractAddress
             },
         });

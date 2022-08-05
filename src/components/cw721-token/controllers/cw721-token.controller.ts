@@ -27,17 +27,6 @@ export class Cw721TokenController {
         return { data: tokens, meta: { count } };
     }
 
-    @Get(':contractAddress')
-    @ApiOperation({ summary: 'Get token detail by contract address' })
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    async getTokenByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string): Promise<any> {
-        this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-        const token = await this.cw721TokenService.getTokenByContractAddress(ctx, contractAddress);
-
-        return { data: token, meta: {} };
-    }
-
     @Post(':contractAddress/nfts')
     @ApiOperation({ summary: 'Get list nfts of token' })
     @ApiResponse({ status: HttpStatus.OK })
