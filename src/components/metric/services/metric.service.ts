@@ -58,7 +58,9 @@ export class MetricService {
     const series = generateSeries(range, hours);
     const metricData = mergeByProperty(results, series);    
     return metricData.map((item) => {
-      return { total: item.total, timestamp: item.timestamp.replace('Z', '') }
+      const date = new Date(item.timestamp.replace('Z', ''));
+      date.setHours(date.getHours() + hours);
+      return { total: item.total, timestamp: date.toISOString() }
     });
 
   }
