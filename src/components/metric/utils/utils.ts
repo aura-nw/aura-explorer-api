@@ -5,15 +5,18 @@ import { Range, TypeDate } from './enum';
 const makeData = (date: Date): MetricOutput => {
   const data = new MetricOutput();
   data.total = '0';
-  data.timestamp = date.toISOString().split('.')[0]+"Z";
+  // data.timestamp = date.toISOString().split('.')[0] + "Z";
+  data.timestamp = date.toISOString().split('.')[0];
   return data;
 };
 
-export function generateSeries(range: Range): MetricOutput[] {
+export function generateSeries(range: Range, hours: number = 0): MetricOutput[] {
   const series: MetricOutput[] = [];
   const now = new Date();
+  now.setHours(now.getHours() + hours);
   const past = new Date(now);
   const condition = buildCondition(range);
+
   switch (condition.type) {
     case TypeDate.month: {
       past.setMonth(now.getMonth() - condition.amount);
@@ -52,7 +55,7 @@ export function generateSeries(range: Range): MetricOutput[] {
     case TypeDate.minute: {
       past.setMinutes(now.getMinutes() - condition.amount);
       for (
-        let date = new Date(new Date(past).setUTCSeconds(0, 0));
+        let date = new Date(new Date(past).setMinutes(0, 0));
         date <= now;
         date.setMinutes(date.getMinutes() + condition.step)
       ) {
