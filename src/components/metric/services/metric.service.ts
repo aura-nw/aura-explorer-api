@@ -46,7 +46,6 @@ export class MetricService {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
-
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
 
@@ -55,6 +54,7 @@ export class MetricService {
     const currentMinutes = stop.getMinutes();
     timezone = timezone * (-1);
     stop.setSeconds(0, 0);
+    const hours = (timezone > 0) ? timezone / 60 : 0;
 
     let start: Date = new Date();
     let queryStep = ``;
@@ -88,7 +88,7 @@ export class MetricService {
       }
     }
     let metricData: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', start.toISOString(), stop.toISOString(), queryStep, 'num_txs', timezone) as MetricOutput[];
-    const series = generateSeries(range);
+    const series = generateSeries(range, hours);
     return mergeByProperty(metricData, series);
   }
 
