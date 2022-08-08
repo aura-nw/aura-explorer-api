@@ -54,9 +54,13 @@ export class MetricService {
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
+    const results = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
     const series = generateSeries(range, hours);
-    return mergeByProperty(metricData, series);
+    const metricData = mergeByProperty(results, series);    
+    return metricData.map((item) => {
+      return { total: item.total, timestamp: item.timestamp.replace('Z', '') }
+    });
+
   }
 
   async getValidator(
