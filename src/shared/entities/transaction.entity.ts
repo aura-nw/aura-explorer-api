@@ -18,7 +18,7 @@ export class Transaction extends BaseEntityIncrementId {
   @Column({ default: '' })
   codespace: string;
 
-  @Column({ default: '' })
+  @Column({nullable: true, type: 'text'})
   data: string;
 
   @Column({ default: 0 })

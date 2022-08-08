@@ -41,19 +41,55 @@ export class MetricService {
   async getTransaction(
     ctx: RequestContext,
     range: Range,
+    timezone: number
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
+
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
-    const { amount, step, fluxType } = buildCondition(range);
-    const startTime = `-${amount}${fluxType}`;
-    const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
-    const series = generateSeries(range);
 
-    return mergeByProperty(metricData, series);;
+    // Create start, stop position to get data fron influxdb
+    let stop = new Date();
+    const currentMinutes = stop.getMinutes();
+    timezone = timezone * (-1);
+    stop.setSeconds(0, 0);
+
+    let start: Date = new Date();
+    let queryStep = ``;
+    if (range === Range.minute) {
+      start.setMinutes(-60);
+      queryStep = `1m`;
+
+    } else {
+      stop.setMinutes(timezone);
+      stop.setMinutes(stop.getMinutes() + currentMinutes);
+
+      start.setMinutes(timezone);
+      start.setMinutes(start.getMinutes() + currentMinutes);
+
+      switch (range) {
+        case Range.month:
+          start.setMonth(-12);
+          start.setUTCHours(0, 0, 0, 0);
+          queryStep = `1mo`;
+          break;
+        case Range.day:
+          start.setDate(-30);
+          start.setUTCHours(0, 0, 0, 0);
+          queryStep = `1d`;
+          break;
+        case Range.hour:
+          start.setHours(-24);
+          start.setSeconds(0, 0);
+          queryStep = `1h`;
+          break;
+      }
+    }
+    let metricData: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', start.toISOString(), stop.toISOString(), queryStep, 'num_txs', timezone) as MetricOutput[];
+    const series = generateSeries(range);
+    return mergeByProperty(metricData, series);
   }
 
   async getValidator(
