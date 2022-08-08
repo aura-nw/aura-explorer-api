@@ -12,10 +12,8 @@ const makeData = (date: Date): MetricOutput => {
 export function generateSeries(range: Range, hours: number = 0): MetricOutput[] {
   const series: MetricOutput[] = [];
   const now = new Date();
-  now.setHours(now.getHours() + hours);
   const past = new Date(now);
   const condition = buildCondition(range);
-
   switch (condition.type) {
     case TypeDate.month: {
       past.setMonth(now.getMonth() - condition.amount);
@@ -54,7 +52,7 @@ export function generateSeries(range: Range, hours: number = 0): MetricOutput[] 
     case TypeDate.minute: {
       past.setMinutes(now.getMinutes() - condition.amount);
       for (
-        let date = new Date(new Date(past).setMinutes(0, 0));
+        let date = new Date(new Date(past).setUTCSeconds(0, 0));
         date <= now;
         date.setMinutes(date.getMinutes() + condition.step)
       ) {
