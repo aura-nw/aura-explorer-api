@@ -60,7 +60,7 @@ export class MetricService {
     return metricData.map((item) => {
       const date = new Date(item.timestamp.replace('Z', ''));
       date.setHours(date.getHours() + hours);
-      return { total: item.total, timestamp: date.toISOString() }
+      return { total: item.total, timestamp: date.toISOString().replace('Z', '') }
     });
 
   }
