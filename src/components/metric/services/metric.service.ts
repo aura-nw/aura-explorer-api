@@ -49,32 +49,43 @@ export class MetricService {
 
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
-    const { amount, step, fluxType } = buildCondition(range);
-    const startTime = `-${amount}${fluxType}`;
-    const queryStep = `${step}${fluxType}`;
-    let metricData: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', timezone) as MetricOutput[];
+ 
+    // Create start, stop position to get data fron influxdb
+    const stop = new Date();
+    const currentMinutes = Math.abs(timezone * (-1)) +  stop.getMinutes();
+    stop.setSeconds(0, 0);
+    stop.setMinutes(currentMinutes);
+
+    let start: Date = new Date();   
+    start.setMinutes(currentMinutes);
+    let queryStep = ``;
+
+    switch (range) {
+      case Range.month:
+        start.setMonth(-12);
+        start.setUTCHours(0, 0, 0, 0);
+        queryStep = `1mo`;        
+        break;
+      case Range.day:
+        start.setDate(-30);
+        start.setUTCHours(0, 0, 0, 0);     
+        queryStep = `1d`;          
+        break;
+      case Range.hour:
+        start.setHours(-24);
+        start.setSeconds(0, 0);
+        queryStep = `1h`;
+        break;
+      case Range.minute:
+        start.setMinutes(-60);
+        start.setSeconds(0, 0);
+        queryStep = `1m`;
+        break;
+    }
+
+    let metricData: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', start.toISOString(), stop.toISOString(), queryStep, 'num_txs', timezone) as MetricOutput[];
     const series = generateSeries(range);
-
-    // if (results) {
-    //   metricData = results.map((item) => {
-    //     let date = new Date();
-    //     if (range === Range.day || range === Range.month) {
-    //       date = new Date(new Date(item.timestamp).setUTCHours(0, 0, 0, 0));
-    //       if (range === Range.month) {
-    //         date.setDate(1);
-    //       }
-    //     }
-    //     else if (range === Range.hour) {
-    //       date = new Date(new Date(item.timestamp).setMinutes(0, 0, 0));
-    //     } else {
-    //       date = new Date(new Date(item.timestamp).setSeconds(0, 0));
-    //     }
-
-    //     const timestamp = date.toISOString().split('.')[0] + "Z";
-    //     return { total: item.total, timestamp: timestamp }
-    //   });
-    // }
-     return mergeByProperty(metricData, series);
+    return mergeByProperty(metricData, series);
   }
 
   async getValidator(

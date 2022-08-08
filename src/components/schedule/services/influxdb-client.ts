@@ -1,4 +1,5 @@
 import { InfluxDB, Point, QueryApi, WriteApi } from "@influxdata/influxdb-client";
+import { start } from "repl";
 
 export class InfluxDBClient {
   private client: InfluxDB;
@@ -118,16 +119,13 @@ export class InfluxDBClient {
    * @param column 
    * @returns 
    */
-  sumData(measurement: string, statTime: string, step: string, column: string, timezone: number) {
+  sumData(measurement: string, start: string, stop: string, step: string, column: string, timezone: number) {
     const results: {
       total: string;
       timestamp: string;
     }[] = [];
-    const query = `
-      // import "timezone"
-      // option location = timezone.fixed(offset: ${timezone}m)
-      from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()
-    `;
+
+    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}, stop: ${stop}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()`;
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
