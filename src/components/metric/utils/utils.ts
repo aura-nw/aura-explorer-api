@@ -5,11 +5,11 @@ import { Range, TypeDate } from './enum';
 const makeData = (date: Date): MetricOutput => {
   const data = new MetricOutput();
   data.total = '0';
-  data.timestamp = date.toISOString().split('.')[0]+"Z";
+  data.timestamp = date.toISOString().split('.')[0] + "Z";
   return data;
 };
 
-export function generateSeries(range: Range): MetricOutput[] {
+export function generateSeries(range: Range, hours: number = 0): MetricOutput[] {
   const series: MetricOutput[] = [];
   const now = new Date();
   const past = new Date(now);
