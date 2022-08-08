@@ -46,6 +46,7 @@ export class MetricService {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
+
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
 
@@ -62,7 +63,6 @@ export class MetricService {
       date.setHours(date.getHours() + hours);
       return { total: item.total, timestamp: date.toISOString().replace('Z', '') }
     });
-
   }
 
   async getValidator(

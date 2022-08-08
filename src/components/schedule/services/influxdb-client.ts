@@ -118,6 +118,7 @@ export class InfluxDBClient {
    * @param column 
    * @returns 
    */
+
   sumData(measurement: string, start: string, step: string, column: string) {
     const results: {
       total: string;
