@@ -27,7 +27,7 @@ export class Cw20TokenController {
     }
 
     @Get(':contractAddress')
-    @ApiOperation({ summary: 'Get token detail by contract address' })
+    @ApiOperation({ summary: 'Get cw20/cw721 token detail by contract address' })
     @ApiResponse({ status: HttpStatus.OK })
     @UseInterceptors(ClassSerializerInterceptor)
     async getTokenByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string): Promise<any> {
