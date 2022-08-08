@@ -60,6 +60,7 @@ export class MetricService {
     return metricData.map((item) => {
       return { total: item.total, timestamp: item.timestamp.replace('Z', '') }
     });
+
   }
 
   async getValidator(
