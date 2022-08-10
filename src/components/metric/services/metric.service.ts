@@ -92,9 +92,10 @@ export class MetricService {
     const series = generateSeries(range, hours);
     const metricData = mergeByProperty(results, series);    
     return metricData.map((item) => {
-      const date = new Date(item.timestamp.replace('Z', ''));
-      date.setHours(date.getHours() + hours);
-      return { total: item.total, timestamp: date.toISOString().replace('Z', '') }
+      // const date = new Date(item.timestamp.replace('Z', ''));
+      // // date.setHours(date.getHours() + hours);
+      // return { total: item.total, timestamp: date.toISOString().replace('Z', '') }
+      return { total: item.total, timestamp: item.timestamp.replace('Z', '') }
     });
 
   }
