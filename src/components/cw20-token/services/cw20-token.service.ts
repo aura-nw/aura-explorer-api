@@ -3,6 +3,7 @@ import { AkcLogger, CONTRACT_TYPE, RequestContext } from "../../../shared";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
 import { Like } from "typeorm";
+import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
 
 @Injectable()
 export class Cw20TokenService {
@@ -43,5 +44,12 @@ export class Cw20TokenService {
         });
 
         return token ? token : null;
+    }
+
+    async getListTokenTransactions(ctx: RequestContext, request: TokenTransactionParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getListTokenTransactions.name} was called!`);
+        const result = await this.tokenContractRepository.getListTokenTransactions(request);
+
+        return { transactions: result[0], count: result[1][0].total };
     }
 }

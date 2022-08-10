@@ -2,6 +2,7 @@ import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, Ht
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
+import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
 import { Cw20TokenService } from "../services/cw20-token.service";
 
 @ApiTags('cw20-tokens')
@@ -35,5 +36,17 @@ export class Cw20TokenController {
         const token = await this.cw20TokenService.getTokenByContractAddress(ctx, contractAddress);
 
         return { data: token, meta: {} };
+    }
+
+    @Post('transactions')
+    @ApiOperation({ summary: 'Get list transactions of cw20/cw721 token' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async getListTokenTransactions(@ReqContext() ctx: RequestContext, @Body() request: TokenTransactionParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getListTokenTransactions.name} was called!`);
+        const { transactions, count } = await this.cw20TokenService.getListTokenTransactions(ctx, request);
+
+        return { data: transactions, meta: { count } };
     }
 }
