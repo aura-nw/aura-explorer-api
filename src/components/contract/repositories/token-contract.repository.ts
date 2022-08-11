@@ -2,6 +2,8 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, TokenContract } from "../../../shared";
 import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
 import { TokenTransactionParamsDto } from "../../../components/cw20-token/dtos/token-transaction-params.dto";
+import { Cw20TokenByOwnerParamsDto } from "../../../components/cw20-token/dtos/cw20-token-by-owner-params.dto";
+import { NftByOwnerParamsDto } from "../../../components/cw721-token/dtos/nft-by-owner-params.dto";
 
 @EntityRepository(TokenContract)
 export class TokenContractRepository extends Repository<TokenContract> {
@@ -43,6 +45,56 @@ export class TokenContractRepository extends Repository<TokenContract> {
             params.push(request.token_id);
         }
         sql += " ORDER BY updated_at DESC";
+        let sqlLimit = " LIMIT ? OFFSET ?";
+        params.push(request.limit);
+        params.push(request.offset);
+    
+        result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
+        result[1] = await this.query(sqlCount + sql, params);
+        return result;
+    }
+
+    async getCw20TokensByOwner(request: Cw20TokenByOwnerParamsDto) {
+        let result = [];
+        let params = [];
+        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance`;
+        let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
+        let sql: string = ` FROM token_contracts tc
+                INNER JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
+            WHERE cto.owner = ?
+                AND cto.balance > 0`;
+        params.push(request.account_address);
+        if(request?.keyword) {
+            sql += ` AND (LOWER(tc.name) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
+            params.push(`%${request.keyword.toLowerCase()}%`);
+            params.push(`%${request.keyword.toLowerCase()}%`);
+        }
+        sql += " ORDER BY tc.updated_at DESC";
+        let sqlLimit = " LIMIT ? OFFSET ?";
+        params.push(request.limit);
+        params.push(request.offset);
+    
+        result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
+        result[1] = await this.query(sqlCount + sql, params);
+        return result;
+    }
+
+    async getNftsByOwner(request: NftByOwnerParamsDto) {
+        let result = [];
+        let params = [];
+        let sqlSelect: string = `SELECT tc.contract_address, sc.contract_name, n.token_id, n.uri`;
+        let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
+        let sql: string = ` FROM token_contracts tc
+                    INNER JOIN smart_contracts sc ON tc.contract_address = sc.contract_address
+                    INNER JOIN nfts n ON tc.contract_address = n.contract_address
+                WHERE n.owner = ?`;
+        params.push(request.account_address);
+        if(request?.keyword) {
+            sql += `  AND (LOWER(n.token_id) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
+            params.push(`%${request.keyword.toLowerCase()}%`);
+            params.push(`%${request.keyword.toLowerCase()}%`);
+        }
+        sql += " ORDER BY tc.updated_at DESC";
         let sqlLimit = " LIMIT ? OFFSET ?";
         params.push(request.limit);
         params.push(request.offset);

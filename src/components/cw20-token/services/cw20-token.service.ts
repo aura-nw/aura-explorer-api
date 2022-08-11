@@ -8,6 +8,7 @@ import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { SmartContractRepository } from "../../../components/contract/repositories/smart-contract.repository";
+import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 
 @Injectable()
 export class Cw20TokenService {
@@ -66,34 +67,10 @@ export class Cw20TokenService {
         return { transactions: result[0], count: result[1][0].total };
     }
 
-    async getTokensByOwner(ctx: RequestContext, accountAddress: string): Promise<any> {
-        this.logger.log(ctx, `${this.getTokensByOwner.name} was called!`);
-        const tokens = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.GET_TOKENS_BY_OWNER, accountAddress, this.indexerChainId)}`, '', ctx);
-        const cw20Tokens = tokens.data.assets.CW20.asset;
-        const cw721Tokens = tokens.data.assets.CW721.asset;
-        if (cw20Tokens.length > 0) {
-            for (let i = 0; i < cw20Tokens.length; i++) {
-                const item = cw20Tokens[i];
-                const token = await this.tokenContractRepository.findOne({
-                    where: {
-                        contract_address: item.contract_address
-                    },
-                });
-                item.image = token ? token.image : '';
-            }
-        }
-        if (cw721Tokens.length > 0) {
-            for (let i = 0; i < cw721Tokens.length; i++) {
-                const item = cw721Tokens[i];
-                const contract = await this.smartContractRepository.findOne({
-                    where: {
-                        contract_address: item.contract_address
-                    },
-                });
-                item.name = contract ? contract.contract_name : '';
-            }
-        }
+    async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
+        const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
 
-        return tokens ? tokens : null;
+        return { tokens: result[0], count: result[1][0].total };
     }
 }
