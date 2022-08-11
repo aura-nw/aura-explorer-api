@@ -85,7 +85,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
     async getCw20TokensByOwner(request: Cw20TokenByOwnerParamsDto) {
         let result = [];
         let params = [];
-        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance`;
+        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance, tc.decimals, tc.total_supply`;
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
                 INNER JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
