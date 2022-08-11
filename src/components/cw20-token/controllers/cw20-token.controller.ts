@@ -49,4 +49,15 @@ export class Cw20TokenController {
 
         return { data: transactions, meta: { count } };
     }
+
+    @Get('get-by-owner/:accountAddress')
+    @ApiOperation({ summary: 'Get cw20/cw721 tokens list by owner' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getTokensByOwner(@ReqContext() ctx: RequestContext, @Param('accountAddress') accountAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.getTokensByOwner.name} was called!`);
+        const tokens = await this.cw20TokenService.getTokensByOwner(ctx, accountAddress);
+
+        return tokens;
+    }
 }
