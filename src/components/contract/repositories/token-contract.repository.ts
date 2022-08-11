@@ -98,9 +98,12 @@ export class TokenContractRepository extends Repository<TokenContract> {
             params.push(`%${request.keyword.toLowerCase()}%`);
         }
         sql += " ORDER BY tc.updated_at DESC";
-        let sqlLimit = " LIMIT ? OFFSET ?";
-        params.push(request.limit);
-        params.push(request.offset);
+        let sqlLimit = "";
+        if(request.limit > 0) {
+            sqlLimit = " LIMIT ? OFFSET ?";
+            params.push(request.limit);
+            params.push(request.offset);
+        }
     
         result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
         result[1] = await this.query(sqlCount + sql, params);
@@ -123,9 +126,12 @@ export class TokenContractRepository extends Repository<TokenContract> {
             params.push(`%${request.keyword.toLowerCase()}%`);
         }
         sql += " ORDER BY tc.updated_at DESC";
-        let sqlLimit = " LIMIT ? OFFSET ?";
-        params.push(request.limit);
-        params.push(request.offset);
+        let sqlLimit = "";
+        if(request.limit > 0) {
+            sqlLimit = " LIMIT ? OFFSET ?";
+            params.push(request.limit);
+            params.push(request.offset);
+        }
     
         result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
         result[1] = await this.query(sqlCount + sql, params);
