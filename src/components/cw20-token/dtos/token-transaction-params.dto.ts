@@ -11,6 +11,9 @@ export class TokenTransactionParamsDto {
 
     @ApiProperty({default: ''})
     tx_hash: string;
+
+    @ApiProperty({default: ''})
+    token_id: string;
     
     @ApiProperty({ default: 20})
     @Min(1)
