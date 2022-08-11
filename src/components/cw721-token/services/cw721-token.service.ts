@@ -4,6 +4,7 @@ import { AkcLogger, CONTRACT_TYPE, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
 import { NftParamsDto } from "../dtos/nft-params.dto";
 import { NftRepository } from "../repositories/nft.repository";
+import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 
 @Injectable()
 export class Cw721TokenService {
@@ -41,5 +42,12 @@ export class Cw721TokenService {
         const nfts = await this.nftRepository.getNftByContractAddressAndTokenId(contractAddress, tokenId);
 
         return nfts.length > 0 ? nfts[0] : null;
+    }
+
+    async getNftsByOwner(ctx: RequestContext, request: NftByOwnerParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
+        const result = await this.tokenContractRepository.getNftsByOwner(request);
+
+        return { tokens: result[0], count: result[1][0].total };
     }
 }
