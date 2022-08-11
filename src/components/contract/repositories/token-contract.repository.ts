@@ -57,7 +57,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
     async getDataTokens(type: CONTRACT_TYPE, keyword: string, limit: number, offset: number) {
         let condition: FindManyOptions<TokenContract> = {
             where: {
-                type: CONTRACT_TYPE.CW20,
+                type: type,
             },
             order: { updated_at: 'DESC' },
         }
