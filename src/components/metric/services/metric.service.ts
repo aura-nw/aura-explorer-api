@@ -84,7 +84,7 @@ export class MetricService {
     
     const format = 'YYYY-MM-DDTHH:mm:00';
     let results: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', moment(start).format(format) + 'Z', moment(stop).format(format) + 'Z', queryStep, 'num_txs', timezone) as MetricOutput[];
-    const series = generateSeries(range, hours);
+    const series = generateSeries(range);
     const metricData = mergeByProperty(results, series);    
     return metricData;
   }

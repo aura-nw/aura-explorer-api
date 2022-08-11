@@ -9,7 +9,7 @@ const makeData = (date: Date): MetricOutput => {
   return data;
 };
 
-export function generateSeries(range: Range, hours: number = 0): MetricOutput[] {
+export function generateSeries(range: Range): MetricOutput[] {
   const series: MetricOutput[] = [];
   const now = new Date();
   const past = new Date(now);
@@ -39,18 +39,12 @@ export function generateSeries(range: Range, hours: number = 0): MetricOutput[] 
       break;
     }
     case TypeDate.hour: {
-      // past.setHours(now.getHours() - condition.amount);
-      // for (
-      //   let date = new Date(new Date(past).setUTCMinutes(0, 0, 0));
-      //   date <= now;
-      //   date.setHours(date.getHours() + condition.step)
-      // ) {
-      //   series.push(makeData(date));
-      // }
-      past.setHours((past.getHours() + hours) -  condition.amount);
-      for (let i = 1; i <= condition.amount; i++) {        
+      past.setHours(now.getHours() - condition.amount);
+      for (
         let date = new Date(new Date(past).setUTCMinutes(0, 0, 0));
-        date.setHours(date.getHours() + i);
+        date <= now;
+        date.setHours(date.getHours() + condition.step)
+      ) {
         series.push(makeData(date));
       }
     }
