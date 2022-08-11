@@ -38,6 +38,10 @@ export class TokenContractRepository extends Repository<TokenContract> {
             params.push(request.account_address);
             params.push(request.account_address);
         }
+        if (request?.token_id) {
+            sql += ` AND JSON_EXTRACT(messages, CONCAT('$[0].msg.', REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', ''), '.token_id')) = ?`;
+            params.push(request.token_id);
+        }
         sql += " ORDER BY updated_at DESC";
         let sqlLimit = " LIMIT ? OFFSET ?";
         params.push(request.limit);
