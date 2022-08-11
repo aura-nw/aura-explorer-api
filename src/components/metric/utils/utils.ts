@@ -47,6 +47,7 @@ export function generateSeries(range: Range): MetricOutput[] {
       ) {
         series.push(makeData(date));
       }
+      break;
     }
     case TypeDate.minute: {
       past.setMinutes(now.getMinutes() - condition.amount);
