@@ -1,7 +1,7 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, TokenContract } from "../../../shared";
-import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
+import { EntityRepository, FindManyOptions, ObjectLiteral, Raw, Repository } from "typeorm";
 import { TokenTransactionParamsDto } from "../../../components/cw20-token/dtos/token-transaction-params.dto";
+import { CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
 
 @EntityRepository(TokenContract)
 export class TokenContractRepository extends Repository<TokenContract> {
@@ -46,9 +46,37 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let sqlLimit = " LIMIT ? OFFSET ?";
         params.push(request.limit);
         params.push(request.offset);
-    
+
         result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
         result[1] = await this.query(sqlCount + sql, params);
         return result;
+    }
+
+    async getDataTokens(type: CONTRACT_TYPE, keyword: string, limit: number, offset: number) {
+        let condition: FindManyOptions<TokenContract> = {
+            where: {
+                type: CONTRACT_TYPE.CW20,
+            },
+            order: { updated_at: 'DESC' },
+        }
+
+        if (keyword) {
+            condition.where = [
+                {
+                    type: type,
+                    ...(keyword && { contract_address: Raw(() => ` LOWER(contract_address) LIKE :keyword`, { keyword: `%${keyword}%`.toLowerCase() }) }),
+                },
+                {
+                    type: type,
+                    ...(keyword && { contract_address: Raw(() => ` LOWER(name) LIKE :keyword`, { keyword: `%${keyword}%`.toLowerCase() }) })
+                }
+            ]
+        }
+        if (limit > 0) {
+            condition['take'] = limit;
+            condition['skip'] = offset;
+        }
+        const [tokens, count] = await this.findAndCount(condition);
+        return { tokens: tokens, count: count };
     }
 }

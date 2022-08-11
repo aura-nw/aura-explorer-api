@@ -1,13 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext } from "../../../shared";
-import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
-import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { Like } from "typeorm";
-import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
-import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
-import { ServiceUtil } from "../../../shared/utils/service.util";
 import { SmartContractRepository } from "../../../components/contract/repositories/smart-contract.repository";
+import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
+import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext } from "../../../shared";
+import * as appConfig from '../../../shared/configs/configuration';
+import { ServiceUtil } from "../../../shared/utils/service.util";
+import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
+import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
 
 @Injectable()
 export class Cw20TokenService {
@@ -29,23 +28,7 @@ export class Cw20TokenService {
 
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
-        const [tokens, count] = await this.tokenContractRepository.findAndCount({
-            where: [
-                {
-                    type: CONTRACT_TYPE.CW20,
-                    ...(request?.keyword && { contract_address: Like(`%${request.keyword}%`) })
-                },
-                {
-                    type: CONTRACT_TYPE.CW20,
-                    ...(request?.keyword && { name: Like(`%${request.keyword}%`) })
-                }
-            ],
-            order: { updated_at: 'DESC' },
-            take: request.limit,
-            skip: request.offset
-        });
-
-        return { tokens: tokens, count: count };
+        return await this.tokenContractRepository.getDataTokens(CONTRACT_TYPE.CW20, request?.keyword, request.limit, request.offset);
     }
 
     async getTokenByContractAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
