@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
 import { AkcLogger, CONTRACT_TYPE, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
-import { Like } from "typeorm";
 import { NftParamsDto } from "../dtos/nft-params.dto";
 import { NftRepository } from "../repositories/nft.repository";
 import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
@@ -19,23 +18,7 @@ export class Cw721TokenService {
 
     async getCw721Tokens(ctx: RequestContext, request: Cw721TokenParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw721Tokens.name} was called!`);
-        const [tokens, count] = await this.tokenContractRepository.findAndCount({
-            where: [
-                {
-                    type: CONTRACT_TYPE.CW721,
-                    ...(request?.keyword && { contract_address: Like(`%${request.keyword}%`) })
-                },
-                {
-                    type: CONTRACT_TYPE.CW721,
-                    ...(request?.keyword && { name: Like(`%${request.keyword}%`) })
-                }
-            ],
-            order: { updated_at: 'DESC' },
-            take: request.limit,
-            skip: request.offset
-        });
-
-        return { tokens: tokens, count: count };
+        return await this.tokenContractRepository.getDataTokens(CONTRACT_TYPE.CW721, request.keyword, request.limit, request.offset);
     }
 
     async getNftsByContractAddress(ctx: RequestContext, contractAddress: string, request: NftParamsDto): Promise<any> {
