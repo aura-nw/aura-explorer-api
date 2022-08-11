@@ -1,6 +1,7 @@
 import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
+import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
 import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
 import { Cw20TokenService } from "../services/cw20-token.service";
@@ -50,14 +51,15 @@ export class Cw20TokenController {
         return { data: transactions, meta: { count } };
     }
 
-    @Get('get-by-owner/:accountAddress')
-    @ApiOperation({ summary: 'Get cw20/cw721 tokens list by owner' })
+    @Post('get-by-owner')
+    @ApiOperation({ summary: 'Get list cw20 tokens by owner' })
     @ApiResponse({ status: HttpStatus.OK })
     @UseInterceptors(ClassSerializerInterceptor)
-    async getTokensByOwner(@ReqContext() ctx: RequestContext, @Param('accountAddress') accountAddress: string): Promise<any> {
-        this.logger.log(ctx, `${this.getTokensByOwner.name} was called!`);
-        const tokens = await this.cw20TokenService.getTokensByOwner(ctx, accountAddress);
+    @UseInterceptors(CacheInterceptor)
+    async getCw20TokensByOwner(@ReqContext() ctx: RequestContext, @Body() request: Cw20TokenByOwnerParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
+        const { tokens, count } = await this.cw20TokenService.getCw20TokensByOwner(ctx, request);
 
-        return tokens;
+        return { data: tokens, meta: { count } };
     }
 }
