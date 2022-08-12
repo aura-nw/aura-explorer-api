@@ -30,9 +30,9 @@ export class TokenContractRepository extends Repository<TokenContract> {
                 OR (REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', '') = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}'
                     AND JSON_EXTRACT(messages, '$[0].sender') = ?) 
                 OR (REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', '') NOT IN ('${CONTRACT_TRANSACTION_EXECUTE_TYPE.MINT}', '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}') 
-                    OR JSON_EXTRACT(messages, CONCAT('$[0].msg.', REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', ''), '.recipient')) = ?
+                    AND (JSON_EXTRACT(messages, CONCAT('$[0].msg.', REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', ''), '.recipient')) = ?
                     OR JSON_EXTRACT(messages, CONCAT('$[0].msg.', REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', ''), '.owner')) = ?
-                    OR SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1) = 'burn' AND JSON_EXTRACT(messages, '$[0].sender') = ?))`;
+                    OR JSON_EXTRACT(messages, '$[0].sender') = ?)))`;
             params.push(request.account_address);
             params.push(request.account_address);
             params.push(request.account_address);
