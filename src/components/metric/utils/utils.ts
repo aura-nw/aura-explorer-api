@@ -17,35 +17,17 @@ export function generateSeries(range: Range, hours: number = 0): MetricOutput[] 
   const condition = buildCondition(range);
   switch (condition.type) {
     case TypeDate.month: {
-      past.setMonth(now.getMonth() - condition.amount);
-      // for (
-      //   let date = new Date(new Date(past).setUTCHours(0, 0, 0, 0));
-      //   date <= now;
-      //   date.setMonth(date.getMonth() + condition.step)
-      // ) {
-      //   date.setDate(0);
-      //   series.push(makeData(date));
-      // }
-     
+      past.setMonth(now.getMonth() - condition.amount);     
       for (let i = 1; i <= condition.amount; i++) {     
         let date = new Date(new Date(past.getFullYear(), past.getMonth() + i, 0));
         date.setDate(date.getDate() + 1);
         date.setHours(hours, 0, 0, 0);
         series.push(makeData(date));
- 
       }
       break;
     }
     case TypeDate.day: {
       past.setDate(now.getDate() - condition.amount);
-      // for (
-      //   let date = new Date(new Date(past).setUTCHours(0, 0, 0, 0));
-      //   date <= now;
-      //   date.setDate(date.getDate() + condition.step)
-      // ) {
-      //   date.setHours(hours);
-      //   series.push(makeData(date));
-      // }
       let date = new Date(new Date(past).setHours(hours, 0, 0, 0));
       for (let i = 1; i <= condition.amount; i++) {
         date.setDate(date.getDate() + condition.step)
