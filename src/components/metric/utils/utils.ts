@@ -1,3 +1,4 @@
+import * as moment from 'moment';
 import { MetricConditionDto } from '../dtos/metric-condition.dto';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { Range, TypeDate } from './enum';
@@ -9,7 +10,7 @@ const makeData = (date: Date): MetricOutput => {
   return data;
 };
 
-export function generateSeries(range: Range): MetricOutput[] {
+export function generateSeries(range: Range, hours: number = 0): MetricOutput[] {
   const series: MetricOutput[] = [];
   const now = new Date();
   const past = new Date(now);
@@ -17,23 +18,37 @@ export function generateSeries(range: Range): MetricOutput[] {
   switch (condition.type) {
     case TypeDate.month: {
       past.setMonth(now.getMonth() - condition.amount);
-      for (
-        let date = new Date(new Date(past).setUTCHours(0, 0, 0, 0));
-        date <= now;
-        date.setMonth(date.getMonth() + condition.step)
-      ) {
-        date.setUTCDate(1);
+      // for (
+      //   let date = new Date(new Date(past).setUTCHours(0, 0, 0, 0));
+      //   date <= now;
+      //   date.setMonth(date.getMonth() + condition.step)
+      // ) {
+      //   date.setDate(0);
+      //   series.push(makeData(date));
+      // }
+     
+      for (let i = 1; i <= condition.amount; i++) {     
+        let date = new Date(new Date(past.getFullYear(), past.getMonth() + i, 0));
+        date.setDate(date.getDate() + 1);
+        date.setHours(hours, 0, 0, 0);
         series.push(makeData(date));
+ 
       }
       break;
     }
     case TypeDate.day: {
       past.setDate(now.getDate() - condition.amount);
-      for (
-        let date = new Date(new Date(past).setUTCHours(0, 0, 0, 0));
-        date <= now;
+      // for (
+      //   let date = new Date(new Date(past).setUTCHours(0, 0, 0, 0));
+      //   date <= now;
+      //   date.setDate(date.getDate() + condition.step)
+      // ) {
+      //   date.setHours(hours);
+      //   series.push(makeData(date));
+      // }
+      let date = new Date(new Date(past).setHours(hours, 0, 0, 0));
+      for (let i = 1; i <= condition.amount; i++) {
         date.setDate(date.getDate() + condition.step)
-      ) {
         series.push(makeData(date));
       }
       break;

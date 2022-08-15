@@ -49,44 +49,15 @@ export class MetricService {
       ctx,
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
+    const hours = Math.round(timezone / 60);
 
-    // Create start, stop position to get data fron influxdb
-    let stop = new Date();
-    const currentMinutes = stop.getMinutes();
-    // timezone = timezone * (-1);
-    stop.setSeconds(0, 0);
-    const hours = (timezone > 0) ? Math.round(timezone / 60) : 0;
-
-    let start: Date = new Date();
-    let queryStep = ``;
-    if (range === Range.minute) {
-      start.setMinutes(-60);
-      queryStep = `1m`;
-
-    } else {
-      switch (range) {
-        case Range.month:
-          start.setMonth(-12);
-          start.setHours(hours, 0, 0, 0);
-          queryStep = `1mo`;
-          break;
-        case Range.day:
-          start.setDate(-30);
-          start.setHours(hours, 0, 0, 0);
-          queryStep = `1d`;
-          break;
-        case Range.hour:
-          start.setHours(-24, 0, 0, 0);
-          queryStep = `1h`;
-          break;
-      }
-    }
-    
-    const format = 'YYYY-MM-DDTHH:mm:00';
-    let results: MetricOutput[] = await this.influxDbClient.sumData('blocks_measurement', moment(start).format(format) + 'Z', moment(stop).format(format) + 'Z', queryStep, 'num_txs', timezone) as MetricOutput[];
-    const series = generateSeries(range);
-    const metricData = mergeByProperty(results, series);    
-    return metricData;
+    const { amount, step, fluxType } = buildCondition(range);
+    const startTime = `-${amount}${fluxType}`;
+    const queryStep = `${step}${fluxType}`;
+    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', hours) as MetricOutput[];
+    const series = generateSeries(range, hours);
+    let result = mergeByProperty(metricData, series);
+    return result;
   }
 
   async getValidator(
