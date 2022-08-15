@@ -117,7 +117,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
                     INNER JOIN smart_contracts sc ON tc.contract_address = sc.contract_address
-                    INNER JOIN nfts n ON tc.contract_address = n.contract_address
+                    INNER JOIN nfts n ON tc.contract_address = n.contract_address AND n.is_burn = 0
                 WHERE n.owner = ?`;
         params.push(request.account_address);
         if(request?.keyword) {
