@@ -17,15 +17,19 @@ export class SmartContractRepository extends Repository<SmartContract> {
         let sql: string = ` FROM smart_contracts sc
             LEFT JOIN smart_contract_codes scc ON sc.code_id = scc.code_id`;
         if (request?.keyword) {
-            sql += ` WHERE sc.contract_name LIKE '%${request.keyword}%'`;
+            sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
+            params.push(`%${request.keyword.toLowerCase()}%`);
         }
         sql += " ORDER BY sc.updated_at DESC";
-        let sqlLimit = " LIMIT ? OFFSET ?";
-        params.push(request.limit);
-        params.push(request.offset);
-    
+        let sqlLimit = "";
+        if (request.limit > 0) {
+            sqlLimit = " LIMIT ? OFFSET ?";
+            params.push(request.limit);
+            params.push(request.offset);
+        }
+
         result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
         result[1] = await this.query(sqlCount + sql, params);
         return result;
-      }
+    }
 }

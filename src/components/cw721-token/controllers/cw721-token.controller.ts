@@ -2,6 +2,7 @@ import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, Ht
 import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
+import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 import { NftParamsDto } from "../dtos/nft-params.dto";
 import { Cw721TokenService } from "../services/cw721-token.service";
 
@@ -48,5 +49,17 @@ export class Cw721TokenController {
         const nft = await this.cw721TokenService.getNftByContractAddressAndTokenId(ctx, contractAddress, tokenId);
 
         return { data: nft, meta: {} };
+    }
+
+    @Post('get-by-owner')
+    @ApiOperation({ summary: 'Get list nfts by owner' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async getNftsByOwner(@ReqContext() ctx: RequestContext, @Body() request: NftByOwnerParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
+        const { tokens, count } = await this.cw721TokenService.getNftsByOwner(ctx, request);
+
+        return { data: tokens, meta: { count } };
     }
 }
