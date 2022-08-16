@@ -1,12 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { SmartContractRepository } from "../../../components/contract/repositories/smart-contract.repository";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { AkcLogger, CONTRACT_TYPE, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext } from "../../../shared";
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
 import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
+import * as util from 'util';
 
 @Injectable()
 export class Cw20TokenService {
@@ -17,7 +17,6 @@ export class Cw20TokenService {
     constructor(
         private readonly logger: AkcLogger,
         private tokenContractRepository: TokenContractRepository,
-        private smartContractRepository: SmartContractRepository,
         private serviceUtil: ServiceUtil
     ) {
         this.logger.setContext(Cw20TokenService.name);
@@ -33,13 +32,23 @@ export class Cw20TokenService {
 
     async getTokenByContractAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
         this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-        const token = await this.tokenContractRepository.findOne({
+        let token: any = null;
+        const tokenData = await this.tokenContractRepository.findOne({
             where: {
                 contract_address: contractAddress
             },
         });
+        if (tokenData) {
+            token = tokenData;
+            //get num holders
+            const holdersData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.TOKEN_HOLDERS, this.indexerChainId, tokenData.type, contractAddress)}`, '', ctx);
+            token.num_holders = 0;
+            if (holdersData?.data) {
+                token.num_holders = holdersData.data.resultCount;
+            }
+        }
 
-        return token ? token : null;
+        return token;
     }
 
     async getListTokenTransactions(ctx: RequestContext, request: TokenTransactionParamsDto): Promise<any> {
