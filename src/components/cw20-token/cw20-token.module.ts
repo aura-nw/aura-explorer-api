@@ -7,12 +7,14 @@ import { SharedModule } from "../../shared";
 import { Cw20TokenController } from "./controllers/cw20-token.controller";
 import { Cw20TokenService } from "./services/cw20-token.service";
 import { TokenContractRepository } from "../contract/repositories/token-contract.repository";
+import { SmartContractRepository } from "../contract/repositories/smart-contract.repository";
 
 @Module({
     imports: [
       SharedModule,
       TypeOrmModule.forFeature([
-        TokenContractRepository
+        TokenContractRepository,
+        SmartContractRepository
       ]),
       ConfigModule,
       HttpModule

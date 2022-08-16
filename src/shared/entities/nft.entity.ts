@@ -15,4 +15,8 @@ export class Nft extends BaseEntityIncrementId {
 
     @Column()
     uri: string;
+
+    @Column({ default: false })
+    is_burn: boolean;
+
 }

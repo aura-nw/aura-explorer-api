@@ -93,6 +93,11 @@ export enum CONTRACT_TRANSACTION_TYPE {
   SEND = "/cosmos.bank.v1beta1.MsgSend"
 }
 
+export enum CONTRACT_TRANSACTION_EXECUTE_TYPE {
+  MINT = "mint",
+  BURN = "burn"
+}
+
 export enum CONTRACT_TYPE {
   CW20 = "CW20",
   CW721 = "CW721"
@@ -108,7 +113,9 @@ export enum INDEXER_API {
   STATUS = "api/v1/network/status?chainid=%s",
   ACCOUNT_INFO = "api/v1/account-info?address=%s&chainId=%s",
   REGISTER_CODE_ID = "api/v1/asset/index",
-  ACCOUNT_DELEGATIONS = "api/v1/account-info/delegations?address=%s&chainId=%s"
+  ACCOUNT_DELEGATIONS = "api/v1/account-info/delegations?address=%s&chainId=%s",
+  GET_TOKENS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&countTotal=false",
+  TOKEN_HOLDERS = "api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true"
 }
 
 export const ERROR_MAP = {
