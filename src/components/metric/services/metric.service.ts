@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as moment from 'moment';
 import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
@@ -49,20 +50,15 @@ export class MetricService {
 
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
+    const hours = Math.round(timezone / 60);
 
-    timezone = timezone * (-1);
-    const hours = (timezone > 0) ? Math.round(timezone / 60) : 0;
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const results = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
+    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', hours) as MetricOutput[];
     const series = generateSeries(range, hours);
-    const metricData = mergeByProperty(results, series);    
-    return metricData.map((item) => {
-      const date = new Date(item.timestamp.replace('Z', ''));
-      date.setHours(date.getHours() + hours);
-      return { total: item.total, timestamp: date.toISOString().replace('Z', '') }
-    });
+    let result = mergeByProperty(metricData, series);
+    return result;
   }
 
   async getValidator(

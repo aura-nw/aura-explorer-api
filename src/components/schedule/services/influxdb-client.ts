@@ -118,18 +118,19 @@ export class InfluxDBClient {
    * @param column 
    * @returns 
    */
-
-  sumData(measurement: string, start: string, step: string, column: string) {
+  sumData(measurement: string, start: string, step: string, column: string, timezone: number) {
     const results: {
       total: string;
       timestamp: string;
     }[] = [];
 
-    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()`;
+    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}, offset: ${timezone}h) |> sum()`;
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
           const o = tableMeta.toObject(row);
+          let date = new Date(o._stop);
+          date.setMinutes(0, 0, 0);
           results.push({
             timestamp: o._start,
             total: String(o._value),
