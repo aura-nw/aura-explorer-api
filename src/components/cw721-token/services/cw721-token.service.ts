@@ -30,7 +30,7 @@ export class Cw721TokenService {
                 ...(request?.token_id && { token_id: request.token_id }),
                 ...(request?.owner && { owner: request.owner })
             },
-            order: { updated_at: 'DESC' },
+            order: { created_at: 'DESC' },
             take: request.limit,
             skip: request.offset
         });
