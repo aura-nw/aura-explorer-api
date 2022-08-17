@@ -13,7 +13,7 @@ export class NftRepository extends Repository<Nft> {
             FROM nfts n
                 INNER JOIN token_contracts tc ON n.contract_address = tc.contract_address
                 LEFT JOIN smart_contracts sc on n.contract_address = sc.contract_address
-            WHERE n.contract_address = ? AND n.token_id = ?`;
+            WHERE n.contract_address = ? AND n.token_id = ? AND n.is_burn = 0`;
 
         return await this.repos.query(sql, [contractAddress, tokenId]);
     }
