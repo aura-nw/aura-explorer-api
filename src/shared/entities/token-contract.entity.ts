@@ -33,4 +33,7 @@ export class TokenContract extends BaseEntityIncrementId {
 
     @Column()
     num_tokens: number;
+
+    @Column()
+    coin_id: string;
 }
