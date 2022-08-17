@@ -25,6 +25,7 @@ export class Cw721TokenService {
         this.logger.log(ctx, `${this.getNftsByContractAddress.name} was called!`);
         const [nfts, count] = await this.nftRepository.findAndCount({
             where: {
+                is_burn: false,
                 contract_address: contractAddress,
                 ...(request?.token_id && { token_id: request.token_id }),
                 ...(request?.owner && { owner: request.owner })
