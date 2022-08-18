@@ -33,15 +33,11 @@ export class Cw20TokenService {
     async getTokenByContractAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
         this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
         let token: any = null;
-        const tokenData = await this.tokenContractRepository.findOne({
-            where: {
-                contract_address: contractAddress
-            },
-        });
-        if (tokenData) {
-            token = tokenData;
+        const tokenData = await this.tokenContractRepository.getTokenByContractAddress(contractAddress);
+        if (tokenData.length > 0) {
+            token = tokenData[0];
             //get num holders
-            const holdersData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.TOKEN_HOLDERS, this.indexerChainId, tokenData.type, contractAddress)}`, '', ctx);
+            const holdersData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.TOKEN_HOLDERS, this.indexerChainId, tokenData[0].type, contractAddress)}`, '', ctx);
             token.num_holders = 0;
             if (holdersData?.data) {
                 token.num_holders = holdersData.data.resultCount;
