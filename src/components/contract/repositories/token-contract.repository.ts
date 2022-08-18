@@ -137,4 +137,13 @@ export class TokenContractRepository extends Repository<TokenContract> {
         result[1] = await this.query(sqlCount + sql, params);
         return result;
     }
+
+    async getTokenByContractAddress(contractAddress: string) {
+        let sql = `SELECT tc.*, sc.contract_verification
+            FROM token_contracts tc
+                INNER JOIN smart_contracts sc ON tc.contract_address = sc.contract_address
+            WHERE tc.contract_address = ?`;
+
+        return await this.repos.query(sql, [contractAddress]);
+    }
 }
