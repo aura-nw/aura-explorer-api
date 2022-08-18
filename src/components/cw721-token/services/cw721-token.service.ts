@@ -25,7 +25,7 @@ export class Cw721TokenService {
         this.logger.log(ctx, `${this.getNftsByContractAddress.name} was called!`);
         const result = await this.nftRepository.getNftsByContractAddress(contractAddress, request);
 
-        return { tokens: result[0], count: result[1][0].total };
+        return { nfts: result[0], count: result[1][0].total };
     }
 
     async getNftByContractAddressAndTokenId(ctx: RequestContext, contractAddress: string, tokenId: string): Promise<any> {
@@ -39,6 +39,6 @@ export class Cw721TokenService {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
         const result = await this.tokenContractRepository.getNftsByOwner(request);
 
-        return { nfts: result[0], count: result[1][0].total };
+        return { tokens: result[0], count: result[1][0].total };
     }
 }
