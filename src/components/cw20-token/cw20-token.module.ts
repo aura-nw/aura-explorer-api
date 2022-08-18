@@ -8,6 +8,7 @@ import { Cw20TokenController } from "./controllers/cw20-token.controller";
 import { Cw20TokenService } from "./services/cw20-token.service";
 import { TokenContractRepository } from "../contract/repositories/token-contract.repository";
 import { SmartContractRepository } from "../contract/repositories/smart-contract.repository";
+import { RedisUtil } from "../../shared/utils/redis.util";
 
 @Module({
     imports: [
@@ -19,7 +20,7 @@ import { SmartContractRepository } from "../contract/repositories/smart-contract
       ConfigModule,
       HttpModule
     ],
-    providers: [Cw20TokenService, ServiceUtil],
+    providers: [Cw20TokenService, ServiceUtil, RedisUtil],
     controllers: [Cw20TokenController],
     exports: [Cw20TokenService],
   })

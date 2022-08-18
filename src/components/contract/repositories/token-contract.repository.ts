@@ -79,7 +79,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
             condition['skip'] = offset;
         }
         const [tokens, count] = await this.findAndCount(condition);
-        return { tokens: tokens, count: count };
+        return [tokens, count];
     }
     
     async getCw20TokensByOwner(request: Cw20TokenByOwnerParamsDto) {

@@ -18,7 +18,9 @@ export class Cw721TokenService {
 
     async getCw721Tokens(ctx: RequestContext, request: Cw721TokenParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw721Tokens.name} was called!`);
-        return await this.tokenContractRepository.getDataTokens(CONTRACT_TYPE.CW721, request.keyword, request.limit, request.offset);
+        const [tokens, count] = await this.tokenContractRepository.getDataTokens(CONTRACT_TYPE.CW721, request.keyword, request.limit, request.offset);
+        
+        return { tokens: tokens, count: count };
     }
 
     async getNftsByContractAddress(ctx: RequestContext, contractAddress: string, request: NftParamsDto): Promise<any> {
