@@ -62,4 +62,15 @@ export class Cw20TokenController {
 
         return { data: tokens, meta: { count } };
     }
+
+    @Get('price/:id')
+    @ApiOperation({ summary: 'Get price of cw20/cw721 token by id' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getPriceById(@ReqContext() ctx: RequestContext, @Param('id') id: string): Promise<any> {
+        this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+        const price = await this.cw20TokenService.getPriceById(ctx, id);
+
+        return { data: price, meta: {} };
+    }
 }

@@ -33,7 +33,7 @@ export class NftRepository extends Repository<Nft> {
                     FROM transactions
                     WHERE contract_address != ''
                         AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
-                    GROUP BY token_id
+                    GROUP BY contract_address, token_id
                     ORDER BY timestamp DESC
                 ) tx ON n.contract_address = tx.contract_address AND n.token_id = tx.token_id
             WHERE n.contract_address = ? AND is_burn = 0`;

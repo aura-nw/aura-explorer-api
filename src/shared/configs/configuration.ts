@@ -28,8 +28,7 @@ export default () => ({
       port: process.env.REDIS_PORT,
       db: process.env.REDIS_DB,
       username: process.env.REDIS_USERNAME,
-      password: process.env.REDIS_PASSWORD,
-      prefix: process.env.REDIS_PREFIX
+      password: process.env.REDIS_PASSWORD
     }
   },
   threads: process.env.THREADS,

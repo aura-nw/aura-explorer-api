@@ -30,9 +30,6 @@ export class Cw20TokenService {
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
         const [tokens, count] = await this.tokenContractRepository.getDataTokens(CONTRACT_TYPE.CW20, request?.keyword, request.limit, request.offset);
-        //get token info from redis
-        await this.redisUtil.connect();
-        const data = await this.redisUtil.getValue('bitcoin');
 
         return { tokens: tokens, count: count };
     }
@@ -66,5 +63,18 @@ export class Cw20TokenService {
         const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
 
         return { tokens: result[0], count: result[1][0].total };
+    }
+
+    async getPriceById(ctx: RequestContext, id: string): Promise<any> {
+        this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+        let price = 0;
+        this.redisUtil.connect();
+        const data = await this.redisUtil.getValue(id);
+        if (data) {
+            const priceData = JSON.parse(data);
+            price = priceData.current_price;
+        }
+
+        return price;
     }
 }
