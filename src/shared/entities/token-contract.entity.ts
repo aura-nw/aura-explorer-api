@@ -29,9 +29,6 @@ export class TokenContract extends BaseEntityIncrementId {
     decimals: number;
 
     @Column()
-    total_supply: number;
-
-    @Column()
     num_tokens: number;
 
     @Column()
