@@ -1,9 +1,9 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { EntityRepository, FindManyOptions, ObjectLiteral, Raw, Repository } from "typeorm";
+import { EntityRepository, FindManyOptions, Not, ObjectLiteral, Raw, Repository } from "typeorm";
 import { Cw20TokenByOwnerParamsDto } from "../../../components/cw20-token/dtos/cw20-token-by-owner-params.dto";
 import { TokenTransactionParamsDto } from "../../../components/cw20-token/dtos/token-transaction-params.dto";
 import { NftByOwnerParamsDto } from "../../../components/cw721-token/dtos/nft-by-owner-params.dto";
-import { CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
+import { AURA_INFO, CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
 
 @EntityRepository(TokenContract)
 export class TokenContractRepository extends Repository<TokenContract> {
@@ -58,6 +58,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let condition: FindManyOptions<TokenContract> = {
             where: {
                 type: type,
+                contract_address: Not(AURA_INFO.CONNTRACT_ADDRESS)
             },
             order: { circulating_market_cap: 'DESC', updated_at: 'DESC' },
         }
@@ -85,19 +86,20 @@ export class TokenContractRepository extends Repository<TokenContract> {
     async getCw20TokensByOwner(request: Cw20TokenByOwnerParamsDto) {
         let result = [];
         let params = [];
-        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance, tc.decimals, tc.max_total_supply`;
+        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance, tc.decimals, tc.max_total_supply,
+            tc.price, tc.price_change_percentage_24h, (price * cto.balance) AS value`;
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
-                INNER JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
-            WHERE cto.owner = ?
-                AND cto.balance > 0`;
+                LEFT JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
+            WHERE (cto.owner = ? AND cto.balance > 0) 
+                OR tc.contract_address = '${AURA_INFO.CONNTRACT_ADDRESS}'`;
         params.push(request.account_address);
         if(request?.keyword) {
             sql += ` AND (LOWER(tc.name) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
             params.push(`%${request.keyword.toLowerCase()}%`);
             params.push(`%${request.keyword.toLowerCase()}%`);
         }
-        sql += " ORDER BY tc.updated_at DESC";
+        sql += ` ORDER BY FIELD(tc.contract_address, '${AURA_INFO.CONNTRACT_ADDRESS}') DESC, (price * cto.balance) DESC, tc.updated_at DESC`;
         let sqlLimit = "";
         if(request.limit > 0) {
             sqlLimit = " LIMIT ? OFFSET ?";
@@ -113,7 +115,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
     async getNftsByOwner(request: NftByOwnerParamsDto) {
         let result = [];
         let params = [];
-        let sqlSelect: string = `SELECT tc.contract_address, sc.contract_name, n.token_id, n.uri`;
+        let sqlSelect: string = `SELECT tc.contract_address, sc.contract_name, n.token_id, n.uri, tc.symbol`;
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
                     INNER JOIN smart_contracts sc ON tc.contract_address = sc.contract_address

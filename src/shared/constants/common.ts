@@ -118,6 +118,10 @@ export enum INDEXER_API {
   TOKEN_HOLDERS = "api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true"
 }
 
+export enum AURA_INFO {
+  CONNTRACT_ADDRESS = 'aura'
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',

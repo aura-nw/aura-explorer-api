@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext, TokenContract } from "../../../shared";
+import { AkcLogger, AURA_INFO, CONTRACT_TYPE, INDEXER_API, RequestContext, TokenContract } from "../../../shared";
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
@@ -14,6 +14,7 @@ export class Cw20TokenService {
     private appParams;
     private indexerUrl;
     private indexerChainId;
+    private api;
 
     constructor(
         private readonly logger: AkcLogger,
@@ -25,6 +26,7 @@ export class Cw20TokenService {
         this.appParams = appConfig.default();
         this.indexerUrl = this.appParams.indexer.url;
         this.indexerChainId = this.appParams.indexer.chainId;
+        this.api = this.appParams.api;
     }
 
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
@@ -61,6 +63,19 @@ export class Cw20TokenService {
     async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
         const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
+        result.forEach(async (item)=>{
+            if(item.contract_address === AURA_INFO.CONNTRACT_ADDRESS){
+                //get balance
+                item.balance = 0;
+                item.value = 0;
+                const balanceParams = `cosmos/bank/v1beta1/balances/${request.account_address}`;
+                const balanceData = await this.serviceUtil.getDataAPI(this.api, balanceParams, ctx)
+                if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
+                    item.balance = Number(balanceData.balances[0].amount);
+                    item.value = item.balance * Number(item.price);
+                }
+            }
+        });
 
         return { tokens: result[0], count: result[1][0].total };
     }
@@ -68,7 +83,6 @@ export class Cw20TokenService {
     async getPriceById(ctx: RequestContext, id: string): Promise<any> {
         this.logger.log(ctx, `${this.getPriceById.name} was called!`);
         let price = 0;
-        this.redisUtil.connect();
         const data = await this.redisUtil.getValue(id);
         if (data) {
             const priceData = JSON.parse(data);
