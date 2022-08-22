@@ -54,12 +54,12 @@ export class TokenContractRepository extends Repository<TokenContract> {
         return result;
     }
 
-    async getDataTokens(type: CONTRACT_TYPE, keyword: string, limit: number, offset: number): Promise<[any[], number]> {
+    async getDataTokens(type: CONTRACT_TYPE, keyword: string, limit: number, offset: number) {
         let condition: FindManyOptions<TokenContract> = {
             where: {
                 type: type,
             },
-            order: { updated_at: 'DESC' },
+            order: { circulating_market_cap: 'DESC', updated_at: 'DESC' },
         }
 
         if (keyword) {
@@ -85,7 +85,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
     async getCw20TokensByOwner(request: Cw20TokenByOwnerParamsDto) {
         let result = [];
         let params = [];
-        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance, tc.decimals`;
+        let sqlSelect: string = `SELECT tc.name, tc.symbol, tc.image, tc.contract_address, cto.balance, tc.decimals, tc.max_total_supply`;
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
                 INNER JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
