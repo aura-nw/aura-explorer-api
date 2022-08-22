@@ -2,7 +2,7 @@ import { Column, Entity, Unique } from "typeorm";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('nfts')
-@Unique(['contract_address', 'token_id'])
+@Unique(['contract_address', 'token_id', 'is_burn'])
 export class Nft extends BaseEntityIncrementId {
     @Column()
     contract_address: string;

@@ -33,4 +33,28 @@ export class TokenContract extends BaseEntityIncrementId {
 
     @Column()
     coin_id: string;
+
+    @Column()
+    max_total_supply: number;
+
+    @Column()
+    price: number;
+
+    @Column()
+    price_change_percentage_24h: number;
+
+    @Column()
+    volume_24h: number;
+
+    @Column()
+    circulating_market_cap: number;
+
+    @Column()
+    fully_diluted_market_cap: number;
+
+    @Column()
+    holders: number;
+
+    @Column()
+    holders_change_percentage_24h: number;
 }
