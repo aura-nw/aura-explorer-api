@@ -67,4 +67,7 @@ export class Proposal {
 
     @Column({ default: false })
     is_delete: boolean;
+
+    @Column()
+    request_amount: number;
 }

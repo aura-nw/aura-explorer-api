@@ -57,7 +57,7 @@ export class MetricController {
   ): Promise<BaseApiResponse<MetricOutput[]>> {
     this.logger.log(ctx, `${this.getTransactionMetric.name} was called!`);
 
-    const metrics = await this.metricService.getTransaction(ctx, query.range);
+    const metrics = await this.metricService.getTransaction(ctx, query.range, query.timezone);
 
     return { data: metrics, meta: null };
   }

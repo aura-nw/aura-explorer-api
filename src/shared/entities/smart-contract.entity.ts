@@ -47,4 +47,10 @@ export class SmartContract extends BaseEntityIncrementId {
 
     @Column()
     s3_location: string;
+
+    @Column()
+    mainnet_code_id: string;
+
+    @Column()
+    mainnet_upload_status: string;
 }
