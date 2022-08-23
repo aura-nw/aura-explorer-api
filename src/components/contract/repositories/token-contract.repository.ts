@@ -91,8 +91,8 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
                 LEFT JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
-            WHERE (cto.owner = ? AND cto.balance > 0) 
-                OR tc.contract_address = '${AURA_INFO.CONNTRACT_ADDRESS}'`;
+            WHERE ((cto.owner = ? AND cto.balance > 0) 
+                OR tc.contract_address = '${AURA_INFO.CONNTRACT_ADDRESS}')`;
         params.push(request.account_address);
         if(request?.keyword) {
             sql += ` AND (LOWER(tc.name) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
