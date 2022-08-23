@@ -26,7 +26,7 @@ export class Cw20TokenService {
         this.appParams = appConfig.default();
         this.indexerUrl = this.appParams.indexer.url;
         this.indexerChainId = this.appParams.indexer.chainId;
-        this.api = this.appParams.api;
+        this.api = this.appParams.node.api;
     }
 
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
@@ -63,19 +63,17 @@ export class Cw20TokenService {
     async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
         const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
-        result.forEach(async (item)=>{
-            if(item.contract_address === AURA_INFO.CONNTRACT_ADDRESS){
-                //get balance
-                item.balance = 0;
-                item.value = 0;
-                const balanceParams = `cosmos/bank/v1beta1/balances/${request.account_address}`;
-                const balanceData = await this.serviceUtil.getDataAPI(this.api, balanceParams, ctx)
-                if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
-                    item.balance = Number(balanceData.balances[0].amount);
-                    item.value = item.balance * Number(item.price);
-                }
+        const item = result[0].find(i => i.contract_address === AURA_INFO.CONNTRACT_ADDRESS);
+        if (item) {
+            item.balance = 0;
+            item.value = 0;
+            const balanceParams = `cosmos/bank/v1beta1/balances/${request.account_address}`;
+            const balanceData = await this.serviceUtil.getDataAPI(this.api, balanceParams, ctx)
+            if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
+                item.balance = Number(balanceData.balances[0].amount);
+                item.value = item.balance * Number(item.price);
             }
-        });
+        }
 
         return { tokens: result[0], count: result[1][0].total };
     }
