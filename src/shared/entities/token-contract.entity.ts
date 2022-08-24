@@ -19,11 +19,11 @@ export class TokenContract extends BaseEntityIncrementId {
     contract_address: string;
 
     @Column()
-    decimal: number;
+    decimals: number;
 
     @Column()
-    max_total_supply: number;
+    total_supply: number;
 
-    @Column()
-    is_main_token: boolean;
+    // @Column()
+    // is_main_token: boolean;
 }
