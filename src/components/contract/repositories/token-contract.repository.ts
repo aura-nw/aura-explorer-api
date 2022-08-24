@@ -1,4 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
+import { Cw721TokenParamsDto } from "../../../components/cw721-token/dtos/cw721-token-params.dto";
 import { EntityRepository, FindManyOptions, Not, ObjectLiteral, Raw, Repository } from "typeorm";
 import { Cw20TokenByOwnerParamsDto } from "../../../components/cw20-token/dtos/cw20-token-by-owner-params.dto";
 import { TokenTransactionParamsDto } from "../../../components/cw20-token/dtos/token-transaction-params.dto";
@@ -109,6 +110,42 @@ export class TokenContractRepository extends Repository<TokenContract> {
     
         result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
         result[1] = await this.query(sqlCount + sql, params);
+        return result;
+    }
+
+    async getCw721Tokens(request: Cw721TokenParamsDto) {
+        let result = [];
+        let params = [];
+        let sqlSelect: string = `SELECT tc.*,
+                (SELECT COUNT(id)
+            FROM transactions
+            WHERE contract_address = tc.contract_address
+                AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
+                AND timestamp > NOW() - INTERVAL 24 HOUR) AS transfers_24h,
+                (SELECT COUNT(id)
+            FROM transactions
+            WHERE contract_address = tc.contract_address
+                AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
+                AND timestamp > NOW() - INTERVAL 72 HOUR) AS transfers_3d`;
+        let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
+        let sql: string = ` FROM token_contracts tc
+            WHERE tc.type = '${CONTRACT_TYPE.CW721}' AND tc.contract_address != '${AURA_INFO.CONNTRACT_ADDRESS}'`;
+        if(request?.keyword) {
+            sql += ` AND (LOWER(tc.name) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
+            params.push(`%${request.keyword.toLowerCase()}%`);
+            params.push(`%${request.keyword.toLowerCase()}%`);
+        }
+        const sqlOrder = ` ORDER BY transfers_24h DESC, tc.updated_at DESC`;
+        let sqlLimit = "";
+        if(request.limit > 0) {
+            sqlLimit = " LIMIT ? OFFSET ?";
+            params.push(request.limit);
+            params.push(request.offset);
+        }
+    
+        result[0] = await this.query(sqlSelect + sql + sqlOrder + sqlLimit, params);
+        result[1] = await this.query(sqlCount + sql, params);
+
         return result;
     }
 
