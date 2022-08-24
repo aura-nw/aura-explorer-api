@@ -81,6 +81,7 @@ export class Cw20TokenService {
     async getPriceById(ctx: RequestContext, id: string): Promise<any> {
         this.logger.log(ctx, `${this.getPriceById.name} was called!`);
         let price = 0;
+        await this.redisUtil.connect();
         const data = await this.redisUtil.getValue(id);
         if (data) {
             const priceData = JSON.parse(data);
