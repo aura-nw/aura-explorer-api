@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as moment from 'moment';
 import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
@@ -41,19 +42,23 @@ export class MetricService {
   async getTransaction(
     ctx: RequestContext,
     range: Range,
+    timezone: number
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
       ctx,
+
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
+    const hours = Math.round(timezone / 60);
+
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
-    const series = generateSeries(range);
-
-    return mergeByProperty(metricData, series);;
+    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', hours) as MetricOutput[];
+    const series = generateSeries(range, hours);
+    let result = mergeByProperty(metricData, series);
+    return result;
   }
 
   async getValidator(
