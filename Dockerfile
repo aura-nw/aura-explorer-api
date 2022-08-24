@@ -1,4 +1,4 @@
-FROM node:dubnium
+FROM node:16.10 as build-stage
 
 ARG PORT=3000
 
@@ -7,8 +7,9 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 COPY . .
-RUN npm install
-RUN npm ci && npm cache clean --force
+#RUN npm install
+#RUN npm ci && npm cache clean --force
+RUN npm install --legacy-peer-deps && npm cache clean --force   
 RUN npm run build
 
 EXPOSE $PORT
