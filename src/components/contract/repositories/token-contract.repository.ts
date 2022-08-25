@@ -135,10 +135,15 @@ export class TokenContractRepository extends Repository<TokenContract> {
             params.push(`%${request.keyword.toLowerCase()}%`);
             params.push(`%${request.keyword.toLowerCase()}%`);
         }
-        const sqlOrder = ` ORDER BY transfers_24h DESC, tc.updated_at DESC`;
-        let sqlLimit = "";
+        let sqlOrder = '';
+        if (request?.sort_column && request?.sort_order) {
+            sqlOrder = ` ORDER BY ${request.sort_column} ${request.sort_order}, tc.updated_at DESC`;
+        } else {
+            sqlOrder = ` ORDER BY transfers_24h DESC, tc.updated_at DESC`;
+        }
+        let sqlLimit = '';
         if(request.limit > 0) {
-            sqlLimit = " LIMIT ? OFFSET ?";
+            sqlLimit = ' LIMIT ? OFFSET ?';
             params.push(request.limit);
             params.push(request.offset);
         }
@@ -184,5 +189,14 @@ export class TokenContractRepository extends Repository<TokenContract> {
             WHERE tc.contract_address = ?`;
 
         return await this.repos.query(sql, [contractAddress]);
+    }
+
+    async getTotalAssetByAccountAddress(accountAddress: string) {
+        const sql = `SELECT SUM(tc.price * cto.balance) AS total
+            FROM token_contracts tc
+            LEFT JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
+        WHERE cto.owner = ?`;
+
+        return await this.repos.query(sql, [accountAddress]);
     }
 }

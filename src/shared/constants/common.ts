@@ -119,7 +119,8 @@ export enum INDEXER_API {
 }
 
 export enum AURA_INFO {
-  CONNTRACT_ADDRESS = 'aura'
+  CONNTRACT_ADDRESS = 'aura',
+  COIN_ID = 'aura-network'
 }
 
 export const ERROR_MAP = {
