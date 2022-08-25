@@ -233,10 +233,10 @@ export class AccountService {
 
     //get auth_info
     let delegatedVesting = 0;
-    accountOutput.delegatable_vesting = '0';
+    accountOutput.delegable_vesting = '0';
     if (balancesAmount > 0) {
       delegatedVesting = (balancesAmount - available);
-      accountOutput.delegatable_vesting = this.changeUauraToAura(delegatedVesting);
+      accountOutput.delegable_vesting = this.changeUauraToAura(delegatedVesting);
     }
 
     // Get vesting
