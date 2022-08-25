@@ -73,4 +73,15 @@ export class Cw20TokenController {
 
         return { data: price, meta: {} };
     }
+
+    @Get('total-asset/:accountAddress')
+    @ApiOperation({ summary: 'Get total asset of coins and tokens' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getTotalAssetByAccountAddress(@ReqContext() ctx: RequestContext, @Param('accountAddress') accountAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.getTotalAssetByAccountAddress.name} was called!`);
+        const price = await this.cw20TokenService.getTotalAssetByAccountAddress(ctx, accountAddress);
+
+        return { data: price, meta: {} };
+    }
 }

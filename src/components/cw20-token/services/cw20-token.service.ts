@@ -90,4 +90,28 @@ export class Cw20TokenService {
 
         return price;
     }
+
+    async getTotalAssetByAccountAddress(ctx: RequestContext, accountAddress: string): Promise<any> {
+        this.logger.log(ctx, `${this.getTotalAssetByAccountAddress.name} was called!`);
+        let total = 0;
+        const result = await this.tokenContractRepository.getTotalAssetByAccountAddress(accountAddress);
+        const balanceParams = `cosmos/bank/v1beta1/balances/${accountAddress}`;
+        const balanceData = await this.serviceUtil.getDataAPI(this.api, balanceParams, ctx);
+        //get balance of aura wallet
+        let balance = 0;
+        if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
+            balance = Number(balanceData.balances[0].amount);
+        }
+        //get price of aura
+        await this.redisUtil.connect();
+        const data = await this.redisUtil.getValue(AURA_INFO.COIN_ID);
+        let price = 0;
+        if (data) {
+            const priceData = JSON.parse(data);
+            price = priceData.current_price;
+        }
+        total = Number(result[0].total) + (balance * price);
+
+        return total;
+    }
 }
