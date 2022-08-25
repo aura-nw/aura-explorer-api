@@ -8,6 +8,7 @@ import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
 import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
 import * as util from 'util';
 import { RedisUtil } from "../../../shared/utils/redis.util";
+import { AccountService } from "../../../components/account/services/account.service";
 
 @Injectable()
 export class Cw20TokenService {
@@ -20,7 +21,8 @@ export class Cw20TokenService {
         private readonly logger: AkcLogger,
         private tokenContractRepository: TokenContractRepository,
         private serviceUtil: ServiceUtil,
-        private redisUtil: RedisUtil
+        private redisUtil: RedisUtil,
+        private accountService: AccountService
     ) {
         this.logger.setContext(Cw20TokenService.name);
         this.appParams = appConfig.default();
@@ -65,14 +67,9 @@ export class Cw20TokenService {
         const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
         const item = result[0].find(i => i.contract_address === AURA_INFO.CONNTRACT_ADDRESS);
         if (item) {
-            item.balance = 0;
-            item.value = 0;
-            const balanceParams = `cosmos/bank/v1beta1/balances/${request.account_address}`;
-            const balanceData = await this.serviceUtil.getDataAPI(this.api, balanceParams, ctx)
-            if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
-                item.balance = Number(balanceData.balances[0].amount);
-                item.value = item.balance * Number(item.price);
-            }
+            const accountData = await this.accountService.getAccountDetailByAddress(ctx, request.account_address);
+            item.balance = accountData ? Number(accountData.total) : 0;
+            item.value = item.balance * Number(item.price);
         }
 
         return { tokens: result[0], count: result[1][0].total };
@@ -95,13 +92,10 @@ export class Cw20TokenService {
         this.logger.log(ctx, `${this.getTotalAssetByAccountAddress.name} was called!`);
         let total = 0;
         const result = await this.tokenContractRepository.getTotalAssetByAccountAddress(accountAddress);
-        const balanceParams = `cosmos/bank/v1beta1/balances/${accountAddress}`;
-        const balanceData = await this.serviceUtil.getDataAPI(this.api, balanceParams, ctx);
         //get balance of aura wallet
         let balance = 0;
-        if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
-            balance = Number(balanceData.balances[0].amount);
-        }
+        const accountData = await this.accountService.getAccountDetailByAddress(ctx, accountAddress);
+        balance = accountData ? Number(accountData.total) : 0;
         //get price of aura
         await this.redisUtil.connect();
         const data = await this.redisUtil.getValue(AURA_INFO.COIN_ID);
