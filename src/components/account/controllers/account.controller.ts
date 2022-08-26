@@ -51,8 +51,8 @@ export class AccountController {
   ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
     this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
 
-    const { transactions, count } = await this.transactionService.getTransactionsByDelegatorAddress(ctx, address, query);
+    // const { transactions, count } = await this.transactionService.getTransactionsByDelegatorAddress(ctx, address, query);
 
-    return { data: transactions, meta: {count} };
+    return { data: [], meta: {count:0} };
   }
 }
