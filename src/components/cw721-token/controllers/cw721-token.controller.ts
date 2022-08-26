@@ -4,6 +4,7 @@ import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
 import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 import { NftParamsDto } from "../dtos/nft-params.dto";
+import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
 import { Cw721TokenService } from "../services/cw721-token.service";
 
 @ApiTags('cw721-tokens')
@@ -63,17 +64,13 @@ export class Cw721TokenController {
         return { data: tokens, meta: { count } };
     }
 
-    @Get('transactions/:address/:type/:limit/:offset')
+    @Post('transactions')
     @ApiResponse({ status: HttpStatus.OK })
     @UseInterceptors(ClassSerializerInterceptor)
     @UseInterceptors(CacheInterceptor)
-    async getTransactionContract(@ReqContext() ctx: RequestContext,
-        @Param('address') address: string,
-        @Param('type') type: string,
-        @Param('limit') limit: number,
-        @Param('offset') offset: number) {
+    async getTransactionContract(@ReqContext() ctx: RequestContext, @Body() req: TokenCW721TransactionParasDto) {
         this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
-        const [transactions, count] = await this.cw721TokenService.getTransactionContract(address, type, limit, offset);
+        const [transactions, count] = await this.cw721TokenService.getTransactionContract(req);
         return { data: transactions, meta: { count } };
     }
 }

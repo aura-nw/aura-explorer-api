@@ -8,6 +8,8 @@ import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 import { TransactionRepository } from "../../transaction/repositories/transaction.repository";
 import { TokenTransactionRepository } from "../repositories/token-transaction.repository";
 import { any } from "joi";
+import { isNumber } from "class-validator";
+import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
 
 @Injectable()
 export class Cw721TokenService {
@@ -57,23 +59,24 @@ export class Cw721TokenService {
      * @param offset 
      * @returns 
      */
-    async getTransactionContract(address: string, type: string, limit: number, offset: number): Promise<any> {
-        const {transactions, count} = await this.transactionRepository.getTransactionContract(address, type, limit, offset);
+    async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<any> {
+        const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash,req.token_id, req.limit, req.offset);
         if (transactions) {
-            const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(address);
+            const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
             if (transactionBurn) {
                 transactions.forEach((item) => {
                     const tokenId = this.getTokenId(item.messages);
-                    const filter = transactionBurn.filter(f => Number(f.token_id) === Number(tokenId));
-                    if(filter){
-                        transactions['disabled'] = true;
-                    }else{
-                        transactions['disabled'] = false;
+                    const filter = transactionBurn.filter(f => Number(f.token_id) === Number(tokenId)
+                        && Number(item.transaction_id) <= Number(f.last_id));
+                    if (filter) {
+                        item['disabled'] = true;
+                    } else {
+                        item['disabled'] = false;
                     }
                 });
             }
         }
-        return {transactions, count};
+        return [transactions, count];
     }
 
     /**
@@ -82,14 +85,13 @@ export class Cw721TokenService {
      * @returns 
      */
     getTokenId(message: any) {
-        const msgObjects = JSON.parse(message);
-        const msg = msgObjects[0];
-        if (msg?.burn) {
-            return msg?.burn.token_id;
-        }else if (msg?.burn) {
-            return msg?.mint.token_id;
-        }else if (msg?.burn) {
-            return msg?.transfer.token_id;
+        const msg = message[0];
+        if (msg.msg?.burn) {
+            return msg.msg?.burn.token_id;
+        } else if (msg.msg?.burn) {
+            return msg.msg?.mint.token_id;
+        } else if (msg.msg?.burn) {
+            return msg.msg?.transfer.token_id;
         }
     }
 }

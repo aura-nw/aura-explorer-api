@@ -1,7 +1,8 @@
 import { SearchTransactionParamsDto } from '../../../components/contract/dtos/search-transaction-params.dto';
-import { EntityRepository, Raw, Repository } from 'typeorm';
+import { EntityRepository, ObjectLiteral, Raw, Repository } from 'typeorm';
 
 import { CONST_CHAR, CONST_FULL_MSG_TYPE, CONST_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract, Transaction } from '../../../shared';
+import { TokenTransaction } from '../../../shared/entities/token-transaction.entity';
 
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
@@ -106,23 +107,52 @@ export class TransactionRepository extends Repository<Transaction> {
    * @param offset 
    * @returns 
    */
-  async getTransactionContract(address: string, type: string, limit: number, offset: number) {
-    const data = await this.createQueryBuilder('trans')
-      .select(`trans.*`)
+  async getTransactionContract(contract_address: string, account_address: string, tx_hash: string, token_id: string, limit: number, offset: number) {
+    let conditions = ` tokenContract.type=:contract_type`;
+    const paras = { 'contract_type': CONTRACT_TYPE.CW721 };
+    const selQuery = this.createQueryBuilder('trans')
+      .select(`trans.*, tokenTrans.id AS transaction_id, tokenTrans.token_id`)
       .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
-      .where(`trans.contract_address=:address AND  tokenContract.type=${type}`)
-      .setParameter('address', address)
-      .limit(limit)
-      .offset(limit * offset)
-      .execute();
+      .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
 
-    const count = await this.createQueryBuilder('trans')
+    const selCount = this.createQueryBuilder('trans')
       .select(`COUNT(trans.id) AS total`)
       .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
-      .where(`trans.contract_address=:address AND  tokenContract.type=${type}`)
-      .setParameter('address', address)
-      .getRawOne();
+      .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
 
-    return { transactions: data, count };
+    if (contract_address) {
+      conditions += ' AND trans.contract_address=:contract_address ';
+      paras['contract_address'] = contract_address;
+    }
+
+    /**
+     * @todo implement after refactoer db
+     */
+    if (account_address) {
+
+    }
+
+    if (tx_hash) {
+      conditions += ' AND trans.tx_hash=:tx_hash ';
+      paras['tx_hash'] = tx_hash;
+    }
+
+    if (token_id) {
+      conditions += ' AND tokenTrans.token_id=:token_id ';
+      paras['token_id'] = token_id;
+    }
+
+    const transactions = await selQuery
+      .where(conditions)
+      .setParameters(paras)
+      .limit(limit)
+      .offset(limit * offset)
+      .orderBy('trans.timestamp', "ASC").getRawMany();
+
+    const count = await selCount
+      .where(conditions)
+      .setParameters(paras)
+      .getRawOne();
+    return [transactions, count];
   }
 }
