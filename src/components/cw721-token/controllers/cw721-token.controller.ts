@@ -62,4 +62,18 @@ export class Cw721TokenController {
 
         return { data: tokens, meta: { count } };
     }
+
+    @Get('transactions/:address/:type/:limit/:offset')
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    @UseInterceptors(CacheInterceptor)
+    async getTransactionContract(@ReqContext() ctx: RequestContext,
+        @Param('address') address: string,
+        @Param('type') type: string,
+        @Param('limit') limit: number,
+        @Param('offset') offset: number) {
+        this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
+        const [transactions, count] = await this.cw721TokenService.getTransactionContract(address, type, limit, offset);
+        return { data: transactions, meta: { count } };
+    }
 }

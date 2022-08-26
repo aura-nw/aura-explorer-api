@@ -1,7 +1,7 @@
 import { SearchTransactionParamsDto } from '../../../components/contract/dtos/search-transaction-params.dto';
 import { EntityRepository, Raw, Repository } from 'typeorm';
 
-import { CONST_CHAR, CONST_FULL_MSG_TYPE, CONST_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, Transaction } from '../../../shared';
+import { CONST_CHAR, CONST_FULL_MSG_TYPE, CONST_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract, Transaction } from '../../../shared';
 
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
@@ -11,8 +11,8 @@ export class TransactionRepository extends Repository<Transaction> {
     const [transactions, count] = await this.findAndCount({
       where: (
         {
-          messages: Raw(() => `code = 0 AND messages LIKE '%${address}%'
-                  AND type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}')`),
+          messages: Raw(() => `type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}') 
+                            AND code = 0 AND messages LIKE '%${address}%'`),
         }
       ),
       order: { height: 'DESC' },
@@ -82,11 +82,11 @@ export class TransactionRepository extends Repository<Transaction> {
             ) )
         OR ( contract_address = ?
             AND type = '${CONTRACT_TRANSACTION_TYPE.INSTANTIATE}' ) )`;
-        params.push(request.contract_address);
-        params.push(request.contract_address);
-        params.push(request.contract_address);
-        params.push(request.contract_address);
-        params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
     }
     sql += " ORDER BY height DESC";
     let sqlLimit = " LIMIT ? OFFSET ?";
@@ -96,5 +96,33 @@ export class TransactionRepository extends Repository<Transaction> {
     result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
     result[1] = await this.query(sqlCount + sql, params);
     return result;
+  }
+
+  /**
+   * Get transaction by contract address and type
+   * @param address 
+   * @param type 
+   * @param limit 
+   * @param offset 
+   * @returns 
+   */
+  async getTransactionContract(address: string, type: string, limit: number, offset: number) {
+    const data = await this.createQueryBuilder('trans')
+      .select(`trans.*`)
+      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .where(`trans.contract_address=:address AND  tokenContract.type=${type}`)
+      .setParameter('address', address)
+      .limit(limit)
+      .offset(limit * offset)
+      .execute();
+
+    const count = await this.createQueryBuilder('trans')
+      .select(`COUNT(trans.id) AS total`)
+      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .where(`trans.contract_address=:address AND  tokenContract.type=${type}`)
+      .setParameter('address', address)
+      .getRawOne();
+
+    return { transactions: data, count };
   }
 }
