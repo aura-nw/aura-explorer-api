@@ -11,8 +11,8 @@ export class TransactionRepository extends Repository<Transaction> {
     const [transactions, count] = await this.findAndCount({
       where: (
         {
-          messages: Raw(() => `code = 0 AND messages LIKE '%${address}%'
-                  AND type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}')`),
+          messages: Raw(() => ` type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}')
+                  AND code = 0 AND messages LIKE '%${address}%'`),
         }
       ),
       order: { height: 'DESC' },

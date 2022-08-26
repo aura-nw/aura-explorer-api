@@ -1,5 +1,4 @@
-import { json } from 'stream/consumers';
-import { Column, Entity, ManyToOne, Unique } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, Unique } from 'typeorm';
 
 import { BaseEntityIncrementId } from './base/base.entity';
 import { Block } from './block.entity';
@@ -34,6 +33,7 @@ export class Transaction extends BaseEntityIncrementId {
   info: string;
 
   @Column({ default: '' })
+  @Index('TRANSACTION_TYPE_IDX', {unique: true})
   type: string;
 
   @Column({ default: '' })
