@@ -155,4 +155,22 @@ export class TransactionRepository extends Repository<Transaction> {
       .getRawOne();
     return [transactions, count];
   }
+
+  viewNTFTransaction(address: string, token_id, limit: number, offset: number) {
+    let selQuery = `SELECT trans.* FROM transactions trans
+    INNER JOIN join token_contracts tContract ON tContract.contract_address = trans.contract_address
+    INNER JOIN token_transactions tTrans ON tTrans.tx_hash = trans.tx_hash
+    WHERE tContract.type =:tokenType
+    AND trans.contract_address =:address
+    AND tTrans.token_id =:toke_id
+    AND trans.type =:transType
+    AND tTrans.id > IFNULL((SELECT MAX(sToken.id) FROM token_transactions sToken 
+      WHERE sToken.token_id =:toke_id AND contract_address =:address AND sToken.transaction_type = 'burn'), 0);
+    LIMIT ${limit} OFFSET ${offset * limit} ORDER BY `;
+
+    this.createQueryBuilder()
+    .addSelect(selQuery)
+    .setParameters({tokenType: CONTRACT_TYPE.CW721, token_id: token_id, contract_address: address})
+    .execute();
+  }
 }
