@@ -17,4 +17,18 @@ export class DelegatorRewardRepository extends Repository<DelegatorReward> {
         .groupBy('validator_address, delegator_address')
         .getRawMany();
     }
+
+    /**
+     * Get rew
+     * @param delegatorAddress 
+     * @returns 
+     */
+    async getClaimRewardByDelegatorAddress(delegatorAddress: string) {
+        return await this.createQueryBuilder()
+        .select('delegator_address, SUM(amount) amount')
+        .where('delegator_address =:delegatorAddress')
+        .setParameter("delegatorAddress", delegatorAddress)
+        .groupBy('delegator_address')
+        .getRawOne();
+    }
 }
