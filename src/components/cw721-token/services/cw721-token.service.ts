@@ -60,7 +60,7 @@ export class Cw721TokenService {
      * @returns 
      */
     async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<any> {
-        const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash,req.token_id, req.limit, req.offset);
+        const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash, req.token_id, req.limit, req.offset);
         if (transactions) {
             const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
             if (transactionBurn) {
@@ -77,6 +77,19 @@ export class Cw721TokenService {
             }
         }
         return [transactions, count];
+    }
+
+    /**
+     * Get transactions by Address and Token Id
+     * @param address 
+     * @param tokenType 
+     * @param token_id 
+     * @param limit 
+     * @param offset 
+     * @returns 
+     */
+    async viewNTFTransaction(address: string, token_id, limit: number, offset: number) {
+        return await this.transactionRepository.viewNTFTransaction(address, CONTRACT_TYPE.CW721, token_id, limit, offset);
     }
 
     /**

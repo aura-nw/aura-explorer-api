@@ -3,7 +3,7 @@ import { EntityRepository, ObjectLiteral, Raw, Repository } from 'typeorm';
 
 import { CONST_CHAR, CONST_FULL_MSG_TYPE, CONST_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract, Transaction } from '../../../shared';
 import { TokenTransaction } from '../../../shared/entities/token-transaction.entity';
-
+import { CONTRACT_TRANSACTION_EXECUTE_TYPE } from "../../../shared";
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
 
@@ -111,7 +111,7 @@ export class TransactionRepository extends Repository<Transaction> {
     let conditions = ` tokenContract.type=:contract_type`;
     const paras = { 'contract_type': CONTRACT_TYPE.CW721 };
     const selQuery = this.createQueryBuilder('trans')
-      .select(`trans.*, tokenTrans.id AS transaction_id, tokenTrans.token_id`)
+      .select(`trans.*, tokenTrans.id AS tokenTrans_id, tokenTrans.token_id`)
       .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
       .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
 
@@ -147,7 +147,8 @@ export class TransactionRepository extends Repository<Transaction> {
       .setParameters(paras)
       .limit(limit)
       .offset(limit * offset)
-      .orderBy('trans.timestamp', "ASC").getRawMany();
+      .orderBy('trans.timestamp', "ASC")
+      .getRawMany();
 
     const count = await selCount
       .where(conditions)
@@ -156,21 +157,39 @@ export class TransactionRepository extends Repository<Transaction> {
     return [transactions, count];
   }
 
-  viewNTFTransaction(address: string, token_id, limit: number, offset: number) {
-    let selQuery = `SELECT trans.* FROM transactions trans
-    INNER JOIN join token_contracts tContract ON tContract.contract_address = trans.contract_address
-    INNER JOIN token_transactions tTrans ON tTrans.tx_hash = trans.tx_hash
-    WHERE tContract.type =:tokenType
-    AND trans.contract_address =:address
-    AND tTrans.token_id =:toke_id
-    AND trans.type =:transType
-    AND tTrans.id > IFNULL((SELECT MAX(sToken.id) FROM token_transactions sToken 
-      WHERE sToken.token_id =:toke_id AND contract_address =:address AND sToken.transaction_type = 'burn'), 0);
-    LIMIT ${limit} OFFSET ${offset * limit} ORDER BY `;
+  /**
+   * Get transactions by Address and Token Id
+   * @param address 
+   * @param tokenType 
+   * @param token_id 
+   * @param limit 
+   * @param offset 
+   * @returns 
+   */
+  async viewNTFTransaction(address: string, tokenType: string, token_id, limit: number, offset: number) {
+    const conditions = `tokenContract.type =:tokenType
+                        AND trans.contract_address =:address
+                        AND tokenTrans.id > IFNULL((SELECT MAX(sToken.id) FROM token_transactions sToken 
+                          WHERE sToken.token_id =:token_id AND contract_address =:address AND sToken.transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}'), 0)`;
 
-    this.createQueryBuilder()
-    .addSelect(selQuery)
-    .setParameters({tokenType: CONTRACT_TYPE.CW721, token_id: token_id, contract_address: address})
-    .execute();
+    const paras = { tokenType, token_id, address };
+    const transactions = this.createQueryBuilder('trans')
+      .select(`trans.*, tokenTrans.id AS tokenTrans_id, tokenTrans.token_id`)
+      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash')
+      .where(conditions)
+      .setParameters(paras)
+      .take(limit)
+      .skip(limit * offset)
+      .orderBy('trans.timestamp', 'DESC')
+      .getRawMany();
+
+
+    const count = await this.createQueryBuilder()
+      .select(`COUNT(trans.id) AS total`)
+      .setParameters(paras)
+      .getRawOne();
+
+    return [transactions, count];
   }
 }
