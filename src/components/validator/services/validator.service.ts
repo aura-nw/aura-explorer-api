@@ -204,11 +204,9 @@ export class ValidatorService {
       result.available_balance = Number(data.account_balances.balances[0].amount);
     }
     result.claim_reward = 0;
-    const withdrawRewards = await this.delegatorRewardRepository.find({
-      where: { delegator_address: delegatorAddress }
-    });
-    if (withdrawRewards.length > 0) {
-      result.claim_reward = withdrawRewards.reduce((a, curr) => Number(a) + Number(curr.amount), 0);
+    const withdrawReward = await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(delegatorAddress);
+    if (withdrawReward) {
+      result.claim_reward = Number(withdrawReward?.amount);
     }
 
     let delegations: any = [];
@@ -230,25 +228,7 @@ export class ValidatorService {
           }
         }
 
-        // delegation.validator_name = '';
-        // delegation.validator_rank = 0;
-        // const validator = await this.validatorRepository.getRankByAddress(item.delegation.validator_address);
-        // if (validator) {
-        //   //set name for item
-        //   delegation.validator_name = validator.title;
-        //   delegation.validator_rank = validator.rank;
-        // }
-
-        // //set reward by validator address and delegator address
-        // const rewards = await this.delegatorRewardRepository.find({
-        //   where: { delegator_address: delegatorAddress, validator_address: item.delegation.validator_address }
-        // });
-        // delegation.reward = 0;
-        // if (rewards.length > 0) {
-        //   delegation.reward = rewards.reduce((a, curr) => Number(a) + Number(curr.amount), 0);
-        // }
-
-        delegation.delegator_address= delegatorAddress;
+        delegation.delegator_address = delegatorAddress;
         delegation.validator_address = item.delegation.validator_address;
         delegations.push(delegation);
         validatorAddress.push(item.delegation.validator_address);
@@ -271,7 +251,7 @@ export class ValidatorService {
 
         // Set reward for validators
         const reward = delegatorRewards.find(f => f.validator_address === item.validator_address && f.validator_address === item.validator_address);
-        if(reward){
+        if (reward) {
           item.reward = Number(reward.amount);
         }
       }
