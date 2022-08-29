@@ -147,7 +147,7 @@ export class TransactionRepository extends Repository<Transaction> {
       .setParameters(paras)
       .limit(limit)
       .offset(limit * offset)
-      .orderBy('trans.timestamp', "ASC")
+      .orderBy('trans.timestamp', "DESC")
       .getRawMany();
 
     const count = await selCount
