@@ -236,7 +236,7 @@ export class ValidatorService {
       }
     }
 
-    if (delegations) {
+    if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
       const delegatorRewards = await this.delegatorRewardRepository.getRewardByAddress(delegatorAddr, validatorAddress);
       for (let i = 0; i < delegations.length; i++) {
