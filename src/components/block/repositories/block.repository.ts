@@ -4,13 +4,13 @@ import { Block } from '../../../shared';
 
 @EntityRepository(Block)
 export class BlockRepository extends Repository<Block> {
-    public getMinHeight = async (operator_address: string) =>{
+    public getMinHeight = async (operator_address: string) => {
         const result = await this.createQueryBuilder()
-        .select("height")
-        .where({operator_address })
-        .limit(1)
-        .addOrderBy("height")
-        .getRawOne();
+            .select("height")
+            .where({ operator_address })
+            .limit(1)
+            .addOrderBy("height")
+            .getRawOne();
 
         return result;
     }
@@ -22,7 +22,7 @@ export class BlockRepository extends Repository<Block> {
      * @param topBlock: Number of blocks to get
      * @returns Array<TextRow>
      */
-    async getBlockUptime(address: string, topBlock: number){
+    async getBlockUptime(address: string, topBlock: number) {
         const sql = `
         SELECT tmpBlock.height, tmpBlock.block_hash, (CASE WHEN tmpMiss.height = tmpBlock.height THEN 1 ELSE 0 END) isMissed FROM(
         SELECT height, block_hash, operator_address FROM blocks ORDER BY height DESC LIMIT ${topBlock}
@@ -31,7 +31,24 @@ export class BlockRepository extends Repository<Block> {
                 SELECT validator_address, height FROM missed_block 
                     WHERE validator_address =? ORDER BY height DESC LIMIT ${topBlock}
         ) AS tmpMiss ON tmpBlock.operator_address = tmpMiss.validator_address`;
-      
+
         return await this.query(sql, [address, address]);
     }
+
+    /**
+     * Get of validator bigin join
+     * @param operator_address 
+     * @returns 
+     */
+    public getHeightValidator = async (operator_address: string) => {
+        const result = await this.createQueryBuilder('blocks')
+            .select('blocks.height')
+            .innerJoin('transactions', 'tran', 'tran.blockId = blocks.id')
+            .where(`blocks.operator_address = :operator_address AND tran.type = '/cosmos.staking.v1beta1.MsgCreateValidator'`)
+            .setParameter('operator_address', operator_address)
+            .limit(1)
+            .addOrderBy('blocks.height')
+            .getRawOne();
+        return result;
+    };
 }
