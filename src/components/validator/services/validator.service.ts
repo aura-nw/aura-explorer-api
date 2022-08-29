@@ -154,7 +154,7 @@ export class ValidatorService {
       excludeExtraneousValues: true,
     });
 
-    const minHeight = await this.blockRepository.getHeightValidator(address);
+    const minHeight = await this.blockRepository.getMinHeight(address);
 
     validatorOutput.bonded_height = 1;
     if (minHeight > 0) {
