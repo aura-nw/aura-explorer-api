@@ -16,6 +16,17 @@ export class ValidatorRepository extends Repository<Validator> {
         ).then(t => t[0]);
     }
 
+    async getRanks(address: string[]) {
+        return await this.query(`
+            SELECT * FROM (
+                SELECT *,
+                RANK() OVER(ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC) as 'rank'
+                FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC
+            ) SUB
+            WHERE SUB.operator_address in (?)`, [address]
+        );
+    }
+
     /**
      * getDelegators
      * @param operatorAddress 

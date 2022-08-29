@@ -212,6 +212,8 @@ export class ValidatorService {
     }
 
     let delegations: any = [];
+    const validatorAddress: string[] = [];
+    const delegatorAddr: string[] = [];
     if (data?.account_delegations && data.account_delegations?.delegation_responses) {
       const delegationsData = data.account_delegations?.delegation_responses;
       for (let i = 0; i < delegationsData.length; i++) {
@@ -227,27 +229,55 @@ export class ValidatorService {
             delegation.pending_reward = findReward.reward[0].amount;
           }
         }
-        delegation.validator_name = '';
-        delegation.validator_rank = 0;
-        const validator = await this.validatorRepository.getRankByAddress(item.delegation.validator_address);
-        if (validator) {
-          //set name for item
-          delegation.validator_name = validator.title;
-          delegation.validator_rank = validator.rank;
-        }
-        //set reward by validator address and delegator address
-        const rewards = await this.delegatorRewardRepository.find({
-          where: { delegator_address: delegatorAddress, validator_address: item.delegation.validator_address }
-        });
-        delegation.reward = 0;
-        if (rewards.length > 0) {
-          delegation.reward = rewards.reduce((a, curr) => Number(a) + Number(curr.amount), 0);
-        }
+
+        // delegation.validator_name = '';
+        // delegation.validator_rank = 0;
+        // const validator = await this.validatorRepository.getRankByAddress(item.delegation.validator_address);
+        // if (validator) {
+        //   //set name for item
+        //   delegation.validator_name = validator.title;
+        //   delegation.validator_rank = validator.rank;
+        // }
+
+        // //set reward by validator address and delegator address
+        // const rewards = await this.delegatorRewardRepository.find({
+        //   where: { delegator_address: delegatorAddress, validator_address: item.delegation.validator_address }
+        // });
+        // delegation.reward = 0;
+        // if (rewards.length > 0) {
+        //   delegation.reward = rewards.reduce((a, curr) => Number(a) + Number(curr.amount), 0);
+        // }
+
+        delegation.delegator_address= delegatorAddress;
+        delegation.validator_address = item.delegation.validator_address;
         delegations.push(delegation);
+        validatorAddress.push(item.delegation.validator_address);
+        delegatorAddr.push(delegatorAddress);
       }
     }
-    result.delegations = delegations;
 
+    if (delegations) {
+      const ranks = await this.validatorRepository.getRanks(validatorAddress);
+      const delegatorRewards = await this.delegatorRewardRepository.getRewardByAddress(delegatorAddr, validatorAddress);
+      for (let i = 0; i < delegations.length; i++) {
+        let item = delegations[i];
+
+        // Set Rank for validators
+        const rank = ranks.find(f => f.operator_address === item.validator_address);
+        if (rank) {
+          item.validator_name = rank.title;
+          item.validator_rank = rank.rank;
+        }
+
+        // Set reward for validators
+        const reward = delegatorRewards.find(f => f.validator_address === item.validator_address && f.validator_address === item.validator_address);
+        if(reward){
+          item.reward = Number(reward.amount);
+        }
+      }
+    }
+
+    result.delegations = delegations;
     return result;
   }
 
