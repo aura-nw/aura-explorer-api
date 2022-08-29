@@ -170,7 +170,9 @@ export class TransactionRepository extends Repository<Transaction> {
     const conditions = `tokenContract.type =:tokenType
                         AND trans.contract_address =:address
                         AND tokenTrans.id > IFNULL((SELECT MAX(sToken.id) FROM token_transactions sToken 
-                          WHERE sToken.token_id =:token_id AND contract_address =:address AND sToken.transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}'), 0)`;
+                          WHERE sToken.token_id =:token_id AND contract_address =:address
+                            AND sToken.transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}'), 0)
+                            AND tokenTrans.token_id =:token_id`;
 
     const paras = { tokenType, token_id, address };
     const transactions = this.createQueryBuilder('trans')
@@ -184,9 +186,11 @@ export class TransactionRepository extends Repository<Transaction> {
       .orderBy('trans.timestamp', 'DESC')
       .getRawMany();
 
-
-    const count = await this.createQueryBuilder()
+    const count = await this.createQueryBuilder('trans')
       .select(`COUNT(trans.id) AS total`)
+      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash')
+      .where(conditions)
       .setParameters(paras)
       .getRawOne();
 
