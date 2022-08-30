@@ -21,4 +21,10 @@ export class TokenTransaction extends BaseEntityIncrementId {
 
     @Column()
     to_address: string;
+
+    @Column()
+    sender: string;
+
+    @Column()
+    amount: number;
 }
