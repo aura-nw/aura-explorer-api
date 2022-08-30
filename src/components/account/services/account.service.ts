@@ -240,11 +240,11 @@ export class AccountService {
     }
 
     // Get vesting
-    if (data?.account_auth && data.account_auth) {
-      const baseVesting = data.account_auth.result?.value?.base_vesting_account;
+    if (data?.account_auth && data.account_auth?.account) {
+      const baseVesting = data.account_auth.account.result?.value?.base_vesting_account;
       if (baseVesting !== undefined) {
         const vesting = new AccountVesting();
-        vesting.type = data.account_auth.result.type;
+        vesting.type = data.account_auth.account.result.type;
         const originalVesting = baseVesting.original_vesting || [];
         if (originalVesting.length > 0) {
           let originalAmount = 0;
