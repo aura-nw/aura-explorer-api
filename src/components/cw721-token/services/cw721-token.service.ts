@@ -63,18 +63,17 @@ export class Cw721TokenService {
         const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash, req.token_id, req.limit, req.offset);
         if (transactions) {
             const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
-            if (transactionBurn) {
-                transactions.forEach((item) => {
+            transactions.forEach((item) => {
+                item['disabled'] = false;                
+                if (transactionBurn?.length > 0) {
                     const tokenId = this.getTokenId(item.messages);
                     const filter = transactionBurn.filter(f => Number(f.token_id) === Number(tokenId)
                         && Number(item.transaction_id) <= Number(f.last_id));
-                    if (filter) {
+                    if (filter?.length > 0) {
                         item['disabled'] = true;
-                    } else {
-                        item['disabled'] = false;
                     }
-                });
-            }
+                }
+            });
         }
         return [transactions, count];
     }
