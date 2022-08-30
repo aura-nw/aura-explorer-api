@@ -125,11 +125,9 @@ export class TransactionRepository extends Repository<Transaction> {
       paras['contract_address'] = contract_address;
     }
 
-    /**
-     * @todo implement after refactoer db
-     */
     if (account_address) {
-
+      conditions += ' AND (tokenTrans.from_address=:accountAddress OR tokenTrans.from_address=:accountAddress) ';
+      paras['accountAddress'] = account_address;
     }
 
     if (tx_hash) {
