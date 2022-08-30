@@ -175,7 +175,7 @@ export class TransactionRepository extends Repository<Transaction> {
                             AND tokenTrans.token_id =:token_id`;
 
     const paras = { tokenType, token_id, address };
-    const transactions = this.createQueryBuilder('trans')
+    const transactions = await this.createQueryBuilder('trans')
       .select(`trans.*, tokenTrans.id AS tokenTrans_id, tokenTrans.token_id`)
       .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
       .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash')
