@@ -17,6 +17,7 @@ export class BlockRepository extends Repository<Block> {
 
 
     /**
+     * @todo
      * Get latest top 100 blocks and latest missing 100 blocks by validator address for uptime detection
      * @param address: Validator address
      * @param topBlock: Number of blocks to get
@@ -32,10 +33,11 @@ export class BlockRepository extends Repository<Block> {
                     WHERE validator_address =? ORDER BY height DESC LIMIT ${topBlock}
         ) AS tmpMiss ON tmpBlock.operator_address = tmpMiss.validator_address`;
 
-        return await this.query(sql, [address, address]);
+        return await this.query(sql, [address]);
     }
 
     /**
+     * @todo
      * Get of validator bigin join
      * @param operator_address 
      * @returns 
