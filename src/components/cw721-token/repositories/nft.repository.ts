@@ -28,8 +28,7 @@ export class NftRepository extends Repository<Nft> {
                                     select max(id) last_id from token_transactions 
                                         WHERE contract_address =:contractAddress
                                         AND token_id = tokenTrans.token_id
-                                        AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}' GROUP BY contract_address, token_id),0)
-                            GROUP BY nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3`
+                                        AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}' GROUP BY contract_address, token_id),0)`;
 
 
         let selQuery = this.createQueryBuilder('nf')
@@ -37,7 +36,7 @@ export class NftRepository extends Repository<Nft> {
             .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
             .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
 
-        const selCount = this.createQueryBuilder('nf').select(`COUNT(nf.id) AS total`)
+        const selCount = this.createQueryBuilder('nf').select(`COUNT(DISTINCT nf.id) AS total`)
             .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
             .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
 
@@ -57,6 +56,7 @@ export class NftRepository extends Repository<Nft> {
         const data = await selQuery
             .where(conditions)
             .setParameters(params)
+            .groupBy('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
             .getRawMany();
 
         const count = await selCount
