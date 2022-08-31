@@ -66,8 +66,7 @@ export class Cw721TokenService {
             transactions.forEach((item) => {
                 item['disabled'] = false;
                 if (transactionBurn?.length > 0) {
-                    const tokenId = this.getTokenId(item.messages);
-                    const filter = transactionBurn.filter(f => String(f.token_id) === String(tokenId)
+                    const filter = transactionBurn.filter(f => String(f.token_id) === item.token_id
                         && Number(item.tokenTrans_id) <= Number(f.last_id));
                     if (filter?.length > 0) {
                         item['disabled'] = true;
@@ -89,21 +88,5 @@ export class Cw721TokenService {
      */
     async viewNTFTransaction(address: string, token_id, limit: number, offset: number): Promise<[any, number]> {
         return await this.transactionRepository.viewNTFTransaction(address, CONTRACT_TYPE.CW721, token_id, limit, offset);
-    }
-
-    /**
-     * Get token id from message
-     * @param message 
-     * @returns 
-     */
-    getTokenId(data: any) {
-        const message = data[0];
-        if (message.msg?.burn) {
-            return message.msg?.burn.token_id;
-        } else if (message.msg?.mint) {
-            return message.msg?.mint.token_id;
-        } else if (message.msg?.transfer_nft) {
-            return message.msg?.transfer_nft.token_id;
-        }
     }
 }
