@@ -2,7 +2,8 @@ import { Nft } from "../../../shared/entities/nft.entity";
 import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { NftParamsDto } from "../dtos/nft-params.dto";
-import { CONTRACT_TRANSACTION_TYPE } from "../../../shared";
+import { CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, Transaction } from "../../../shared";
+import { TokenTransaction } from "../../../shared/entities/token-transaction.entity";
 
 @EntityRepository(Nft)
 export class NftRepository extends Repository<Nft> {
@@ -20,42 +21,50 @@ export class NftRepository extends Repository<Nft> {
         return await this.repos.query(sql, [contractAddress, tokenId]);
     }
 
-    async getNftsByContractAddress(contractAddress: string, request: NftParamsDto) {
-        let result = [];
-        let params = [];
-        let sqlSelect: string = `SELECT n.*`;
-        let sqlCount: string = `SELECT COUNT(n.id) AS total`;
-        let sql: string = ` FROM nfts n
-                INNER JOIN (
-                    SELECT tx_hash, contract_address, MAX(timestamp) AS timestamp,
-                        REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', ''),
-                        REPLACE(JSON_EXTRACT(messages, CONCAT('$[0].msg.', REPLACE(SUBSTRING_INDEX(REPLACE(JSON_EXTRACT(messages, '$[0].msg'), '{', ''), ': ', 1), '"', ''), '.token_id')), '"', '') AS token_id
-                    FROM transactions
-                    WHERE contract_address != ''
-                        AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
-                    GROUP BY contract_address, token_id
-                    ORDER BY timestamp DESC
-                ) tx ON n.contract_address = tx.contract_address AND n.token_id = tx.token_id
-            WHERE n.contract_address = ? AND is_burn = 0`;
-        params.push(contractAddress);
-        if(request?.token_id) {
-            sql += ` AND n.token_id = ?`
-            params.push(request.token_id);
+    async getNftsByContractAddress(contractAddress: string, request: NftParamsDto): Promise<[any, number]> {
+        let params = { contractAddress: contractAddress };
+        let conditions = `trans.contract_address =:contractAddress
+                            AND length(nf.owner) > 0 AND tokenTrans.id > IFNULL((
+                                    select max(id) last_id from token_transactions 
+                                        WHERE contract_address =:contractAddress
+                                        AND token_id = tokenTrans.token_id
+                                        AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}' GROUP BY contract_address, token_id),0)
+                            GROUP BY nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3`
+
+
+        let selQuery = this.createQueryBuilder('nf')
+            .select(`nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3, max(trans.timestamp) lastTime`)
+            .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
+            .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
+
+        const selCount = this.createQueryBuilder('nf').select(`COUNT(nf.id) AS total`)
+            .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
+            .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
+
+        if (request?.token_id) {
+            conditions = ` nf.token_id =:tokenId AND ` + conditions;
+            params['tokenId'] = request?.token_id;
         }
-        if(request?.owner) {
-            sql += ` AND n.owner = ?`
-            params.push(request.owner);
+        if (request?.owner) {
+            conditions = ` nf.owner =:owner AND ` + conditions;
+            params['owner'] = request?.owner;
         }
-        sql += " ORDER BY tx.timestamp DESC";
-        let sqlLimit = "";
-        if(request.limit > 0) {
-            sqlLimit = " LIMIT ? OFFSET ?";
-            params.push(request.limit);
-            params.push(request.offset);
+
+        if (request.limit > 0) {
+            selQuery = selQuery.take(request.limit).skip(request.limit * request.offset);
         }
-    
-        result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
-        result[1] = await this.query(sqlCount + sql, params);
-        return result;
+
+        const data = await selQuery
+            .where(conditions)
+            .setParameters(params)
+            .getRawMany();
+
+        const count = await selCount
+            .where(conditions)
+            .setParameters(params)
+            .getRawOne();
+
+
+        return [data, Number(count?.total) || 0];
     }
 }

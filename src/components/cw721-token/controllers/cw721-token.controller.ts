@@ -36,7 +36,7 @@ export class Cw721TokenController {
     @UseInterceptors(CacheInterceptor)
     async getNftsByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string, @Body() request: NftParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getNftsByContractAddress.name} was called!`);
-        const { nfts, count } = await this.cw721TokenService.getNftsByContractAddress(ctx, contractAddress, request);
+        const [nfts, count] = await this.cw721TokenService.getNftsByContractAddress(ctx, contractAddress, request);
 
         return { data: nfts, meta: { count } };
     }
