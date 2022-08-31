@@ -70,22 +70,22 @@ export class ValidatorController {
     return { data: validator, meta: {} };
   }
 
-  @Get(':operatorAddr/:delegatorAddr/delegators')
-  @ApiOperation({
-    summary: 'Get list delegators',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getDelegators(
-    @ReqContext() ctx: RequestContext,
-    @Param('operatorAddr') operatorAddr: string,
-    @Param('delegatorAddr') delegatorAddr: string
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getDelegators.name} was called!`);
-    return await this.validatorService.getDelegators(operatorAddr, delegatorAddr);
-  }
+  // @Get(':operatorAddr/:delegatorAddr/delegators')
+  // @ApiOperation({
+  //   summary: 'Get list delegators',
+  // })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  // })
+  // @UseInterceptors(ClassSerializerInterceptor)
+  // async getDelegators(
+  //   @ReqContext() ctx: RequestContext,
+  //   @Param('operatorAddr') operatorAddr: string,
+  //   @Param('delegatorAddr') delegatorAddr: string
+  // ): Promise<any> {
+  //   this.logger.log(ctx, `${this.getDelegators.name} was called!`);
+  //   return await this.validatorService.getDelegators(operatorAddr, delegatorAddr);
+  // }
 
 
   @Get(':delegatorAddr/unbonding-delegations')

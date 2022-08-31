@@ -126,7 +126,7 @@ export class TransactionRepository extends Repository<Transaction> {
     }
 
     if (account_address) {
-      conditions += ' AND (tokenTrans.from_address=:accountAddress OR tokenTrans.from_address=:accountAddress OR tokenTrans.sender=:accountAddress) ';
+      conditions += ' AND (tokenTrans.from_address=:accountAddress OR tokenTrans.to_address=:accountAddress OR tokenTrans.sender=:accountAddress) ';
       paras['accountAddress'] = account_address;
     }
 
@@ -152,7 +152,7 @@ export class TransactionRepository extends Repository<Transaction> {
       .where(conditions)
       .setParameters(paras)
       .getRawOne();
-    return [transactions, Number(count.total) || 0];
+    return [transactions, Number(count?.total) || 0];
   }
 
   /**
@@ -192,6 +192,6 @@ export class TransactionRepository extends Repository<Transaction> {
       .setParameters(paras)
       .getRawOne();
 
-    return [transactions, Number(count.total) || 0];
+    return [transactions, Number(count?.total) || 0];
   }
 }
