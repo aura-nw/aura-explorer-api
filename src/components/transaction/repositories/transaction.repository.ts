@@ -126,7 +126,7 @@ export class TransactionRepository extends Repository<Transaction> {
     }
 
     if (account_address) {
-      conditions += ' AND (tokenTrans.from_address=:accountAddress OR tokenTrans.from_address=:accountAddress) ';
+      conditions += ' AND (tokenTrans.from_address=:accountAddress OR tokenTrans.from_address=:accountAddress OR tokenTrans.sender=:accountAddress) ';
       paras['accountAddress'] = account_address;
     }
 
