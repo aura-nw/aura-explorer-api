@@ -107,7 +107,7 @@ export class TransactionRepository extends Repository<Transaction> {
    * @param offset 
    * @returns 
    */
-  async getTransactionContract(contract_address: string, account_address: string, tx_hash: string, token_id: string, limit: number, offset: number) {
+  async getTransactionContract(contract_address: string, account_address: string, tx_hash: string, token_id: string, limit: number, offset: number): Promise<[any, number]> {
     let conditions = ` tokenContract.type=:contract_type`;
     const paras = { 'contract_type': CONTRACT_TYPE.CW721 };
     const selQuery = this.createQueryBuilder('trans')
@@ -152,7 +152,7 @@ export class TransactionRepository extends Repository<Transaction> {
       .where(conditions)
       .setParameters(paras)
       .getRawOne();
-    return [transactions, count];
+    return [transactions, Number(count.total) || 0];
   }
 
   /**
@@ -164,7 +164,7 @@ export class TransactionRepository extends Repository<Transaction> {
    * @param offset 
    * @returns 
    */
-  async viewNTFTransaction(address: string, tokenType: string, token_id, limit: number, offset: number) {
+  async viewNTFTransaction(address: string, tokenType: string, token_id, limit: number, offset: number): Promise<[any, number]> {
     const conditions = `tokenContract.type =:tokenType
                         AND trans.contract_address =:address
                         AND tokenTrans.id > IFNULL((SELECT MAX(sToken.id) FROM token_transactions sToken 
@@ -192,6 +192,6 @@ export class TransactionRepository extends Repository<Transaction> {
       .setParameters(paras)
       .getRawOne();
 
-    return [transactions, count];
+    return [transactions, Number(count.total) || 0];
   }
 }

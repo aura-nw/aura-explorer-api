@@ -59,12 +59,12 @@ export class Cw721TokenService {
      * @param offset 
      * @returns 
      */
-    async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<any> {
+    async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<[any, number]> {
         const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash, req.token_id, req.limit, req.offset);
         if (transactions) {
             const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
             transactions.forEach((item) => {
-                item['disabled'] = false;                
+                item['disabled'] = false;
                 if (transactionBurn?.length > 0) {
                     const tokenId = this.getTokenId(item.messages);
                     const filter = transactionBurn.filter(f => String(f.token_id) === String(tokenId)
@@ -87,7 +87,7 @@ export class Cw721TokenService {
      * @param offset 
      * @returns 
      */
-    async viewNTFTransaction(address: string, token_id, limit: number, offset: number) {
+    async viewNTFTransaction(address: string, token_id, limit: number, offset: number): Promise<[any, number]> {
         return await this.transactionRepository.viewNTFTransaction(address, CONTRACT_TYPE.CW721, token_id, limit, offset);
     }
 
@@ -96,14 +96,14 @@ export class Cw721TokenService {
      * @param message 
      * @returns 
      */
-    getTokenId(message: any) {
-        const msg = message[0];
-        if (msg.msg?.burn) {
-            return msg.msg?.burn.token_id;
-        } else if (msg.msg?.burn) {
-            return msg.msg?.mint.token_id;
-        } else if (msg.msg?.burn) {
-            return msg.msg?.transfer.token_id;
+    getTokenId(data: any) {
+        const message = data[0];
+        if (message.msg?.burn) {
+            return message.msg?.burn.token_id;
+        } else if (message.msg?.mint) {
+            return message.msg?.mint.token_id;
+        } else if (message.msg?.transfer_nft) {
+            return message.msg?.transfer_nft.token_id;
         }
     }
 }
