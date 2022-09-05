@@ -5,10 +5,11 @@ import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
-import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
+import { Cw20TokenTransactionParamsDto } from "../dtos/cw20-token-transaction-params.dto";
 import * as util from 'util';
 import { RedisUtil } from "../../../shared/utils/redis.util";
 import { AccountService } from "../../../components/account/services/account.service";
+import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
 
 @Injectable()
 export class Cw20TokenService {
@@ -20,6 +21,7 @@ export class Cw20TokenService {
     constructor(
         private readonly logger: AkcLogger,
         private tokenContractRepository: TokenContractRepository,
+        private transactionRepository: TransactionRepository,
         private serviceUtil: ServiceUtil,
         private redisUtil: RedisUtil,
         private accountService: AccountService
@@ -55,11 +57,11 @@ export class Cw20TokenService {
         return token;
     }
 
-    async getListTokenTransactions(ctx: RequestContext, request: TokenTransactionParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.getListTokenTransactions.name} was called!`);
-        const result = await this.tokenContractRepository.getListTokenTransactions(request);
+    async getCw20TokenTransactions(ctx: RequestContext, request: Cw20TokenTransactionParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getCw20TokenTransactions.name} was called!`);
+        const [transactions, count] = await this.transactionRepository.getCw20TokenTransactions(request);
 
-        return { transactions: result[0], count: result[1][0].total };
+        return [transactions, count];
     }
 
     async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
