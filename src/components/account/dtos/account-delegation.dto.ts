@@ -17,4 +17,8 @@ export class AccountDelegation {
     @Expose()
     @ApiProperty()
     reward: string;
+
+    @Expose()
+    @ApiProperty()
+    validator_identity: string;
   }

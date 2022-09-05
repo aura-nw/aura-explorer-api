@@ -69,4 +69,8 @@ export class LiteValidatorOutput {
   @Expose()
   @ApiProperty()
   status: number;
+
+  @Expose()
+  @ApiProperty()
+  identity: string;
 }
