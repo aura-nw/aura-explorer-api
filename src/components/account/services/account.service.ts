@@ -233,18 +233,18 @@ export class AccountService {
 
     //get auth_info
     let delegatedVesting = 0;
-    accountOutput.delegatable_vesting = '0';
+    accountOutput.delegable_vesting = '0';
     if (balancesAmount > 0) {
       delegatedVesting = (balancesAmount - available);
-      accountOutput.delegatable_vesting = this.changeUauraToAura(delegatedVesting);
+      accountOutput.delegable_vesting = this.changeUauraToAura(delegatedVesting);
     }
 
     // Get vesting
-    if (data?.account_auth && data.account_auth?.account) {
-      const baseVesting = data.account_auth.account.result?.value?.base_vesting_account;
+    if (data?.account_auth && data.account_auth) {
+      const baseVesting = data.account_auth.result?.value?.base_vesting_account;
       if (baseVesting !== undefined) {
         const vesting = new AccountVesting();
-        vesting.type = data.account_auth.account.result.type;
+        vesting.type = data.account_auth.result.type;
         const originalVesting = baseVesting.original_vesting || [];
         if (originalVesting.length > 0) {
           let originalAmount = 0;
