@@ -12,4 +12,10 @@ export class Cw721TokenParamsDto {
 
     @ApiProperty({default: ''})
     keyword: string;
+
+    @ApiProperty({default: 'transfers_24h'})
+    sort_column: string;
+
+    @ApiProperty({default: 'desc'})
+    sort_order: string;
 }

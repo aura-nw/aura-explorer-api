@@ -8,18 +8,24 @@ import { Cw20TokenController } from "./controllers/cw20-token.controller";
 import { Cw20TokenService } from "./services/cw20-token.service";
 import { TokenContractRepository } from "../contract/repositories/token-contract.repository";
 import { SmartContractRepository } from "../contract/repositories/smart-contract.repository";
+import { RedisUtil } from "../../shared/utils/redis.util";
+import { AccountService } from "../account/services/account.service";
+import { ValidatorRepository } from "../validator/repositories/validator.repository";
+import { TransactionRepository } from "../transaction/repositories/transaction.repository";
 
 @Module({
     imports: [
       SharedModule,
       TypeOrmModule.forFeature([
         TokenContractRepository,
-        SmartContractRepository
+        SmartContractRepository,
+        ValidatorRepository,
+        TransactionRepository
       ]),
       ConfigModule,
       HttpModule
     ],
-    providers: [Cw20TokenService, ServiceUtil],
+    providers: [Cw20TokenService, ServiceUtil, RedisUtil, AccountService],
     controllers: [Cw20TokenController],
     exports: [Cw20TokenService],
   })
