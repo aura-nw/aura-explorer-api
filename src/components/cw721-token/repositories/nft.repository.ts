@@ -54,7 +54,7 @@ export class NftRepository extends Repository<Nft> {
         if (request.limit > 0) {
             data = await selQuery
                 .where(
-                    conditions.replace('{groupBy}', 'GROUP BY nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
+                    conditions.replace('{groupBy}', 'GROUP BY nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3 ORDER BY lastTime DESC ')
                         .replace('{limit}', ` LIMIT ${request.limit} OFFSET ${request.offset}`)
                 )
                 .setParameters(params)
@@ -65,6 +65,7 @@ export class NftRepository extends Repository<Nft> {
                 .where(conditions.replace('{groupBy}', '').replace('{limit}', ''))
                 .setParameters(params)
                 .groupBy('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
+                .orderBy('trans.timestamp', 'DESC')
                 .getRawMany();
         }
 
