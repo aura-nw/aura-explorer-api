@@ -11,7 +11,7 @@ export class TokenTransactionRepository extends Repository<TokenTransaction>{
 
     async getBurnByAddress(address: string){
      return await this.createQueryBuilder()
-        .select(`contract_address, token_id, max(id) last_id`)
+        .select(`contract_address, token_id, max(height) height`)
         .where({
             contract_address: address,
             transaction_type: CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN

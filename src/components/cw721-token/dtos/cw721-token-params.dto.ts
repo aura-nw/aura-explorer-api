@@ -1,9 +1,11 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Min } from "class-validator";
+import { Max, Min } from "class-validator";
+import { PAGE_REQUEST } from "../../../shared";
 
 export class Cw721TokenParamsDto {
     @ApiProperty({ default: 20})
     @Min(0)
+    @Max(PAGE_REQUEST.MAX)
     limit: number;
 
     @ApiProperty({default: 0})

@@ -67,7 +67,7 @@ export class Cw721TokenService {
                 item['disabled'] = false;
                 if (transactionBurn?.length > 0) {
                     const filter = transactionBurn.filter(f => String(f.token_id) === item.token_id
-                        && Number(item.tokenTrans_id) <= Number(f.last_id));
+                        && Number(item.height) <= Number(f.height));
                     if (filter?.length > 0) {
                         item['disabled'] = true;
                     }

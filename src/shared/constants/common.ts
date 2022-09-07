@@ -149,3 +149,8 @@ export const ERROR_MAP = {
     Message: `Result is correct, you cannot update this record`
   }
 }
+
+export const PAGE_REQUEST = {
+  MIN: 1,
+  MAX: 100
+}
