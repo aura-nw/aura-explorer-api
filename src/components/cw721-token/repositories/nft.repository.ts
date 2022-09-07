@@ -22,59 +22,38 @@ export class NftRepository extends Repository<Nft> {
     }
 
     async getNftsByContractAddress(contractAddress: string, request: NftParamsDto): Promise<[any, number]> {
-        let params = { contractAddress: contractAddress };
-        let conditions = `trans.contract_address =:contractAddress
-                            AND length(nf.owner) > 0 AND tokenTrans.id > IFNULL((
-                                    select max(id) last_id from token_transactions 
-                                        WHERE contract_address =:contractAddress
-                                        AND token_id = tokenTrans.token_id
-                                        AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}' GROUP BY contract_address, token_id),0)
-                                        {groupBy} {limit}`;
+        const params = { contractAddress };
+        let conditions = ` nf.contract_address=:contractAddress AND length(nf.owner) > 0 `;
 
+        let selQuery = this.createQueryBuilder('nf')
+            .select('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
+            .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.token_id = nf.token_id AND nf.contract_address = tokenTrans.contract_address')
+            .limit(request.limit)
+            .offset(request.offset)
+            .orderBy('tokenTrans.height', 'DESC');
 
-        let selQuery = this.createQueryBuilder('nf');
-        selQuery.select(`nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3, max(trans.timestamp) lastTime`)
-            .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
-            .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
-
-        const selCount = this.createQueryBuilder('nf').select(`COUNT(DISTINCT nf.id) AS total`)
-            .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
-            .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
+        const countQuery = this.createQueryBuilder('nf')
+            .select('COUNT(nf.id) AS total')
+            .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.token_id = nf.token_id AND nf.contract_address = tokenTrans.contract_address')
 
         if (request?.token_id) {
-            conditions = ` nf.token_id =:tokenId AND ` + conditions;
+            conditions += ` AND nf.token_id =:tokenId`;
             params['tokenId'] = request?.token_id;
         }
         if (request?.owner) {
-            conditions = ` nf.owner =:owner AND ` + conditions;
+            conditions += ` nf.owner =:owner`;
             params['owner'] = request?.owner;
         }
 
-        let data = [];
-        if (request.limit > 0) {
-            data = await selQuery
-                .where(
-                    conditions.replace('{groupBy}', 'GROUP BY nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3 ORDER BY lastTime DESC ')
-                        .replace('{limit}', ` LIMIT ${request.limit} OFFSET ${request.offset}`)
-                )
-                .setParameters(params)
-                .getRawMany();
+        conditions += ` AND tokenTrans.height > IFNULL((select max(height) last_id from token_transactions 
+                                            WHERE contract_address =:contractAddress
+                                            AND token_id = tokenTrans.token_id
+                                            AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}'), 0)`;
 
-        } else {
-            data = await selQuery
-                .where(conditions.replace('{groupBy}', '').replace('{limit}', ''))
-                .setParameters(params)
-                .groupBy('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
-                .orderBy('lastTime', 'DESC')
-                .getRawMany();
-        }
+        selQuery = selQuery.where(conditions).setParameters(params);
 
-        const count = await selCount
-            .where(conditions.replace('{groupBy}', '').replace('{limit}', ''))
-            .setParameters(params)
-            .getRawOne();
-
-
+        const data = await selQuery.where(conditions).setParameters(params).getRawMany();
+        const count = await countQuery.where(conditions).setParameters(params).getRawOne();
         return [data, Number(count?.total) || 0];
     }
 }
