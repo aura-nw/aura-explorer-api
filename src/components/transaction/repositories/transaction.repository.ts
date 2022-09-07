@@ -4,6 +4,7 @@ import { EntityRepository, ObjectLiteral, Raw, Repository } from 'typeorm';
 import { CONST_CHAR, CONST_FULL_MSG_TYPE, CONST_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract, Transaction } from '../../../shared';
 import { TokenTransaction } from '../../../shared/entities/token-transaction.entity';
 import { CONTRACT_TRANSACTION_EXECUTE_TYPE } from "../../../shared";
+import { Cw20TokenTransactionParamsDto } from '../../../components/cw20-token/dtos/cw20-token-transaction-params.dto';
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
 
@@ -111,8 +112,8 @@ export class TransactionRepository extends Repository<Transaction> {
     let conditions = ` tokenContract.type=:contract_type`;
     const paras = { 'contract_type': CONTRACT_TYPE.CW721 };
     const selQuery = this.createQueryBuilder('trans')
-      .select(`trans.*, tokenTrans.id AS tokenTrans_id, tokenTrans.token_id`)
-      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .select(`trans.*, tokenTrans.token_id`)
+      .innerJoin(TokenContract, 'tokenContract', `tokenContract.contract_address = trans.contract_address AND trans.type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'`)
       .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
 
     const selCount = this.createQueryBuilder('trans')
@@ -192,6 +193,54 @@ export class TransactionRepository extends Repository<Transaction> {
       .setParameters(paras)
       .getRawOne();
 
+    return [transactions, Number(count?.total) || 0];
+  }
+
+  /**
+   * Get transactions of cw20 token
+   * @param request 
+   * @returns 
+   */
+   async getCw20TokenTransactions(request: Cw20TokenTransactionParamsDto): Promise<[any, number]> {
+    let conditions = ` tokenContract.type=:contract_type`;
+    const paras = { 'contract_type': CONTRACT_TYPE.CW20 };
+    const selQuery = this.createQueryBuilder('trans')
+      .select(`trans.*`)
+      .innerJoin(TokenContract, 'tokenContract', `tokenContract.contract_address = trans.contract_address AND trans.type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'`)
+      .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
+
+    const selCount = this.createQueryBuilder('trans')
+      .select(`COUNT(trans.id) AS total`)
+      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
+
+    if (request.contract_address) {
+      conditions += ' AND trans.contract_address=:contract_address ';
+      paras['contract_address'] = request.contract_address;
+    }
+
+    if (request.account_address) {
+      conditions += ' AND (tokenTrans.from_address=:account_address OR tokenTrans.to_address=:account_address) ';
+      paras['account_address'] = request.account_address;
+    }
+
+    if (request.tx_hash) {
+      conditions += ' AND trans.tx_hash=:tx_hash ';
+      paras['tx_hash'] = request.tx_hash;
+    }
+
+    const transactions = await selQuery
+      .where(conditions)
+      .setParameters(paras)
+      .limit(request.limit)
+      .offset(request.limit * request.offset)
+      .orderBy('trans.timestamp', "DESC")
+      .getRawMany();
+
+    const count = await selCount
+      .where(conditions)
+      .setParameters(paras)
+      .getRawOne();
     return [transactions, Number(count?.total) || 0];
   }
 }
