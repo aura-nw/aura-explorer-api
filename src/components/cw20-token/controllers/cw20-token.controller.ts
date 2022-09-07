@@ -3,7 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
-import { TokenTransactionParamsDto } from "../dtos/token-transaction-params.dto";
+import { Cw20TokenTransactionParamsDto } from "../dtos/cw20-token-transaction-params.dto";
 import { Cw20TokenService } from "../services/cw20-token.service";
 
 @ApiTags('cw20-tokens')
@@ -40,13 +40,13 @@ export class Cw20TokenController {
     }
 
     @Post('transactions')
-    @ApiOperation({ summary: 'Get list transactions of cw20/cw721 token' })
+    @ApiOperation({ summary: 'Get list transactions of cw20 token' })
     @ApiResponse({ status: HttpStatus.OK })
     @UseInterceptors(ClassSerializerInterceptor)
     @UseInterceptors(CacheInterceptor)
-    async getListTokenTransactions(@ReqContext() ctx: RequestContext, @Body() request: TokenTransactionParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.getListTokenTransactions.name} was called!`);
-        const { transactions, count } = await this.cw20TokenService.getListTokenTransactions(ctx, request);
+    async getCw20TokenTransactions(@ReqContext() ctx: RequestContext, @Body() request: Cw20TokenTransactionParamsDto): Promise<any> {
+        this.logger.log(ctx, `${this.getCw20TokenTransactions.name} was called!`);
+        const [transactions, count] = await this.cw20TokenService.getCw20TokenTransactions(ctx, request);
 
         return { data: transactions, meta: { count } };
     }

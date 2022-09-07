@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, Min } from "class-validator";
 
-export class TokenTransactionParamsDto {
+export class Cw20TokenTransactionParamsDto {
     @IsNotEmpty()
     @ApiProperty()
     contract_address: string;
@@ -11,9 +11,6 @@ export class TokenTransactionParamsDto {
 
     @ApiProperty({default: ''})
     tx_hash: string;
-
-    @ApiProperty({default: ''})
-    token_id: string;
     
     @ApiProperty({ default: 20})
     @Min(1)
