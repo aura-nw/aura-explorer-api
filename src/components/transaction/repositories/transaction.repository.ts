@@ -112,8 +112,8 @@ export class TransactionRepository extends Repository<Transaction> {
     let conditions = ` tokenContract.type=:contract_type`;
     const paras = { 'contract_type': CONTRACT_TYPE.CW721 };
     const selQuery = this.createQueryBuilder('trans')
-      .select(`trans.*, tokenTrans.id AS tokenTrans_id, tokenTrans.token_id`)
-      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .select(`trans.*, tokenTrans.token_id`)
+      .innerJoin(TokenContract, 'tokenContract', `tokenContract.contract_address = trans.contract_address AND trans.type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'`)
       .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
 
     const selCount = this.createQueryBuilder('trans')
@@ -206,7 +206,7 @@ export class TransactionRepository extends Repository<Transaction> {
     const paras = { 'contract_type': CONTRACT_TYPE.CW20 };
     const selQuery = this.createQueryBuilder('trans')
       .select(`trans.*`)
-      .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address = trans.contract_address')
+      .innerJoin(TokenContract, 'tokenContract', `tokenContract.contract_address = trans.contract_address AND trans.type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'`)
       .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash');
 
     const selCount = this.createQueryBuilder('trans')
