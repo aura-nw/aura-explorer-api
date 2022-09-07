@@ -28,11 +28,12 @@ export class NftRepository extends Repository<Nft> {
                                     select max(id) last_id from token_transactions 
                                         WHERE contract_address =:contractAddress
                                         AND token_id = tokenTrans.token_id
-                                        AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}' GROUP BY contract_address, token_id),0)`;
+                                        AND transaction_type = '${CONTRACT_TRANSACTION_EXECUTE_TYPE.BURN}' GROUP BY contract_address, token_id),0)
+                                        {groupBy} {limit}`;
 
 
-        let selQuery = this.createQueryBuilder('nf')
-            .select(`nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3, max(trans.timestamp) lastTime`)
+        let selQuery = this.createQueryBuilder('nf');
+        selQuery.select(`nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3, max(trans.timestamp) lastTime`)
             .innerJoin(Transaction, 'trans', 'trans.contract_address = nf.contract_address')
             .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.tx_hash = trans.tx_hash and tokenTrans.token_id = nf.token_id');
 
@@ -49,18 +50,27 @@ export class NftRepository extends Repository<Nft> {
             params['owner'] = request?.owner;
         }
 
+        let data = [];
         if (request.limit > 0) {
-            selQuery = selQuery.take(request.limit).skip(request.limit * request.offset);
+            data = await selQuery
+                .where(
+                    conditions.replace('{groupBy}', 'GROUP BY nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3 ORDER BY lastTime DESC ')
+                        .replace('{limit}', ` LIMIT ${request.limit} OFFSET ${request.offset}`)
+                )
+                .setParameters(params)
+                .getRawMany();
+
+        } else {
+            data = await selQuery
+                .where(conditions.replace('{groupBy}', '').replace('{limit}', ''))
+                .setParameters(params)
+                .groupBy('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
+                .orderBy('lastTime', 'DESC')
+                .getRawMany();
         }
 
-        const data = await selQuery
-            .where(conditions)
-            .setParameters(params)
-            .groupBy('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
-            .getRawMany();
-
         const count = await selCount
-            .where(conditions)
+            .where(conditions.replace('{groupBy}', '').replace('{limit}', ''))
             .setParameters(params)
             .getRawOne();
 
