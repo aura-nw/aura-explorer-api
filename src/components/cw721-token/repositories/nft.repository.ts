@@ -26,11 +26,12 @@ export class NftRepository extends Repository<Nft> {
         let conditions = ` nf.contract_address=:contractAddress AND length(nf.owner) > 0 `;
 
         let selQuery = this.createQueryBuilder('nf')
-            .select('DISTINCT nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3, tokenTrans.height')
+            .select('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
             .innerJoin(TokenTransaction, 'tokenTrans', 'tokenTrans.token_id = nf.token_id AND nf.contract_address = tokenTrans.contract_address AND tokenTrans.height >0')
             .limit(request.limit)
             .offset(request.offset)
-            .orderBy('tokenTrans.height', 'DESC');
+            .groupBy('nf.contract_address, nf.token_id, nf.owner, nf.uri, nf.uri_s3')
+            .orderBy('MAX(tokenTrans.height)', 'DESC');
 
         const countQuery = this.createQueryBuilder('nf')
             .select('COUNT(DISTINCT nf.id) AS total')
