@@ -3,7 +3,6 @@ import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
 import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
-import { NftParamsDto } from "../dtos/nft-params.dto";
 import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
 import { Cw721TokenService } from "../services/cw721-token.service";
 
@@ -27,18 +26,6 @@ export class Cw721TokenController {
         const { tokens, count } = await this.cw721TokenService.getCw721Tokens(ctx, request);
 
         return { data: tokens, meta: { count } };
-    }
-
-    @Post(':contractAddress/nfts')
-    @ApiOperation({ summary: 'Get list nfts of token' })
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getNftsByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string, @Body() request: NftParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.getNftsByContractAddress.name} was called!`);
-        const [nfts, count] = await this.cw721TokenService.getNftsByContractAddress(ctx, contractAddress, request);
-
-        return { data: nfts, meta: { count } };
     }
 
     @Get(':contractAddress/nft/:tokenId')

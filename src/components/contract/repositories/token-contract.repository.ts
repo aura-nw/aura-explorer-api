@@ -114,32 +114,12 @@ export class TokenContractRepository extends Repository<TokenContract> {
         return result;
     }
 
-    async getNftsByOwner(request: NftByOwnerParamsDto) {
-        let result = [];
-        let params = [];
-        let sqlSelect: string = `SELECT tc.contract_address, sc.contract_name, n.token_id, n.uri, tc.symbol`;
-        let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
-        let sql: string = ` FROM token_contracts tc
-                    INNER JOIN smart_contracts sc ON tc.contract_address = sc.contract_address
-                    INNER JOIN nfts n ON tc.contract_address = n.contract_address AND n.is_burn = 0
-                WHERE n.owner = ?`;
-        params.push(request.account_address);
-        if(request?.keyword) {
-            sql += `  AND (LOWER(n.token_id) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
-            params.push(`%${request.keyword.toLowerCase()}%`);
-            params.push(`%${request.keyword.toLowerCase()}%`);
-        }
-        sql += " ORDER BY tc.updated_at DESC";
-        let sqlLimit = "";
-        if(request.limit > 0) {
-            sqlLimit = " LIMIT ? OFFSET ?";
-            params.push(request.limit);
-            params.push(request.offset);
-        }
-    
-        result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
-        result[1] = await this.query(sqlCount + sql, params);
-        return result;
+    async getTokensByListContractAddress(listContractAddress: Array<any>) {
+        let sql = `SELECT contract_address, contract_name, token_symbol AS symbol
+            FROM smart_contracts
+            WHERE contract_address IN (?)`;
+
+        return await this.repos.query(sql, [listContractAddress]);
     }
 
     async getTokenByContractAddress(contractAddress: string) {

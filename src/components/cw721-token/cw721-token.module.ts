@@ -4,10 +4,10 @@ import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { SharedModule } from "../../shared";
 import { ServiceUtil } from "../../shared/utils/service.util";
+import { SmartContractRepository } from "../contract/repositories/smart-contract.repository";
 import { TokenContractRepository } from "../contract/repositories/token-contract.repository";
 import { TransactionRepository } from "../transaction/repositories/transaction.repository";
 import { Cw721TokenController } from "./controllers/cw721-token.controller";
-import { NftRepository } from "./repositories/nft.repository";
 import { TokenTransactionRepository } from "./repositories/token-transaction.repository";
 import { Cw721TokenService } from "./services/cw721-token.service";
 
@@ -18,7 +18,7 @@ import { Cw721TokenService } from "./services/cw721-token.service";
         TokenContractRepository,
         TokenTransactionRepository,
         TransactionRepository,
-        NftRepository
+        SmartContractRepository
       ]),
       ConfigModule,
       HttpModule
