@@ -74,17 +74,17 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let params = [];
         let sqlSelect: string = `SELECT sc.token_name AS name, sc.token_symbol AS symbol, sc.contract_address, sc.num_tokens,
             (SELECT COUNT(id)
-                FROM token_transactions
+                FROM transactions
                 WHERE contract_address = sc.contract_address
-                    AND created_at > NOW() - INTERVAL 24 HOUR) AS transfers_24h,
+                    AND timestamp > NOW() - INTERVAL 24 HOUR) AS transfers_24h,
             (SELECT COUNT(id)
-                FROM token_transactions
+                FROM transactions
                 WHERE contract_address = sc.contract_address
-                    AND created_at > NOW() - INTERVAL 72 HOUR) AS transfers_3d,
-            (SELECT created_at
-                FROM token_transactions
+                    AND timestamp > NOW() - INTERVAL 72 HOUR) AS transfers_3d,
+            (SELECT timestamp
+                FROM transactions
                 WHERE contract_address = sc.contract_address
-                ORDER BY created_at DESC
+                ORDER BY timestamp DESC
                 LIMIT 1) AS upTime`;
         let sqlCount: string = `SELECT COUNT(sc.id) AS total`;
         let sql: string = ` FROM smart_contracts sc
