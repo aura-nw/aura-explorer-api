@@ -12,11 +12,11 @@ export class NftRepository extends Repository<Nft> {
     }
 
     async getNftByContractAddressAndTokenId(contractAddress: string, tokenId: string) {
-        let sql = `SELECT n.*, tc.name, sc.creator_address AS creator, tc.symbol
+        let sql = `SELECT n.*, tc.name, sc.creator_address AS creator, tc.symbol, n.is_burn AS is_burned
             FROM nfts n
                 INNER JOIN token_contracts tc ON n.contract_address = tc.contract_address
                 LEFT JOIN smart_contracts sc on n.contract_address = sc.contract_address
-            WHERE n.contract_address = ? AND n.token_id = ? AND n.is_burn = 0`;
+            WHERE n.contract_address = ? AND n.token_id = ?`;
 
         return await this.repos.query(sql, [contractAddress, tokenId]);
     }
