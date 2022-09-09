@@ -201,7 +201,7 @@ export class ValidatorService {
     const data = accountData.data;
     result.available_balance = 0;
     if (data?.account_balances && data.account_balances.length > 0) {
-      result.available_balance = Number(data.account_balances.balances[0].amount);
+      result.available_balance = Number(data.account_balances[0].amount);
     }
     result.claim_reward = 0;
     const withdrawReward = await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(delegatorAddress);
