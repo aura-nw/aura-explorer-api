@@ -117,19 +117,19 @@ export class TransactionService {
     return { transactions: transactionsOutput, count: total };
   }
 
-  async getTransactionsByDelegatorAddress(
-    ctx: RequestContext,
-    address,
-    query: DelegationParamsDto,
-  ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
-    this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
+  // async getTransactionsByDelegatorAddress(
+  //   ctx: RequestContext,
+  //   address,
+  //   query: DelegationParamsDto,
+  // ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
+  //   this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
 
-    const { transactions, total } = await this.txRepository.getTransactionsByDelegatorAddress(address, query.limit, query.offset);
+  //   const { transactions, total } = await this.txRepository.getTransactionsByDelegatorAddress(address, query.limit, query.offset);
 
-    const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
-      excludeExtraneousValues: true,
-    });
+  //   const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
+  //     excludeExtraneousValues: true,
+  //   });
 
-    return { transactions: transactionsOutput, count: total };
-  }
+  //   return { transactions: transactionsOutput, count: total };
+  // }
 }
