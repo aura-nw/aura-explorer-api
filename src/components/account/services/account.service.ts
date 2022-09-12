@@ -153,9 +153,9 @@ export class AccountService {
 
     // get unbonding
     let unbondingAmount = 0;
-    if (data?.account_unbonds) {
+    if (data?.account_unbonding) {
       accountOutput.unbonding_delegations = [];
-      data.account_unbonds?.forEach((item) => {
+      data.account_unbonding?.forEach((item) => {
         item.entries?.forEach((item1) => {
           const validator_address = item.validator_address;
           const validator = validatorData.filter(
