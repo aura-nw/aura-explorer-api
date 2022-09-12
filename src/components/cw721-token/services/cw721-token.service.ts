@@ -80,11 +80,11 @@ export class Cw721TokenService {
             const listContractAddress = [...new Set(tokens.map(i => i.contract_address))];
             const tokensInfo = await this.tokenContractRepository.getTokensByListContractAddress(listContractAddress);
             tokens.forEach((item) => {
-                item.contract_name = '';
+                item.token_name = '';
                 item.symbol = '';
                 const filter = tokensInfo.filter(f => String(f.contract_address) === item.contract_address);
                 if (filter?.length > 0) {
-                    item.contract_name = filter[0].contract_name;
+                    item.token_name = filter[0].token_name;
                     item.symbol = filter[0].symbol;
                 }
             });

@@ -115,7 +115,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
     }
     
     async getTokensByListContractAddress(listContractAddress: Array<any>) {
-        let sql = `SELECT contract_address, contract_name, token_symbol AS symbol
+        let sql = `SELECT contract_address, token_name, token_symbol AS symbol
             FROM smart_contracts
             WHERE contract_address IN (?)`;
 
