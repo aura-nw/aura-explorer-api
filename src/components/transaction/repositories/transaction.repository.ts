@@ -25,19 +25,19 @@ export class TransactionRepository extends Repository<Transaction> {
     return { transactions, total: count };
   }
 
-  async getTransactionsByDelegatorAddress(address: string, limit: number, offset: number) {
+  // async getTransactionsByDelegatorAddress(address: string, limit: number, offset: number) {
 
-    const [transactions, count] = await this.findAndCount({
-      where: (
-        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${address}')`) }
-      ),
-      order: { height: 'DESC' },
-      take: limit,
-      skip: offset,
-    });
+  //   const [transactions, count] = await this.findAndCount({
+  //     where: (
+  //       { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${address}')`) }
+  //     ),
+  //     order: { height: 'DESC' },
+  //     take: limit,
+  //     skip: offset,
+  //   });
 
-    return { transactions, total: count };
-  }
+  //   return { transactions, total: count };
+  // }
 
   async searchContractTransactions(request: SearchTransactionParamsDto) {
     let result = [];
