@@ -113,7 +113,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
     async getNftsByOwner(request: NftByOwnerParamsDto) {
         let result = [];
         let params = [];
-        let sqlSelect: string = `SELECT tc.contract_address, sc.contract_name, n.token_id, n.uri, tc.symbol, n.uri_s3`;
+        let sqlSelect: string = `SELECT tc.contract_address, tc.name AS token_name, n.token_id, n.uri, tc.symbol, n.uri_s3`;
         let sqlCount: string = `SELECT COUNT(tc.id) AS total`;
         let sql: string = ` FROM token_contracts tc
                     INNER JOIN smart_contracts sc ON tc.contract_address = sc.contract_address
