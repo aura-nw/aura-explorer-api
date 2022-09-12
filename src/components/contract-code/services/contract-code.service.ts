@@ -142,9 +142,9 @@ export class ContractCodeService {
                     Message: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Message
                 };
             }
-        }catch(err){
+        } catch (err) {
             this.logger.error(ctx, `Class ${ContractCodeService.name} call updateContractCode method error: ${err.stack}`);
-            throw err;            
+            throw err;
         }
     }
 }

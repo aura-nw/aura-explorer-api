@@ -12,6 +12,9 @@ import { lastValueFrom } from "rxjs";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { TokenContractRepository } from "../repositories/token-contract.repository";
 import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
+import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
+import { plainToClass } from "class-transformer";
+import { ContractByCreatorOutputDto } from "../dtos/contract-by-creator-output.dto";
 
 @Injectable()
 export class ContractService {
@@ -158,6 +161,70 @@ export class ContractService {
         Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message
       };
       return error;
+    }
+  }
+
+  /**
+   * Get list status of smart contract
+   * @returns List status(Array<ContractStatusOutputDto>)
+   */
+  getSmartContractStatus() {
+    this.logger.log(null, `${this.getSmartContractStatus.name} was called!`);
+    try {
+      const smartContractStatus: Array<ContractStatusOutputDto> = [];
+      Object.keys(CONTRACT_STATUS).forEach(key => {
+        const status: ContractStatusOutputDto = new ContractStatusOutputDto();
+        status.key = key;
+        status.label = CONTRACT_STATUS[key];
+
+        smartContractStatus.push(status);
+      });
+      return smartContractStatus;
+    } catch (err) {
+      this.logger.error(null, `Class ${ContractService.name} call ${this.getSmartContractStatus.name} method error: ${err.stack}`);
+      throw err;
+    }
+  }
+
+  /**
+     * Get list code id
+     * @param creatorAddress: Creator address
+     * @returns List code id (number[])
+     */
+  async getCodeIds(ctx: RequestContext, creatorAddress: string) {
+    this.logger.log(ctx, `${this.getCodeIds.name} was called with creator address: ${creatorAddress}`);
+    try {
+      const codeIds = await this.smartContractRepository.getCodeIds(creatorAddress);
+      const respones: Array<number> = [];
+      codeIds?.forEach(f => {
+        respones.push(Number(f.codeId))
+      });
+      return respones;
+    } catch (err) {
+      this.logger.error(ctx, `Class ${ContractService.name} call ${this.getCodeIds.name} method error: ${err.stack}`);
+      throw err;
+    }
+  }
+
+  /**
+   * Get list contract by creator address
+   * @param ctx: RequestContext
+   * @param creatorAddress: Creator address 
+   * @returns List contract (ContractByCreatorOutputDto[])
+   */
+  async getContractByCreator(ctx: RequestContext, creatorAddress: string, limit: number, offset: number) {
+    this.logger.log(ctx, `${this.getContractByCreator.name} was called with creator address: ${creatorAddress}`);
+    try {
+      const [constracts, count] = await this.smartContractRepository.getContractByCreator(creatorAddress, limit, offset);
+
+      const mappingData = plainToClass(ContractByCreatorOutputDto, constracts, {
+        excludeExtraneousValues: true,
+      });
+
+      return [mappingData, count];
+    } catch (err) {
+      this.logger.error(ctx, `Class ${ContractService.name} call ${this.getContractByCreator.name} method error: ${err.stack}`);
+      throw err;
     }
   }
 }
