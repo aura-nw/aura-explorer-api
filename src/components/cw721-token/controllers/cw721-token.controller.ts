@@ -51,27 +51,27 @@ export class Cw721TokenController {
         return { data: tokens, meta: { count } };
     }
 
-    @Post('transactions')
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getTransactionContract(@ReqContext() ctx: RequestContext, @Body() req: TokenCW721TransactionParasDto) {
-        this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
-        const [transactions, count] = await this.cw721TokenService.getTransactionContract(req);
-        return { data: transactions, meta: { count } };
-    }
+    // @Post('transactions')
+    // @ApiResponse({ status: HttpStatus.OK })
+    // @UseInterceptors(ClassSerializerInterceptor)
+    // @UseInterceptors(CacheInterceptor)
+    // async getTransactionContract(@ReqContext() ctx: RequestContext, @Body() req: TokenCW721TransactionParasDto) {
+    //     this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
+    //     const [transactions, count] = await this.cw721TokenService.getTransactionContract(req);
+    //     return { data: transactions, meta: { count } };
+    // }
 
-    @Get('transactions/:contractAddress/:token/:limit/:offset')
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async viewNTFTransaction(@ReqContext() ctx: RequestContext,
-        @Param('contractAddress') contractAddress: string,
-        @Param('token') token: string,
-        @Param('limit') limit: number,
-        @Param('offset') offset: number) {
-        this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
-        const [transactions, count] = await this.cw721TokenService.viewNTFTransaction(contractAddress, token, limit, offset);
-        return { data: transactions, meta: { count } };
-    }
+    // @Get('transactions/:contractAddress/:token/:limit/:offset')
+    // @ApiResponse({ status: HttpStatus.OK })
+    // @UseInterceptors(ClassSerializerInterceptor)
+    // @UseInterceptors(CacheInterceptor)
+    // async viewNTFTransaction(@ReqContext() ctx: RequestContext,
+    //     @Param('contractAddress') contractAddress: string,
+    //     @Param('token') token: string,
+    //     @Param('limit') limit: number,
+    //     @Param('offset') offset: number) {
+    //     this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
+    //     const [transactions, count] = await this.cw721TokenService.viewNTFTransaction(contractAddress, token, limit, offset);
+    //     return { data: transactions, meta: { count } };
+    // }
 }

@@ -4,7 +4,6 @@ import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext, SEARCH_KEYWORD }
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
 import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 import { TransactionRepository } from "../../transaction/repositories/transaction.repository";
-import { TokenTransactionRepository } from "../repositories/token-transaction.repository";
 import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import * as appConfig from '../../../shared/configs/configuration';
@@ -20,8 +19,6 @@ export class Cw721TokenService {
     constructor(
         private readonly logger: AkcLogger,
         private tokenContractRepository: TokenContractRepository,
-        private transactionRepository: TransactionRepository,
-        private tokenTransactionRepository: TokenTransactionRepository,
         private smartContractRepository: SmartContractRepository,
         private serviceUtil: ServiceUtil
     ) {
@@ -101,23 +98,23 @@ export class Cw721TokenService {
      * @param offset 
      * @returns 
      */
-    async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<[any, number]> {
-        const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash, req.token_id, req.limit, req.offset);
-        if (transactions) {
-            const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
-            transactions.forEach((item) => {
-                item['disabled'] = false;
-                if (transactionBurn?.length > 0) {
-                    const filter = transactionBurn.filter(f => String(f.token_id) === item.token_id
-                        && Number(item.height) <= Number(f.height));
-                    if (filter?.length > 0) {
-                        item['disabled'] = true;
-                    }
-                }
-            });
-        }
-        return [transactions, count];
-    }
+    // async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<[any, number]> {
+    //     const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash, req.token_id, req.limit, req.offset);
+    //     if (transactions) {
+    //         const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
+    //         transactions.forEach((item) => {
+    //             item['disabled'] = false;
+    //             if (transactionBurn?.length > 0) {
+    //                 const filter = transactionBurn.filter(f => String(f.token_id) === item.token_id
+    //                     && Number(item.height) <= Number(f.height));
+    //                 if (filter?.length > 0) {
+    //                     item['disabled'] = true;
+    //                 }
+    //             }
+    //         });
+    //     }
+    //     return [transactions, count];
+    // }
 
     /**
      * Get transactions by Address and Token Id
@@ -128,7 +125,7 @@ export class Cw721TokenService {
      * @param offset 
      * @returns 
      */
-    async viewNTFTransaction(address: string, token_id, limit: number, offset: number): Promise<[any, number]> {
-        return await this.transactionRepository.viewNTFTransaction(address, CONTRACT_TYPE.CW721, token_id, limit, offset);
-    }
+    // async viewNTFTransaction(address: string, token_id, limit: number, offset: number): Promise<[any, number]> {
+    //     return await this.transactionRepository.viewNTFTransaction(address, CONTRACT_TYPE.CW721, token_id, limit, offset);
+    // }
 }
