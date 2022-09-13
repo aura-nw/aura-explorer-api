@@ -87,8 +87,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
             .distinct(true)
             .where(conditions)
             .setParameters(params)
-            .take(limit)
-            .skip(offset)
+            .limit(limit)
+            .offset(offset)
             .getRawMany();
 
         let count = await this.createQueryBuilder('sm')
