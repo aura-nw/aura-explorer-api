@@ -7,6 +7,9 @@ export class DeploymentRequests extends BaseEntityIncrementId {
     request_id: number;
 
     @Column()
+    requester_address: string;
+
+    @Column()
     name: string;
 
     @Column()
