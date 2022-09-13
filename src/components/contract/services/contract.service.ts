@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Like, MoreThan, Not } from "typeorm";
-import { AkcLogger, CONTRACT_STATUS, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_CODE_RESULT, CONTRACT_STATUS, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 import { SmartContractRepository } from "../repositories/smart-contract.repository";
 import { ConfigService } from "@nestjs/config";
@@ -14,6 +14,7 @@ import { TransactionRepository } from "../../../components/transaction/repositor
 import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
 import { plainToClass } from "class-transformer";
 import { ContractByCreatorOutputDto } from "../dtos/contract-by-creator-output.dto";
+import { SmartContractCodeRepository } from "../../../components/contract-code/repositories/smart-contract-code.repository";
 
 @Injectable()
 export class ContractService {
@@ -27,6 +28,7 @@ export class ContractService {
     private smartContractRepository: SmartContractRepository,
     private tagRepository: TagRepository,
     private transactionRepository: TransactionRepository,
+    private smartContractCodeRepository: SmartContractCodeRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService
@@ -64,6 +66,12 @@ export class ContractService {
       if (balanceData && balanceData?.balances && balanceData?.balances?.length > 0) {
         contract.balance = Number(balanceData.balances[0].amount);
       }
+      const contractCode = await this.smartContractCodeRepository.findOne({
+        where: {
+          code_id: codeId
+        }
+      });
+      contract.type = contractCode ? contractCode.type : '';
     }
     return contract;
   }
