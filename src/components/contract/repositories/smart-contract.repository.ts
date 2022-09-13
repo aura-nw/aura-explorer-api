@@ -2,7 +2,7 @@ import { SmartContract } from "../../../shared/entities/smart-contract.entity";
 import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
-import { CONTRACT_STATUS } from "../../../shared";
+import { CONTRACT_STATUS, TokenContract } from "../../../shared";
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
@@ -56,26 +56,48 @@ export class SmartContractRepository extends Repository<SmartContract> {
      * @param creatorAddress 
      * @returns List contract(any[])
      */
-    async getContractByCreator(creatorAddress: string, limit: number, offset: number) {
-        const constracts = await this.createQueryBuilder('sm')
-            .select(`sm.*, (CASE WHEN(
+    async getContractByCreator(creatorAddress: string, codeId: number, status: string, limit: number, offset: number) {
+        let conditions = `creator_address=:creatorAddress`;
+        const params = { creatorAddress };
+
+        if (codeId) {
+            conditions += ` AND sm.code_id LIKE :codeId`
+            params['codeId'] = `%${codeId}%`;
+        }
+
+        if (status) {
+            if (status === CONTRACT_STATUS.UNVERIFIED
+                || status === CONTRACT_STATUS.EXACT_MATCH
+                || status === CONTRACT_STATUS.SIMILAR_MATCH) {
+                    conditions += ` AND sm.contract_verification=:status`
+
+            } else {
+                conditions += ` AND sm.mainnet_upload_status=:status`
+            }
+            params['status'] = status;
+        }
+
+        let constracts = await this.createQueryBuilder('sm')
+            .select(`sm.*, tokenContract.type, (CASE WHEN(
                 sm.contract_verification = '${CONTRACT_STATUS.UNVERIFIED}'
                 OR sm.contract_verification = '${CONTRACT_STATUS.SIMILAR_MATCH}'
                 OR sm.contract_verification = '${CONTRACT_STATUS.EXACT_MATCH}'
             ) THEN sm.contract_verification ELSE sm.mainnet_upload_status END) AS status`)
+            .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address=sm.contract_address')
             .distinct(true)
-            .where('creator_address=:creatorAddress')
-            .setParameter('creatorAddress', creatorAddress)
+            .where(conditions)
+            .setParameters(params)
             .take(limit)
             .skip(offset)
             .getRawMany();
 
-        const count = await this.createQueryBuilder('sm')
-            .select(`COUNT(id) AS total`)
-            .distinct(true)
-            .where('creator_address=:creatorAddress')
-            .setParameter('creatorAddress', creatorAddress)
+        let count = await this.createQueryBuilder('sm')
+            .select(`COUNT(DISTINCT sm.id) AS total`)
+            .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address=sm.contract_address')
+            .where(conditions)
+            .setParameters(params)
             .getRawOne();
+
         return [constracts, Number(count?.total) || 0];
     }
 }

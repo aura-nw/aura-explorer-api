@@ -1,6 +1,8 @@
-import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, UseInterceptors } from "@nestjs/common";
-import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, Query, UseInterceptors } from "@nestjs/common";
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { number } from "joi";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
+import { ContractByCreatorParamsDto } from "../dtos/contract-by-creator-params.dto";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 // import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
 import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
@@ -36,6 +38,15 @@ export class ContractController {
     getSmartContractStatus() {
         const status = this.contractService.getSmartContractStatus();
         return { data: status, meta: {} };
+    }
+
+    @Get('get-contract-by-creator')
+    @ApiOperation({ summary: 'Get list smart contract by creator address' })
+    @ApiResponse({ status: HttpStatus.OK })
+    @UseInterceptors(ClassSerializerInterceptor)
+    async getContractByCreator(@ReqContext() ctx: RequestContext, @Query() req: ContractByCreatorParamsDto) {
+        const [constracts, count] = await this.contractService.getContractByCreator(ctx, req);
+        return { data: constracts, meta: { count } };
     }
 
     @Get(':contractAddress')
@@ -119,18 +130,5 @@ export class ContractController {
     async getCodeIds(@ReqContext() ctx: RequestContext, @Param('creatorAddress') creatorAddress: string) {
         const codeIds: Array<number> = await this.contractService.getCodeIds(ctx, creatorAddress);
         return { data: codeIds, meta: {} };
-    }
-
-    @Get('get-contract-by-creator/:creatorAddress/:limit/:offset')
-    @ApiOperation({ summary: 'Get list smart contract by creator address' })
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    async getContractByCreator(@ReqContext() ctx: RequestContext,
-        @Param('creatorAddress') creatorAddress: string,
-        @Param('limit') limit: number,
-        @Param('offset') offset: number,
-    ) {
-        const [constracts, count] = await this.contractService.getContractByCreator(ctx, creatorAddress, limit, offset);
-        return { data: constracts, meta: { count } };
     }
 }

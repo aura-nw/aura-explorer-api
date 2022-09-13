@@ -14,6 +14,7 @@ import { TransactionRepository } from "../../../components/transaction/repositor
 import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
 import { plainToClass } from "class-transformer";
 import { ContractByCreatorOutputDto } from "../dtos/contract-by-creator-output.dto";
+import { ContractByCreatorParamsDto } from "../dtos/contract-by-creator-params.dto";
 import { SmartContractCodeRepository } from "../../../components/contract-code/repositories/smart-contract-code.repository";
 
 @Injectable()
@@ -211,10 +212,10 @@ export class ContractService {
    * @param creatorAddress: Creator address 
    * @returns List contract (ContractByCreatorOutputDto[])
    */
-  async getContractByCreator(ctx: RequestContext, creatorAddress: string, limit: number, offset: number) {
-    this.logger.log(ctx, `${this.getContractByCreator.name} was called with creator address: ${creatorAddress}`);
+  async getContractByCreator(ctx: RequestContext, req: ContractByCreatorParamsDto) {
+    this.logger.log(ctx, `${this.getContractByCreator.name} was called with creator address: ${req}`);
     try {
-      const [constracts, count] = await this.smartContractRepository.getContractByCreator(creatorAddress, limit, offset);
+      const [constracts, count] = await this.smartContractRepository.getContractByCreator(req.creatorAddress, req.codeId, req.status, req.limit, req.offset);
 
       const mappingData = plainToClass(ContractByCreatorOutputDto, constracts, {
         excludeExtraneousValues: true,
