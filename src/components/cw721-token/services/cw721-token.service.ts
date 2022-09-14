@@ -52,6 +52,7 @@ export class Cw721TokenService {
                 nft.creator = contract.creator_address;
                 nft.symbol = contract.token_symbol;
             }
+            nft.owner = nft.is_burned ? '' : nft.owner
         }
         return nft;
     }
