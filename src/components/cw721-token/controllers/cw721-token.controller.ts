@@ -3,7 +3,6 @@ import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
 import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
-import { NftParamsDto } from "../dtos/nft-params.dto";
 import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
 import { Cw721TokenService } from "../services/cw721-token.service";
 
@@ -29,18 +28,6 @@ export class Cw721TokenController {
         return { data: tokens, meta: { count } };
     }
 
-    @Post(':contractAddress/nfts')
-    @ApiOperation({ summary: 'Get list nfts of token' })
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getNftsByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string, @Body() request: NftParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.getNftsByContractAddress.name} was called!`);
-        const [nfts, count] = await this.cw721TokenService.getNftsByContractAddress(ctx, contractAddress, request);
-
-        return { data: nfts, meta: { count } };
-    }
-
     @Get(':contractAddress/nft/:tokenId')
     @ApiOperation({ summary: 'Get nft detail by contract address and token id' })
     @ApiResponse({ status: HttpStatus.OK })
@@ -64,27 +51,27 @@ export class Cw721TokenController {
         return { data: tokens, meta: { count } };
     }
 
-    @Post('transactions')
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async getTransactionContract(@ReqContext() ctx: RequestContext, @Body() req: TokenCW721TransactionParasDto) {
-        this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
-        const [transactions, count] = await this.cw721TokenService.getTransactionContract(req);
-        return { data: transactions, meta: { count } };
-    }
+    // @Post('transactions')
+    // @ApiResponse({ status: HttpStatus.OK })
+    // @UseInterceptors(ClassSerializerInterceptor)
+    // @UseInterceptors(CacheInterceptor)
+    // async getTransactionContract(@ReqContext() ctx: RequestContext, @Body() req: TokenCW721TransactionParasDto) {
+    //     this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
+    //     const [transactions, count] = await this.cw721TokenService.getTransactionContract(req);
+    //     return { data: transactions, meta: { count } };
+    // }
 
-    @Get('transactions/:contractAddress/:token/:limit/:offset')
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async viewNTFTransaction(@ReqContext() ctx: RequestContext,
-        @Param('contractAddress') contractAddress: string,
-        @Param('token') token: string,
-        @Param('limit') limit: number,
-        @Param('offset') offset: number) {
-        this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
-        const [transactions, count] = await this.cw721TokenService.viewNTFTransaction(contractAddress, token, limit, offset);
-        return { data: transactions, meta: { count } };
-    }
+    // @Get('transactions/:contractAddress/:token/:limit/:offset')
+    // @ApiResponse({ status: HttpStatus.OK })
+    // @UseInterceptors(ClassSerializerInterceptor)
+    // @UseInterceptors(CacheInterceptor)
+    // async viewNTFTransaction(@ReqContext() ctx: RequestContext,
+    //     @Param('contractAddress') contractAddress: string,
+    //     @Param('token') token: string,
+    //     @Param('limit') limit: number,
+    //     @Param('offset') offset: number) {
+    //     this.logger.log(ctx, `${this.getTransactionContract.name} was called!`);
+    //     const [transactions, count] = await this.cw721TokenService.viewNTFTransaction(contractAddress, token, limit, offset);
+    //     return { data: transactions, meta: { count } };
+    // }
 }
