@@ -50,11 +50,14 @@ export class SmartContractRepository extends Repository<SmartContract> {
             .getRawMany();
     }
 
-
     /**
      * Get list contract by Creator address
      * @param creatorAddress 
-     * @returns List contract(any[])
+     * @param codeId: Code id of contract
+     * @param status: Status of contract
+     * @param limit: Number of record on per page
+     * @param offset: Numer of record to skip
+     * @returns @returns List contract(any[])
      */
     async getContractByCreator(creatorAddress: string, codeId: number, status: string, limit: number, offset: number) {
         let conditions = `creator_address=:creatorAddress`;

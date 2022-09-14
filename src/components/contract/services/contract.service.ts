@@ -209,9 +209,14 @@ export class ContractService {
   /**
    * Get list contract by creator address
    * @param ctx: RequestContext
-   * @param creatorAddress: Creator address 
+   * @param creatorAddress: Creator address
+   * @param codeId: Code id of contract
+   * @param status: Status of contract
+   * @param limit: Number of record on per page
+   * @param offset: Numer of record to skip
    * @returns List contract (ContractByCreatorOutputDto[])
    */
+
   async getContractByCreator(ctx: RequestContext, req: ContractByCreatorParamsDto) {
     this.logger.log(ctx, `${this.getContractByCreator.name} was called with creator address: ${req}`);
     try {
