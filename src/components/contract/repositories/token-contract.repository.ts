@@ -76,10 +76,12 @@ export class TokenContractRepository extends Repository<TokenContract> {
             (SELECT COUNT(id)
                 FROM transactions
                 WHERE contract_address = sc.contract_address
+                    AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
                     AND timestamp > NOW() - INTERVAL 24 HOUR) AS transfers_24h,
             (SELECT COUNT(id)
                 FROM transactions
                 WHERE contract_address = sc.contract_address
+                    AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
                     AND timestamp > NOW() - INTERVAL 72 HOUR) AS transfers_3d,
             (SELECT timestamp
                 FROM transactions
