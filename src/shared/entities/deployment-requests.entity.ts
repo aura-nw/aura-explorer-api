@@ -27,26 +27,70 @@ export class DeploymentRequests extends BaseEntityIncrementId {
     @Column()
     official_project_email: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     project_sector: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     whitepaper: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     github: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     telegram: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
+    wechat: string;
+
+    @Column({
+        nullable: true
+    })
+    linkedin: string;
+
+    @Column({
+        nullable: true
+    })
     discord: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
+    medium: string;
+
+    @Column({
+        nullable: true
+    })
+    reddit: string;
+
+    @Column({
+        nullable: true
+    })
+    slack: string;
+
+    @Column({
+        nullable: true
+    })
     facebook: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     twitter: string;
+
+    @Column({
+        nullable: true
+    })
+    bitcointalk: string;
     
     @Column()
     euphoria_code_id: number;
@@ -78,6 +122,8 @@ export class DeploymentRequests extends BaseEntityIncrementId {
     @Column()
     status: string;
 
-    @Column()
+    @Column({
+        nullable: true
+    })
     reason: string;
 }
