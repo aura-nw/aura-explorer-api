@@ -9,8 +9,8 @@ export class ValidatorRepository extends Repository<Validator> {
         return await this.query(`
             SELECT * FROM (
                 SELECT *,
-                RANK() OVER(ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC) as 'rank'
-                FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC
+                RANK() OVER(ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC) as 'rank'
+                FROM validators ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC
             ) SUB
             WHERE SUB.operator_address = ?`, [address]
         ).then(t => t[0]);
@@ -20,8 +20,8 @@ export class ValidatorRepository extends Repository<Validator> {
         return await this.query(`
             SELECT * FROM (
                 SELECT *,
-                RANK() OVER(ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC) as 'rank'
-                FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC
+                RANK() OVER(ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC) as 'rank'
+                FROM validators ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC
             ) SUB
             WHERE SUB.operator_address in (?)`, [address]
         );
@@ -34,11 +34,17 @@ export class ValidatorRepository extends Repository<Validator> {
      * @returns 
      */
     async getDelegators(operatorAddr: string, delegatorAddr: string) {
-        const sql = `SELECT val.title, val.operator_address, val.acc_address, val.commission, val.status, val.jailed,
-                    (SELECT del.delegator_address FROM delegations del WHERE del.delegator_address=? AND del.validator_address = val.operator_address limit 1) AS staking_address,
-                    IFNULL((SELECT SUM(amount) FROM delegations WHERE validator_address = val.operator_address AND delegator_address = ?), 0) AS amount_staked
-            FROM validators val WHERE val.OPERATOR_ADDRESS!=? AND val.status=3`;
-        return await this.query(sql, [delegatorAddr, delegatorAddr, operatorAddr]);
+        const sql = `SELECT val.title, val.operator_address, val.acc_address, val.commission, val.status, val.jailed, joinDel.isStaking
+                        FROM validators val 
+                        LEFT OUTER JOIN (
+                                SELECT del.delegator_address AS staking_address, del.validator_address,
+                                (CASE WHEN IFNULL(SUM(amount), 0) > 0 THEN 1 ELSE 0 END) isStaking
+                                FROM delegations del
+                                where del.delegator_address=?
+                                GROUP BY del.delegator_address, del.validator_address
+                            ) joinDel on joinDel.validator_address = val.operator_address
+                        WHERE val.operator_address!=? AND val.status=3 ORDER BY joinDel.isStaking DESC, val.percent_power DESC`;
+        return await this.query(sql, [delegatorAddr, operatorAddr]);
     }
 
     /**
@@ -58,7 +64,7 @@ export class ValidatorRepository extends Repository<Validator> {
     }
 
     async getValidators() {
-        const sql = `SELECT * FROM validators ORDER BY FIELD(status, 3, 1, 2), jailed ASC, power DESC, updated_at DESC`;
+        const sql = `SELECT * FROM validators ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC`;
         return await this.query(sql, []);
     }
 }

@@ -17,5 +17,9 @@ export class AccountUnbonding {
     @Expose()
     @ApiProperty()
     completion_time: string;
+
+    @Expose()
+    @ApiProperty()
+    validator_identity: string;
   }
   

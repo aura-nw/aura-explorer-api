@@ -25,4 +25,12 @@ export class AccountRedelegation {
     @Expose()
     @ApiProperty()
     completion_time: string;
+
+    @Expose()
+    @ApiProperty()
+    validator_src_identity: string;
+
+    @Expose()
+    @ApiProperty()
+    validator_dst_identity: string;
   }

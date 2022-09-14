@@ -3,6 +3,11 @@ import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('smart_contracts')
 export class SmartContract extends BaseEntityIncrementId {
+    @Column({
+        type: 'timestamp'
+    })
+    verified_at: Date;
+
     @Column()
     height: number;
 
@@ -47,4 +52,22 @@ export class SmartContract extends BaseEntityIncrementId {
 
     @Column()
     s3_location: string;
+
+    @Column()
+    reference_code_id: string;
+
+    @Column()
+    mainnet_upload_status: string;
+
+    @Column()
+    token_name: string;
+
+    @Column()
+    token_symbol: string;
+
+    @Column()
+    num_tokens: number;
+
+    @Column()
+    is_minted: boolean;
 }
