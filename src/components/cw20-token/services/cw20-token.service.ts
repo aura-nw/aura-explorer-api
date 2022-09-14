@@ -1,11 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { AkcLogger, AURA_INFO, CONTRACT_TYPE, INDEXER_API, RequestContext, TokenContract } from "../../../shared";
+import { AkcLogger, AURA_INFO, CONTRACT_TYPE, INDEXER_API, RequestContext } from "../../../shared";
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
-import { Cw20TokenTransactionParamsDto } from "../dtos/cw20-token-transaction-params.dto";
 import * as util from 'util';
 import { RedisUtil } from "../../../shared/utils/redis.util";
 import { AccountService } from "../../../components/account/services/account.service";
@@ -57,12 +56,12 @@ export class Cw20TokenService {
         return token;
     }
 
-    async getCw20TokenTransactions(ctx: RequestContext, request: Cw20TokenTransactionParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.getCw20TokenTransactions.name} was called!`);
-        const [transactions, count] = await this.transactionRepository.getCw20TokenTransactions(request);
+    // async getCw20TokenTransactions(ctx: RequestContext, request: Cw20TokenTransactionParamsDto): Promise<any> {
+    //     this.logger.log(ctx, `${this.getCw20TokenTransactions.name} was called!`);
+    //     const [transactions, count] = await this.transactionRepository.getCw20TokenTransactions(request);
 
-        return [transactions, count];
-    }
+    //     return [transactions, count];
+    // }
 
     async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);

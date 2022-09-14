@@ -6,6 +6,12 @@ export class NftByOwnerParamsDto {
     @IsNotEmpty({ message: 'Account address is required' })
     account_address: string;
 
+    @ApiProperty({default: ''})
+    contract_address: string;
+
+    @ApiProperty({default: ''})
+    token_id: string;
+
     @ApiProperty({ default: 4})
     @Min(0)
     limit: number;
@@ -13,7 +19,4 @@ export class NftByOwnerParamsDto {
     @ApiProperty({default: 0})
     @Min(0)
     offset: number;
-
-    @ApiProperty({default: ''})
-    keyword: string;
 }

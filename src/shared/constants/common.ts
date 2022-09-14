@@ -78,7 +78,10 @@ export enum CONST_DELEGATE_TYPE {
 export enum CONTRACT_STATUS {
   EXACT_MATCH = "EXACT MATCH",
   SIMILAR_MATCH = "SIMILAR MATCH",
-  UNVERIFIED = "UNVERIFIED"
+  UNVERIFIED = "UNVERIFIED",
+  DEPLOYED ='DEPLOYED',
+  TBD ='TBD',
+  REJECTED ='REJECTED',
 }
 
 export enum CONTRACT_TRANSACTION_LABEL {
@@ -115,12 +118,19 @@ export enum INDEXER_API {
   REGISTER_CODE_ID = "api/v1/asset/index",
   ACCOUNT_DELEGATIONS = "api/v1/account-info/delegations?address=%s&chainId=%s",
   GET_TOKENS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&countTotal=false",
-  TOKEN_HOLDERS = "api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true"
+  TOKEN_HOLDERS = "api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true",
+  GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID = "api/v1/asset/getByOwner?chainid=%s&contractType=%s&tokenId=%s&contractAddress=%s",
+  GET_NFTS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=%s&isBurned=false&countTotal=true&pageLimit=%s&pageOffset=%s",
 }
 
 export enum AURA_INFO {
   CONNTRACT_ADDRESS = 'aura',
   COIN_ID = 'aura-network'
+}
+
+export enum SEARCH_KEYWORD {
+  CONTRACT_ADDRESS = 'contractAddress',
+  TOKEN_ID = 'tokenId'
 }
 
 export const ERROR_MAP = {
