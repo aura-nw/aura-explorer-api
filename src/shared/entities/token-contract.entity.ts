@@ -35,7 +35,7 @@ export class TokenContract extends BaseEntityIncrementId {
     coin_id: string;
 
     @Column()
-    total_supply: number;
+    max_total_supply: number;
 
     @Column()
     price: number;
