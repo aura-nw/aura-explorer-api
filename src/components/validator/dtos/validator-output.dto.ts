@@ -65,4 +65,8 @@ export class ValidatorOutput {
   @Expose()
   @ApiProperty()
   status: number;
+
+  @Expose()
+  @ApiProperty()
+  identity: number;
 }
