@@ -1,8 +1,7 @@
 import { SearchTransactionParamsDto } from '../../../components/contract/dtos/search-transaction-params.dto';
-import { EntityRepository, Raw, Repository } from 'typeorm';
+import { EntityRepository, ObjectLiteral, Raw, Repository } from 'typeorm';
 
-import { CONST_CHAR, CONST_FULL_MSG_TYPE, CONST_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, Transaction } from '../../../shared';
-
+import { CONST_FULL_MSG_TYPE, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract, Transaction } from '../../../shared';
 @EntityRepository(Transaction)
 export class TransactionRepository extends Repository<Transaction> {
 
@@ -11,23 +10,9 @@ export class TransactionRepository extends Repository<Transaction> {
     const [transactions, count] = await this.findAndCount({
       where: (
         {
-          messages: Raw(() => ` type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}')
-                  AND code = 0 AND messages LIKE '%${address}%'`),
+          messages: Raw(() => `type IN ('${CONST_FULL_MSG_TYPE.MSG_DELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_REDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_UNDELEGATE}', '${CONST_FULL_MSG_TYPE.MSG_CREATE_VALIDATOR}') 
+            AND code = 0 AND messages LIKE '%${address}%'`),
         }
-      ),
-      order: { height: 'DESC' },
-      take: limit,
-      skip: offset,
-    });
-
-    return { transactions, total: count };
-  }
-
-  async getTransactionsByDelegatorAddress(address: string, limit: number, offset: number) {
-
-    const [transactions, count] = await this.findAndCount({
-      where: (
-        { messages: Raw(() => `JSON_SEARCH(messages, 'all', '${address}')`) }
       ),
       order: { height: 'DESC' },
       take: limit,
@@ -82,11 +67,11 @@ export class TransactionRepository extends Repository<Transaction> {
             ) )
         OR ( contract_address = ?
             AND type = '${CONTRACT_TRANSACTION_TYPE.INSTANTIATE}' ) )`;
-        params.push(request.contract_address);
-        params.push(request.contract_address);
-        params.push(request.contract_address);
-        params.push(request.contract_address);
-        params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
+      params.push(request.contract_address);
     }
     sql += " ORDER BY height DESC";
     let sqlLimit = " LIMIT ? OFFSET ?";

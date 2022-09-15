@@ -9,6 +9,7 @@ import { configModuleOptions } from './configs/module-options';
 import { AllExceptionsFilter } from './filters/all-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AkcLoggerModule } from './logger/logger.module';
+import { RedisUtil } from './utils/redis.util';
 
 @Module({
   imports: [
@@ -52,7 +53,8 @@ import { AkcLoggerModule } from './logger/logger.module';
   providers: [
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
-    { provide: 'CACHE_INTERCEPTOR', useClass: CacheInterceptor}
+    { provide: 'CACHE_INTERCEPTOR', useClass: CacheInterceptor},
+    RedisUtil
   ],
 })
 export class SharedModule {}

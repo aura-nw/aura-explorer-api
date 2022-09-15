@@ -109,12 +109,6 @@ export class ValidatorService {
         data.status_validator = false;
       }
 
-      // // get count proposal vote by address
-      // const countVotes = await this.proposalVoteRepository.count({
-      //   where: { voter: data.acc_address },
-      // });
-      // data.vote_count = countVotes;
-
       votersAddress.push(data.acc_address);
     }
 
@@ -200,8 +194,8 @@ export class ValidatorService {
     }
     const data = accountData.data;
     result.available_balance = 0;
-    if (data?.account_balances && data.account_balances?.balances && data.account_balances.balances.length > 0) {
-      result.available_balance = Number(data.account_balances.balances[0].amount);
+    if (data?.account_balances && data.account_balances.length > 0) {
+      result.available_balance = Number(data.account_balances[0].amount);
     }
     result.claim_reward = 0;
     const withdrawReward = await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(delegatorAddress);
@@ -212,8 +206,8 @@ export class ValidatorService {
     let delegations: any = [];
     const validatorAddress: string[] = [];
     const delegatorAddr: string[] = [];
-    if (data?.account_delegations && data.account_delegations?.delegation_responses) {
-      const delegationsData = data.account_delegations?.delegation_responses;
+    if (data?.account_delegations) {
+      const delegationsData = data.account_delegations;
       for (let i = 0; i < delegationsData.length; i++) {
         let delegation: any = {};
         let item = delegationsData[i];

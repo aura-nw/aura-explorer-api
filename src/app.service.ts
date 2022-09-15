@@ -74,11 +74,6 @@ export class AppService {
     let comPool;
     let supply;
     if (blocks) {
-      // const block_first = blocks[0].timestamp.getTime();
-      // const block_second = blocks[1].timestamp.getTime();
-      // blockTime =
-      //   Math.floor(Math.abs(block_first - block_second) / 1000) +
-      //   CONST_CHAR.SECOND;
       height = blocks.current_block;
     }
 
