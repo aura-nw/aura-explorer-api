@@ -56,13 +56,6 @@ export class Cw20TokenService {
         return token;
     }
 
-    // async getCw20TokenTransactions(ctx: RequestContext, request: Cw20TokenTransactionParamsDto): Promise<any> {
-    //     this.logger.log(ctx, `${this.getCw20TokenTransactions.name} was called!`);
-    //     const [transactions, count] = await this.transactionRepository.getCw20TokenTransactions(request);
-
-    //     return [transactions, count];
-    // }
-
     async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
         const result = await this.tokenContractRepository.getCw20TokensByOwner(request);

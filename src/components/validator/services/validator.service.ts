@@ -109,12 +109,6 @@ export class ValidatorService {
         data.status_validator = false;
       }
 
-      // // get count proposal vote by address
-      // const countVotes = await this.proposalVoteRepository.count({
-      //   where: { voter: data.acc_address },
-      // });
-      // data.vote_count = countVotes;
-
       votersAddress.push(data.acc_address);
     }
 

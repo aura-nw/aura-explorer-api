@@ -32,27 +32,6 @@ export class TransactionController {
     this.logger.setContext(TransactionController.name);
   }
 
-  // @Get()
-  // @ApiOperation({
-  //   summary: 'Get latest transaction API - defaults to 20 transactions',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   type: SwaggerBaseApiResponse(LiteTransactionOutput),
-  // })
-  // @UseInterceptors(ClassSerializerInterceptor)
-  // @UseInterceptors(CacheInterceptor)
-  // async getTxs(
-  //   @ReqContext() ctx: RequestContext,
-  //   @Query() query: TxParamsDto,
-  // ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
-  //   this.logger.log(ctx, `${this.getTxs.name} was called!`);
-
-  //   const { txs, count } = await this.transactionService.getTxs(ctx, query);
-
-  //   return { data: txs, meta: { count } };
-  // }
-
   @Get(':hash')
   @ApiOperation({ summary: 'Get transaction by hash' })
   @ApiResponse({

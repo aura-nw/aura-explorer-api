@@ -35,23 +35,4 @@ export class AccountController {
 
       return { data: account, meta: {} };
   }
-
-  // @Get(':address/transaction')
-  // @ApiOperation({ summary: 'Get transaction by address' })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   type: SwaggerBaseApiResponse(LiteTransactionOutput),
-  // })
-  // @UseInterceptors(ClassSerializerInterceptor)
-  // @UseInterceptors(CacheInterceptor)
-  // async getTransactionsByDelegatorAddress(
-  //   @ReqContext() ctx: RequestContext,
-  //   @Param('address') address: string,
-  //   @Query() query: DelegationParamsDto,
-  // ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
-  //   this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
-  //   const { transactions, count } = await this.transactionService.getTransactionsByDelegatorAddress(ctx, address, query);
-
-  //   return { data: transactions, meta: {count} };
-  // }
 }
