@@ -125,7 +125,8 @@ export class TokenContractRepository extends Repository<TokenContract> {
 
     async getTokenByContractAddress(contractAddress: string) {
         let sql = `SELECT sc.token_name AS name, sc.token_symbol AS symbol, sc.num_tokens,
-                sc.contract_address, sc.contract_verification, sc.tx_hash, scc.type
+                sc.contract_address, sc.contract_verification, sc.tx_hash, scc.type,
+                sc.token_decimals AS decimals, sc.token_description AS description, sc.token_image AS image
             FROM smart_contracts sc
                 INNER JOIN smart_contract_codes scc ON sc.code_id = scc.code_id
             WHERE sc.contract_address = ?`;
