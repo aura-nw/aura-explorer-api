@@ -12,15 +12,16 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
 
     async getProposalVotesByOption(request: ProposalVoteByOptionInput) {
         let params = [];
-        let sql = `SELECT * 
-            FROM proposal_votes 
-            WHERE proposal_id = ?`;
+        let sql = `SELECT pv.*, v.identity AS validator_identity
+            FROM proposal_votes pv
+                LEFT JOIN validators v ON pv.voter = v.acc_address
+            WHERE pv.proposal_id = ?`;
         params.push(request.proposalId);
         if (request.option !== '') {
-            sql += " AND `option` = ?";
+            sql += " AND pv.option = ?";
             params.push(request.option);
         }
-        sql += ` ORDER BY updated_at DESC`;
+        sql += ` ORDER BY pv.updated_at DESC`;
         sql += ` LIMIT ? OFFSET ?`;
         params.push(request.limit);
         params.push(request.offset * request.limit);
@@ -31,7 +32,7 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
     async getProposalVotesByValidator(request: ProposalVoteByValidatorInput, isLimit: boolean) {
         let params = [];
         let sql = `SELECT v.title AS validator_name, v.acc_address AS validator_address, pv.tx_hash, pv.option, pv.created_at, pv.updated_at, v.operator_address,
-                ROW_NUMBER() OVER(ORDER BY v.power DESC ) as 'rank'
+                ROW_NUMBER() OVER(ORDER BY v.power DESC ) as 'rank', v.identity AS validator_identity
             FROM validators v
                 LEFT JOIN proposal_votes pv ON v.acc_address = pv.voter AND pv.proposal_id = ?
                 WHERE v.status = 3`;
