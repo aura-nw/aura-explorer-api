@@ -18,8 +18,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
         let sql: string = ` FROM smart_contracts sc
             LEFT JOIN smart_contract_codes scc ON sc.code_id = scc.code_id`;
         if (request?.keyword) {
-            sql += ` WHERE LOWER(sc.contract_name) LIKE '%?%'`;
-            params.push(request.keyword.toLowerCase());
+            sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
+            params.push(`%${request.keyword.toLowerCase()}%`);
         }
         sql += " ORDER BY sc.updated_at DESC";
         let sqlLimit = "";
@@ -50,11 +50,14 @@ export class SmartContractRepository extends Repository<SmartContract> {
             .getRawMany();
     }
 
-
     /**
      * Get list contract by Creator address
      * @param creatorAddress 
-     * @returns List contract(any[])
+     * @param codeId: Code id of contract
+     * @param status: Status of contract
+     * @param limit: Number of record on per page
+     * @param offset: Numer of record to skip
+     * @returns @returns List contract(any[])
      */
     async getContractByCreator(creatorAddress: string, codeId: number, status: string, limit: number, offset: number) {
         let conditions = `creator_address=:creatorAddress`;
