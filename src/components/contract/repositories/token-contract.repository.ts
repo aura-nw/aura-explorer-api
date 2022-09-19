@@ -90,10 +90,9 @@ export class TokenContractRepository extends Repository<TokenContract> {
                 LIMIT 1) AS upTime`;
         let sqlCount: string = `SELECT COUNT(sc.id) AS total`;
         let sql: string = ` FROM smart_contracts sc
-                INNER JOIN smart_contract_codes scc ON sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'
-            WHERE sc.is_minted = true`;
+                INNER JOIN smart_contract_codes scc ON sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'`;
         if(request?.keyword) {
-            sql += ` AND (LOWER(sc.token_name) LIKE ? OR LOWER(sc.contract_address) LIKE ?)`
+            sql += ` WHERE (LOWER(sc.token_name) LIKE ? OR LOWER(sc.contract_address) LIKE ?)`
             params.push(`%${request.keyword.toLowerCase()}%`);
             params.push(`%${request.keyword.toLowerCase()}%`);
         }

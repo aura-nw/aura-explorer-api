@@ -18,8 +18,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
         let sql: string = ` FROM smart_contracts sc
             LEFT JOIN smart_contract_codes scc ON sc.code_id = scc.code_id`;
         if (request?.keyword) {
-            sql += ` WHERE LOWER(sc.contract_name) LIKE '%?%'`;
-            params.push(request.keyword.toLowerCase());
+            sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
+            params.push(`%${request.keyword.toLowerCase()}%`);
         }
         sql += " ORDER BY sc.updated_at DESC";
         let sqlLimit = "";
