@@ -247,6 +247,7 @@ export class ValidatorService {
         if (rank) {
           item.validator_name = rank.title;
           item.validator_rank = rank.rank;
+          item.validator_identity = rank.identity;
         }
 
         // Set reward for validators
