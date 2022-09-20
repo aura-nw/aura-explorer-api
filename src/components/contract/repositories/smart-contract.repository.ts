@@ -2,7 +2,7 @@ import { SmartContract } from "../../../shared/entities/smart-contract.entity";
 import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
-import { CONTRACT_STATUS, TokenContract } from "../../../shared";
+import { AURA_INFO, CONTRACT_STATUS, LENGTH, TokenContract } from "../../../shared";
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
@@ -18,8 +18,20 @@ export class SmartContractRepository extends Repository<SmartContract> {
         let sql: string = ` FROM smart_contracts sc
             LEFT JOIN smart_contract_codes scc ON sc.code_id = scc.code_id`;
         if (request?.keyword) {
-            sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
-            params.push(`%${request.keyword.toLowerCase()}%`);
+            const keyword = request.keyword.toLowerCase();
+            if (Number(keyword) && Number(keyword) > 0) {
+                sql += ` WHERE sc.code_id = ?`;
+                params.push(keyword);
+            } else if (keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && keyword.length === LENGTH.CONTRACT_ADDRESS) {
+                sql += ` WHERE sc.contract_address = ?`;
+                params.push(keyword);
+            } else if (keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && keyword.length === LENGTH.ACCOUNT_ADDRESS) {
+                sql += ` WHERE sc.creator_address = ?`;
+                params.push(keyword);
+            } else {
+                sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
+                params.push(`%${keyword}%`);
+            }
         }
         sql += " ORDER BY sc.updated_at DESC";
         let sqlLimit = "";
