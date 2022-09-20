@@ -30,7 +30,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 params.push(keyword);
             } else {
                 sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
-                params.push(`%${request.keyword}%`);
+                params.push(`%${keyword}%`);
             }
         }
         sql += " ORDER BY sc.updated_at DESC";
