@@ -134,6 +134,11 @@ export enum SEARCH_KEYWORD {
   TOKEN_ID = 'tokenId'
 }
 
+export enum LENGTH {
+  CONTRACT_ADDRESS = 63,
+  ACCOUNT_ADDRESS = 43
+}
+
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
     Code: 'E001',
