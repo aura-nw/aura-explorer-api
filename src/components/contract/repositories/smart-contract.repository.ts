@@ -23,7 +23,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 sql += ` WHERE sc.code_id = ?`;
                 params.push(keyword);
             } else if (keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && keyword.length === LENGTH.CONTRACT_ADDRESS) {
-                sql += ` WHERE sc.contract_address = ?`;
+                sql += ` WHERE sc.contract_address = ? OR sc.creator_address = ?`;
+                params.push(keyword);
                 params.push(keyword);
             } else if (keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && keyword.length === LENGTH.ACCOUNT_ADDRESS) {
                 sql += ` WHERE sc.creator_address = ?`;
