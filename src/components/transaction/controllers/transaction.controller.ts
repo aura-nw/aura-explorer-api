@@ -1,26 +1,18 @@
 import {
-  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
   HttpStatus,
-  Param,
-  Query,
-  UseInterceptors,
+  Param, UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-  AkcLogger,
-  BaseApiResponse,
-  RequestContext,
-  SwaggerBaseApiResponse,
-  ReqContext,
+  AkcLogger, ReqContext, RequestContext,
+  SwaggerBaseApiResponse
 } from '../../../shared';
 
-import { TxParamsDto } from '../dtos/transaction-params.dto';
 import { TransactionOutput } from '../dtos/transaction-output.dto';
 import { TransactionService } from '../services/transaction.service';
-import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
 
 @ApiTags('transactions')
 @Controller('transactions')
@@ -31,27 +23,6 @@ export class TransactionController {
   ) {
     this.logger.setContext(TransactionController.name);
   }
-
-  // @Get()
-  // @ApiOperation({
-  //   summary: 'Get latest transaction API - defaults to 20 transactions',
-  // })
-  // @ApiResponse({
-  //   status: HttpStatus.OK,
-  //   type: SwaggerBaseApiResponse(LiteTransactionOutput),
-  // })
-  // @UseInterceptors(ClassSerializerInterceptor)
-  // @UseInterceptors(CacheInterceptor)
-  // async getTxs(
-  //   @ReqContext() ctx: RequestContext,
-  //   @Query() query: TxParamsDto,
-  // ): Promise<BaseApiResponse<LiteTransactionOutput[]>> {
-  //   this.logger.log(ctx, `${this.getTxs.name} was called!`);
-
-  //   const { txs, count } = await this.transactionService.getTxs(ctx, query);
-
-  //   return { data: txs, meta: { count } };
-  // }
 
   @Get(':hash')
   @ApiOperation({ summary: 'Get transaction by hash' })
@@ -64,7 +35,6 @@ export class TransactionController {
     @ReqContext() ctx: RequestContext,
     @Param('hash') hash: string,
   ): Promise<any> {
-    // ): Promise<BaseApiResponse<BlockOutput>> {
     this.logger.log(ctx, `${this.getTxByHash.name} was called!`);
 
     const tx = await this.transactionService.getTxByHash(ctx, hash);
