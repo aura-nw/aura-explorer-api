@@ -1,14 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext, SEARCH_KEYWORD } from "../../../shared";
-import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
-import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
-import { TransactionRepository } from "../../transaction/repositories/transaction.repository";
-import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
-import { ServiceUtil } from "../../../shared/utils/service.util";
-import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { SmartContractRepository } from "../../../components/contract/repositories/smart-contract.repository";
+import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
+import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext, SEARCH_KEYWORD } from "../../../shared";
+import * as appConfig from '../../../shared/configs/configuration';
+import { ServiceUtil } from "../../../shared/utils/service.util";
+import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
+import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 
 @Injectable()
 export class Cw721TokenService {
@@ -90,43 +88,4 @@ export class Cw721TokenService {
 
         return { tokens: tokens, count: count };
     }
-
-    /**
-     * Get transactions by address
-     * @param address 
-     * @param type 
-     * @param limit 
-     * @param offset 
-     * @returns 
-     */
-    // async getTransactionContract(req: TokenCW721TransactionParasDto): Promise<[any, number]> {
-    //     const [transactions, count] = await this.transactionRepository.getTransactionContract(req.contract_address, req.account_address, req.tx_hash, req.token_id, req.limit, req.offset);
-    //     if (transactions) {
-    //         const transactionBurn = await this.tokenTransactionRepository.getBurnByAddress(req.contract_address);
-    //         transactions.forEach((item) => {
-    //             item['disabled'] = false;
-    //             if (transactionBurn?.length > 0) {
-    //                 const filter = transactionBurn.filter(f => String(f.token_id) === item.token_id
-    //                     && Number(item.height) <= Number(f.height));
-    //                 if (filter?.length > 0) {
-    //                     item['disabled'] = true;
-    //                 }
-    //             }
-    //         });
-    //     }
-    //     return [transactions, count];
-    // }
-
-    /**
-     * Get transactions by Address and Token Id
-     * @param address 
-     * @param tokenType 
-     * @param token_id 
-     * @param limit 
-     * @param offset 
-     * @returns 
-     */
-    // async viewNTFTransaction(address: string, token_id, limit: number, offset: number): Promise<[any, number]> {
-    //     return await this.transactionRepository.viewNTFTransaction(address, CONTRACT_TYPE.CW721, token_id, limit, offset);
-    // }
 }
