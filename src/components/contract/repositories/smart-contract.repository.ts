@@ -57,8 +57,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
             .select('sm.code_id AS codeId')
             .distinct(true)
             .where(`sm.contract_verification != '${CONTRACT_STATUS.UNVERIFIED}'
-                AND sm.mainnet_upload_status NOT IN('${CONTRACT_STATUS.DEPLOYED}', '${CONTRACT_STATUS.TBD}',
-                '${CONTRACT_STATUS.REJECTED}', '${CONTRACT_STATUS.NOT_REGISTERED}', '${CONTRACT_STATUS.PENDING}')
+                AND sm.mainnet_upload_status IN('${CONTRACT_STATUS.REJECTED}','${CONTRACT_STATUS.NOT_REGISTERED}')
                 AND sm.creator_address=:creatorAddress`)
             .setParameter('creatorAddress', creatorAddress)
             .getRawMany();
