@@ -6,17 +6,14 @@ import {
   HttpStatus,
   Param,
   Query,
-  UseInterceptors,
+  UseInterceptors
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
   AkcLogger,
-  BaseApiResponse,
-  RequestContext,
-  SwaggerBaseApiResponse,
-  ReqContext,
-  CONST_NUM,
+  BaseApiResponse, ReqContext, RequestContext,
+  SwaggerBaseApiResponse
 } from '../../../shared';
 import { BlockLatestDto } from '../dtos/block-latest-params.dto';
 
@@ -84,7 +81,6 @@ export class BlockController {
     @ReqContext() ctx: RequestContext,
     @Param('height') height: number,
   ): Promise<any> {
-    // ): Promise<BaseApiResponse<BlockOutput>> {
     this.logger.log(ctx, `${this.getBlockByHeight.name} was called!`);
 
     const block = await this.blockService.getBlockByHeight(ctx, height);
@@ -103,7 +99,6 @@ export class BlockController {
     @ReqContext() ctx: RequestContext,
     @Param('blockId') blockId: number,
   ): Promise<any> {
-    // ): Promise<BaseApiResponse<BlockOutput>> {
     this.logger.log(ctx, `${this.getBlockById.name} was called!`);
 
     const block = await this.blockService.getBlockById(ctx, blockId);

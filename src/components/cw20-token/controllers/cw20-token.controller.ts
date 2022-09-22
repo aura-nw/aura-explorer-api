@@ -38,18 +38,6 @@ export class Cw20TokenController {
         return { data: token, meta: {} };
     }
 
-    // @Post('transactions')
-    // @ApiOperation({ summary: 'Get list transactions of cw20 token' })
-    // @ApiResponse({ status: HttpStatus.OK })
-    // @UseInterceptors(ClassSerializerInterceptor)
-    // @UseInterceptors(CacheInterceptor)
-    // async getCw20TokenTransactions(@ReqContext() ctx: RequestContext, @Body() request: Cw20TokenTransactionParamsDto): Promise<any> {
-    //     this.logger.log(ctx, `${this.getCw20TokenTransactions.name} was called!`);
-    //     const [transactions, count] = await this.cw20TokenService.getCw20TokenTransactions(ctx, request);
-
-    //     return { data: transactions, meta: { count } };
-    // }
-
     @Post('get-by-owner')
     @ApiOperation({ summary: 'Get list cw20 tokens by owner' })
     @ApiResponse({ status: HttpStatus.OK })
