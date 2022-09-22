@@ -100,6 +100,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.DEPLOYED}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.REJECTED}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.PENDING}'
+                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.NOT_REGISTERED}'
+                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.APPROVED}'
             ) THEN sm.mainnet_upload_status ELSE sm.contract_verification END) AS status`)
             .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address=sm.contract_address')
             .distinct(true)
