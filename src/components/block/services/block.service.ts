@@ -1,6 +1,4 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 
 import { AkcLogger, RequestContext } from '../../../shared';
@@ -9,21 +7,15 @@ import { BlockParamsDto } from '../dtos/block-params.dto';
 import { BlockRepository } from '../repositories/block.repository';
 
 import { TransactionService } from '../../transaction/services/transaction.service';
-import { MissedBlockRepository } from '../../../components/schedule/repositories/missed-block.repository';
-import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
-import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
 import { BlockLatestDto } from '../dtos/block-latest-params.dto';
+import { LiteBlockOutput } from '../dtos/lite-block-output.dto';
 
 @Injectable()
 export class BlockService {
   constructor(
     private readonly logger: AkcLogger,
-    private httpService: HttpService,
-    private configService: ConfigService,
     private blockRepository: BlockRepository,
     private txService: TransactionService,
-    private missedBlockRepository: MissedBlockRepository,
-    private validatorRepository: ValidatorRepository,
   ) {
     this.logger.setContext(BlockService.name);
   }

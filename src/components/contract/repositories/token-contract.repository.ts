@@ -1,9 +1,8 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { Cw721TokenParamsDto } from "../../../components/cw721-token/dtos/cw721-token-params.dto";
 import { EntityRepository, FindManyOptions, Not, ObjectLiteral, Raw, Repository } from "typeorm";
 import { Cw20TokenByOwnerParamsDto } from "../../../components/cw20-token/dtos/cw20-token-by-owner-params.dto";
-import { NftByOwnerParamsDto } from "../../../components/cw721-token/dtos/nft-by-owner-params.dto";
-import { AURA_INFO, CONTRACT_CODE_RESULT, CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
+import { Cw721TokenParamsDto } from "../../../components/cw721-token/dtos/cw721-token-params.dto";
+import { AURA_INFO, CONTRACT_CODE_RESULT, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
 
 @EntityRepository(TokenContract)
 export class TokenContractRepository extends Repository<TokenContract> {

@@ -1,15 +1,13 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { ServiceUtil } from '../../../shared/utils/service.util';
 import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
-import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import {
   AkcLogger, CONST_PROPOSAL_VOTE_OPTION,
   LINK_API,
   RequestContext
 } from '../../../shared';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ProposalOutput } from '../dtos/proposal-output.dto';
 import { ProposalVoteByOptionInput } from '../dtos/proposal-vote-by-option-input.dto';
 import { ProposalVoteByValidatorInput } from '../dtos/proposal-vote-by-validator-input.dto';
@@ -26,11 +24,9 @@ export class ProposalService {
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
-    private httpService: HttpService,
     private serviceUtil: ServiceUtil,
     private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
-    private validatorRepository: ValidatorRepository,
     private historyProposalRepository: HistoryProposalRepository,
     private proposalDepositRepository: ProposalDepositRepository,
     private delegationRepository: DelegationRepository

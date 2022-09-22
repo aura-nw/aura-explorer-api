@@ -1,25 +1,21 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
-import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 
+import * as util from 'util';
 import {
-  AkcLogger,
-  CONST_CHAR,
-  CONST_NUM,
-  INDEXER_API,
-  RequestContext,
+  AkcLogger, INDEXER_API,
+  RequestContext
 } from '../../../shared';
+import * as appConfig from '../../../shared/configs/configuration';
 import { AccountBalance } from '../dtos/account-balance.dto';
 import { AccountDelegation } from '../dtos/account-delegation.dto';
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountRedelegation } from '../dtos/account-redelegation.dto';
 import { AccountUnbonding } from '../dtos/account-unbonding.dto';
 import { AccountVesting } from '../dtos/account-vesting.dto';
-import * as appConfig from '../../../shared/configs/configuration';
-import * as util from 'util';
 
 @Injectable()
 export class AccountService {
@@ -33,8 +29,6 @@ export class AccountService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private httpService: HttpService,
-    private configService: ConfigService,
     private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository
   ) {
