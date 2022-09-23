@@ -83,10 +83,12 @@ export class Cw20TokenService {
         let price = 0;
         if (data) {
             const priceData = JSON.parse(data);
-            price = priceData.current_price;
+            assetDto.price = priceData.current_price;
+            assetDto.price_change_percentage_24h = priceData.price_change_percentage_24h;
+            assetDto.max_total_supply = priceData.max_supply;
         }
         //get value
-        assetDto.value = (Number(assetDto.balance) * Number(price)).toString();
+        assetDto.value = (Number(assetDto.balance) * Number(assetDto.price)).toString();
         result.push(assetDto);
 
         //ibc
