@@ -109,6 +109,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
             .setParameters(params)
             .limit(limit)
             .offset(offset)
+            .orderBy('sm.updated_at', 'DESC')
             .getRawMany();
 
         let count = await this.createQueryBuilder('sm')
