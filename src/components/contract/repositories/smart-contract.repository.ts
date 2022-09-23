@@ -103,7 +103,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.NOT_REGISTERED}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.APPROVED}'
             ) THEN sm.mainnet_upload_status ELSE sm.contract_verification END) AS status`)
-            .innerJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id')
+            .leftJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id AND sm.creator_address = smCode.creator')
             .distinct(true)
             .where(conditions)
             .setParameters(params)
@@ -114,7 +114,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
         let count = await this.createQueryBuilder('sm')
             .select(`COUNT(DISTINCT sm.id) AS total`)
-            .innerJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id')
+            .leftJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id AND sm.creator_address = smCode.creator')
             .where(conditions)
             .setParameters(params)
             .getRawOne();
