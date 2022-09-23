@@ -3,6 +3,7 @@ import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
 import { SmartContract } from "../../../shared/entities/smart-contract.entity";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 import { AURA_INFO, CONTRACT_STATUS, LENGTH, TokenContract } from "../../../shared";
+import { SmartContractCode } from "../../../shared/entities/smart-contract-code.entity";
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
@@ -94,7 +95,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
         }
 
         let constracts = await this.createQueryBuilder('sm')
-            .select(`sm.*, tokenContract.type, (CASE WHEN(
+            .select(`sm.*, smCode.type, (CASE WHEN(
                 sm.mainnet_upload_status = '${CONTRACT_STATUS.TBD}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.DEPLOYED}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.REJECTED}'
@@ -102,7 +103,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.NOT_REGISTERED}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.APPROVED}'
             ) THEN sm.mainnet_upload_status ELSE sm.contract_verification END) AS status`)
-            .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address=sm.contract_address')
+            .innerJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id')
             .distinct(true)
             .where(conditions)
             .setParameters(params)
@@ -112,7 +113,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
         let count = await this.createQueryBuilder('sm')
             .select(`COUNT(DISTINCT sm.id) AS total`)
-            .innerJoin(TokenContract, 'tokenContract', 'tokenContract.contract_address=sm.contract_address')
+            .innerJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id')
             .where(conditions)
             .setParameters(params)
             .getRawOne();
