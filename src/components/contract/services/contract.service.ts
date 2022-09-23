@@ -174,10 +174,17 @@ export class ContractService {
       const smartContractStatus: Array<ContractStatusOutputDto> = [];
       Object.keys(CONTRACT_STATUS).forEach(key => {
         const status: ContractStatusOutputDto = new ContractStatusOutputDto();
-        status.key = key;
-        status.label = CONTRACT_STATUS[key];
+        const value = CONTRACT_STATUS[key];
 
-        smartContractStatus.push(status);
+        if (value !== CONTRACT_STATUS.EXACT_MATCH
+          && value !== CONTRACT_STATUS.SIMILAR_MATCH
+          && value !== CONTRACT_STATUS.APPROVED
+          && value !== CONTRACT_STATUS.PENDING
+        ) {
+          status.key = key;
+          status.label = value;
+          smartContractStatus.push(status);
+        }
       });
       return smartContractStatus;
     } catch (err) {

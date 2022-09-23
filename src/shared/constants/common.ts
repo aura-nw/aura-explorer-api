@@ -79,11 +79,11 @@ export enum CONTRACT_STATUS {
   EXACT_MATCH = "EXACT MATCH",
   SIMILAR_MATCH = "SIMILAR MATCH",
   UNVERIFIED = "UNVERIFIED",
-  DEPLOYED = 'Deployed',
-  TBD = 'TBD',
-  REJECTED = 'Rejected',
-  APPROVED = 'Approved',
   NOT_REGISTERED = 'Not registered',
+  TBD = 'TBD',
+  DEPLOYED = 'Deployed',
+  REJECTED = 'Rejected',
+  APPROVED = 'Approved',  
   PENDING = 'Pending'
 }
 
