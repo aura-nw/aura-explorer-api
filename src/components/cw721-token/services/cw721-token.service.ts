@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import * as util from 'util';
 import { SmartContractRepository } from "../../../components/contract/repositories/smart-contract.repository";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext, SEARCH_KEYWORD } from "../../../shared";
+import { AkcLogger, AURA_INFO, CONTRACT_TYPE, INDEXER_API, LENGTH, RequestContext, SEARCH_KEYWORD } from "../../../shared";
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
@@ -59,15 +59,14 @@ export class Cw721TokenService {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
         let url: string = INDEXER_API.GET_NFTS_BY_OWNER;
         const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit, request.offset]
-        if (request.contract_address) {
+        if (request?.keyword) {
             url += '&%s=%s';
-            params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS);
-            params.push(request.contract_address);
-        }
-        if (request.token_id) {
-            url += '&%s=%s';
-            params.push(SEARCH_KEYWORD.TOKEN_ID);
-            params.push(request.token_id);
+            if (request.keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && request.keyword.length === LENGTH.CONTRACT_ADDRESS) {
+                params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS)
+            } else {
+                params.push(SEARCH_KEYWORD.TOKEN_ID);
+            }
+            params.push(request.keyword);
         }
         const result = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(url, ...params)}`, '', ctx);
         const tokens = result.data.assets.CW721.asset;
