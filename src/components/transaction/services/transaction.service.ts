@@ -1,16 +1,14 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 
-import { AkcLogger, CONST_CHAR, CONST_NUM, RequestContext, Transaction } from '../../../shared';
+import { AkcLogger, CONST_CHAR, RequestContext, Transaction } from '../../../shared';
 
-import { TxParamsDto } from '../dtos/transaction-params.dto';
-import { TransactionRepository } from '../repositories/transaction.repository';
 import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
-import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
-import { MoreThan } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
+import { LiteTransactionOutput } from '../dtos/lite-transaction-output.dto';
+import { TransactionRepository } from '../repositories/transaction.repository';
 
 @Injectable()
 export class TransactionService {
@@ -37,26 +35,6 @@ export class TransactionService {
 
   async getTxsByBlockHeight(height: number): Promise<Transaction[]> {
     return await this.txRepository.find({ where: { height } });
-  }
-
-  async getTxs(
-    ctx: RequestContext,
-    query: TxParamsDto,
-  ): Promise<{ txs: LiteTransactionOutput[]; count: number }> {
-    this.logger.log(ctx, `${this.getTxs.name} was called!`);
-
-    const [txs, count] = await this.txRepository.findAndCount({
-      where: { id: MoreThan(0) },
-      order: { height: 'DESC' },
-      take: query.limit,
-      skip: query.offset,
-    });
-
-    const txsOuput = plainToClass(LiteTransactionOutput, txs, {
-      excludeExtraneousValues: true,
-    });
-
-    return { txs: txsOuput, count };
   }
 
   async getTxByHash(ctx: RequestContext, hash): Promise<any> {
@@ -116,20 +94,4 @@ export class TransactionService {
 
     return { transactions: transactionsOutput, count: total };
   }
-
-  // async getTransactionsByDelegatorAddress(
-  //   ctx: RequestContext,
-  //   address,
-  //   query: DelegationParamsDto,
-  // ): Promise<{ transactions: LiteTransactionOutput[]; count: number }> {
-  //   this.logger.log(ctx, `${this.getTransactionsByDelegatorAddress.name} was called!`);
-
-  //   const { transactions, total } = await this.txRepository.getTransactionsByDelegatorAddress(address, query.limit, query.offset);
-
-  //   const transactionsOutput = plainToClass(LiteTransactionOutput, transactions, {
-  //     excludeExtraneousValues: true,
-  //   });
-
-  //   return { transactions: transactionsOutput, count: total };
-  // }
 }

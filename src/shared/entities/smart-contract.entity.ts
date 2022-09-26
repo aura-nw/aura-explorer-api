@@ -67,7 +67,4 @@ export class SmartContract extends BaseEntityIncrementId {
 
     @Column()
     num_tokens: number;
-
-    @Column()
-    is_minted: boolean;
 }

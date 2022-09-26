@@ -3,27 +3,22 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
-import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 import { BlockService } from '../../../components/block/services/block.service';
+import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
 
 import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext, Validator } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
+import * as util from 'util';
+import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
+import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
+import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
+import * as appConfig from '../../../shared/configs/configuration';
+import { ServiceUtil } from '../../../shared/utils/service.util';
+import { DelegationOutput } from '../dtos/delegation-output.dto';
+import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorRepository } from '../repositories/validator.repository';
-import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
-import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
-import { DelegationOutput } from '../dtos/delegation-output.dto';
-import { DelegatorOutput } from '../dtos/delegator-output';
-import { ServiceUtil } from '../../../shared/utils/service.util';
-import { UnbondingDelegationsOutput } from '../dtos/unbonding-delegations-output';
-import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
-import { DelegatorByValidatorAddrParamsDto } from '../dtos/delegator-by-validator-addr-params.dto';
-import { DelegatorByValidatorAddrOutputDto } from '../dtos/delegator-by-validator-addr-output.dto';
-import { MoreThan } from 'typeorm';
-import * as appConfig from '../../../shared/configs/configuration';
-import * as util from 'util';
 
 @Injectable()
 export class ValidatorService {
@@ -108,13 +103,7 @@ export class ValidatorService {
       } else {
         data.status_validator = false;
       }
-
-      // // get count proposal vote by address
-      // const countVotes = await this.proposalVoteRepository.count({
-      //   where: { voter: data.acc_address },
-      // });
-      // data.vote_count = countVotes;
-
+      
       votersAddress.push(data.acc_address);
     }
 
@@ -247,6 +236,7 @@ export class ValidatorService {
         if (rank) {
           item.validator_name = rank.title;
           item.validator_rank = rank.rank;
+          item.validator_identity = rank.identity;
         }
 
         // Set reward for validators
@@ -259,60 +249,5 @@ export class ValidatorService {
 
     result.delegations = delegations;
     return result;
-  }
-
-  /**
-   * getDelegators
-   * @param operatorAddress 
-   * @param delegatorAddress 
-   * @returns 
-   */
-  async getDelegators(operatorAddr: string, delegatorAddr: string) {
-    const delegators = await this.validatorRepository.getDelegators(operatorAddr, delegatorAddr);
-    if (delegators.length > 0) {
-      const delegatorOutputs = plainToClass(DelegatorOutput, delegators, {
-        excludeExtraneousValues: true,
-      });
-
-      return { data: delegatorOutputs };
-    }
-    return { data: [] };
-  }
-
-  /**
-   * unbondingDelegations
-   * @param ctx 
-   * @param validatorAddr 
-   * @returns 
-   */
-  async unbondingDelegations(ctx: RequestContext, delegatorAddr: string) {
-    const params = `cosmos/staking/v1beta1/delegators/${delegatorAddr}/unbonding_delegations`;
-    const responses = await this.serviceUtil.getDataAPI(this.api, params, ctx);
-    let unbonding_responses = [];
-    if (responses) {
-      for (let i = 0; i < responses.unbonding_responses?.length; i++) {
-        let unbondingRes: UnbondingDelegationsOutput = { ...responses.unbonding_responses[i] };
-        const validator = await this.validatorRepository.findOne({ where: { operator_address: unbondingRes.validator_address } });
-        if (validator) {
-          unbondingRes.validator_name = validator.title;
-        }
-        unbonding_responses.push(unbondingRes);
-      }
-    }
-    return { data: unbonding_responses };
-  }
-
-  /**
-   * getDelegatorByValidatorAddr
-   * @param validatorAddress 
-   * @param limit 
-   * @param offset 
-   */
-  async getDelegatorByValidatorAddr(ctx: RequestContext, validatorAddress: string, params: DelegatorByValidatorAddrParamsDto) {
-    const { pageResults, total } = await this.validatorRepository.getDelegatorByValidatorAddr(validatorAddress, params.limit, params.offset);
-    const responses = plainToClass(DelegatorByValidatorAddrOutputDto, pageResults, {
-      excludeExtraneousValues: true,
-    });
-    return { data: responses, total };
   }
 }

@@ -1,9 +1,8 @@
 import { InjectRepository } from "@nestjs/typeorm";
-import { Cw721TokenParamsDto } from "../../../components/cw721-token/dtos/cw721-token-params.dto";
 import { EntityRepository, FindManyOptions, Not, ObjectLiteral, Raw, Repository } from "typeorm";
 import { Cw20TokenByOwnerParamsDto } from "../../../components/cw20-token/dtos/cw20-token-by-owner-params.dto";
-import { NftByOwnerParamsDto } from "../../../components/cw721-token/dtos/nft-by-owner-params.dto";
-import { AURA_INFO, CONTRACT_CODE_RESULT, CONTRACT_TRANSACTION_EXECUTE_TYPE, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
+import { Cw721TokenParamsDto } from "../../../components/cw721-token/dtos/cw721-token-params.dto";
+import { AURA_INFO, CONTRACT_CODE_RESULT, CONTRACT_TRANSACTION_TYPE, CONTRACT_TYPE, TokenContract } from "../../../shared";
 
 @EntityRepository(TokenContract)
 export class TokenContractRepository extends Repository<TokenContract> {
@@ -90,10 +89,9 @@ export class TokenContractRepository extends Repository<TokenContract> {
                 LIMIT 1) AS upTime`;
         let sqlCount: string = `SELECT COUNT(sc.id) AS total`;
         let sql: string = ` FROM smart_contracts sc
-                INNER JOIN smart_contract_codes scc ON sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'
-            WHERE sc.is_minted = true`;
+                INNER JOIN smart_contract_codes scc ON sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'`;
         if(request?.keyword) {
-            sql += ` AND (LOWER(sc.token_name) LIKE ? OR LOWER(sc.contract_address) LIKE ?)`
+            sql += ` WHERE (LOWER(sc.token_name) LIKE ? OR LOWER(sc.contract_address) LIKE ?)`
             params.push(`%${request.keyword.toLowerCase()}%`);
             params.push(`%${request.keyword.toLowerCase()}%`);
         }

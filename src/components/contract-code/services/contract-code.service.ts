@@ -1,17 +1,16 @@
+import { HttpService } from "@nestjs/axios";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { ServiceUtil } from "../../../shared/utils/service.util";
+import { lastValueFrom } from "rxjs";
 import { Like } from "typeorm";
 import { AkcLogger, CONTRACT_CODE_RESULT, ERROR_MAP, INDEXER_API, RequestContext } from "../../../shared";
+import * as appConfig from '../../../shared/configs/configuration';
+import { MappingDataHelper } from "../../../shared/helpers/mapping-data.helper";
+import { ServiceUtil } from "../../../shared/utils/service.util";
 import { ContractCodeParamsDto } from "../dtos/contract-code-params.dto";
 import { RegisterContractCodeParamsDto } from "../dtos/register-contract-code-params.dto";
-import { SmartContractCodeRepository } from "../repositories/smart-contract-code.repository";
-import { SmartContractCode } from "../../../shared/entities/smart-contract-code.entity";
 import { UpdateContractCodeParamsDto } from "../dtos/update-contract-code-params.dto";
-import { lastValueFrom } from "rxjs";
-import { HttpService } from "@nestjs/axios";
-import { MappingDataHelper } from "../../../shared/helpers/mapping-data.helper";
-import * as appConfig from '../../../shared/configs/configuration';
+import { SmartContractCodeRepository } from "../repositories/smart-contract-code.repository";
 
 @Injectable()
 export class ContractCodeService {
@@ -22,7 +21,6 @@ export class ContractCodeService {
     constructor(
         private readonly logger: AkcLogger,
         private smartContractCodeRepository: SmartContractCodeRepository,
-        private configService: ConfigService,
         private serviceUtil: ServiceUtil,
         private httpService: HttpService
     ) {
