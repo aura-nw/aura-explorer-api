@@ -135,8 +135,8 @@ export class Cw20TokenService {
 
     async getTotalAssetByAccountAddress(ctx: RequestContext, accountAddress: string): Promise<any> {
         this.logger.log(ctx, `${this.getTotalAssetByAccountAddress.name} was called!`);
-        let total = 0;
-        const result = await this.tokenContractRepository.getTotalAssetByAccountAddress(accountAddress);
+        // let total = 0;
+        // const result = await this.tokenContractRepository.getTotalAssetByAccountAddress(accountAddress);
         //get balance of aura wallet
         let balance = 0;
         const accountData = await this.accountService.getAccountDetailByAddress(ctx, accountAddress);
@@ -149,8 +149,9 @@ export class Cw20TokenService {
             const priceData = JSON.parse(data);
             price = priceData.current_price;
         }
-        total = Number(result[0].total) + (balance * price);
+        // total = Number(result[0].total) + (balance * price);
 
-        return total;
+        // return total;
+        return balance * price;
     }
 }
