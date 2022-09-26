@@ -7,10 +7,7 @@ export class NftByOwnerParamsDto {
     account_address: string;
 
     @ApiProperty({default: ''})
-    contract_address: string;
-
-    @ApiProperty({default: ''})
-    token_id: string;
+    keyword: string;
 
     @ApiProperty({ default: 4})
     @Min(0)
