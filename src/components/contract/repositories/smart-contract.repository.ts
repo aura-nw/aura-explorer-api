@@ -102,7 +102,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.PENDING}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.NOT_REGISTERED}'
                 OR sm.mainnet_upload_status = '${CONTRACT_STATUS.APPROVED}'
-            ) THEN sm.mainnet_upload_status ELSE sm.contract_verification END) AS status`)
+            ) THEN sm.mainnet_upload_status ELSE sm.contract_verification END) AS status,
+            smCode.result`)
             .leftJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id AND sm.creator_address = smCode.creator')
             .distinct(true)
             .where(conditions)

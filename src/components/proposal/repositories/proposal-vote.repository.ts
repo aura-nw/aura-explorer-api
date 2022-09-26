@@ -32,8 +32,13 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
     async getProposalVotesByValidator(request: ProposalVoteByValidatorInput, isLimit: boolean) {
         let params = [];
         let sql = `SELECT v.title AS validator_name, v.acc_address AS validator_address, pv.tx_hash, pv.option, pv.created_at, pv.updated_at, v.operator_address,
-                ROW_NUMBER() OVER(ORDER BY v.power DESC ) as 'rank', v.identity AS validator_identity
+                vv.rank, v.identity AS validator_identity
             FROM validators v
+            INNER JOIN (
+                SELECT *,
+                RANK() OVER(ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC) as 'rank'
+                FROM validators ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC
+            )  vv ON v.operator_address = vv.operator_address
                 LEFT JOIN proposal_votes pv ON v.acc_address = pv.voter AND pv.proposal_id = ?
                 WHERE v.status = 3`;
         params.push(request.proposalId);
