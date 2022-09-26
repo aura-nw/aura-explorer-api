@@ -81,4 +81,8 @@ export class ContractByCreatorOutputDto{
     @Expose()
     @ApiProperty()
     verified_at: Date;
+
+    @Expose()
+    @ApiProperty()
+    result: string;
 }
