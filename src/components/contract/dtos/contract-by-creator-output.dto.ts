@@ -64,7 +64,7 @@ export class ContractByCreatorOutputDto{
 
     @Expose()
     @ApiProperty()
-    reference_code_id: string;
+    reference_code_id: number;
 
     @Expose()
     @ApiProperty()
