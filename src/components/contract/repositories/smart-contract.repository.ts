@@ -61,6 +61,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 AND sm.mainnet_upload_status IN('${CONTRACT_STATUS.REJECTED}','${CONTRACT_STATUS.NOT_REGISTERED}')
                 AND sm.creator_address=:creatorAddress`)
             .setParameter('creatorAddress', creatorAddress)
+            .orderBy('sm.code_id', 'ASC')
             .getRawMany();
     }
 
