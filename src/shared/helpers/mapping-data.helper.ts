@@ -1,11 +1,9 @@
 import { SmartContractCode } from "../entities/smart-contract-code.entity";
 
 export class MappingDataHelper {
-    static mappingContractCode(codeId: number, result: string, creator: string) {
-        let contractCode = new SmartContractCode();
-        contractCode.code_id = codeId;
+    static mappingContractCode(contractCode: any, type: string, result: string) {
+        contractCode.type = type;
         contractCode.result = result;
-        contractCode.creator = creator;
 
         return contractCode;
     }

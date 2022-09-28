@@ -123,7 +123,8 @@ export class DeploymentRequests extends BaseEntityIncrementId {
     status: string;
 
     @Column({
-        nullable: true
+        nullable: true,
+        type: 'text'
     })
     reason: string;
 }
