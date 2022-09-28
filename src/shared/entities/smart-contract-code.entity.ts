@@ -7,11 +7,8 @@ export class SmartContractCode extends BaseEntityIncrementId {
     @Column()
     code_id: number;
 
-    @Column({
-        type: 'enum',
-        enum: CONTRACT_TYPE
-    })
-    type: CONTRACT_TYPE;
+    @Column()
+    type: string;
 
     @Column()
     result: string;
