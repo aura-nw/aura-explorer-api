@@ -1,8 +1,7 @@
 import { HttpService } from "@nestjs/axios";
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Injectable } from "@nestjs/common";;
 import { lastValueFrom } from "rxjs";
-import { Like } from "typeorm";
+import { Like, Not } from "typeorm";
 import { AkcLogger, CONTRACT_CODE_RESULT, ERROR_MAP, INDEXER_API, RequestContext } from "../../../shared";
 import * as appConfig from '../../../shared/configs/configuration';
 import { MappingDataHelper } from "../../../shared/helpers/mapping-data.helper";
@@ -36,6 +35,7 @@ export class ContractCodeService {
         const [contract_codes, count] = await this.smartContractCodeRepository.findAndCount({
             where: {
                 creator: request.account_address,
+                type: Not(''),
                 ...(request?.keyword && { code_id: Like(`%${request.keyword}%`) })
             },
             order: { updated_at: 'DESC' },
@@ -47,22 +47,19 @@ export class ContractCodeService {
     }
 
     async registerContractCode(ctx: RequestContext, request: RegisterContractCodeParamsDto): Promise<any> {
-        //check exist code id in node
-        const contractCodeParams = `cosmwasm/wasm/v1/code/${request.code_id}`;
-        const contractCodeNode = await this.serviceUtil.getDataAPI(this.api, contractCodeParams, ctx);
-        if (contractCodeNode && contractCodeNode?.code_info) {
-            //check exist code id in db
-            const contractCodeDb = await this.smartContractCodeRepository.findOne({
-                where: { code_id: request.code_id }
-            });
-            if (contractCodeDb) {
+        //check exist code id in db
+        let contractCodeDb = await this.smartContractCodeRepository.findOne({
+            where: { code_id: request.code_id }
+        });
+        if (contractCodeDb) {
+            if (contractCodeDb.type !== '') {
                 return {
                     Code: ERROR_MAP.CONTRACT_CODE_ID_EXIST.Code,
                     Message: ERROR_MAP.CONTRACT_CODE_ID_EXIST.Message
                 };
             }
             //check creator
-            if (contractCodeNode.code_info.creator !== request.account_address) {
+            if (contractCodeDb.creator !== request.account_address) {
                 return {
                     Code: ERROR_MAP.NOT_CONTRACT_CREATOR.Code,
                     Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
@@ -78,14 +75,12 @@ export class ContractCodeService {
             await lastValueFrom(this.httpService.post(`${this.indexerUrl}${INDEXER_API.REGISTER_CODE_ID}`, properties)).then(
                 (rs) => rs.data,
             );
-            const contractCode = MappingDataHelper.mappingContractCode(
-                request.code_id,
-                CONTRACT_CODE_RESULT.TBD,
-                contractCodeNode.code_info.creator
+            contractCodeDb = MappingDataHelper.mappingContractCode(
+                contractCodeDb,
+                request.type,
+                CONTRACT_CODE_RESULT.TBD
             );
-            contractCode.type = request.type;
-
-            return await this.smartContractCodeRepository.save(contractCode);
+            return await this.smartContractCodeRepository.save(contractCodeDb);
         } else {
             return {
                 Code: ERROR_MAP.CONTRACT_CODE_ID_NOT_EXIST.Code,
