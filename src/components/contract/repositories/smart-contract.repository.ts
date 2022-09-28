@@ -35,7 +35,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
                 params.push(`%${keyword}%`);
             }
         }
-        sql += " ORDER BY sc.verified_at DESC";
+        sql += " ORDER BY sc.updated_at DESC";
         let sqlLimit = "";
         if (request.limit > 0) {
             sqlLimit = " LIMIT ? OFFSET ?";
