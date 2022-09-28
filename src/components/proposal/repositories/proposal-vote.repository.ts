@@ -36,8 +36,8 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
             FROM validators v
             INNER JOIN (
                 SELECT *,
-                RANK() OVER(ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC) as 'rank'
-                FROM validators ORDER BY FIELD(status, 3, 2, 1), jailed ASC, power DESC, updated_at DESC
+                RANK() OVER(ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC) as 'rank'
+                FROM validators ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC
             )  vv ON v.operator_address = vv.operator_address
                 LEFT JOIN proposal_votes pv ON v.acc_address = pv.voter AND pv.proposal_id = ?
                 WHERE v.status = 3`;

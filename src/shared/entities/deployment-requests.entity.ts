@@ -15,13 +15,13 @@ export class DeploymentRequests extends BaseEntityIncrementId {
     @Column()
     email: string;
 
-    @Column()
+    @Column({ type: 'text' })
     contract_description: string;
 
     @Column()
     project_name: string;
 
-    @Column()
+    @Column({ type: 'text' })
     official_project_website: string;
 
     @Column()
