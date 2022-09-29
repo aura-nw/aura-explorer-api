@@ -24,6 +24,6 @@ export class AccountUnbonding {
 
     @Expose()
     @ApiProperty()
-    validator_jailed: number;
+    jailed: number;
   }
   

@@ -24,5 +24,5 @@ export class AccountDelegation {
 
     @Expose()
     @ApiProperty()
-    validator_jailed: number;
+    jailed: number;
   }
