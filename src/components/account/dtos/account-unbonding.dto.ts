@@ -21,5 +21,9 @@ export class AccountUnbonding {
     @Expose()
     @ApiProperty()
     validator_identity: string;
+
+    @Expose()
+    @ApiProperty()
+    validator_jailed: number;
   }
   
