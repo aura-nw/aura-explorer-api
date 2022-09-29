@@ -21,4 +21,8 @@ export class AccountDelegation {
     @Expose()
     @ApiProperty()
     validator_identity: string;
+
+    @Expose()
+    @ApiProperty()
+    jailed: number;
   }
