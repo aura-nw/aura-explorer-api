@@ -33,4 +33,12 @@ export class AccountRedelegation {
     @Expose()
     @ApiProperty()
     validator_dst_identity: string;
+
+    @Expose()
+    @ApiProperty()
+    validator_src_jailed: number;
+
+    @Expose()
+    @ApiProperty()
+    validator_dst_jailed: number;
   }
