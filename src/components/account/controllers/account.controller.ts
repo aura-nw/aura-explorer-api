@@ -1,6 +1,5 @@
 import { ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { TransactionService } from "../../../components/transaction/services/transaction.service";
 import { AkcLogger, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountService } from '../services/account.service';

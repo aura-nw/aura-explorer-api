@@ -5,14 +5,12 @@ import { plainToClass } from "class-transformer";
 import { lastValueFrom } from "rxjs";
 import { Not } from "typeorm";
 import { SmartContractCodeRepository } from "../../../components/contract-code/repositories/smart-contract-code.repository";
-import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
-import { AkcLogger, CONTRACT_STATUS, CONTRACT_TRANSACTION_LABEL, ERROR_MAP, RequestContext } from "../../../shared";
+import { AkcLogger, CONTRACT_STATUS, ERROR_MAP, RequestContext } from "../../../shared";
 import { ServiceUtil } from "../../../shared/utils/service.util";
 import { ContractByCreatorOutputDto } from "../dtos/contract-by-creator-output.dto";
 import { ContractByCreatorParamsDto } from "../dtos/contract-by-creator-params.dto";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
 import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
-import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { SmartContractRepository } from "../repositories/smart-contract.repository";
 import { TagRepository } from "../repositories/tag.repository";
@@ -28,7 +26,6 @@ export class ContractService {
     private readonly logger: AkcLogger,
     private smartContractRepository: SmartContractRepository,
     private tagRepository: TagRepository,
-    private transactionRepository: TransactionRepository,
     private smartContractCodeRepository: SmartContractCodeRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
@@ -132,16 +129,6 @@ export class ContractService {
     }
 
     return { contracts: contracts, count };
-  }
-
-  async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
-    this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-    if (request?.label && !(<any>Object).values(CONTRACT_TRANSACTION_LABEL).includes(request.label)) {
-      return { transactions: [], count: 0 };
-    }
-    const result = await this.transactionRepository.searchContractTransactions(request);
-
-    return { transactions: result[0], count: result[1][0].total };
   }
 
   async verifyContractStatus(ctx: RequestContext, contractAddress: string): Promise<any> {

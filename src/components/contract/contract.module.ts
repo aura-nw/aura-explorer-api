@@ -9,7 +9,6 @@ import { ConfigModule } from "@nestjs/config";
 import { TagRepository } from "./repositories/tag.repository";
 import { HttpModule } from "@nestjs/axios";
 import { TokenContractRepository } from "./repositories/token-contract.repository";
-import { TransactionRepository } from "../transaction/repositories/transaction.repository";
 import { SmartContractCodeRepository } from "../contract-code/repositories/smart-contract-code.repository";
 
 @Module({
@@ -19,7 +18,6 @@ import { SmartContractCodeRepository } from "../contract-code/repositories/smart
       SmartContractRepository,
       TagRepository,
       TokenContractRepository,
-      TransactionRepository,
       SmartContractCodeRepository
     ]),
     ConfigModule,
