@@ -1,9 +1,7 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 
-import { AkcLogger, CONST_CHAR, RequestContext, Transaction } from '../../../shared';
+import { AkcLogger, CONST_CHAR, RequestContext } from '../../../shared';
 
 import { DelegationParamsDto } from '../../../components/validator/dtos/delegation-params.dto';
 import * as appConfig from '../../../shared/configs/configuration';
@@ -18,8 +16,6 @@ export class TransactionService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private configService: ConfigService,
-    private httpService: HttpService,
     private txRepository: TransactionRepository,
   ) {
     this.logger.setContext(TransactionService.name);
@@ -31,25 +27,6 @@ export class TransactionService {
 
   async getTotalTx(): Promise<number> {
     return await this.txRepository.count();
-  }
-
-  async getTxsByBlockHeight(height: number): Promise<Transaction[]> {
-    return await this.txRepository.find({ where: { height } });
-  }
-
-  async getTxByHash(ctx: RequestContext, hash): Promise<any> {
-    this.logger.log(ctx, `${this.getTxByHash.name} was called!`);
-    const transaction = await this.txRepository.findOne({
-      where: { tx_hash: hash },
-    });
-    let result = null;
-    if (transaction) {
-      result = transaction;
-      const block = await transaction.block;
-      result.chainid = block.chainid;
-    }
-
-    return result;
   }
 
   async getTransactionsByAddress(

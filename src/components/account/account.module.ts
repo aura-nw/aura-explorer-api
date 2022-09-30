@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServiceUtil } from '../../shared/utils/service.util';
 
 import { SharedModule } from '../../shared/shared.module';
-import { TransactionRepository } from '../transaction/repositories/transaction.repository';
 import { TransactionModule } from '../transaction/transaction.module';
 import { ValidatorRepository } from '../validator/repositories/validator.repository';
 
@@ -19,7 +18,6 @@ import { AccountService } from './services/account.service';
     ConfigModule,
     TypeOrmModule.forFeature([
       ValidatorRepository,
-      TransactionRepository,
     ]),
     TransactionModule,
   ],

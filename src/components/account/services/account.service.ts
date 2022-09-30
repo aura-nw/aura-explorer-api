@@ -1,6 +1,4 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 
