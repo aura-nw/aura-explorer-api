@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
+import { InfluxDBClient } from './influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
 import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
