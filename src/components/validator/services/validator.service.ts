@@ -1,10 +1,7 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
-import { BlockService } from '../../../components/block/services/block.service';
-import { DelegationRepository } from '../../../components/schedule/repositories/delegation.repository';
+import { DelegationRepository } from '../repositories/delegation.repository';
 
 import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext, Validator } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
@@ -12,7 +9,7 @@ import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 import * as util from 'util';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
 import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
-import { DelegatorRewardRepository } from '../../../components/schedule/repositories/delegator-reward.repository';
+import { DelegatorRewardRepository } from '../repositories/delegator-reward.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
@@ -29,9 +26,6 @@ export class ValidatorService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private httpService: HttpService,
-    private configService: ConfigService,
-    private blockService: BlockService,
     private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,

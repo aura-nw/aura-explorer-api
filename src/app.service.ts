@@ -17,7 +17,7 @@ import { ValidatorService } from './components/validator/services/validator.serv
 import { ServiceUtil } from './shared/utils/service.util';
 import * as appConfig from './shared/configs/configuration';
 import * as util from 'util';
-import { SyncStatusRepository } from './components/schedule/repositories/syns-status.repository';
+import { SyncStatusRepository } from './components/block/repositories/syns-status.repository';
 
 @Injectable()
 export class AppService {
