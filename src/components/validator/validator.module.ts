@@ -10,7 +10,6 @@ import { BlockRepository } from '../block/repositories/block.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { ProposalRepository } from '../proposal/repositories/proposal.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
-import { TransactionModule } from '../transaction/transaction.module';
 
 import { ValidatorController } from './controllers/validator.controller';
 import { ValidatorRepository } from './repositories/validator.repository';
@@ -31,7 +30,6 @@ import { DelegatorRewardRepository } from './repositories/delegator-reward.repos
     HttpModule,
     ConfigModule,
     BlockModule,
-    TransactionModule,
   ],
   providers: [ValidatorService, ServiceUtil],
   controllers: [ValidatorController],
