@@ -4,7 +4,7 @@ export class dropRawLogTableTransactions1664942442051 implements MigrationInterf
     name = 'dropRawLogTableTransactions1664942442051'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE \`transactions\` DROP COLUMN \`raw_log\``);
+        // await queryRunner.query(`ALTER TABLE \`transactions\` DROP COLUMN \`raw_log\``);
         await queryRunner.query(`ALTER TABLE \`transactions\` DROP COLUMN \`raw_log_data\``);
     }
 
