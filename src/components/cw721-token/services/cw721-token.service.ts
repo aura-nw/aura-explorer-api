@@ -58,7 +58,7 @@ export class Cw721TokenService {
     async getNftsByOwner(ctx: RequestContext, request: NftByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
         let url: string = INDEXER_API.GET_NFTS_BY_OWNER;
-        const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit, request.offset]
+        const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit]
         if (request?.keyword) {
             url += '&%s=%s';
             if (request.keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && request.keyword.length === LENGTH.CONTRACT_ADDRESS) {
@@ -68,9 +68,15 @@ export class Cw721TokenService {
             }
             params.push(request.keyword);
         }
+        if (request?.next_key) {
+            url += '&%s=%s';
+            params.push(SEARCH_KEYWORD.NEXT_KEY);
+            params.push(request.next_key);
+        }
         const result = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(url, ...params)}`, '', ctx);
         const tokens = result.data.assets.CW721.asset;
         const count = result.data.assets.CW721.count;
+        const nextKey = result.data.nextKey;
         if (count > 0) {
             const listContractAddress = [...new Set(tokens.map(i => i.contract_address))];
             const tokensInfo = await this.tokenContractRepository.getTokensByListContractAddress(listContractAddress);
@@ -85,6 +91,6 @@ export class Cw721TokenService {
             });
         }
 
-        return { tokens: tokens, count: count };
+        return { tokens: tokens, count: count, next_key: nextKey };
     }
 }

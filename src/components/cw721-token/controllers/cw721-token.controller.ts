@@ -45,8 +45,8 @@ export class Cw721TokenController {
     @UseInterceptors(CacheInterceptor)
     async getNftsByOwner(@ReqContext() ctx: RequestContext, @Body() request: NftByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
-        const { tokens, count } = await this.cw721TokenService.getNftsByOwner(ctx, request);
+        const { tokens, count, next_key } = await this.cw721TokenService.getNftsByOwner(ctx, request);
 
-        return { data: tokens, meta: { count } };
+        return { data: tokens, meta: { count, next_key } };
     }
 }
