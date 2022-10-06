@@ -13,10 +13,6 @@ export class NftByOwnerParamsDto {
     @Min(0)
     limit: number;
 
-    @ApiProperty({default: 0})
-    @Min(0)
-    offset: number;
-
     @ApiProperty({default: ''})
     next_key: string;
 }
