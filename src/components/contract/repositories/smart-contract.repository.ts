@@ -83,12 +83,6 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getCodeIds(creatorAddress: string) {
     const result = await this.createQueryBuilder('sc')
       .select('sc.code_id `codeId`')
-      .innerJoin(
-        SmartContractCode,
-        'scc',
-        'scc.code_id = sc.code_id AND scc.creator = sc.creator_address',
-      )
-      .distinct(true)
       .where({ contract_verification: Not(CONTRACT_STATUS.UNVERIFIED) })
       .andWhere({
         mainnet_upload_status: In([
@@ -96,7 +90,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
           CONTRACT_STATUS.NOT_REGISTERED,
         ]),
       })
-      .andWhere('scc.creator = :creatorAddress', { creatorAddress })
+      .andWhere({ creator_address: creatorAddress })
+      .groupBy('sc.code_id')
       .orderBy('sc.code_id', 'ASC')
       .getRawMany();
 
