@@ -60,7 +60,7 @@ export class AppService {
       this.syncStatusRepos.findOne(),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
-      await this.metricService.getNumberTransactions()
+      this.metricService.getNumberTransactions()
     ]);
 
     let height;
