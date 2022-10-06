@@ -16,4 +16,7 @@ export class NftByOwnerParamsDto {
     @ApiProperty({default: 0})
     @Min(0)
     offset: number;
+
+    @ApiProperty({default: ''})
+    next_key: string;
 }
