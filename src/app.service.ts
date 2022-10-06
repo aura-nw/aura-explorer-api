@@ -1,23 +1,18 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 
-import {
-  AkcLogger,
-  CONST_CHAR,
-  CONST_NUM,
-  INDEXER_API,
-  LINK_API,
-  RequestContext,
-} from './shared';
-import { StatusOutput } from './components/dashboard/dtos/status-output.dto';
-import { TransactionService } from './components/transaction/services/transaction.service';
-import { BlockService } from './components/block/services/block.service';
-import { ValidatorService } from './components/validator/services/validator.service';
-import { ServiceUtil } from './shared/utils/service.util';
-import * as appConfig from './shared/configs/configuration';
 import * as util from 'util';
 import { SyncStatusRepository } from './components/block/repositories/syns-status.repository';
+import { StatusOutput } from './components/dashboard/dtos/status-output.dto';
+import { MetricService } from './components/metric/services/metric.service';
+import { TransactionService } from './components/transaction/services/transaction.service';
+import { ValidatorService } from './components/validator/services/validator.service';
+import {
+  AkcLogger,
+  CONST_CHAR, INDEXER_API, RequestContext
+} from './shared';
+import * as appConfig from './shared/configs/configuration';
+import { ServiceUtil } from './shared/utils/service.util';
 
 @Injectable()
 export class AppService {
@@ -29,13 +24,13 @@ export class AppService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private configService: ConfigService,
     private httpService: HttpService,
     private txService: TransactionService,
-    private blockService: BlockService,
     private validatorService: ValidatorService,
     private serviceUtil: ServiceUtil,
-    private syncStatusRepos : SyncStatusRepository
+    private syncStatusRepos : SyncStatusRepository,
+    private metricService: MetricService
+
   ) {
     this.logger.setContext(AppService.name);
     this.appParams = appConfig.default();
@@ -59,26 +54,19 @@ export class AppService {
       blocks,
       totalValidatorNum,
       totalValidatorActiveNum,
-      totalTxsNum,
+      totalTxsNum
     ] = await Promise.all([
       this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
       this.syncStatusRepos.findOne(),
-      // this.blockService.getDataBlocks(ctx, CONST_NUM.LIMIT_2, CONST_NUM.OFFSET),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
-      this.txService.getTotalTx(),
+      await this.metricService.getNumberTransactions()
     ]);
 
-    let blockTime;
     let height;
     let comPool;
     let supply;
     if (blocks) {
-      // const block_first = blocks[0].timestamp.getTime();
-      // const block_second = blocks[1].timestamp.getTime();
-      // blockTime =
-      //   Math.floor(Math.abs(block_first - block_second) / 1000) +
-      //   CONST_CHAR.SECOND;
       height = blocks.current_block;
     }
 
@@ -103,7 +91,7 @@ export class AppService {
 
     return {
       block_height: height,
-      total_txs_num: totalTxsNum,
+      total_txs_num: (totalTxsNum)? Number(totalTxsNum[0].total): 0,
       total_validator_num: totalValidatorNum,
       total_validator_active_num: totalValidatorActiveNum,
       block_time: '',

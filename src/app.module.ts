@@ -18,6 +18,7 @@ import { SyncStatusRepository } from './components/block/repositories/syns-statu
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
 import { Cw721TokenModule } from './components/cw721-token/cw721-token.module';
+import { MetricService } from './components/metric/services/metric.service';
 
 @Module({
   imports: [
@@ -37,6 +38,6 @@ import { Cw721TokenModule } from './components/cw721-token/cw721-token.module';
     TypeOrmModule.forFeature([SyncStatusRepository])
   ],
   controllers: [AppController],
-  providers: [AppService, ServiceUtil],
+  providers: [AppService, ServiceUtil, MetricService],
 })
 export class AppModule {}
