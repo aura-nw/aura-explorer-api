@@ -68,9 +68,15 @@ export class Cw721TokenService {
             }
             params.push(request.keyword);
         }
+        if (request?.next_key) {
+            url += '&%s=%s';
+            params.push(SEARCH_KEYWORD.NEXT_KEY);
+            params.push(request.next_key);
+        }
         const result = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(url, ...params)}`, '', ctx);
         const tokens = result.data.assets.CW721.asset;
         const count = result.data.assets.CW721.count;
+        const nextKey = result.data.nextKey;
         if (count > 0) {
             const listContractAddress = [...new Set(tokens.map(i => i.contract_address))];
             const tokensInfo = await this.tokenContractRepository.getTokensByListContractAddress(listContractAddress);
@@ -85,6 +91,6 @@ export class Cw721TokenService {
             });
         }
 
-        return { tokens: tokens, count: count };
+        return { tokens: tokens, count: count, next_key: nextKey };
     }
 }

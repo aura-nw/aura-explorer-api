@@ -134,7 +134,8 @@ export enum AURA_INFO {
 
 export enum SEARCH_KEYWORD {
   CONTRACT_ADDRESS = 'contractAddress',
-  TOKEN_ID = 'tokenId'
+  TOKEN_ID = 'tokenId',
+  NEXT_KEY = 'nextKey'
 }
 
 export enum LENGTH {
