@@ -83,4 +83,13 @@ export class MetricService {
     const series = generateSeries(range);
     return mergeByProperty(data, series);
   }
+
+  /**
+   * Get the number of transactions
+   * @returns MetricOutput[]
+   */
+  async getNumberTransactions(){
+    const start:string = this.configService.get<string>('deploymentDate');
+    return (await this.influxDbClient.getNumberTransactions(start)) as MetricOutput[];
+  }
 }
