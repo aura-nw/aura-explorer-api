@@ -58,7 +58,7 @@ export class Cw721TokenService {
     async getNftsByOwner(ctx: RequestContext, request: NftByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
         let url: string = INDEXER_API.GET_NFTS_BY_OWNER;
-        const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit, request.offset]
+        const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit]
         if (request?.keyword) {
             url += '&%s=%s';
             if (request.keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && request.keyword.length === LENGTH.CONTRACT_ADDRESS) {
