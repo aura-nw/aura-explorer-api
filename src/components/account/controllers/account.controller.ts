@@ -1,9 +1,6 @@
-import { CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Query, UseInterceptors } from "@nestjs/common";
+import { ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, UseInterceptors } from "@nestjs/common";
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LiteTransactionOutput } from "../../../components/transaction/dtos/lite-transaction-output.dto";
-import { TransactionService } from "../../../components/transaction/services/transaction.service";
-import { DelegationParamsDto } from "../../../components/validator/dtos/delegation-params.dto";
-import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
+import { AkcLogger, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountService } from '../services/account.service';
 
@@ -12,7 +9,6 @@ import { AccountService } from '../services/account.service';
 export class AccountController {
   constructor(
     private readonly accountService: AccountService,
-    private readonly transactionService: TransactionService,
     private readonly logger: AkcLogger,
   ) {
     this.logger.setContext(AccountController.name);

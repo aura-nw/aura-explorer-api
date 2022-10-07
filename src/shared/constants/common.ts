@@ -79,9 +79,12 @@ export enum CONTRACT_STATUS {
   EXACT_MATCH = "EXACT MATCH",
   SIMILAR_MATCH = "SIMILAR MATCH",
   UNVERIFIED = "UNVERIFIED",
-  DEPLOYED ='DEPLOYED',
-  TBD ='TBD',
-  REJECTED ='REJECTED',
+  NOT_REGISTERED = 'Not registered',
+  TBD = 'TBD',
+  DEPLOYED = 'Deployed',
+  REJECTED = 'Rejected',
+  APPROVED = 'Approved',  
+  PENDING = 'Pending'
 }
 
 export enum CONTRACT_TRANSACTION_LABEL {
@@ -120,17 +123,24 @@ export enum INDEXER_API {
   GET_TOKENS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&countTotal=false",
   TOKEN_HOLDERS = "api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true",
   GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID = "api/v1/asset/getByOwner?chainid=%s&contractType=%s&tokenId=%s&contractAddress=%s",
-  GET_NFTS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=%s&isBurned=false&countTotal=true&pageLimit=%s&pageOffset=%s",
+  GET_NFTS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=%s&isBurned=false&countTotal=true&pageLimit=%s",
 }
 
 export enum AURA_INFO {
   CONNTRACT_ADDRESS = 'aura',
-  COIN_ID = 'aura-network'
+  COIN_ID = 'aura-network',
+  IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg'
 }
 
 export enum SEARCH_KEYWORD {
   CONTRACT_ADDRESS = 'contractAddress',
-  TOKEN_ID = 'tokenId'
+  TOKEN_ID = 'tokenId',
+  NEXT_KEY = 'nextKey'
+}
+
+export enum LENGTH {
+  CONTRACT_ADDRESS = 63,
+  ACCOUNT_ADDRESS = 43
 }
 
 export const ERROR_MAP = {

@@ -1,25 +1,19 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
-import { ServiceUtil } from '../../../shared/utils/service.util';
+import { Injectable } from '@nestjs/common';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 
+import * as util from 'util';
 import {
-  AkcLogger,
-  CONST_CHAR,
-  CONST_NUM,
-  INDEXER_API,
-  RequestContext,
+  AkcLogger, INDEXER_API,
+  RequestContext
 } from '../../../shared';
+import * as appConfig from '../../../shared/configs/configuration';
 import { AccountBalance } from '../dtos/account-balance.dto';
 import { AccountDelegation } from '../dtos/account-delegation.dto';
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountRedelegation } from '../dtos/account-redelegation.dto';
 import { AccountUnbonding } from '../dtos/account-unbonding.dto';
 import { AccountVesting } from '../dtos/account-vesting.dto';
-import * as appConfig from '../../../shared/configs/configuration';
-import * as util from 'util';
 
 @Injectable()
 export class AccountService {
@@ -33,8 +27,6 @@ export class AccountService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private httpService: HttpService,
-    private configService: ConfigService,
     private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository
   ) {
@@ -120,6 +112,7 @@ export class AccountService {
           delegation.validator_name = validator[0].title;
           delegation.validator_address = validator_address;
           delegation.validator_identity = validator[0].identity;
+          delegation.jailed = Number(validator[0].jailed);
         }
         delegation.amount = this.changeUauraToAura(item.balance.amount);
         if (
@@ -167,6 +160,7 @@ export class AccountService {
             unbonding.validator_name = validator[0].title;
             unbonding.validator_address = validator_address;
             unbonding.validator_identity = validator[0].identity;
+            unbonding.jailed = Number(validator[0].jailed);
           }
           unbonding.amount = this.changeUauraToAura(item1.balance);
           unbonding.completion_time = item1.completion_time;
@@ -198,11 +192,13 @@ export class AccountService {
             redelegation.validator_src_name = validatorSrc[0].title;
             redelegation.validator_src_address = validator_src_address;
             redelegation.validator_src_identity = validatorSrc[0].identity;
+            redelegation.validator_src_jailed = Number(validatorSrc[0].jailed);
           }
           if (validatorDst.length > 0) {
             redelegation.validator_dst_name = validatorDst[0].title;
             redelegation.validator_dst_address = validator_dst_address;
             redelegation.validator_dst_identity = validatorDst[0].identity;
+            redelegation.validator_dst_jailed = Number(validatorDst[0].jailed);
           }
           redelegation.amount = this.changeUauraToAura(item1.balance);
           redelegation.completion_time =
