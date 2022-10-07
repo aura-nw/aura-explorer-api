@@ -119,12 +119,31 @@ export class InfluxDBClient {
    * @returns 
    */
   sumData(measurement: string, start: string, step: string, column: string, timezone: number) {
+    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}, offset: ${timezone}h) |> sum()`;
+    return this.bindingData(query);
+  }
+
+  /**
+   * Get number transactions
+   * @param start 
+   * @returns 
+   */
+  getNumberTransactions(start: string){
+    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "blocks_measurement") |> filter(fn: (r) => r["_field"] == "num_txs")|> sum()`;
+    return this.bindingData(query);
+  }
+
+  /**
+   * Convert result's Influx
+   * @param query 
+   * @returns 
+   */
+  private bindingData(query: String): Promise<any>{
     const results: {
       total: string;
       timestamp: string;
     }[] = [];
-
-    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}, offset: ${timezone}h) |> sum()`;
+   
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {

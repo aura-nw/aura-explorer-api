@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as moment from 'moment';
-import { InfluxDBClient } from '../../../components/schedule/services/influxdb-client';
+import { InfluxDBClient } from './influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
 import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
@@ -84,5 +83,14 @@ export class MetricService {
     const data = (await this.influxDbClient.queryData(measurement, startTime, queryStep)) as MetricOutput[];
     const series = generateSeries(range);
     return mergeByProperty(data, series);
+  }
+
+  /**
+   * Get the number of transactions
+   * @returns MetricOutput[]
+   */
+  async getNumberTransactions(){
+    const start:string = this.configService.get<string>('deploymentDate');
+    return (await this.influxDbClient.getNumberTransactions(start)) as MetricOutput[];
   }
 }

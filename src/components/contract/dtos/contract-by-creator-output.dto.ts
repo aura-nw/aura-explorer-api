@@ -64,7 +64,7 @@ export class ContractByCreatorOutputDto{
 
     @Expose()
     @ApiProperty()
-    mainnet_code_id: string;
+    reference_code_id: number;
 
     @Expose()
     @ApiProperty()
@@ -73,4 +73,16 @@ export class ContractByCreatorOutputDto{
     @Expose()
     @ApiProperty()
     status: string;
+
+    @Expose()
+    @ApiProperty()
+    type: string;
+
+    @Expose()
+    @ApiProperty()
+    verified_at: Date;
+
+    @Expose()
+    @ApiProperty()
+    result: string;
 }

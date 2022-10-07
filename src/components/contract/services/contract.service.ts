@@ -1,21 +1,19 @@
-import { Injectable } from "@nestjs/common";
-import { ServiceUtil } from "../../../shared/utils/service.util";
-import { Like, MoreThan, Not } from "typeorm";
-import { AkcLogger, CONTRACT_CODE_RESULT, CONTRACT_STATUS, CONTRACT_TRANSACTION_LABEL, CONTRACT_TRANSACTION_TYPE, ERROR_MAP, RequestContext } from "../../../shared";
-import { ContractParamsDto } from "../dtos/contract-params.dto";
-import { SmartContractRepository } from "../repositories/smart-contract.repository";
-import { ConfigService } from "@nestjs/config";
-import { TagRepository } from "../repositories/tag.repository";
-import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { HttpService } from "@nestjs/axios";
-import { lastValueFrom } from "rxjs";
-import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
-import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
-import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { plainToClass } from "class-transformer";
+import { lastValueFrom } from "rxjs";
+import { Not } from "typeorm";
+import { SmartContractCodeRepository } from "../../../components/contract-code/repositories/smart-contract-code.repository";
+import { AkcLogger, CONTRACT_STATUS, ERROR_MAP, RequestContext } from "../../../shared";
+import { ServiceUtil } from "../../../shared/utils/service.util";
 import { ContractByCreatorOutputDto } from "../dtos/contract-by-creator-output.dto";
 import { ContractByCreatorParamsDto } from "../dtos/contract-by-creator-params.dto";
-import { SmartContractCodeRepository } from "../../../components/contract-code/repositories/smart-contract-code.repository";
+import { ContractParamsDto } from "../dtos/contract-params.dto";
+import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
+import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
+import { SmartContractRepository } from "../repositories/smart-contract.repository";
+import { TagRepository } from "../repositories/tag.repository";
 
 @Injectable()
 export class ContractService {
@@ -28,7 +26,6 @@ export class ContractService {
     private readonly logger: AkcLogger,
     private smartContractRepository: SmartContractRepository,
     private tagRepository: TagRepository,
-    private transactionRepository: TransactionRepository,
     private smartContractCodeRepository: SmartContractCodeRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
@@ -134,16 +131,6 @@ export class ContractService {
     return { contracts: contracts, count };
   }
 
-  async searchTransactions(ctx: RequestContext, request: SearchTransactionParamsDto): Promise<any> {
-    this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-    if (request?.label && !(<any>Object).values(CONTRACT_TRANSACTION_LABEL).includes(request.label)) {
-      return { transactions: [], count: 0 };
-    }
-    const result = await this.transactionRepository.searchContractTransactions(request);
-
-    return { transactions: result[0], count: result[1][0].total };
-  }
-
   async verifyContractStatus(ctx: RequestContext, contractAddress: string): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
     const contract = await this.smartContractRepository.findOne({
@@ -174,10 +161,17 @@ export class ContractService {
       const smartContractStatus: Array<ContractStatusOutputDto> = [];
       Object.keys(CONTRACT_STATUS).forEach(key => {
         const status: ContractStatusOutputDto = new ContractStatusOutputDto();
-        status.key = key;
-        status.label = CONTRACT_STATUS[key];
+        const value = CONTRACT_STATUS[key];
 
-        smartContractStatus.push(status);
+        if (value !== CONTRACT_STATUS.EXACT_MATCH
+          && value !== CONTRACT_STATUS.SIMILAR_MATCH
+          && value !== CONTRACT_STATUS.APPROVED
+          && value !== CONTRACT_STATUS.PENDING
+        ) {
+          status.key = key;
+          status.label = value;
+          smartContractStatus.push(status);
+        }
       });
       return smartContractStatus;
     } catch (err) {
@@ -209,9 +203,14 @@ export class ContractService {
   /**
    * Get list contract by creator address
    * @param ctx: RequestContext
-   * @param creatorAddress: Creator address 
+   * @param creatorAddress: Creator address
+   * @param codeId: Code id of contract
+   * @param status: Status of contract
+   * @param limit: Number of record on per page
+   * @param offset: Numer of record to skip
    * @returns List contract (ContractByCreatorOutputDto[])
    */
+
   async getContractByCreator(ctx: RequestContext, req: ContractByCreatorParamsDto) {
     this.logger.log(ctx, `${this.getContractByCreator.name} was called with creator address: ${req}`);
     try {

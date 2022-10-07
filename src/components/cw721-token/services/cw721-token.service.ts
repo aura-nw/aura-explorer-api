@@ -1,14 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { AkcLogger, CONTRACT_TYPE, INDEXER_API, RequestContext, SEARCH_KEYWORD } from "../../../shared";
-import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
-import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
-import { TransactionRepository } from "../../transaction/repositories/transaction.repository";
-import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
-import { ServiceUtil } from "../../../shared/utils/service.util";
-import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { SmartContractRepository } from "../../../components/contract/repositories/smart-contract.repository";
+import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
+import { AkcLogger, AURA_INFO, CONTRACT_TYPE, INDEXER_API, LENGTH, RequestContext, SEARCH_KEYWORD } from "../../../shared";
+import * as appConfig from '../../../shared/configs/configuration';
+import { ServiceUtil } from "../../../shared/utils/service.util";
+import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
+import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
 
 @Injectable()
 export class Cw721TokenService {
@@ -60,20 +58,25 @@ export class Cw721TokenService {
     async getNftsByOwner(ctx: RequestContext, request: NftByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
         let url: string = INDEXER_API.GET_NFTS_BY_OWNER;
-        const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit, request.offset]
-        if (request.contract_address) {
+        const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit]
+        if (request?.keyword) {
             url += '&%s=%s';
-            params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS);
-            params.push(request.contract_address);
+            if (request.keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && request.keyword.length === LENGTH.CONTRACT_ADDRESS) {
+                params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS)
+            } else {
+                params.push(SEARCH_KEYWORD.TOKEN_ID);
+            }
+            params.push(request.keyword);
         }
-        if (request.token_id) {
+        if (request?.next_key) {
             url += '&%s=%s';
-            params.push(SEARCH_KEYWORD.TOKEN_ID);
-            params.push(request.token_id);
+            params.push(SEARCH_KEYWORD.NEXT_KEY);
+            params.push(request.next_key);
         }
         const result = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(url, ...params)}`, '', ctx);
         const tokens = result.data.assets.CW721.asset;
         const count = result.data.assets.CW721.count;
+        const nextKey = result.data.nextKey;
         if (count > 0) {
             const listContractAddress = [...new Set(tokens.map(i => i.contract_address))];
             const tokensInfo = await this.tokenContractRepository.getTokensByListContractAddress(listContractAddress);
@@ -88,6 +91,6 @@ export class Cw721TokenService {
             });
         }
 
-        return { tokens: tokens, count: count };
+        return { tokens: tokens, count: count, next_key: nextKey };
     }
 }

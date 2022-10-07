@@ -1,11 +1,8 @@
 import { Body, CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, Post, Query, UseInterceptors } from "@nestjs/common";
-import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
-import { number } from "joi";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { ContractByCreatorParamsDto } from "../dtos/contract-by-creator-params.dto";
 import { ContractParamsDto } from "../dtos/contract-params.dto";
-// import { ReadContractParamsDto } from "../dtos/read-contract-params.dto";
-import { SearchTransactionParamsDto } from "../dtos/search-transaction-params.dto";
 import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
 import { ContractService } from "../services/contract.service";
 
@@ -97,18 +94,6 @@ export class ContractController {
         const { contracts, count } = await this.contractService.getContractsMatchCreationCode(ctx, contractAddress);
 
         return { data: contracts, meta: { count } };
-    }
-
-    @Post('search-transactions')
-    @ApiOperation({ summary: 'Get contract transactions' })
-    @ApiResponse({ status: HttpStatus.OK })
-    @UseInterceptors(ClassSerializerInterceptor)
-    @UseInterceptors(CacheInterceptor)
-    async searchTransactions(@ReqContext() ctx: RequestContext, @Body() request: SearchTransactionParamsDto): Promise<any> {
-        this.logger.log(ctx, `${this.searchTransactions.name} was called!`);
-        const { transactions, count } = await this.contractService.searchTransactions(ctx, request);
-
-        return { data: transactions, meta: { count } };
     }
 
     @Get('verify/status/:contractAddress')

@@ -4,10 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { SharedModule } from '../../shared/shared.module';
-import { MissedBlockRepository } from '../schedule/repositories/missed-block.repository';
 
 import { TransactionModule } from '../transaction/transaction.module';
-import { ValidatorRepository } from '../validator/repositories/validator.repository';
 
 import { BlockController } from './controllers/block.controller';
 import { BlockRepository } from './repositories/block.repository';
@@ -18,8 +16,6 @@ import { BlockService } from './services/block.service';
     SharedModule,
     TypeOrmModule.forFeature([
       BlockRepository,
-      MissedBlockRepository,
-      ValidatorRepository,
     ]),
     HttpModule,
     ConfigModule,

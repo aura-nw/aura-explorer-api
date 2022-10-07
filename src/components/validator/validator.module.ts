@@ -9,13 +9,12 @@ import { BlockModule } from '../block/block.module';
 import { BlockRepository } from '../block/repositories/block.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
 import { ProposalRepository } from '../proposal/repositories/proposal.repository';
-import { DelegationRepository } from '../schedule/repositories/delegation.repository';
-import { TransactionModule } from '../transaction/transaction.module';
+import { DelegationRepository } from './repositories/delegation.repository';
 
 import { ValidatorController } from './controllers/validator.controller';
 import { ValidatorRepository } from './repositories/validator.repository';
 import { ValidatorService } from './services/validator.service';
-import { DelegatorRewardRepository } from '../schedule/repositories/delegator-reward.repository';
+import { DelegatorRewardRepository } from './repositories/delegator-reward.repository';
 
 @Module({
   imports: [
@@ -31,7 +30,6 @@ import { DelegatorRewardRepository } from '../schedule/repositories/delegator-re
     HttpModule,
     ConfigModule,
     BlockModule,
-    TransactionModule,
   ],
   providers: [ValidatorService, ServiceUtil],
   controllers: [ValidatorController],

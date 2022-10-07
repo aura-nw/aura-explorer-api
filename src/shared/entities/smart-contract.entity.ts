@@ -54,7 +54,7 @@ export class SmartContract extends BaseEntityIncrementId {
     s3_location: string;
 
     @Column()
-    reference_code_id: string;
+    reference_code_id: number;
 
     @Column()
     mainnet_upload_status: string;
@@ -67,7 +67,4 @@ export class SmartContract extends BaseEntityIncrementId {
 
     @Column()
     num_tokens: number;
-
-    @Column()
-    is_minted: boolean;
 }

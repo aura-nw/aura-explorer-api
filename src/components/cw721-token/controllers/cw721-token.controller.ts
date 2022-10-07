@@ -3,7 +3,6 @@ import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { AkcLogger, ReqContext, RequestContext } from "../../../shared";
 import { Cw721TokenParamsDto } from "../dtos/cw721-token-params.dto";
 import { NftByOwnerParamsDto } from "../dtos/nft-by-owner-params.dto";
-import { TokenCW721TransactionParasDto } from "../dtos/token-cw721-transaction-paras.dto";
 import { Cw721TokenService } from "../services/cw721-token.service";
 
 @ApiTags('cw721-tokens')
@@ -46,8 +45,8 @@ export class Cw721TokenController {
     @UseInterceptors(CacheInterceptor)
     async getNftsByOwner(@ReqContext() ctx: RequestContext, @Body() request: NftByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
-        const { tokens, count } = await this.cw721TokenService.getNftsByOwner(ctx, request);
+        const { tokens, count, next_key } = await this.cw721TokenService.getNftsByOwner(ctx, request);
 
-        return { data: tokens, meta: { count } };
+        return { data: tokens, meta: { count, next_key } };
     }
 }
