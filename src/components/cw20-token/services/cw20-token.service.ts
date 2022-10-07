@@ -69,7 +69,7 @@ export class Cw20TokenService {
         //aura
         const assetDto = new AssetDto();
         assetDto.name = AURA_INFO.NAME;
-        assetDto.symbol = this.denom.toUpperCase();
+        assetDto.symbol = this.denom;
         assetDto.image = AURA_INFO.IMAGE;
         assetDto.denom = this.minimalDenom;
         assetDto.decimals = this.decimals;
