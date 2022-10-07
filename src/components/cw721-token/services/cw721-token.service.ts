@@ -61,7 +61,7 @@ export class Cw721TokenService {
         const params = [request.account_address, this.indexerChainId, CONTRACT_TYPE.CW721, request.limit]
         if (request?.keyword) {
             url += '&%s=%s';
-            if (request.keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && request.keyword.length === LENGTH.CONTRACT_ADDRESS) {
+            if (request.keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) && request.keyword.length === LENGTH.CONTRACT_ADDRESS) {
                 params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS)
             } else {
                 params.push(SEARCH_KEYWORD.TOKEN_ID);
