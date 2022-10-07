@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
+import { find } from "rxjs";
 import * as util from 'util';
 import { AccountService } from "../../../components/account/services/account.service";
 import { TokenContractRepository } from "../../../components/contract/repositories/token-contract.repository";
-import { TransactionRepository } from "../../../components/transaction/repositories/transaction.repository";
 import { AkcLogger, AURA_INFO, CONTRACT_TYPE, INDEXER_API, RequestContext } from "../../../shared";
 import * as appConfig from '../../../shared/configs/configuration';
 import { RedisUtil } from "../../../shared/utils/redis.util";
@@ -10,22 +10,20 @@ import { ServiceUtil } from "../../../shared/utils/service.util";
 import { AssetDto } from "../dtos/asset.dto";
 import { Cw20TokenByOwnerParamsDto } from "../dtos/cw20-token-by-owner-params.dto";
 import { Cw20TokenParamsDto } from "../dtos/cw20-token-params.dto";
-
 @Injectable()
 export class Cw20TokenService {
     private appParams;
     private indexerUrl;
     private indexerChainId;
-    private api;
     private denom;
     private minimalDenom;
     private decimals;
     private precisionDiv;
+    private configUrl;
 
     constructor(
         private readonly logger: AkcLogger,
         private tokenContractRepository: TokenContractRepository,
-        private transactionRepository: TransactionRepository,
         private serviceUtil: ServiceUtil,
         private redisUtil: RedisUtil,
         private accountService: AccountService
@@ -34,11 +32,11 @@ export class Cw20TokenService {
         this.appParams = appConfig.default();
         this.indexerUrl = this.appParams.indexer.url;
         this.indexerChainId = this.appParams.indexer.chainId;
-        this.api = this.appParams.node.api;
         this.denom = this.appParams.chainInfo.coinDenom;
         this.minimalDenom = this.appParams.chainInfo.coinMinimalDenom;
         this.decimals = this.appParams.chainInfo.coinDecimals;
         this.precisionDiv = this.appParams.chainInfo.precisionDiv;
+        this.configUrl = this.appParams.configUrl;
     }
 
     async getCw20Tokens(ctx: RequestContext, request: Cw20TokenParamsDto): Promise<any> {
@@ -67,12 +65,13 @@ export class Cw20TokenService {
 
     async getCw20TokensByOwner(ctx: RequestContext, request: Cw20TokenByOwnerParamsDto): Promise<any> {
         this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
-        const result = [];
+        let result = [];
         //aura
         const assetDto = new AssetDto();
-        assetDto.name = this.denom;
-        assetDto.symbol = this.minimalDenom;
+        assetDto.name = AURA_INFO.NAME;
+        assetDto.symbol = this.denom.toUpperCase();
         assetDto.image = AURA_INFO.IMAGE;
+        assetDto.denom = this.minimalDenom;
         assetDto.decimals = this.decimals;
         //get balance 
         const totalBalances = await this.accountService.getAccountDetailByAddress(ctx, request.account_address);
@@ -80,7 +79,6 @@ export class Cw20TokenService {
         //get price of aura
         await this.redisUtil.connect();
         const data = await this.redisUtil.getValue(AURA_INFO.COIN_ID);
-        let price = 0;
         if (data) {
             const priceData = JSON.parse(data);
             assetDto.price = priceData.current_price;
@@ -96,21 +94,34 @@ export class Cw20TokenService {
         const accountBalances = accountData.data.account_balances;
         const ibcBalances = accountBalances.filter(str => str.minimal_denom);
         if (ibcBalances.length > 0) {
+            //get coin info from config
+            const configData = await this.serviceUtil.getDataAPI(this.configUrl, '', ctx);
+            const coins = configData.coins;
             for (let i = 0; i < ibcBalances.length; i ++) {
                 const item = ibcBalances[i];
                 const asset = new AssetDto();
-                asset.name = item.denom;
-                asset.symbol = item.minimal_denom;
-                asset.image = AURA_INFO.IMAGE;
                 asset.balance = Number((item.amount / this.precisionDiv).toFixed(this.decimals));
+                //get ibc info
+                const findCoin = coins.find(f => f.denom === item.minimal_denom);
+                if (findCoin) {
+                    asset.name = findCoin.name;
+                    asset.symbol = findCoin.display;
+                    asset.image = findCoin.logo;
+                    asset.denom = findCoin.denom;
+                    asset.decimals = findCoin.decimals;
+                }
                 result.push(asset);
             }
+        }
+        //filter by keyword
+        if (result.length > 0 && request?.keyword) {
+            result = result.filter(f => f.name.toLowerCase().indexOf(request.keyword.toLowerCase()) > -1);
         }
 
         return { tokens: result, count: result.length };
 
         // const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
-        // const item = result[0].find(i => i.contract_address === AURA_INFO.CONNTRACT_ADDRESS);
+        // const item = result[0].find(i => i.contract_address === AURA_INFO.CONTRACT_ADDRESS);
         // if (item) {
             // const accountData = await this.accountService.getAccountDetailByAddress(ctx, request.account_address);
             // item.balance = accountData ? Number(accountData.total) : 0;
