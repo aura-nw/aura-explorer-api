@@ -127,9 +127,10 @@ export enum INDEXER_API {
 }
 
 export enum AURA_INFO {
-  CONNTRACT_ADDRESS = 'aura',
+  CONTRACT_ADDRESS = 'aura',
   COIN_ID = 'aura-network',
-  IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg'
+  IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg',
+  NAME = 'Aura'
 }
 
 export enum SEARCH_KEYWORD {

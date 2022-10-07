@@ -14,7 +14,7 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let condition: FindManyOptions<TokenContract> = {
             where: {
                 type: type,
-                contract_address: Not(AURA_INFO.CONNTRACT_ADDRESS)
+                contract_address: Not(AURA_INFO.CONTRACT_ADDRESS)
             },
             order: { circulating_market_cap: 'DESC', updated_at: 'DESC' },
         }
@@ -48,14 +48,14 @@ export class TokenContractRepository extends Repository<TokenContract> {
         let sql: string = ` FROM token_contracts tc
                 LEFT JOIN cw20_token_owners cto ON tc.contract_address = cto.contract_address
             WHERE ((cto.owner = ? AND cto.balance > 0) 
-                OR tc.contract_address = '${AURA_INFO.CONNTRACT_ADDRESS}')`;
+                OR tc.contract_address = '${AURA_INFO.CONTRACT_ADDRESS}')`;
         params.push(request.account_address);
         if(request?.keyword) {
             sql += ` AND (LOWER(tc.name) LIKE ? OR LOWER(tc.contract_address) LIKE ?)`
             params.push(`%${request.keyword.toLowerCase()}%`);
             params.push(`%${request.keyword.toLowerCase()}%`);
         }
-        sql += ` ORDER BY FIELD(tc.contract_address, '${AURA_INFO.CONNTRACT_ADDRESS}') DESC, (price * cto.balance) DESC, tc.updated_at DESC`;
+        sql += ` ORDER BY FIELD(tc.contract_address, '${AURA_INFO.CONTRACT_ADDRESS}') DESC, (price * cto.balance) DESC, tc.updated_at DESC`;
         let sqlLimit = "";
         if(request.limit > 0) {
             sqlLimit = " LIMIT ? OFFSET ?";
