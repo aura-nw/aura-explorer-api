@@ -77,11 +77,20 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
   /**
    * Get list code id
+   * @description get code ids for 'Register Contracts to Deploy on Mainnet' screen.
+   * The code ids just for creator who owner that code (not deployer).
+   * So must to join smart_contract_codes to make sure that code id has synced and belong to creator
    * @param creatorAddress: Creator address
    * @returns List code id (number[])
    */
   async getCodeIds(creatorAddress: string) {
     const result = await this.createQueryBuilder('sc')
+      .innerJoin(
+        SmartContractCode,
+        'scc',
+        'scc.code_id = sc.code_id AND scc.creator = sc.creator_address',
+      )
+      .distinct(true)
       .select('sc.code_id `codeId`')
       .where({ contract_verification: Not(CONTRACT_STATUS.UNVERIFIED) })
       .andWhere({
@@ -91,7 +100,6 @@ export class SmartContractRepository extends Repository<SmartContract> {
         ]),
       })
       .andWhere({ creator_address: creatorAddress })
-      .groupBy('sc.code_id')
       .orderBy('sc.code_id', 'ASC')
       .getRawMany();
 
