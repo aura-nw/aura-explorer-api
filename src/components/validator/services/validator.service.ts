@@ -55,7 +55,7 @@ export class ValidatorService {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
     // get all validator
-    const validatorsRes: Validator[] = await this.validatorRepository.getValidators();
+    const validatorsRes: Validator[] = await this.validatorRepository.getAllValidators();
     const count = validatorsRes.length;
 
     const validatorsOutput = plainToClass(LiteValidatorOutput, validatorsRes, {
