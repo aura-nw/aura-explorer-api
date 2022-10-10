@@ -12,7 +12,7 @@ export class ValidatorRepository extends Repository<Validator> {
         .addSelect(
           `RANK() OVER(ORDER BY
             jailed ASC,
-            FIELD(status, 3, 2, 1) ASC,
+            status DESC,
             power DESC,
             updated_at DESC
           ) as \`rank\``,
@@ -41,7 +41,7 @@ export class ValidatorRepository extends Repository<Validator> {
     return await this.createQueryBuilder('v')
       .select('v.*')
       .orderBy('jailed', 'ASC')
-      .addOrderBy('FIELD(status, 3, 2, 1)', 'ASC')
+      .addOrderBy('status', 'DESC')
       .addOrderBy('power', 'DESC')
       .addOrderBy('updated_at', 'DESC')
       .getRawMany();
