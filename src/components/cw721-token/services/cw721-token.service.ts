@@ -35,7 +35,8 @@ export class Cw721TokenService {
 
     async getNftByContractAddressAndTokenId(ctx: RequestContext, contractAddress: string, tokenId: string): Promise<any> {
         this.logger.log(ctx, `${this.getNftByContractAddressAndTokenId.name} was called!`);
-        const result = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID, this.indexerChainId, CONTRACT_TYPE.CW721, tokenId, contractAddress)}`, '', ctx);
+        const url = `${this.indexerUrl}${util.format(INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID, this.indexerChainId, CONTRACT_TYPE.CW721, encodeURIComponent(tokenId), contractAddress)}`;
+        const result = await this.serviceUtil.getDataAPI(url, '', ctx);
         let nft = null;
         if (result && result.data.assets.CW721.asset.length > 0) {
             nft = result.data.assets.CW721.asset[0];
@@ -66,7 +67,7 @@ export class Cw721TokenService {
             } else {
                 params.push(SEARCH_KEYWORD.TOKEN_ID);
             }
-            params.push(request.keyword);
+            params.push(encodeURIComponent(request.keyword));
         }
         if (request?.next_key) {
             url += '&%s=%s';
