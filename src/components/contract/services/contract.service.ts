@@ -1,19 +1,24 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { plainToClass } from "class-transformer";
-import { lastValueFrom } from "rxjs";
-import { Not } from "typeorm";
-import { SmartContractCodeRepository } from "../../../components/contract-code/repositories/smart-contract-code.repository";
-import { AkcLogger, CONTRACT_STATUS, ERROR_MAP, RequestContext } from "../../../shared";
-import { ServiceUtil } from "../../../shared/utils/service.util";
-import { ContractByCreatorOutputDto } from "../dtos/contract-by-creator-output.dto";
-import { ContractByCreatorParamsDto } from "../dtos/contract-by-creator-params.dto";
-import { ContractParamsDto } from "../dtos/contract-params.dto";
-import { ContractStatusOutputDto } from "../dtos/contract-status-output.dto";
-import { VerifyContractParamsDto } from "../dtos/verify-contract-params.dto";
-import { SmartContractRepository } from "../repositories/smart-contract.repository";
-import { TagRepository } from "../repositories/tag.repository";
+import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { plainToClass } from 'class-transformer';
+import { lastValueFrom } from 'rxjs';
+import { Not } from 'typeorm';
+import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
+import {
+  AkcLogger,
+  CONTRACT_STATUS,
+  ERROR_MAP,
+  RequestContext,
+} from '../../../shared';
+import { ServiceUtil } from '../../../shared/utils/service.util';
+import { ContractByCreatorOutputDto } from '../dtos/contract-by-creator-output.dto';
+import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
+import { ContractParamsDto } from '../dtos/contract-params.dto';
+import { ContractStatusOutputDto } from '../dtos/contract-status-output.dto';
+import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
+import { SmartContractRepository } from '../repositories/smart-contract.repository';
+import { TagRepository } from '../repositories/tag.repository';
 
 @Injectable()
 export class ContractService {
@@ -40,9 +45,9 @@ export class ContractService {
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
     this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const result = await this.smartContractRepository.getContracts(request);
+    const [contracts, count] = await this.smartContractRepository.getContracts(request);
 
-    return { contracts: result[0], count: result[1][0].total };
+    return { contracts, count };
   }
 
   async getContractByAddress(ctx: RequestContext, contractAddress: string): Promise<any> {
@@ -181,19 +186,15 @@ export class ContractService {
   }
 
   /**
-     * Get list code id
-     * @param creatorAddress: Creator address
-     * @returns List code id (number[])
-     */
+   * Get list code id
+   * @param creatorAddress: Creator address
+   * @returns List code id (number[])
+   */
   async getCodeIds(ctx: RequestContext, creatorAddress: string) {
     this.logger.log(ctx, `${this.getCodeIds.name} was called with creator address: ${creatorAddress}`);
     try {
       const codeIds = await this.smartContractRepository.getCodeIds(creatorAddress);
-      const respones: Array<number> = [];
-      codeIds?.forEach(f => {
-        respones.push(Number(f.codeId))
-      });
-      return respones;
+      return codeIds;
     } catch (err) {
       this.logger.error(ctx, `Class ${ContractService.name} call ${this.getCodeIds.name} method error: ${err.stack}`);
       throw err;
@@ -214,9 +215,9 @@ export class ContractService {
   async getContractByCreator(ctx: RequestContext, req: ContractByCreatorParamsDto) {
     this.logger.log(ctx, `${this.getContractByCreator.name} was called with creator address: ${req}`);
     try {
-      const [constracts, count] = await this.smartContractRepository.getContractByCreator(req.creatorAddress, req.codeId, req.status, req.limit, req.offset);
+      const [contracts, count] = await this.smartContractRepository.getContractByCreator(req.creatorAddress, req.codeId, req.status, req.limit, req.offset);
 
-      const mappingData = plainToClass(ContractByCreatorOutputDto, constracts, {
+      const mappingData = plainToClass(ContractByCreatorOutputDto, contracts, {
         excludeExtraneousValues: true,
       });
 
