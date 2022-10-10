@@ -73,6 +73,11 @@ export class SmartContract extends BaseEntityIncrementId {
     })
     project_name: string;
 
+    @Column({
+        nullable: true
+    })
+    project_description: string;
+
     @Column({ 
         type: 'text',
         nullable: true
