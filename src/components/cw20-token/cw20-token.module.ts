@@ -11,7 +11,6 @@ import { SmartContractRepository } from "../contract/repositories/smart-contract
 import { RedisUtil } from "../../shared/utils/redis.util";
 import { AccountService } from "../account/services/account.service";
 import { ValidatorRepository } from "../validator/repositories/validator.repository";
-import { TransactionRepository } from "../transaction/repositories/transaction.repository";
 
 @Module({
     imports: [
@@ -19,8 +18,7 @@ import { TransactionRepository } from "../transaction/repositories/transaction.r
       TypeOrmModule.forFeature([
         TokenContractRepository,
         SmartContractRepository,
-        ValidatorRepository,
-        TransactionRepository
+        ValidatorRepository
       ]),
       ConfigModule,
       HttpModule
