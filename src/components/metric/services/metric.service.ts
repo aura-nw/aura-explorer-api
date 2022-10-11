@@ -40,8 +40,7 @@ export class MetricService {
 
   async getTransaction(
     ctx: RequestContext,
-    range: Range,
-    timezone: number
+    range: Range
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
@@ -49,13 +48,12 @@ export class MetricService {
 
       `calling ${TransactionRepository.name}.createQueryBuilder`,
     );
-    const hours = Math.round(timezone / 60);
 
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs', hours) as MetricOutput[];
-    const series = generateSeries(range, hours);
+    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
+    const series = generateSeries(range);
     let result = mergeByProperty(metricData, series);
     return result;
   }
