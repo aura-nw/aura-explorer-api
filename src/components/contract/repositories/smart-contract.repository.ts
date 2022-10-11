@@ -1,127 +1,176 @@
-import { InjectRepository } from "@nestjs/typeorm";
-import { EntityRepository, ObjectLiteral, Repository } from "typeorm";
-import { SmartContract } from "../../../shared/entities/smart-contract.entity";
-import { ContractParamsDto } from "../dtos/contract-params.dto";
-import { AURA_INFO, CONTRACT_STATUS, LENGTH, TokenContract } from "../../../shared";
-import { SmartContractCode } from "../../../shared/entities/smart-contract-code.entity";
+import { InjectRepository } from '@nestjs/typeorm';
+import {
+  EntityRepository,
+  In,
+  Not,
+  ObjectLiteral,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
+import { AURA_INFO, CONTRACT_STATUS, LENGTH } from '../../../shared';
+import { SmartContractCode } from '../../../shared/entities/smart-contract-code.entity';
+import { SmartContract } from '../../../shared/entities/smart-contract.entity';
+import { ContractParamsDto } from '../dtos/contract-params.dto';
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
-    constructor(@InjectRepository(SmartContract) private readonly repos: Repository<ObjectLiteral>) {
-        super();
+  constructor(
+    @InjectRepository(SmartContract)
+    private readonly repos: Repository<ObjectLiteral>,
+  ) {
+    super();
+  }
+
+  async getContracts(request: ContractParamsDto) {
+    const builder = this.createQueryBuilder('sc')
+      .leftJoin(SmartContractCode, 'scc', 'sc.code_id = scc.code_id')
+      .select(['sc.*', 'scc.type `type`', 'scc.result `result`'])
+      .orderBy('sc.updated_at', 'DESC');
+
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const count = await _builder.getCount();
+      const contracts = await _builder
+        .limit(request.limit)
+        .offset(request.offset)
+        .getRawMany();
+
+      return [contracts, count];
+    };
+
+    if (!request?.keyword) {
+      return await _finalizeResult(builder);
     }
 
-    async getContracts(request: ContractParamsDto) {
-        let result = [];
-        let params = [];
-        let sqlSelect: string = `SELECT sc.*, scc.type, scc.result`;
-        let sqlCount: string = `SELECT COUNT(sc.Id) AS total`;
-        let sql: string = ` FROM smart_contracts sc
-            LEFT JOIN smart_contract_codes scc ON sc.code_id = scc.code_id`;
-        if (request?.keyword) {
-            const keyword = request.keyword.toLowerCase();
-            if (Number(keyword) && Number(keyword) > 0) {
-                sql += ` WHERE sc.code_id = ?`;
-                params.push(keyword);
-            } else if (keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && keyword.length === LENGTH.CONTRACT_ADDRESS) {
-                sql += ` WHERE (sc.contract_address = ? OR sc.creator_address = ?)`;
-                params.push(keyword);
-                params.push(keyword);
-            } else if (keyword.startsWith(AURA_INFO.CONNTRACT_ADDRESS) && keyword.length === LENGTH.ACCOUNT_ADDRESS) {
-                sql += ` WHERE sc.creator_address = ?`;
-                params.push(keyword);
-            } else {
-                sql += ` WHERE LOWER(sc.contract_name) LIKE ?`;
-                params.push(`%${keyword}%`);
-            }
-        }
-        sql += " ORDER BY sc.updated_at DESC";
-        let sqlLimit = "";
-        if (request.limit > 0) {
-            sqlLimit = " LIMIT ? OFFSET ?";
-            params.push(request.limit);
-            params.push(request.offset);
-        }
+    const keyword = request.keyword.toLowerCase();
 
-        result[0] = await this.query(sqlSelect + sql + sqlLimit, params);
-        result[1] = await this.query(sqlCount + sql, params);
-        return result;
+    const byCodeId = Number(keyword) && Number(keyword) > 0;
+    if (byCodeId) {
+      builder.where({ code_id: keyword });
+      return await _finalizeResult(builder);
     }
 
-    /**
-  * Get list code id
-  * @param creatorAddress: Creator address
-  * @returns List code id (number[])
-  */
-    async getCodeIds(creatorAddress: string) {
-        return await this.createQueryBuilder('sm')
-            .select('sm.code_id AS codeId')
-            .innerJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id AND smCode.creator = sm.creator_address')
-            .distinct(true)
-            .where(`sm.contract_verification != '${CONTRACT_STATUS.UNVERIFIED}'
-                AND sm.mainnet_upload_status IN('${CONTRACT_STATUS.REJECTED}','${CONTRACT_STATUS.NOT_REGISTERED}')
-                AND smCode.creator=:creatorAddress`)
-            .setParameter('creatorAddress', creatorAddress)
-            .orderBy('sm.code_id', 'ASC')
-            .getRawMany();
+    const byCreatorAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.ACCOUNT_ADDRESS;
+    if (byCreatorAddress) {
+      builder.where({ creator_address: keyword });
+      return await _finalizeResult(builder);
     }
 
-    /**
-     * Get list contract by Creator address
-     * @param creatorAddress 
-     * @param codeId: Code id of contract
-     * @param status: Status of contract
-     * @param limit: Number of record on per page
-     * @param offset: Numer of record to skip
-     * @returns @returns List contract(any[])
-     */
-    async getContractByCreator(creatorAddress: string, codeId: number, status: string, limit: number, offset: number) {
-        let conditions = `creator_address=:creatorAddress`;
-        const params = { creatorAddress };
-
-        if (codeId) {
-            conditions += ` AND sm.code_id LIKE :codeId`
-            params['codeId'] = `%${codeId}%`;
-        }
-
-        if (status) {
-            if (status === CONTRACT_STATUS.UNVERIFIED
-                || status === CONTRACT_STATUS.EXACT_MATCH
-                || status === CONTRACT_STATUS.SIMILAR_MATCH) {
-                conditions += ` AND sm.contract_verification=:status`
-
-            } else {
-                conditions += ` AND sm.mainnet_upload_status=:status`
-            }
-            params['status'] = status;
-        }
-
-        let constracts = await this.createQueryBuilder('sm')
-            .select(`sm.*, smCode.type, (CASE WHEN(
-                sm.mainnet_upload_status = '${CONTRACT_STATUS.TBD}'
-                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.DEPLOYED}'
-                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.REJECTED}'
-                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.PENDING}'
-                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.NOT_REGISTERED}'
-                OR sm.mainnet_upload_status = '${CONTRACT_STATUS.APPROVED}'
-            ) THEN sm.mainnet_upload_status ELSE sm.contract_verification END) AS status,
-            smCode.result`)
-            .leftJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id')
-            .distinct(true)
-            .where(conditions)
-            .setParameters(params)
-            .limit(limit)
-            .offset(offset)
-            .orderBy('sm.updated_at', 'DESC')
-            .getRawMany();
-
-        let count = await this.createQueryBuilder('sm')
-            .select(`COUNT(DISTINCT sm.id) AS total`)
-            .leftJoin(SmartContractCode, 'smCode', 'smCode.code_id=sm.code_id')
-            .where(conditions)
-            .setParameters(params)
-            .getRawOne();
-
-        return [constracts, Number(count?.total) || 0];
+    const byCreatorOrContractAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.CONTRACT_ADDRESS;
+    if (byCreatorOrContractAddress) {
+      builder
+        .where({ contract_address: keyword })
+        .orWhere({ creator_address: keyword });
+      return await _finalizeResult(builder);
     }
+
+    builder.where('LOWER(sc.contract_name) LIKE :keyword', {
+      keyword: `%${keyword}%`,
+    });
+    return await _finalizeResult(builder);
+  }
+
+  /**
+   * Get list code id
+   * @description get code ids for 'Register Contracts to Deploy on Mainnet' screen.
+   * The code ids just for creator who owner that code (not deployer).
+   * So must to join smart_contract_codes to make sure that code id has synced and belong to creator
+   * @param creatorAddress: Creator address
+   * @returns List code id (number[])
+   */
+  async getCodeIds(creatorAddress: string) {
+    const result = await this.createQueryBuilder('sc')
+      .innerJoin(
+        SmartContractCode,
+        'scc',
+        'scc.code_id = sc.code_id AND scc.creator = sc.creator_address',
+      )
+      .distinct(true)
+      .select('sc.code_id `codeId`')
+      .where({ contract_verification: Not(CONTRACT_STATUS.UNVERIFIED) })
+      .andWhere({
+        mainnet_upload_status: In([
+          CONTRACT_STATUS.REJECTED,
+          CONTRACT_STATUS.NOT_REGISTERED,
+        ]),
+      })
+      .andWhere({ creator_address: creatorAddress })
+      .orderBy('sc.code_id', 'ASC')
+      .getRawMany();
+
+    return result.map((item) => Number(item.codeId));
+  }
+
+  /**
+   * Get list contract by Creator address
+   * @param creatorAddress
+   * @param codeId: Code id of contract
+   * @param status: Status of contract
+   * @param limit: Number of record on per page
+   * @param offset: Numer of record to skip
+   * @returns @returns List contract(any[])
+   */
+  async getContractByCreator(
+    creatorAddress: string,
+    codeId: number,
+    status: string,
+    limit: number,
+    offset: number,
+  ) {
+    const mainnetUploadStatus = [
+      CONTRACT_STATUS.TBD,
+      CONTRACT_STATUS.DEPLOYED,
+      CONTRACT_STATUS.REJECTED,
+      CONTRACT_STATUS.PENDING,
+      CONTRACT_STATUS.NOT_REGISTERED,
+      CONTRACT_STATUS.APPROVED,
+    ];
+
+    const builder = this.createQueryBuilder('sc')
+      .leftJoin(SmartContractCode, 'scc', 'scc.code_id = sc.code_id')
+
+      // select
+      .select('sc.*, scc.type `type`, scc.result `result`')
+      .addSelect(
+        `IF(
+          sc.mainnet_upload_status IN (:mainnetUploadStatus),
+          sc.mainnet_upload_status,
+          sc.contract_verification
+        )`,
+        'status',
+      )
+      .setParameters({ mainnetUploadStatus })
+      // select
+
+      .orderBy('sc.updated_at', 'DESC')
+      .where({ creator_address: creatorAddress });
+
+    if (codeId) {
+      builder.andWhere('sc.code_id LIKE :codeId', { codeId: `%${codeId}%` });
+    }
+
+    if (status) {
+      const isFilterContractVerificationStatus = [
+        CONTRACT_STATUS.UNVERIFIED,
+        CONTRACT_STATUS.EXACT_MATCH,
+        CONTRACT_STATUS.SIMILAR_MATCH,
+      ].includes(<CONTRACT_STATUS>status);
+
+      if (isFilterContractVerificationStatus) {
+        builder.andWhere({ contract_verification: status });
+      } else {
+        builder.andWhere({ mainnet_upload_status: status });
+      }
+    }
+
+    const count = await builder.getCount();
+    const contracts = await builder.limit(limit).offset(offset).getRawMany();
+
+    return [contracts, count];
+  }
 }
