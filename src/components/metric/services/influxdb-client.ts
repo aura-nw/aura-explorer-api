@@ -118,8 +118,8 @@ export class InfluxDBClient {
    * @param column 
    * @returns 
    */
-  sumData(measurement: string, start: string, step: string, column: string, timezone: number) {
-    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}, offset: ${timezone}h) |> sum()`;
+  sumData(measurement: string, start: string, step: string, column: string) {
+    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()`;
     return this.bindingData(query);
   }
 
