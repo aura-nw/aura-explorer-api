@@ -67,4 +67,85 @@ export class SmartContract extends BaseEntityIncrementId {
 
     @Column()
     num_tokens: number;
+
+    @Column({
+        nullable: true
+    })
+    project_name: string;
+
+    @Column({
+        nullable: true
+    })
+    project_description: string;
+
+    @Column({ 
+        type: 'text',
+        nullable: true
+    })
+    official_project_website: string;
+
+    @Column({
+        nullable: true
+    })
+    official_project_email: string;
+
+    @Column({
+        nullable: true
+    })
+    whitepaper: string;
+
+    @Column({
+        nullable: true
+    })
+    github: string;
+
+    @Column({
+        nullable: true
+    })
+    telegram: string;
+
+    @Column({
+        nullable: true
+    })
+    wechat: string;
+
+    @Column({
+        nullable: true
+    })
+    linkedin: string;
+
+    @Column({
+        nullable: true
+    })
+    discord: string;
+
+    @Column({
+        nullable: true
+    })
+    medium: string;
+
+    @Column({
+        nullable: true
+    })
+    reddit: string;
+
+    @Column({
+        nullable: true
+    })
+    slack: string;
+
+    @Column({
+        nullable: true
+    })
+    facebook: string;
+
+    @Column({
+        nullable: true
+    })
+    twitter: string;
+
+    @Column({
+        nullable: true
+    })
+    bitcointalk: string;
 }
