@@ -78,7 +78,7 @@ export class Cw721TokenService {
         const tokens = result.data.assets.CW721.asset;
         const count = result.data.assets.CW721.count;
         const nextKey = result.data.nextKey;
-        if (count > 0) {
+        if (tokens.length > 0) {
             const listContractAddress = [...new Set(tokens.map(i => i.contract_address))];
             const tokensInfo = await this.tokenContractRepository.getTokensByListContractAddress(listContractAddress);
             tokens.forEach((item) => {
