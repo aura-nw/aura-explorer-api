@@ -31,10 +31,11 @@ export class SmartContractRepository extends Repository<SmartContract> {
       _builder: SelectQueryBuilder<SmartContract>,
     ) => {
       const count = await _builder.getCount();
-      const contracts = await _builder
-        .limit(request.limit)
-        .offset(request.offset)
-        .getRawMany();
+      if (request.limit > 0) {
+        _builder.limit(request.limit).offset(request.offset);
+      }
+
+      const contracts = await _builder.getRawMany();
 
       return [contracts, count];
     };
