@@ -4,7 +4,7 @@ import { PAGE_REQUEST } from 'src/shared';
 
 export class ContractParamsDto {
   @ApiProperty({ default: 20 })
-  @Min(PAGE_REQUEST.MIN)
+  @Min(0)
   @Max(PAGE_REQUEST.MAX)
   limit: number;
 
