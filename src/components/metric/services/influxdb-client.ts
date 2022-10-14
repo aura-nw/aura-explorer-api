@@ -1,4 +1,9 @@
-import { InfluxDB, Point, QueryApi, WriteApi } from "@influxdata/influxdb-client";
+import {
+  InfluxDB,
+  Point,
+  QueryApi,
+  WriteApi,
+} from '@influxdata/influxdb-client';
 
 export class InfluxDBClient {
   private client: InfluxDB;
@@ -11,7 +16,7 @@ export class InfluxDBClient {
     public url: string,
     public token: string,
   ) {
-    this.client = new InfluxDB({ url, token, timeout:60000 });
+    this.client = new InfluxDB({ url, token, timeout: 60000 });
   }
 
   initQueryApi(): void {
@@ -31,8 +36,8 @@ export class InfluxDBClient {
 
   queryData(measurement, statTime, step) {
     const results: {
-      count: string,
-      timestamp: string
+      count: string;
+      timestamp: string;
     }[] = [];
     const query = `from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> window(every: ${step}) |> count()`;
     const output = new Promise((resolve, reject) => {
@@ -91,7 +96,15 @@ export class InfluxDBClient {
     this.writeApi.writePoint(point);
   }
 
-  writeDelegation(delegator_address, validator_address, shares, amount, tx_hash, created_at, type): void {
+  writeDelegation(
+    delegator_address,
+    validator_address,
+    shares,
+    amount,
+    tx_hash,
+    created_at,
+    type,
+  ): void {
     const point = new Point('delegation')
       .stringField('delegator_address', delegator_address)
       .stringField('validator_address', validator_address)
@@ -112,11 +125,11 @@ export class InfluxDBClient {
 
   /**
    * Sum data by column
-   * @param measurement 
-   * @param statTime 
-   * @param step 
-   * @param column 
-   * @returns 
+   * @param measurement
+   * @param statTime
+   * @param step
+   * @param column
+   * @returns
    */
   sumData(measurement: string, start: string, step: string, column: string) {
     const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "${measurement}") |> filter(fn: (r) => r["_field"] == "${column}") |> window(every: ${step}) |> sum()`;
@@ -124,26 +137,65 @@ export class InfluxDBClient {
   }
 
   /**
-   * Get number transactions
-   * @param start 
-   * @returns 
+   * Sum data by column with timezone (in hour)
+   * @param measurement
+   * @param statTime
+   * @param step
+   * @param column
+   * @param offsetInHours
+   * @returns
    */
-  getNumberTransactions(start: string){
+  sumDataWithTimezoneOffset(
+    measurement: string,
+    start: string,
+    step: string,
+    column: string,
+    withTimezone = true,
+    offsetInHours = 0,
+  ) {
+    if (withTimezone) {
+      const query = `
+        from(bucket: "${this.bucket}")
+          |> range(start: ${start})
+          |> filter(fn: (r) => r._measurement == "${measurement}")
+          |> filter(fn: (r) => r["_field"] == "${column}")
+          |> aggregateWindow(every: 1h, timeSrc: "_start", fn: sum, createEmpty: false)
+          |> window(every: ${step}, offset: ${offsetInHours}h)
+          |> sum()`;
+      return this.bindingData(query);
+    }
+
+    const query = `
+      from(bucket: "${this.bucket}")
+        |> range(start: ${start})
+        |> filter(fn: (r) => r._measurement == "${measurement}")
+        |> filter(fn: (r) => r["_field"] == "${column}")
+        |> window(every: ${step})
+        |> sum()`;
+    return this.bindingData(query);
+  }
+
+  /**
+   * Get number transactions
+   * @param start
+   * @returns
+   */
+  getNumberTransactions(start: string) {
     const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "blocks_measurement") |> filter(fn: (r) => r["_field"] == "num_txs")|> sum()`;
     return this.bindingData(query);
   }
 
   /**
    * Convert result's Influx
-   * @param query 
-   * @returns 
+   * @param query
+   * @returns
    */
-  private bindingData(query: String): Promise<any>{
+  private bindingData(query: String): Promise<any> {
     const results: {
       total: string;
       timestamp: string;
     }[] = [];
-   
+
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
