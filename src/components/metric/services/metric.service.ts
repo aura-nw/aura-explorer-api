@@ -10,7 +10,8 @@ import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
-  mergeByProperty
+  generateSeriesWithTimezoneOffset,
+  mergeByProperty,
 } from '../utils/utils';
 
 @Injectable()
@@ -40,7 +41,8 @@ export class MetricService {
 
   async getTransaction(
     ctx: RequestContext,
-    range: Range
+    range: Range,
+    timezoneOffset: number,
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
     this.logger.log(
@@ -51,9 +53,20 @@ export class MetricService {
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const metricData = await this.influxDbClient.sumData('blocks_measurement', startTime, queryStep, 'num_txs') as MetricOutput[];
-    const series = generateSeries(range);
-    let result = mergeByProperty(metricData, series);
+
+    const withTimezone = [Range.day, Range.month].includes(range);
+    const offsetInHours = Math.round(timezoneOffset / 60);
+
+    const metricData = (await this.influxDbClient.sumDataWithTimezoneOffset(
+      'blocks_measurement',
+      startTime,
+      queryStep,
+      'num_txs',
+      withTimezone,
+      offsetInHours,
+    )) as MetricOutput[];
+    const series = generateSeriesWithTimezoneOffset(range, offsetInHours);
+    const result = mergeByProperty(metricData, series);
     return result;
   }
 
@@ -77,7 +90,11 @@ export class MetricService {
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
-    const data = (await this.influxDbClient.queryData(measurement, startTime, queryStep)) as MetricOutput[];
+    const data = (await this.influxDbClient.queryData(
+      measurement,
+      startTime,
+      queryStep,
+    )) as MetricOutput[];
     const series = generateSeries(range);
     return mergeByProperty(data, series);
   }
@@ -86,8 +103,10 @@ export class MetricService {
    * Get the number of transactions
    * @returns MetricOutput[]
    */
-  async getNumberTransactions(){
-    const start:string = this.configService.get<string>('deploymentDate');
-    return (await this.influxDbClient.getNumberTransactions(start)) as MetricOutput[];
+  async getNumberTransactions() {
+    const start: string = this.configService.get<string>('deploymentDate');
+    return (await this.influxDbClient.getNumberTransactions(
+      start,
+    )) as MetricOutput[];
   }
 }
