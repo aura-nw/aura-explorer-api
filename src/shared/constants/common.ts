@@ -124,6 +124,7 @@ export enum INDEXER_API {
   TOKEN_HOLDERS = "api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true",
   GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID = "api/v1/asset/getByOwner?chainid=%s&contractType=%s&tokenId=%s&contractAddress=%s",
   GET_NFTS_BY_OWNER = "api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=%s&isBurned=false&countTotal=true&pageLimit=%s",
+  GET_PROPOSAL = "api/v1/proposal?chainid=%s&pageLimit=%s&pageOffset=%s&reverse=true",
 }
 
 export enum AURA_INFO {

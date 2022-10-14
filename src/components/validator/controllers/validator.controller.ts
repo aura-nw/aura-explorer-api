@@ -43,9 +43,9 @@ export class ValidatorController {
   ): Promise<BaseApiResponse<LiteValidatorOutput[]>> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
-    const { validators, count } = await this.validatorService.getValidators(ctx);
+    const { validators } = await this.validatorService.getValidators(ctx);
 
-    return { data: validators, meta: { count } };
+    return { data: validators, meta: { } };
   }
 
   @Get(':address')
