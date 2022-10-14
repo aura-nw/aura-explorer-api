@@ -30,7 +30,6 @@ export class ValidatorService {
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
     private blockRepository: BlockRepository,
-    private proposalRepository: ProposalRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private delegatorRewardRepository: DelegatorRewardRepository,
   ) {
@@ -51,22 +50,19 @@ export class ValidatorService {
   }
 
   async getValidators(ctx: RequestContext
-  ): Promise<{ validators: LiteValidatorOutput[]; count: number }> {
+  ): Promise<{ validators: LiteValidatorOutput[] }> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
+    const [validatorsRes, proposal] = await Promise.all(
+      [
+        this.validatorRepository.getAllValidators(),
+        this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.GET_PROPOSAL, this.indexerChainId, 1, 0)}`, '', ctx)
+      ]);
 
-    // get all validator
-    const validatorsRes: Validator[] = await this.validatorRepository.getAllValidators();
-    const count = validatorsRes.length;
+    // Get total proposal on indexer
+    const proposalCount = proposal?.data?.count || 0;
 
     const validatorsOutput = plainToClass(LiteValidatorOutput, validatorsRes, {
       excludeExtraneousValues: true,
-    });
-
-    // get 50 proposals
-    const countProposal = await this.proposalRepository.count({
-      order: { pro_id: 'DESC' },
-      take: CONST_NUM.LIMIT_50,
-      skip: CONST_NUM.OFFSET,
     });
 
     let cntValidatorActive = 0;
@@ -90,20 +86,20 @@ export class ValidatorService {
     for (let key in validatorsOutput) {
       const data = validatorsOutput[key];
       data.rank = parseInt(key) + 1;
-      data.target_count = countProposal;
+      data.target_count = proposalCount;
       if (data.jailed === '0') {
         data.status_validator = true;
         cntValidatorActive = cntValidatorActive + 1;
       } else {
         data.status_validator = false;
       }
-      
+
       votersAddress.push(data.acc_address);
     }
 
     validatorsOutput.map((map, idx) => {
       map.rank = idx + 1;
-      map.target_count = countProposal;
+      map.target_count = proposalCount;
       if (map.jailed === '0') {
         map.status_validator = true;
         cntValidatorActive = cntValidatorActive + 1;
@@ -125,7 +121,7 @@ export class ValidatorService {
     });
 
 
-    return { validators: validatorsOutput, count };
+    return { validators: validatorsOutput };
   }
 
   async getValidatorByAddress(ctx: RequestContext, address: string): Promise<any> {
