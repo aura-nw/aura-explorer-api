@@ -62,7 +62,11 @@ export class AccountService {
       }),
     ]);
 
-    const data = accountData?.data;
+    if (!accountData?.data) {
+      return accountData;
+    }
+
+    const data = accountData.data;
     // get balance
     let balancesAmount = 0;
     if (data?.account_balances) {

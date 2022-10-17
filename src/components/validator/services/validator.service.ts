@@ -204,6 +204,10 @@ export class ValidatorService {
       ctx,
     );
 
+    if (!accountData?.data) {
+      return accountData;
+    }
+
     const data = accountData.data;
     result.available_balance = 0;
     if (data?.account_balances && data.account_balances.length > 0) {
