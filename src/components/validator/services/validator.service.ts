@@ -13,8 +13,7 @@ import {
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import * as util from 'util';
-import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
+import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
 import { DelegatorRewardRepository } from '../repositories/delegator-reward.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
@@ -289,5 +288,24 @@ export class ValidatorService {
 
     result.delegations = delegations;
     return result;
+  }
+
+  async getDelegationsByDelegatorAddress(
+    ctx: RequestContext,
+    delegatorAddress: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getDelegationsByDelegatorAddress.name} was called!`);
+    //get delegation first
+    let result: any = {};
+    result = await this.delegationRepository.findOne({
+      where: { delegator_address: delegatorAddress },
+      order: { created_at: 'ASC' }
+    });
+    const sumAmount = await this.delegationRepository.getSumAmountByAddress(delegatorAddress);
+    if (sumAmount && Number(sumAmount.sum) <= 0) {
+      result = {};
+    }
+
+    return { result: result };
   }
 }
