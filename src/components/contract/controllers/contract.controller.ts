@@ -52,9 +52,9 @@ export class ContractController {
     @UseInterceptors(ClassSerializerInterceptor)
     async getContractByAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string): Promise<any> {
         this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
-        const proposal = await this.contractService.getContractByAddress(ctx, contractAddress);
+        const contract = await this.contractService.getContractByAddress(ctx, contractAddress);
 
-        return { data: proposal, meta: {} };
+        return { data: contract, meta: {} };
     }
 
     @Get('tag/:accountAddress/:contractAddress')
@@ -66,9 +66,9 @@ export class ContractController {
         @Param('contractAddress') contractAddress: string
     ): Promise<any> {
         this.logger.log(ctx, `${this.getTagByAddress.name} was called!`);
-        const proposal = await this.contractService.getTagByAddress(ctx, accountAddress, contractAddress);
+        const tag = await this.contractService.getTagByAddress(ctx, accountAddress, contractAddress);
 
-        return { data: proposal, meta: {} };
+        return { data: tag, meta: {} };
     }
 
     @Post('verify-contract')

@@ -103,4 +103,24 @@ export class ValidatorController {
 
     return { data: result, meta: {} };
   }
+
+  @Get('delegations/delegator/:delegatorAddress')
+  @ApiOperation({
+    summary: 'Get delegations by address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getDelegationsByDelegatorAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('delegatorAddress') delegatorAddress: string,
+  ): Promise<any> {
+    const result = await this.validatorService.getDelegationsByDelegatorAddress(
+      ctx,
+      delegatorAddress
+    );
+    return { data: result, meta: {} };
+  }
 }
