@@ -8,7 +8,6 @@ import { SharedModule } from '../../shared/shared.module';
 import { BlockModule } from '../block/block.module';
 import { BlockRepository } from '../block/repositories/block.repository';
 import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
-import { ProposalRepository } from '../proposal/repositories/proposal.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 
 import { ValidatorController } from './controllers/validator.controller';
@@ -23,7 +22,6 @@ import { DelegatorRewardRepository } from './repositories/delegator-reward.repos
       ValidatorRepository,
       DelegationRepository,
       BlockRepository,
-      ProposalRepository,
       ProposalVoteRepository,
       DelegatorRewardRepository
     ]),

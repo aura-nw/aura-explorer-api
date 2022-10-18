@@ -8,7 +8,6 @@ import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import * as util from 'util';
 import { ProposalVoteRepository } from '../../../components/proposal/repositories/proposal-vote.repository';
-import { ProposalRepository } from '../../../components/proposal/repositories/proposal.repository';
 import { DelegatorRewardRepository } from '../repositories/delegator-reward.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
