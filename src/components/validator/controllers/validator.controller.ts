@@ -104,7 +104,7 @@ export class ValidatorController {
     return { data: result, meta: {} };
   }
 
-  @Get('first-delegations/:delegatorAddress')
+  @Get('delegations/delegator/:delegatorAddress')
   @ApiOperation({
     summary: 'Get delegations by address',
   })
