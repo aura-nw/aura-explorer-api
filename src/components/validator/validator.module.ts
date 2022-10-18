@@ -7,7 +7,7 @@ import { ServiceUtil } from '../../shared/utils/service.util';
 import { SharedModule } from '../../shared/shared.module';
 import { BlockModule } from '../block/block.module';
 import { BlockRepository } from '../block/repositories/block.repository';
-import { ProposalVoteRepository } from '../proposal/repositories/proposal-vote.repository';
+import { ProposalVoteRepository } from './repositories/proposal-vote.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 
 import { ValidatorController } from './controllers/validator.controller';

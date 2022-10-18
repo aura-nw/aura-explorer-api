@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Max, Min } from 'class-validator';
-import { PAGE_REQUEST } from 'src/shared';
+import { PAGE_REQUEST } from '../../../shared';
 
 export class ContractParamsDto {
   @ApiProperty({ default: 20 })
