@@ -3,7 +3,13 @@ import { plainToClass } from 'class-transformer';
 import { BlockRepository } from '../../../components/block/repositories/block.repository';
 import { DelegationRepository } from '../repositories/delegation.repository';
 
-import { AkcLogger, CONST_NUM, INDEXER_API, RequestContext, Validator } from '../../../shared';
+import {
+  AkcLogger,
+  CONST_NUM,
+  INDEXER_API,
+  RequestContext,
+  Validator,
+} from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import * as util from 'util';
@@ -49,14 +55,23 @@ export class ValidatorService {
     return await this.validatorRepository.count({ where: { status: 3 } });
   }
 
-  async getValidators(ctx: RequestContext
+  async getValidators(
+    ctx: RequestContext,
   ): Promise<{ validators: LiteValidatorOutput[] }> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
-    const [validatorsRes, proposal] = await Promise.all(
-      [
-        this.validatorRepository.getAllValidators(),
-        this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.GET_PROPOSAL, this.indexerChainId, 1, 0)}`, '', ctx)
-      ]);
+    const [validatorsRes, proposal] = await Promise.all([
+      this.validatorRepository.getAllValidators(),
+      this.serviceUtil.getDataAPI(
+        `${this.indexerUrl}${util.format(
+          INDEXER_API.GET_PROPOSAL,
+          this.indexerChainId,
+          1,
+          0,
+        )}`,
+        '',
+        ctx,
+      ),
+    ]);
 
     // Get total proposal on indexer
     const proposalCount = proposal?.data?.count || 0;
@@ -66,8 +81,8 @@ export class ValidatorService {
     });
 
     let cntValidatorActive = 0;
-    const validatorActive = validatorsOutput.filter(e => e.jailed !== '0');
-    for (let key in validatorActive) {
+    const validatorActive = validatorsOutput.filter((e) => e.jailed !== '0');
+    for (const key in validatorActive) {
       const data = validatorActive[key];
       const dataBefore = validatorActive[parseInt(key) - 1];
       if (parseInt(key) === 0) {
@@ -77,13 +92,15 @@ export class ValidatorService {
       } else {
         data.cumulative_share_before = dataBefore.cumulative_share_after;
         data.cumulative_share = data.percent_power;
-        const cumulative = parseFloat(data.cumulative_share_before) + parseFloat(data.percent_power);
+        const cumulative =
+          parseFloat(data.cumulative_share_before) +
+          parseFloat(data.percent_power);
         data.cumulative_share_after = cumulative.toFixed(2);
       }
     }
 
-    let votersAddress: Array<string> = [];
-    for (let key in validatorsOutput) {
+    const votersAddress: Array<string> = [];
+    for (const key in validatorsOutput) {
       const data = validatorsOutput[key];
       data.rank = parseInt(key) + 1;
       data.target_count = proposalCount;
@@ -108,11 +125,14 @@ export class ValidatorService {
       }
       votersAddress.push(map.acc_address);
       return map;
-    })
+    });
 
-    const countVotes: [] = await this.proposalVoteRepository.countVoteByAddress(votersAddress);
+    const countVotes: any[] =
+      await this.proposalVoteRepository.countVoteByAddress(votersAddress);
     countVotes.forEach((item: any) => {
-      const findValidator = validatorsOutput.find(f => f.acc_address === item.voter);
+      const findValidator = validatorsOutput.find(
+        (f) => f.acc_address === item.voter,
+      );
       if (findValidator) {
         findValidator.vote_count = Number(item.countVote);
       } else {
@@ -120,11 +140,13 @@ export class ValidatorService {
       }
     });
 
-
     return { validators: validatorsOutput };
   }
 
-  async getValidatorByAddress(ctx: RequestContext, address: string): Promise<any> {
+  async getValidatorByAddress(
+    ctx: RequestContext,
+    address: string,
+  ): Promise<any> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
     const validator = await this.validatorRepository.getRankByAddress(address);
@@ -166,41 +188,58 @@ export class ValidatorService {
 
   async getDelegations(
     ctx: RequestContext,
-    delegatorAddress: string
+    delegatorAddress: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-    let result: any = {};
+    const result: any = {};
     //get available balance
 
-    // Use promise all to improve performance
-    let accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
-    if (accountData.data === null) {
-      accountData = await this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.ACCOUNT_DELEGATIONS, delegatorAddress, this.indexerChainId)}`, '', ctx);
+    const accountData = await this.serviceUtil.getDataAPI(
+      `${this.indexerUrl}${util.format(
+        INDEXER_API.ACCOUNT_DELEGATIONS,
+        delegatorAddress,
+        this.indexerChainId,
+      )}`,
+      '',
+      ctx,
+    );
+
+    if (!accountData?.data) {
+      return accountData;
     }
+
     const data = accountData.data;
     result.available_balance = 0;
     if (data?.account_balances && data.account_balances.length > 0) {
       result.available_balance = Number(data.account_balances[0].amount);
     }
     result.claim_reward = 0;
-    const withdrawReward = await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(delegatorAddress);
+    const withdrawReward =
+      await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(
+        delegatorAddress,
+      );
     if (withdrawReward) {
       result.claim_reward = Number(withdrawReward?.amount);
     }
 
-    let delegations: any = [];
+    const delegations: any = [];
     const validatorAddress: string[] = [];
     const delegatorAddr: string[] = [];
     if (data?.account_delegations) {
       const delegationsData = data.account_delegations;
       for (let i = 0; i < delegationsData.length; i++) {
-        let delegation: any = {};
-        let item = delegationsData[i];
+        const delegation: any = {};
+        const item = delegationsData[i];
         delegation.amount_staked = Number(item.balance.amount);
         delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
-        if (data?.account_delegate_rewards && data.account_delegate_rewards?.rewards) {
-          const findReward = data.account_delegate_rewards?.rewards.find(i => i.validator_address === item.delegation.validator_address);
+        if (
+          data?.account_delegate_rewards &&
+          data.account_delegate_rewards?.rewards
+        ) {
+          const findReward = data.account_delegate_rewards?.rewards.find(
+            (i) => i.validator_address === item.delegation.validator_address,
+          );
           if (findReward && findReward.reward.length > 0) {
             //set reward for item
             delegation.pending_reward = findReward.reward[0].amount;
@@ -217,12 +256,18 @@ export class ValidatorService {
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
-      const delegatorRewards = await this.delegatorRewardRepository.getRewardByAddress(delegatorAddr, validatorAddress);
+      const delegatorRewards =
+        await this.delegatorRewardRepository.getRewardByAddress(
+          delegatorAddr,
+          validatorAddress,
+        );
       for (let i = 0; i < delegations.length; i++) {
-        let item = delegations[i];
+        const item = delegations[i];
 
         // Set Rank for validators
-        const rank = ranks.find(f => f.operator_address === item.validator_address);
+        const rank = ranks.find(
+          (f) => f.operator_address === item.validator_address,
+        );
         if (rank) {
           item.validator_name = rank.title;
           item.validator_rank = rank.rank;
@@ -231,7 +276,11 @@ export class ValidatorService {
         }
 
         // Set reward for validators
-        const reward = delegatorRewards.find(f => f.validator_address === item.validator_address && f.validator_address === item.validator_address);
+        const reward = delegatorRewards.find(
+          (f) =>
+            f.validator_address === item.validator_address &&
+            f.validator_address === item.validator_address,
+        );
         if (reward) {
           item.reward = Number(reward.amount);
         }
