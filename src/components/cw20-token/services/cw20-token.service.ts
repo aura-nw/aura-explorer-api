@@ -62,38 +62,6 @@ export class Cw20TokenService {
     return { tokens: tokens, count: count };
   }
 
-  async getTokenByContractAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-    let token: any = null;
-    const tokenData =
-      await this.smartContractRepository.getTokenByContractAddress(
-        contractAddress,
-      );
-    if (tokenData.length > 0) {
-      token = tokenData[0];
-      //get num holders
-      const holdersData = await this.serviceUtil.getDataAPI(
-        `${this.indexerUrl}${util.format(
-          INDEXER_API.TOKEN_HOLDERS,
-          this.indexerChainId,
-          tokenData[0].type,
-          contractAddress,
-        )}`,
-        '',
-        ctx,
-      );
-      token.num_holders = 0;
-      if (holdersData?.data) {
-        token.num_holders = holdersData.data.resultCount;
-      }
-    }
-
-    return token;
-  }
-
   async getCw20TokensByOwner(
     ctx: RequestContext,
     request: Cw20TokenByOwnerParamsDto,
