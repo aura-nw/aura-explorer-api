@@ -109,10 +109,7 @@ export class ValidatorService {
       } else {
         data.status_validator = false;
       }
-<<<<<<< HEAD
-=======
 
->>>>>>> serenity
       votersAddress.push(data.acc_address);
     }
 
