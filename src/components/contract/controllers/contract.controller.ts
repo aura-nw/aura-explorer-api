@@ -116,4 +116,13 @@ export class ContractController {
         const codeIds: Array<number> = await this.contractService.getCodeIds(ctx, creatorAddress);
         return { data: codeIds, meta: {} };
     }
+
+    @Get('token/:contractAddress')
+    async getTokenByContractAddress(@ReqContext() ctx: RequestContext, @Param('contractAddress') contractAddress: string){
+        this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
+        const token = await this.contractService.getTokenByContractAddress(ctx, contractAddress);
+
+        return { data: token, meta: {} };
+    }
+    
 }
