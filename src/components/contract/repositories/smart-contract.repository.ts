@@ -7,10 +7,19 @@ import {
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { AURA_INFO, CONTRACT_STATUS, LENGTH } from '../../../shared';
 import { SmartContractCode } from '../../../shared/entities/smart-contract-code.entity';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
+
+import {
+  AURA_INFO,
+  CONTRACT_CODE_RESULT,
+  CONTRACT_STATUS,
+  CONTRACT_TRANSACTION_TYPE,
+  CONTRACT_TYPE,
+  LENGTH,
+} from '../../../shared';
+import { Cw721TokenParamsDto } from 'src/components/cw721-token/dtos/cw721-token-params.dto';
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
@@ -31,10 +40,11 @@ export class SmartContractRepository extends Repository<SmartContract> {
       _builder: SelectQueryBuilder<SmartContract>,
     ) => {
       const count = await _builder.getCount();
-      const contracts = await _builder
-        .limit(request.limit)
-        .offset(request.offset)
-        .getRawMany();
+      if (request.limit > 0) {
+        _builder.limit(request.limit).offset(request.offset);
+      }
+
+      const contracts = await _builder.getRawMany();
 
       return [contracts, count];
     };
@@ -172,5 +182,76 @@ export class SmartContractRepository extends Repository<SmartContract> {
     const contracts = await builder.limit(limit).offset(offset).getRawMany();
 
     return [contracts, count];
+  }
+
+  async getTokenByContractAddress(contractAddress: string) {
+    return await this.createQueryBuilder('sc')
+      .select(
+        `sc.token_name AS name, sc.token_symbol AS symbol, sc.num_tokens,
+            sc.contract_address, sc.contract_verification, sc.tx_hash, scc.type`,
+      )
+      .innerJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
+      .where('sc.contract_address = :contract_address', {
+        contract_address: contractAddress,
+      })
+      .getRawMany();
+  }
+
+  async getTokensByListContractAddress(listContractAddress: Array<any>) {
+    return await this.createQueryBuilder()
+      .select('contract_address, token_name, token_symbol AS symbol')
+      .where('contract_address IN (:...listContractAddress)', {
+        listContractAddress: listContractAddress,
+      })
+      .getRawMany();
+  }
+
+  async getCw721Tokens(request: Cw721TokenParamsDto) {
+    const sqlSelect = ` sc.token_name AS name, sc.token_symbol AS symbol, sc.contract_address, sc.num_tokens,
+    (SELECT COUNT(id)
+        FROM transactions
+        WHERE contract_address = sc.contract_address
+            AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
+            AND timestamp > NOW() - INTERVAL 24 HOUR) AS transfers_24h,
+    (SELECT COUNT(id)
+        FROM transactions
+        WHERE contract_address = sc.contract_address
+            AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
+            AND timestamp > NOW() - INTERVAL 72 HOUR) AS transfers_3d,
+    (SELECT timestamp
+        FROM transactions
+        WHERE contract_address = sc.contract_address
+        ORDER BY timestamp DESC
+        LIMIT 1) AS upTime`;
+
+    const queryBuilder = this.createQueryBuilder('sc')
+      .select(sqlSelect)
+      .innerJoin(
+        SmartContractCode,
+        'scc',
+        `sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'`,
+      )
+      .where(
+        'LOWER(sc.token_name) LIKE :keyword OR LOWER(sc.contract_address) LIKE :keyword',
+        {
+          keyword: `%${request.keyword.toLowerCase()}%`,
+        },
+      )
+      .limit(request.limit)
+      .offset(request.offset)
+      .orderBy(
+        request?.sort_column && request?.sort_order
+          ? {
+              [`${request.sort_column}`]:
+                request.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC',
+              upTime: 'DESC',
+            }
+          : { transfers_24h: 'DESC', upTime: 'DESC' },
+      );
+
+    const list = await queryBuilder.getRawMany();
+    const count = await queryBuilder.getCount();
+
+    return [list, count];
   }
 }
