@@ -1,34 +1,49 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, In, Repository } from 'typeorm';
 
 import { Validator } from '../../../shared';
 
 @EntityRepository(Validator)
 export class ValidatorRepository extends Repository<Validator> {
+  private _getRankBuilder = (alias = 'ranks') => {
+    return this.manager.createQueryBuilder().from((qb) => {
+      return qb
+        .from(Validator, 'v')
+        .select('v.*')
+        .addSelect(
+          `RANK() OVER(ORDER BY
+            jailed ASC,
+            status DESC,
+            power DESC,
+            updated_at DESC
+          ) as \`rank\``,
+        )
+        .orderBy('`rank`');
+    }, alias);
+  };
 
-    async getRankByAddress(address: string) {
-        return await this.query(`
-            SELECT * FROM (
-                SELECT *,
-                RANK() OVER(ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC) as 'rank'
-                FROM validators ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC
-            ) SUB
-            WHERE SUB.operator_address = ?`, [address]
-        ).then(t => t[0]);
-    }
+  async getRankByAddress(address: string) {
+    const rankBuilder = this._getRankBuilder()
+      .select('ranks.*')
+      .where({ operator_address: address });
 
-    async getRanks(address: string[]) {
-        return await this.query(`
-            SELECT * FROM (
-                SELECT *,
-                RANK() OVER(ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC) as 'rank'
-                FROM validators ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC
-            ) SUB
-            WHERE SUB.operator_address in (?)`, [address]
-        );
-    }
+    return await rankBuilder.getRawOne();
+  }
 
-    async getValidators() {
-        const sql = `SELECT * FROM validators ORDER BY jailed ASC, FIELD(status, 3, 2, 1), power DESC, updated_at DESC`;
-        return await this.query(sql, []);
-    }
+  async getRanks(address: string[]) {
+    const rankBuilder = this._getRankBuilder()
+      .select('ranks.*')
+      .where({ operator_address: In(address) });
+
+    return await rankBuilder.getRawMany();
+  }
+
+  async getAllValidators() {
+    return await this.createQueryBuilder('v')
+      .select('v.*')
+      .orderBy('jailed', 'ASC')
+      .addOrderBy('status', 'DESC')
+      .addOrderBy('power', 'DESC')
+      .addOrderBy('updated_at', 'DESC')
+      .getRawMany();
+  }
 }

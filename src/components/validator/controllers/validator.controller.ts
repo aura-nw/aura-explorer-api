@@ -43,9 +43,9 @@ export class ValidatorController {
   ): Promise<BaseApiResponse<LiteValidatorOutput[]>> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
 
-    const { validators, count } = await this.validatorService.getValidators(ctx);
+    const { validators } = await this.validatorService.getValidators(ctx);
 
-    return { data: validators, meta: { count } };
+    return { data: validators, meta: { } };
   }
 
   @Get(':address')
@@ -101,6 +101,26 @@ export class ValidatorController {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result = await this.validatorService.getDelegations(ctx, delegatorAddress);
 
+    return { data: result, meta: {} };
+  }
+
+  @Get('delegations/delegator/:delegatorAddress')
+  @ApiOperation({
+    summary: 'Get delegations by address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getDelegationsByDelegatorAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('delegatorAddress') delegatorAddress: string,
+  ): Promise<any> {
+    const result = await this.validatorService.getDelegationsByDelegatorAddress(
+      ctx,
+      delegatorAddress
+    );
     return { data: result, meta: {} };
   }
 }
