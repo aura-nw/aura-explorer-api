@@ -175,16 +175,6 @@ export class Cw20TokenService {
     }
 
     return { tokens: result, count: result.length };
-
-    // const result = await this.tokenContractRepository.getCw20TokensByOwner(request);
-    // const item = result[0].find(i => i.contract_address === AURA_INFO.CONTRACT_ADDRESS);
-    // if (item) {
-    // const accountData = await this.accountService.getAccountDetailByAddress(ctx, request.account_address);
-    // item.balance = accountData ? Number(accountData.total) : 0;
-    // item.value = item.balance * Number(item.price);
-    // }
-
-    // return { tokens: result[0], count: result[1][0].total };
   }
 
   async getPriceById(ctx: RequestContext, id: string): Promise<any> {
