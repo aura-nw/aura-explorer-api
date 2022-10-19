@@ -9,6 +9,7 @@ import {
   AkcLogger,
   CONTRACT_STATUS,
   ERROR_MAP,
+  INDEXER_API,
   RequestContext,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
@@ -19,13 +20,17 @@ import { ContractStatusOutputDto } from '../dtos/contract-status-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { SmartContractRepository } from '../repositories/smart-contract.repository';
 import { TagRepository } from '../repositories/tag.repository';
-
+import * as appConfig from '../../../shared/configs/configuration';
+import * as util from 'util';
 @Injectable()
 export class ContractService {
   private api;
   private rpc;
   private verifyContractUrl;
   private verifyContractStatusUrl;
+  private appParams;
+  private indexerUrl: string;
+  private indexerChainId: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -41,6 +46,9 @@ export class ContractService {
     this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
     this.verifyContractStatusUrl = this.configService.get('VERIFY_CONTRACT_STATUS_URL');
+    this.appParams = appConfig.default();
+    this.indexerUrl = this.appParams.indexer.url;
+    this.indexerChainId = this.appParams.indexer.chainId;
   }
 
   async getContracts(ctx: RequestContext, request: ContractParamsDto): Promise<any> {
@@ -226,5 +234,40 @@ export class ContractService {
       this.logger.error(ctx, `Class ${ContractService.name} call ${this.getContractByCreator.name} method error: ${err.stack}`);
       throw err;
     }
+  }
+
+  /**
+   * Get token by contract address
+   * @param ctx 
+   * @param contractAddress 
+   * @returns 
+   */
+  async getTokenByContractAddress( ctx: RequestContext, contractAddress: string){
+    this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
+    let token: any = null;
+    const tokenData =
+      await this.smartContractRepository.getTokenByContractAddress(
+        contractAddress,
+      );
+    if (tokenData.length > 0) {
+      token = tokenData[0];
+      //get num holders
+      const holdersData = await this.serviceUtil.getDataAPI(
+        `${this.indexerUrl}${util.format(
+          INDEXER_API.TOKEN_HOLDERS,
+          this.indexerChainId,
+          tokenData[0].type,
+          contractAddress,
+        )}`,
+        '',
+        ctx,
+      );
+      token.num_holders = 0;
+      if (holdersData?.data) {
+        token.num_holders = holdersData.data.resultCount;
+      }
+    }
+
+    return token;
   }
 }
