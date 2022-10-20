@@ -17,7 +17,7 @@ export class ProposalVoteRepository extends Repository<ProposalVote> {
       .where('voter IN (:...address)', {
         address: address,
       })
-      .orderBy('voter')
+      .groupBy('voter')
       .getRawMany();
   }
 }
