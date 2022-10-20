@@ -160,7 +160,9 @@ export class InfluxDBClient {
           |> filter(fn: (r) => r._measurement == "${measurement}")
           |> filter(fn: (r) => r["_field"] == "${column}")
           |> aggregateWindow(every: 1h, timeSrc: "_start", fn: sum, createEmpty: false)
-          |> window(every: ${step}, offset: ${offsetInHours}h)
+          |> timeShift(duration: ${-offsetInHours}h)
+          |> window(every: ${step})
+          |> timeShift(duration: ${offsetInHours}h)
           |> sum()`;
       return this.bindingData(query);
     }
