@@ -1,9 +1,7 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   EntityRepository,
   In,
   Not,
-  ObjectLiteral,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -23,10 +21,7 @@ import { Cw721TokenParamsDto } from 'src/components/cw721-token/dtos/cw721-token
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
-  constructor(
-    @InjectRepository(SmartContract)
-    private readonly repos: Repository<ObjectLiteral>,
-  ) {
+  constructor() {
     super();
   }
 
