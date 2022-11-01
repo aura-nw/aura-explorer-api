@@ -10,7 +10,7 @@ import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
-  generateSeriesWithTimezoneOffset,
+  makeupData,
   mergeByProperty,
 } from '../utils/utils';
 
@@ -66,9 +66,7 @@ export class MetricService {
       withTimezone,
       offsetInHours,
     )) as MetricOutput[];
-    const series = generateSeriesWithTimezoneOffset(range, offsetInHours);
-    const result = mergeByProperty(metricData, series);
-    return result;
+    return makeupData(metricData, amount);
   }
 
   async getValidator(
