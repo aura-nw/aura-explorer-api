@@ -10,66 +10,23 @@ const makeData = (date: Date): MetricOutput => {
   return data;
 };
 
-export function generateSeriesWithTimezoneOffset(
-  range: Range,
-  offsetInHours = 0,
+export function makeupData(
+  metricData: MetricOutput[],
+  length: number,
 ): MetricOutput[] {
-  // All date time below from UTC then add timezone offset (hours)
-  // to make sure we create correct series
-  const _now = new Date();
+  const _metricData = metricData.filter((i) => {
+    return i.timestamp.substring(i.timestamp.lastIndexOf(':')) === ':00Z';
+  });
+  _metricData.length > length && _metricData.shift();
 
-  const nowDate = new Date(_now.getUTCFullYear(), 0, 0);
-  nowDate.setUTCFullYear(_now.getUTCFullYear());
-  nowDate.setUTCMonth(_now.getUTCMonth());
-  nowDate.setUTCDate(_now.getUTCDate());
+  return _metricData.map((i) => {
+    const total = Number(i.total) && Number(i.total) >= 0 ? Number(i.total) : 0;
 
-  const nowTime = new Date(nowDate);
-  nowTime.setUTCHours(_now.getUTCHours());
-  nowTime.setUTCMinutes(_now.getUTCMinutes());
-
-  const series: MetricOutput[] = [];
-  const condition = buildCondition(range);
-
-  switch (condition.type) {
-    case TypeDate.month: {
-      for (let i = 0; i < condition.amount; i++) {
-        const dateCalculate = new Date(nowDate);
-        dateCalculate.setUTCMonth(nowDate.getUTCMonth() - i);
-        dateCalculate.setUTCDate(1);
-        dateCalculate.setUTCHours(offsetInHours);
-        series.unshift(makeData(dateCalculate));
-      }
-      break;
-    }
-    case TypeDate.day: {
-      for (let i = 0; i < condition.amount; i++) {
-        const dateCalculate = new Date(nowDate);
-        dateCalculate.setUTCDate(nowDate.getUTCDate() - i);
-        dateCalculate.setUTCHours(offsetInHours);
-        series.unshift(makeData(dateCalculate));
-      }
-      break;
-    }
-    case TypeDate.hour: {
-      for (let i = 0; i < condition.amount; i++) {
-        const dateCalculate = new Date(nowTime);
-        dateCalculate.setUTCHours(nowTime.getUTCHours() - i);
-        dateCalculate.setUTCMinutes(0);
-        series.unshift(makeData(dateCalculate));
-      }
-      break;
-    }
-    case TypeDate.minute: {
-      for (let i = 0; i < condition.amount; i++) {
-        const dateCalculate = new Date(nowTime);
-        dateCalculate.setUTCMinutes(nowTime.getUTCMinutes() - i);
-        series.unshift(makeData(dateCalculate));
-      }
-      break;
-    }
-  }
-
-  return series;
+    return {
+      total: `${total}`,
+      timestamp: i.timestamp,
+    };
+  });
 }
 
 export function generateSeries(
