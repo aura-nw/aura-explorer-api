@@ -159,9 +159,9 @@ export class InfluxDBClient {
           |> range(start: ${start})
           |> filter(fn: (r) => r._measurement == "${measurement}")
           |> filter(fn: (r) => r["_field"] == "${column}")
-          |> aggregateWindow(every: 1h, timeSrc: "_start", fn: sum, createEmpty: false)
+          |> aggregateWindow(every: 1h, timeSrc: "_start", fn: sum)
           |> timeShift(duration: ${-offsetInHours}h)
-          |> window(every: ${step})
+          |> window(every: ${step}, createEmpty: true)
           |> timeShift(duration: ${offsetInHours}h)
           |> sum()`;
       return this.bindingData(query);
@@ -172,7 +172,7 @@ export class InfluxDBClient {
         |> range(start: ${start})
         |> filter(fn: (r) => r._measurement == "${measurement}")
         |> filter(fn: (r) => r["_field"] == "${column}")
-        |> window(every: ${step})
+        |> window(every: ${step}, createEmpty: true)
         |> sum()`;
     return this.bindingData(query);
   }
