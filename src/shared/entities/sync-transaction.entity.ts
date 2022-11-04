@@ -3,19 +3,22 @@ import { BaseEntity } from './base/base.entity';
 
 @Entity('sync_transactions')
 export class SyncTransaction extends BaseEntity {
-  @PrimaryColumn({ type: 'string', name: 'tx_hash' })
+  @PrimaryColumn({ type: 'varchar', name: 'tx_hash' })
   tx_hash: string;
 
-  @Column({ type: 'string', name: 'type' })
+  @Column({ type: 'int', name: 'height' })
+  height: string;
+
+  @Column({ type: 'varchar', name: 'type' })
   type: string;
 
-  @Column({ type: 'string', name: 'contract_address' })
+  @Column({ type: 'varchar', name: 'contract_address' })
   contract_address: string;
 
-  @Column({ type: 'string', name: 'from_address' })
+  @Column({ type: 'varchar', name: 'from_address' })
   from_address: string;
 
-  @Column({ type: 'string', name: 'to_address' })
+  @Column({ type: 'varchar', name: 'to_address' })
   to_address: string;
 
   @Column({ type: 'decimal', name: 'amount' })

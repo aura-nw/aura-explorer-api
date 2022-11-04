@@ -11,6 +11,7 @@ export class createTableSyncTransactions1667101731715
         \`created_at\` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
         \`updated_at\` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
         \`tx_hash\` VARCHAR(255) NOT NULL,
+        \`height\` INT NOT NULL,
         \`type\` VARCHAR(255) NOT NULL,
         \`contract_address\` VARCHAR(255) NOT NULL DEFAULT '',
         \`from_address\` VARCHAR(255) NOT NULL DEFAULT '',
