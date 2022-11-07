@@ -7,7 +7,7 @@ export class SyncTransaction extends BaseEntity {
   tx_hash: string;
 
   @Column({ type: 'int', name: 'height' })
-  height: string;
+  height: number;
 
   @Column({ type: 'varchar', name: 'type' })
   type: string;
@@ -25,7 +25,7 @@ export class SyncTransaction extends BaseEntity {
   amount: string;
 
   @Column({ type: 'decimal', name: 'fee' })
-  fee: number;
+  fee: string;
 
   @Column({ type: 'datetime', name: 'timestamp' })
   timestamp: Date;
