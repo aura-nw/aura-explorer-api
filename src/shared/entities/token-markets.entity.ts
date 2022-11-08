@@ -1,4 +1,5 @@
-import { BaseEntity, Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('token_markets')
 export class TokenMarkets extends BaseEntity {
