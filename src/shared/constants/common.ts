@@ -99,6 +99,12 @@ export enum CONTRACT_TRANSACTION_TYPE {
   SEND = '/cosmos.bank.v1beta1.MsgSend',
 }
 
+export enum SYNC_CONTRACT_TRANSACTION_TYPE {
+  INSTANTIATE = 'MsgInstantiateContract',
+  EXECUTE = 'MsgExecuteContract',
+  SEND = 'MsgSend',
+}
+
 export enum CONTRACT_TRANSACTION_EXECUTE_TYPE {
   MINT = 'mint',
   BURN = 'burn',
