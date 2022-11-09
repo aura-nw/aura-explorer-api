@@ -9,15 +9,16 @@ import { SmartContractCode } from '../../../shared/entities/smart-contract-code.
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 
+import { Cw721TokenParamsDto } from 'src/components/cw721-token/dtos/cw721-token-params.dto';
+import { SyncTransaction } from 'src/shared/entities/sync-transaction.entity';
 import {
   AURA_INFO,
   CONTRACT_CODE_RESULT,
   CONTRACT_STATUS,
-  CONTRACT_TRANSACTION_TYPE,
   CONTRACT_TYPE,
   LENGTH,
+  SYNC_CONTRACT_TRANSACTION_TYPE,
 } from '../../../shared';
-import { Cw721TokenParamsDto } from 'src/components/cw721-token/dtos/cw721-token-params.dto';
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
@@ -202,22 +203,32 @@ export class SmartContractRepository extends Repository<SmartContract> {
   }
 
   async getCw721Tokens(request: Cw721TokenParamsDto) {
-    const sqlSelect = ` sc.token_name AS name, sc.token_symbol AS symbol, sc.contract_address, sc.num_tokens,
-    (SELECT COUNT(id)
-        FROM transactions
-        WHERE contract_address = sc.contract_address
-            AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
-            AND timestamp > NOW() - INTERVAL 24 HOUR) AS transfers_24h,
-    (SELECT COUNT(id)
-        FROM transactions
-        WHERE contract_address = sc.contract_address
-            AND type = '${CONTRACT_TRANSACTION_TYPE.EXECUTE}'
-            AND timestamp > NOW() - INTERVAL 72 HOUR) AS transfers_3d,
-    (SELECT timestamp
-        FROM transactions
-        WHERE contract_address = sc.contract_address
-        ORDER BY timestamp DESC
-        LIMIT 1) AS upTime`;
+    const sqlSelect = `
+      sc.token_name AS name,
+      sc.token_symbol AS symbol,
+      sc.contract_address,
+      sc.num_tokens,
+      IFNULL(tx_24h.no, 0) AS transfers_24h,
+      IFNULL(tx_3d.no, 0) AS transfers_3d,
+      tx_24h.timestamp AS upTime
+    `;
+
+    const _createSubQuery = (intervalTime: string) => {
+      return (qb: SelectQueryBuilder<SyncTransaction>) => {
+        const builder = qb
+          .from(SyncTransaction, 'st')
+          .select(
+            'st.contract_address, COUNT(*) AS no, MAX(st.timestamp) AS timestamp',
+          )
+          .where({
+            contract_address: Not(null),
+            type: SYNC_CONTRACT_TRANSACTION_TYPE.EXECUTE,
+          })
+          .andWhere(`st.timestamp > NOW() - INTERVAL ${intervalTime}`)
+          .groupBy('st.contract_address');
+        return builder;
+      };
+    };
 
     const queryBuilder = this.createQueryBuilder('sc')
       .select(sqlSelect)
@@ -225,6 +236,16 @@ export class SmartContractRepository extends Repository<SmartContract> {
         SmartContractCode,
         'scc',
         `sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'`,
+      )
+      .leftJoin(
+        _createSubQuery('24 HOUR'),
+        'tx_24h',
+        'tx_24h.contract_address = sc.contract_address',
+      )
+      .leftJoin(
+        _createSubQuery('72 HOUR'),
+        'tx_3d',
+        'tx_3d.contract_address = sc.contract_address',
       )
       .where(
         'LOWER(sc.token_name) LIKE :keyword OR LOWER(sc.contract_address) LIKE :keyword',
