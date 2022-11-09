@@ -20,6 +20,9 @@ export class createTableSyncTransactions1667101731715
         \`fee\` DECIMAL(30, 6) NOT NULL DEFAULT '0',
         \`timestamp\` DATETIME NOT NULL,
         INDEX \`idx_timestamp\` (\`timestamp\`),
+        INDEX \`idx_contract_address\` (\`contract_address\`),
+        INDEX \`idx_from_address\` (\`from_address\`),
+        INDEX \`idx_to_address\` (\`to_address\`),
         PRIMARY KEY (\`tx_hash\`)
       ) ENGINE=InnoDB
     `);
