@@ -9,6 +9,7 @@ import {
   AURA_INFO,
   CONTRACT_TYPE,
   INDEXER_API,
+  LENGTH,
   RequestContext,
   TokenMarkets,
 } from '../../../shared';
@@ -87,7 +88,7 @@ export class Cw20TokenService {
     request: Cw20TokenByOwnerParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
-    const result = [];
+    let result = [];
     //aura
     const assetDto = new AssetDto();
     assetDto.name = AURA_INFO.NAME;
@@ -160,7 +161,14 @@ export class Cw20TokenService {
       }
     }
 
-    const url: string = INDEXER_API.GET_CW20_TOKENS_BY_OWNER;
+    const keyword = request.keyword;
+
+    if (keyword) {
+      result = result.filter(
+        (f) => f.name?.toLowerCase() === keyword.toLowerCase(),
+      );
+    }
+
     let limit = request.limit;
     let offset = request.offset;
 
@@ -177,8 +185,25 @@ export class Cw20TokenService {
       offset,
     ];
 
+    let getByOwnerUrl = `${this.indexerUrl}${util.format(
+      INDEXER_API.GET_CW20_TOKENS_BY_OWNER,
+      ...params,
+    )}`;
+
+    const isSearchByContractAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.CONTRACT_ADDRESS;
+
+    if (keyword) {
+      if (isSearchByContractAddress) {
+        getByOwnerUrl = `${getByOwnerUrl}&contractAddress=${keyword}`;
+      } else {
+        getByOwnerUrl = `${getByOwnerUrl}&tokenName=${keyword}`;
+      }
+    }
+
     const resultGetCw20Tokens = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(url, ...params)}`,
+      getByOwnerUrl,
       '',
       ctx,
     );
