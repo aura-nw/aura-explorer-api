@@ -10,7 +10,7 @@ import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 
 import { Cw721TokenParamsDto } from 'src/components/cw721-token/dtos/cw721-token-params.dto';
-import { SyncTransaction } from 'src/shared/entities/sync-transaction.entity';
+import { Transaction } from 'src/shared';
 import {
   AURA_INFO,
   CONTRACT_CODE_RESULT,
@@ -214,9 +214,9 @@ export class SmartContractRepository extends Repository<SmartContract> {
     `;
 
     const _createSubQuery = (intervalTime: string) => {
-      return (qb: SelectQueryBuilder<SyncTransaction>) => {
+      return (qb: SelectQueryBuilder<Transaction>) => {
         const builder = qb
-          .from(SyncTransaction, 'st')
+          .from(Transaction, 'st')
           .select('st.contract_address, COUNT(*) AS no')
           .where({ type: SYNC_CONTRACT_TRANSACTION_TYPE.EXECUTE })
           .andWhere(`st.timestamp > NOW() - INTERVAL ${intervalTime}`)
@@ -243,9 +243,9 @@ export class SmartContractRepository extends Repository<SmartContract> {
         'tx_3d.contract_address = sc.contract_address',
       )
       .leftJoin(
-        (qb: SelectQueryBuilder<SyncTransaction>) => {
+        (qb: SelectQueryBuilder<Transaction>) => {
           const builder = qb
-            .from(SyncTransaction, 'st')
+            .from(Transaction, 'st')
             .select('st.contract_address, MAX(st.timestamp) AS timestamp')
             .orderBy({ timestamp: 'DESC' })
             .groupBy('st.contract_address');
