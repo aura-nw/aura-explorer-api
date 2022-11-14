@@ -8,7 +8,6 @@ import { ContractService } from './services/contract.service';
 import { ConfigModule } from '@nestjs/config';
 import { TagRepository } from './repositories/tag.repository';
 import { HttpModule } from '@nestjs/axios';
-import { TokenContractRepository } from './repositories/token-contract.repository';
 import { SmartContractCodeRepository } from '../contract-code/repositories/smart-contract-code.repository';
 import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
 
@@ -18,7 +17,6 @@ import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets
     TypeOrmModule.forFeature([
       SmartContractRepository,
       TagRepository,
-      TokenContractRepository,
       SmartContractCodeRepository,
       TokenMarketsRepository,
     ]),
