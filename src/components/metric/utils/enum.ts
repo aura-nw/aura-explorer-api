@@ -11,3 +11,8 @@ export enum Range {
   hour = '24h',
   minute = '60m',
 }
+
+export enum CW20MetricType {
+  price = 'price',
+  volume = 'volume',
+}

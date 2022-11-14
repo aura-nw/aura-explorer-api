@@ -6,7 +6,7 @@ import { BlockRepository } from '../../block/repositories/block.repository';
 import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
-import { Range } from '../utils/enum';
+import { CW20MetricType, Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
@@ -79,6 +79,37 @@ export class MetricService {
     );
 
     return await this.queryInfluxDb(range, 'validators');
+  }
+
+  async getCw20Tokens(
+    ctx: RequestContext,
+    range: Range,
+    type: CW20MetricType,
+    timezoneOffset: number
+  ): Promise<MetricOutput[]> {
+    this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
+
+    const { amount, step, fluxType } = buildCondition(range);
+    const startTime = `-${amount}${fluxType}`;
+    const queryStep = `${step}${fluxType}`;
+
+    const withTimezone = [Range.day, Range.month].includes(range);
+    const offsetInHours = Math.round(timezoneOffset / 60);
+
+    const columnMapping = {
+      [CW20MetricType.price]: 'price_change_24h',
+      [CW20MetricType.volume]: 'total_volume'
+    }
+
+    const metricData = (await this.influxDbClient.sumDataWithTimezoneOffset(
+      'token_cw20_measurement',
+      startTime,
+      queryStep,
+      columnMapping[type],
+      withTimezone,
+      offsetInHours,
+    )) as MetricOutput[];
+    return makeupData(metricData, amount);
   }
 
   private async queryInfluxDb(
