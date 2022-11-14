@@ -9,8 +9,6 @@ import { SmartContractCode } from '../../../shared/entities/smart-contract-code.
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 
-import { Cw721TokenParamsDto } from 'src/components/cw721-token/dtos/cw721-token-params.dto';
-import { Transaction } from 'src/shared';
 import {
   AURA_INFO,
   CONTRACT_CODE_RESULT,
@@ -18,7 +16,9 @@ import {
   CONTRACT_TYPE,
   LENGTH,
   SYNC_CONTRACT_TRANSACTION_TYPE,
+  Transaction,
 } from '../../../shared';
+import { Cw721TokenParamsDto } from '../../cw721-token/dtos/cw721-token-params.dto';
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
