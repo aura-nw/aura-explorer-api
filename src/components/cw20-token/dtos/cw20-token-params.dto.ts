@@ -14,7 +14,7 @@ export class Cw20TokenParamsDto {
   @ApiProperty({ default: '' })
   keyword: string;
 
-  @ApiProperty({ default: 'circulating_supply' })
+  @ApiProperty({ default: 'circulating_market_cap' })
   sort_column: string;
 
   @ApiProperty({ default: 'desc' })

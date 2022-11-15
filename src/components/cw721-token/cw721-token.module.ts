@@ -5,17 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from '../../shared';
 import { ServiceUtil } from '../../shared/utils/service.util';
 import { SmartContractRepository } from '../contract/repositories/smart-contract.repository';
-import { TokenContractRepository } from '../contract/repositories/token-contract.repository';
 import { Cw721TokenController } from './controllers/cw721-token.controller';
 import { Cw721TokenService } from './services/cw721-token.service';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([
-      TokenContractRepository,
-      SmartContractRepository,
-    ]),
+    TypeOrmModule.forFeature([SmartContractRepository]),
     ConfigModule,
     HttpModule,
   ],

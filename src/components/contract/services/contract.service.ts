@@ -323,7 +323,8 @@ export class ContractService {
         where: { contract_address: contractAddress },
       });
       token.max_total_supply = tokenMarketData?.max_supply || 0;
-      token.circulating_market_cap = tokenMarketData?.circulating_supply || 0;
+      token.circulating_market_cap =
+        tokenMarketData?.circulating_market_cap || 0;
       token.price = tokenMarketData?.current_price || 0;
       token.fully_diluted_market_cap = token.max_total_supply * token.price;
 
