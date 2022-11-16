@@ -87,7 +87,7 @@ export class MetricController {
     return { data: metrics, meta: null };
   }
 
-  @Get('token/:coinid')
+  @Get('token')
   @ApiOperation({ summary: 'Get token by coin id' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -100,7 +100,7 @@ export class MetricController {
   ): Promise<BaseApiResponse<MetricOutput[]>> {
     this.logger.log(ctx, `${this.getTokenByCoinIdMetric.name} was called!`);
 
-    const metrics = await this.metricService.getTokenByCoinId(ctx, query.coidId, query.range, query.type);
+    const metrics = await this.metricService.getTokenByCoinId(ctx, query.coidId, query.range);
 
     return { data: metrics, meta: null };
   }

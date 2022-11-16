@@ -13,6 +13,8 @@ import {
   makeupData,
   mergeByProperty,
 } from '../utils/utils';
+import { TokenOutput } from '../dtos/token-output.dto';
+import e from 'express';
 
 @Injectable()
 export class MetricService {
@@ -81,32 +83,48 @@ export class MetricService {
     return await this.queryInfluxDb(range, 'validators');
   }
 
+  /**
+   * Get token data by coid id
+   * @param ctx 
+   * @param coinId 
+   * @param range 
+   * @returns 
+   */
   async getTokenByCoinId(
     ctx: RequestContext,
     coinId:string,
     range: Range,
-    type: CW20MetricType,
-  ): Promise<MetricOutput[]> {
+  ): Promise<any[]> {
     this.logger.log(ctx, `${this.getTokenByCoinId.name} was called!`);
 
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
 
-
-    const columnMapping = {
-      [CW20MetricType.price]: 'current_price',
-      [CW20MetricType.volume]: 'total_volume'
-    }
-
-    const metricData = (await this.influxDbClient.getTokenByCoinId(
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} call method from influxdb!`);
+    const output = await this.influxDbClient.getTokenByCoinId(
       'token_cw20_measurement',
       startTime,
       queryStep,
-      coinId,
-      columnMapping[type],
-    )) as MetricOutput[];
-    return makeupData(metricData, amount);
+      coinId
+    )as TokenOutput[];
+
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
+    const metricData: TokenOutput[] = [];
+    const series = generateSeries(range);
+    series.forEach((item: MetricOutput) => {
+      let tokenOutput = new TokenOutput();
+      const find = output.find(f => f.timestamp === item.timestamp);
+      if(find){
+        tokenOutput = {...find};
+      }else{
+        tokenOutput.coinId = coinId;
+        tokenOutput.timestamp = item.timestamp;
+      }
+      metricData.push(tokenOutput);
+    });
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} end call!`);
+    return metricData;
   }
 
   private async queryInfluxDb(
