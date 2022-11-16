@@ -1,20 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InfluxDBClient } from './influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
 import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
-import { CW20MetricType, Range } from '../utils/enum';
+import { TokenOutput } from '../dtos/token-output.dto';
+import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
   makeupData,
-  mergeByProperty,
+  mergeByProperty
 } from '../utils/utils';
-import { TokenOutput } from '../dtos/token-output.dto';
-import e from 'express';
+import { InfluxDBClient } from './influxdb-client';
 
 @Injectable()
 export class MetricService {
