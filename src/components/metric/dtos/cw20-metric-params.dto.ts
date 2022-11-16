@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { CW20MetricType } from '../utils/enum';
 import { Range } from '../utils/enum';
 
 export class Cw20MetricParamsDto{
