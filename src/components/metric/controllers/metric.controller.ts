@@ -87,20 +87,20 @@ export class MetricController {
     return { data: metrics, meta: null };
   }
 
-  @Get('cw20-tokens')
-  @ApiOperation({ summary: 'Get cw20 metric API' })
+  @Get('token/:coinid')
+  @ApiOperation({ summary: 'Get token by coin id' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(MetricOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  async getCw20TokensMetric(
+  async getTokenByCoinIdMetric(
     @ReqContext() ctx: RequestContext,
     @Query() query: Cw20MetricParamsDto,
   ): Promise<BaseApiResponse<MetricOutput[]>> {
-    this.logger.log(ctx, `${this.getCw20TokensMetric.name} was called!`);
+    this.logger.log(ctx, `${this.getTokenByCoinIdMetric.name} was called!`);
 
-    const metrics = await this.metricService.getCw20Tokens(ctx, query.range, query.type, query.timezone);
+    const metrics = await this.metricService.getTokenByCoinId(ctx, query.coidId, query.range, query.type);
 
     return { data: metrics, meta: null };
   }

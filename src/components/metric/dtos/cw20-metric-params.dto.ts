@@ -1,9 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { CW20MetricType } from '../utils/enum';
-import { MetricParamsDto } from './metric-params.dto';
+import { Range } from '../utils/enum';
 
-export class Cw20MetricParamsDto extends MetricParamsDto {
+export class Cw20MetricParamsDto{
+
+  @ApiPropertyOptional({
+    enum: Range,
+    description: 'Optional, defaults to 24h',
+    type: Range,
+    example: Range.day,
+    default: Range.hour,
+  })
+  @IsEnum(Range)
+  @ApiProperty()
+  readonly range: Range = Range.hour;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  coidId: string;
+
   @ApiPropertyOptional({
     enum: CW20MetricType,
     description: 'Optional, defaults to price',

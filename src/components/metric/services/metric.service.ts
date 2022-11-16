@@ -81,33 +81,30 @@ export class MetricService {
     return await this.queryInfluxDb(range, 'validators');
   }
 
-  async getCw20Tokens(
+  async getTokenByCoinId(
     ctx: RequestContext,
+    coinId:string,
     range: Range,
     type: CW20MetricType,
-    timezoneOffset: number
   ): Promise<MetricOutput[]> {
-    this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} was called!`);
 
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
 
-    const withTimezone = [Range.day, Range.month].includes(range);
-    const offsetInHours = Math.round(timezoneOffset / 60);
 
     const columnMapping = {
-      [CW20MetricType.price]: 'price_change_24h',
+      [CW20MetricType.price]: 'current_price',
       [CW20MetricType.volume]: 'total_volume'
     }
 
-    const metricData = (await this.influxDbClient.sumDataWithTimezoneOffset(
+    const metricData = (await this.influxDbClient.getTokenByCoinId(
       'token_cw20_measurement',
       startTime,
       queryStep,
+      coinId,
       columnMapping[type],
-      withTimezone,
-      offsetInHours,
     )) as MetricOutput[];
     return makeupData(metricData, amount);
   }

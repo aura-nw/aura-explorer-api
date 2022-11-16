@@ -222,4 +222,30 @@ export class InfluxDBClient {
     });
     return output;
   }
+
+  /**
+   * Get token by coin id
+   * @param measurement 
+   * @param start 
+   * @param step 
+   * @param coinId 
+   * @returns 
+   */
+  getTokenByCoinId(
+    measurement: string,
+    start: string,
+    step: string,
+    coinId: string,
+    column: string,
+  ) {
+    const query = `
+      from(bucket: "${this.bucket}")
+        |> range(start: ${start})
+        |> filter(fn: (r) => r._measurement == "${measurement}")
+        |> filter(fn: (r) => (r["_field"] == "coinId" and r["_value"] =="${coinId}") or r["_field"] == "${column}")
+        |> filter(fn: (r) => r["_field"] == "${column}")
+        |> aggregateWindow(every: ${step}, fn: last, timeSrc: "_start", createEmpty: true)
+        |> yield(name: "last")`;
+    return this.bindingData(query);
+  }
 }
