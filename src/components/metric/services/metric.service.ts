@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { InfluxDBClient } from './influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
-import { TransactionRepository } from '../../transaction/repositories/transaction.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { Range } from '../utils/enum';
@@ -45,11 +44,6 @@ export class MetricService {
     timezoneOffset: number,
   ): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getTransaction.name} was called!`);
-    this.logger.log(
-      ctx,
-
-      `calling ${TransactionRepository.name}.createQueryBuilder`,
-    );
 
     const { amount, step, fluxType } = buildCondition(range);
     const startTime = `-${amount}${fluxType}`;
