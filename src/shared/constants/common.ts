@@ -184,3 +184,9 @@ export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
 };
+
+export enum SOULBOUND_TOKEN_STATUS{
+  UNCLAIM = 'Unclaimed',
+  EQUIPPED = 'Equipped',
+  UNEQUIPPED = 'Unequipped',
+}
