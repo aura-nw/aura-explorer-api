@@ -4,6 +4,7 @@ import {
   QueryApi,
   WriteApi,
 } from '@influxdata/influxdb-client';
+import { TokenOutput } from '../dtos/token-output.dto';
 
 export class InfluxDBClient {
   private client: InfluxDB;
@@ -208,6 +209,70 @@ export class InfluxDBClient {
             timestamp: o._start,
             total: String(o._value),
           });
+        },
+        error(error) {
+          console.error(error);
+          console.log('Finished ERROR');
+          return resolve(results);
+        },
+        complete() {
+          console.log('Finished SUCCESS');
+          return resolve(results);
+        },
+      });
+    });
+    return output;
+  }
+
+  /**
+   * Get token by coin id
+   * @param measurement 
+   * @param start 
+   * @param step 
+   * @param coinId 
+   * @returns 
+   */
+  getTokenByCoinId(
+    measurement: string,
+    start: string,
+    step: string,
+    coinId: string,
+  ): Promise<any> {
+    const results: Array<TokenOutput> = [];
+    const query = `
+      import "date"
+      from(bucket: "${this.bucket}")
+        |> range(start: ${start})
+        |> filter(fn: (r) => r._measurement == "${measurement}")
+        |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
+        |> drop(columns:["_value"])
+        |> filter(fn: (r) => r.coinId == "${coinId}")
+        |> window(every: ${step}, createEmpty: true, timeColumn: "_time")
+        |> last(column: "_time")
+        |> map(fn: (r) => ({
+            coinId: r.coinId,
+            current_price: r.current_price,
+            max_supply: r.max_supply,
+            circulating_supply: r.circulating_supply,
+            total_volume: r.total_volume,
+            current_holder: r.current_holder,
+            current_holder: r.current_holder,
+            market_cap: r.market_cap,
+            time: date.truncate(t: r._time, unit: ${step})
+        }))`;
+
+    const output = new Promise((resolve) => {
+      this.queryApi.queryRows(query, {
+        next(row, tableMeta) {
+          const output = tableMeta.toObject(row);
+          const tokenOutput = new TokenOutput();
+          tokenOutput.timestamp = output.time;
+          tokenOutput.coinId = String(output.coinId);
+          tokenOutput.current_price = Number(output.current_price) || 0;
+          tokenOutput.max_supply = Number(output.max_supply) || 0;
+          tokenOutput.total_volume = Number(output.total_volume) || 0;
+          tokenOutput.market_cap = Number(output.market_cap) || 0;
+          results.push(tokenOutput);
         },
         error(error) {
           console.error(error);
