@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { find } from 'rxjs';
-import { SmartContractRepository } from 'src/components/contract/repositories/smart-contract.repository';
 import { In } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
   AkcLogger,
   AURA_INFO,
-  CONTRACT_TYPE,
   INDEXER_API,
   LENGTH,
   RequestContext,
@@ -34,8 +31,6 @@ export class Cw20TokenService {
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
-
-    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private accountService: AccountService,
   ) {

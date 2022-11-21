@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TokenMarkets } from 'src/shared';
 import { EntityRepository, ObjectLiteral, Repository } from 'typeorm';
+import { TokenMarkets } from '../../../shared';
 import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
 
 @EntityRepository(TokenMarkets)
