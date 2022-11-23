@@ -60,7 +60,7 @@ export function generateSeries(
       break;
     }
     case TypeDate.hour: {
-      past.setHours(now.getHours() - condition.amount);
+      past.setHours((now.getHours() - condition.amount) + 1);
       for (
         let date = new Date(new Date(past).setUTCMinutes(0, 0, 0));
         date <= now;
@@ -71,7 +71,7 @@ export function generateSeries(
       break;
     }
     case TypeDate.minute: {
-      past.setMinutes(now.getMinutes() - condition.amount);
+      past.setMinutes((now.getMinutes() - condition.amount) + 1);
       for (
         let date = new Date(new Date(past).setUTCSeconds(0, 0));
         date <= now;
