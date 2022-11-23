@@ -265,10 +265,10 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .orderBy(
         request?.sort_column && request?.sort_order
           ? {
-              [`${request.sort_column}`]:
-                request.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC',
-              upTime: 'DESC',
-            }
+            [`${request.sort_column}`]:
+              request.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC',
+            upTime: 'DESC',
+          }
           : { transfers_24h: 'DESC', upTime: 'DESC' },
       );
 
@@ -276,5 +276,30 @@ export class SmartContractRepository extends Repository<SmartContract> {
     const count = await queryBuilder.getCount();
 
     return [list, count];
+  }
+
+  /**
+   * Get smart contract by minter
+   * @param minterAddress 
+   * @param limit 
+   * @param offset 
+   */
+  async getContractByMinter(minterAddress: string, limit: number, offset: number) {
+    const builder = this.createQueryBuilder("sm")
+    .select('sm.id, sm.contract_address, sm.minter_address')
+    .where({
+      minter_address: minterAddress
+    });
+
+    const data =  await builder
+      .limit(limit)
+      .offset(offset)
+      .orderBy({
+        created_at: 'DESC'
+      })
+      .getRawMany();
+
+      const count = await builder.getCount();
+      return {contracts: data, count};
   }
 }
