@@ -5,4 +5,5 @@ export class TokenOutput {
     total_volume: number = 0;
     market_cap: number = 0;
     timestamp: string = '';
+    price_change_percentage_24h: number = 0;
 }
