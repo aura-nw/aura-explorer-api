@@ -249,7 +249,7 @@ export class InfluxDBClient {
         |> drop(columns:["_value"])
         |> filter(fn: (r) => r.coinId == "${coinId}")
         |> window(every: ${step}, createEmpty: true, timeColumn: "_time")
-        |> last(column: "_time")
+        |> last(column: "_start")
         |> map(fn: (r) => ({
             coinId: r.coinId,
             current_price: r.current_price,
