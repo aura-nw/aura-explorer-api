@@ -4,6 +4,7 @@ import {
   QueryApi,
   WriteApi,
 } from '@influxdata/influxdb-client';
+import { number } from 'joi';
 import { TokenOutput } from '../dtos/token-output.dto';
 
 export class InfluxDBClient {
@@ -258,7 +259,8 @@ export class InfluxDBClient {
             current_holder: r.current_holder,
             current_holder: r.current_holder,
             market_cap: r.market_cap,
-            time: date.truncate(t: r._time, unit: ${step})
+            price_change_percentage_24h: r.price_change_percentage_24h,
+            time: date.truncate(t: r._start, unit: ${step})
         }))`;
 
     const output = new Promise((resolve) => {
@@ -272,6 +274,7 @@ export class InfluxDBClient {
           tokenOutput.max_supply = Number(output.max_supply) || 0;
           tokenOutput.total_volume = Number(output.total_volume) || 0;
           tokenOutput.market_cap = Number(output.market_cap) || 0;
+          tokenOutput.price_change_percentage_24h = Number(output.price_change_percentage_24h) || 0;
           results.push(tokenOutput);
         },
         error(error) {
