@@ -14,6 +14,7 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
 } from '../../../shared';
+import { Cw20MetricParamsDto } from '../dtos/cw20-metric-params.dto';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { MetricParamsDto } from '../dtos/metric-params.dto';
 import { MetricService } from '../services/metric.service';
@@ -82,6 +83,24 @@ export class MetricController {
     this.logger.log(ctx, `${this.getValidatorMetric.name} was called!`);
 
     const metrics = await this.metricService.getValidator(ctx, query.range);
+
+    return { data: metrics, meta: null };
+  }
+
+  @Get('token')
+  @ApiOperation({ summary: 'Get token by coin id' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(MetricOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getTokenByCoinIdMetric(
+    @ReqContext() ctx: RequestContext,
+    @Query() query: Cw20MetricParamsDto,
+  ): Promise<BaseApiResponse<MetricOutput[]>> {
+    this.logger.log(ctx, `${this.getTokenByCoinIdMetric.name} was called!`);
+
+    const metrics = await this.metricService.getTokenByCoinId(ctx, query.coidId, query.range);
 
     return { data: metrics, meta: null };
   }
