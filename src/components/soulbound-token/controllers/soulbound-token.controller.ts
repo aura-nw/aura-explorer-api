@@ -6,6 +6,7 @@ import { CreateSoulboundTokenParamsDto } from "../dtos/create-soulbound-token-pa
 import { SoulboundContractParasDto } from "../dtos/soulbound-contract-paras.dto";
 import { UpdateSoulboundTokenParamsDto } from "../dtos/update-soulbound-token-params.dto";
 import { SoulboundTokenService } from "../services/soulbound-token.service";
+import { PickedNftParasDto } from "../dtos/picked-nft-paras.dto";
 
 @Controller('soulbound-token')
 @ApiTags('soulbound-token')
@@ -55,7 +56,16 @@ export class SoulboundTokenController {
     @ApiResponse({ status: HttpStatus.OK, schema:{} })
     async update(@ReqContext() ctx: RequestContext, @Body() req: UpdateSoulboundTokenParamsDto) {
         this.logger.log(ctx, `============== ${this.update.name} was called! ==============`);
-        const result = this.soulboundTokenService.update(ctx, req);
+        const result = await this.soulboundTokenService.update(ctx, req);
+        return { data: result, meta: 0 };
+    }
+
+    @Put('picked-nft')
+    @ApiOperation({ summary: 'Picked Nft of Soulbound contract' })
+    @ApiResponse({ status: HttpStatus.OK, schema:{} })
+    async pickedNft(@ReqContext() ctx: RequestContext, @Body() req: PickedNftParasDto) {
+        this.logger.log(ctx, `============== ${this.pickedNft.name} was called! ==============`);
+        const result = await this.soulboundTokenService.pickedNft(ctx, req);
         return { data: result, meta: 0 };
     }
 }

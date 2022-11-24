@@ -24,4 +24,7 @@ export class SoulboundToken extends BaseEntityIncrementId {
 
     @Column({nullable: true, type: 'text'})
     signature: string;
+
+    @Column({default: false})
+    picked: boolean;
 }

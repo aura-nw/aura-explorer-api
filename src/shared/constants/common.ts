@@ -179,6 +179,14 @@ export const ERROR_MAP = {
     Code: 'E006',
     Message: `Result is correct, you cannot update this record`,
   },
+  MINTER_OR_CONTRACT_ADDRESS_INVALID: {
+    Code: 'E007',
+    Message: `Attestor address or contract address invalid`,
+  },
+  TOKEN_NOT_EXIST: {
+    Code: 'E008',
+    Message: `Token not exist`,
+  },
 };
 
 export const PAGE_REQUEST = {

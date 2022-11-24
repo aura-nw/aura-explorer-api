@@ -1,5 +1,5 @@
 import { Body, Injectable } from '@nestjs/common';
-import { AkcLogger, RequestContext, SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
+import { AkcLogger, ERROR_MAP, RequestContext, SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
 import { SmartContractRepository } from '../../contract/repositories/smart-contract.repository';
 import { TokenParasDto } from '../dtos/token-paras.dto';
 import { CreateSoulboundTokenParamsDto } from '../dtos/create-soulbound-token-params.dto';
@@ -9,6 +9,7 @@ import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-pa
 import { SoulboundTokenRepository } from '../repositories/soulbound-token.repository';
 import { TokenOutputDto } from '../dtos/token-output.dto';
 import { plainToClass } from 'class-transformer';
+import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
 
 
 @Injectable()
@@ -42,7 +43,7 @@ export class SoulboundTokenService {
                     if (m.status === SOULBOUND_TOKEN_STATUS.EQUIPPED) {
                         claimedQty = Number(m.quanity) || 0;
                     } else {
-                        unclaimedQty = Number(m.quanity) || 0;
+                        unclaimedQty += Number(m.quanity) || 0;
                     }
                 });
 
@@ -63,11 +64,11 @@ export class SoulboundTokenService {
      */
     async getTokens(ctx: RequestContext, req: TokenParasDto) {
         this.logger.log(ctx, `============== ${this.getTokens.name} was called with paras: ${JSON.stringify(req)}! ==============`);
-        const {tokens, count} = await this.soulboundTokenRepos.getTokens(req.minterAddress, req.contractAddress, req.limit, req.offset);
+        const { tokens, count } = await this.soulboundTokenRepos.getTokens(req.minterAddress, req.contractAddress, req.limit, req.offset);
         const data = plainToClass(TokenOutputDto, tokens, {
             excludeExtraneousValues: true,
-          });
-        return {data, count};
+        });
+        return { data, count };
     }
 
     /**
@@ -85,7 +86,7 @@ export class SoulboundTokenService {
                 minter_address: req.attestor_address
             }
         });
-        if(contract){
+        if (contract) {
             entity.smart_contract_id = contract.code_id;
             entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
             entity.receiver_address = req.receiver_address;
@@ -93,8 +94,12 @@ export class SoulboundTokenService {
             entity.token_id = '';
 
             return await this.soulboundTokenRepos.save(entity);
+        } else {
+            return {
+                Code: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Code,
+                Message: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Message
+            };
         }
-        return null;
     }
 
     /**
@@ -106,8 +111,35 @@ export class SoulboundTokenService {
     async update(ctx: RequestContext, @Body() req: UpdateSoulboundTokenParamsDto) {
         this.logger.log(ctx, `============== ${this.update.name} was called with paras: ${JSON.stringify(req)}! ==============`);
         let entity = await this.soulboundTokenRepos.findOne(req.id);
-        entity.status = req.status;
-        entity.signature = req.signature;
-        return await this.soulboundTokenRepos.update(entity.id, entity);
+        if (entity) {
+            entity.status = req.status;
+            entity.signature = req.signature;
+            return await this.soulboundTokenRepos.update(entity.id, entity);
+        } else {
+            return {
+                code: ERROR_MAP.TOKEN_NOT_EXIST.Code,
+                message: ERROR_MAP.TOKEN_NOT_EXIST.Message
+            };
+        }
+    }
+
+    /**
+     * Pick or Unpick nft of soulbound token
+     * @param ctx 
+     * @param req 
+     * @returns 
+     */
+    async pickedNft(ctx: RequestContext, @Body() req: PickedNftParasDto) {
+        this.logger.log(ctx, `============== ${this.pickedNft.name} was called with paras: ${JSON.stringify(req)}! ==============`);
+        let entity = await this.soulboundTokenRepos.findOne(req.id);
+        if (entity) {
+            entity.picked = req.picked;
+            return await this.soulboundTokenRepos.update(entity.id, entity);
+        } else {
+            return {
+                code: ERROR_MAP.TOKEN_NOT_EXIST.Code,
+                message: ERROR_MAP.TOKEN_NOT_EXIST.Message
+            };
+        }
     }
 }
