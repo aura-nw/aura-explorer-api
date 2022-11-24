@@ -3,8 +3,6 @@ import { EntityRepository, In, Repository } from "typeorm";
 import { SoulboundToken } from "../../../shared";
 import { SmartContract } from "../../../shared/entities/smart-contract.entity";
 
-
-
 @EntityRepository(SoulboundToken)
 export class SoulboundTokenRepository extends Repository<SoulboundToken>{
     private readonly _logger = new Logger(SoulboundTokenRepository.name);
@@ -18,6 +16,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken>{
      * @returns 
      */
     async getTokens(minterAddress: string, contractAddress: string, limit: number, offset: number) {
+        this._logger.log(`============== ${this.getTokens.name} was called! ==============`);
         const builder = this.createQueryBuilder('sbt')
             .select('sbt.*')
             .innerJoin(SmartContract, 'sm', 'sm.id = sbt.smart_contract_id')
@@ -35,7 +34,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken>{
             .getRawMany();
 
         const count = await builder.getCount();
-        return {tokens, count};
+        return { tokens, count };
     }
 
     /**
@@ -44,6 +43,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken>{
      * @returns 
      */
     countStatus(contractIds: Array<number>) {
+        this._logger.log(`============== ${this.countStatus.name} was called! ==============`);
         return this.createQueryBuilder('sbt')
             .select('sbt.smart_contract_id, COUNT(sbt.id) as quanity')
             .where({
