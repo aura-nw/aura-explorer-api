@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
+import { IsEnum, IsNotEmpty } from "class-validator";
 import { SOULBOUND_TOKEN_STATUS } from "../../../shared";
 
 export class UpdateSoulboundTokenParamsDto {
@@ -12,5 +12,6 @@ export class UpdateSoulboundTokenParamsDto {
 
     @ApiProperty()
     @IsNotEmpty()
+    @IsEnum(SOULBOUND_TOKEN_STATUS)
     status: SOULBOUND_TOKEN_STATUS;
 }

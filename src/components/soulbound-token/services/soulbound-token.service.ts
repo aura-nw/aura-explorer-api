@@ -133,8 +133,14 @@ export class SoulboundTokenService {
         this.logger.log(ctx, `============== ${this.pickedNft.name} was called with paras: ${JSON.stringify(req)}! ==============`);
         let entity = await this.soulboundTokenRepos.findOne(req.id);
         if (entity) {
-            entity.picked = req.picked;
-            return await this.soulboundTokenRepos.update(entity.id, entity);
+            // Check Status token
+            
+
+            if (req.address === entity.receiver_address) {
+                entity.picked = req.picked;
+                return await this.soulboundTokenRepos.update(entity.id, entity);
+            }
+
         } else {
             return {
                 code: ERROR_MAP.TOKEN_NOT_EXIST.Code,
