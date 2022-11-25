@@ -86,7 +86,7 @@ export class MetricService {
    */
   async getTokenByCoinId(
     ctx: RequestContext,
-    coinId:string,
+    coinId: string,
     range: Range,
   ): Promise<any[]> {
     this.logger.log(ctx, `${this.getTokenByCoinId.name} was called!`);
@@ -101,22 +101,27 @@ export class MetricService {
       startTime,
       queryStep,
       coinId
-    )as TokenOutput[];
+    ) as TokenOutput[];
 
     this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
     const metricData: TokenOutput[] = [];
-    const series = generateSeries(range);
-    series.forEach((item: MetricOutput) => {
+    const length = output?.length || 0;
+    for (let i = 0; i < length; i++) {
+      const item = output[i];
       let tokenOutput = new TokenOutput();
-      const find = output.find(f => f.timestamp === item.timestamp);
-      if(find){
-        tokenOutput = {...find};
-      }else{
-        tokenOutput.coinId = coinId;
-        tokenOutput.timestamp = item.timestamp;
-      }
+      tokenOutput = { ...item };
       metricData.push(tokenOutput);
-    });
+      if (range === Range.minute) {
+        const currentTime = new Date();
+        currentTime.setSeconds(0, 0);
+        if (new Date(item.timestamp) < currentTime && i == (length - 1)) {
+          const cloneItem = { ...item };
+          cloneItem.timestamp = currentTime.toUTCString();
+          metricData.push(cloneItem);
+        }
+      }
+    }
+
     this.logger.log(ctx, `${this.getTokenByCoinId.name} end call!`);
     return metricData;
   }
