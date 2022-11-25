@@ -61,7 +61,7 @@ export class Cw20TokenService {
 
     const tokens = list.map((item: TokenMarkets) => {
       const current_price = item.current_price || 0;
-      const circulating_supply = item.circulating_supply || 0;
+      const circulating_market_cap = item.circulating_market_cap || 0;
 
       return {
         coin_id: item.coin_id || '',
@@ -70,7 +70,7 @@ export class Cw20TokenService {
         symbol: item.symbol || '',
         image: item.image || '',
         description: item.description || '',
-        circulating_market_cap: circulating_supply,
+        circulating_market_cap: circulating_market_cap,
         volume_24h: item.total_volume || 0,
         price: current_price,
         price_change_percentage_24h: item.price_change_percentage_24h || 0,
