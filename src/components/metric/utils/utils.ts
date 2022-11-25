@@ -14,16 +14,29 @@ export function makeupData(
   metricData: MetricOutput[],
   length: number,
 ): MetricOutput[] {
-  const _metricData = metricData.filter((i) => {
-    return i.timestamp.substring(i.timestamp.lastIndexOf(':')) === ':00Z';
-  });
+  const _metricData = metricData
+    .filter((i) => {
+      return i.timestamp.substring(i.timestamp.lastIndexOf(':')) === ':00Z';
+    })
+    .reduce((pre, curr) => {
+      const total: any =
+        Number(curr.total) && Number(curr.total) > 0 ? Number(curr.total) : 0;
+
+      const mergeTarget = pre.find((i) => i.timestamp === curr.timestamp);
+      if (mergeTarget) {
+        mergeTarget.total += total;
+        return pre;
+      }
+
+      curr.total = total;
+      return [...pre, curr];
+    }, []);
+
   _metricData.length > length && _metricData.shift();
 
   return _metricData.map((i) => {
-    const total = Number(i.total) && Number(i.total) >= 0 ? Number(i.total) : 0;
-
     return {
-      total: `${total}`,
+      total: `${i.total}`,
       timestamp: i.timestamp,
     };
   });
