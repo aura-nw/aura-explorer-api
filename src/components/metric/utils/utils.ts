@@ -20,7 +20,7 @@ export function makeupData(
     })
     .reduce((pre, curr) => {
       const total: any =
-        Number(curr.total) && Number(curr.total) >= 0 ? Number(curr.total) : 0;
+        Number(curr.total) && Number(curr.total) > 0 ? Number(curr.total) : 0;
 
       const mergeTarget = pre.find((i) => i.timestamp === curr.timestamp);
       if (mergeTarget) {
