@@ -86,4 +86,7 @@ export class SmartContract extends BaseEntityIncrementId {
 
   @Column({ name: 'description' })
   description: string;
+
+  @Column()
+  decimals: number;
 }
