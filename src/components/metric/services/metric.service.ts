@@ -104,14 +104,14 @@ export class MetricService {
     ) as TokenOutput[];
 
     this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
-    const metricData: TokenOutput[] = [];
-    const length = output?.length || 0;
-    for (let i = 0; i < length; i++) {
-      const item = output[i];
-      let tokenOutput = new TokenOutput();
-      tokenOutput = { ...item };
-      metricData.push(tokenOutput);
-      if (range === Range.minute) {
+    const metricData: TokenOutput[] = [];   
+    if (range === Range.minute) {
+      const length = output?.length || 0;
+      for (let i = 0; i < length; i++) {
+        const item = output[i];
+        let tokenOutput = new TokenOutput();
+        tokenOutput = { ...item };
+        metricData.push(tokenOutput);
         const currentTime = new Date();
         currentTime.setSeconds(0, 0);
         if (new Date(item.timestamp) < currentTime && i == (length - 1)) {
@@ -120,6 +120,19 @@ export class MetricService {
           metricData.push(cloneItem);
         }
       }
+    } else {
+      const series = generateSeries(range);
+      series.forEach((item: MetricOutput) => {
+        let tokenOutput = new TokenOutput();
+        const find = output.find(f => f.timestamp === item.timestamp);
+        if (find) {
+          tokenOutput = { ...find };
+        } else {
+          tokenOutput.coinId = coinId;
+          tokenOutput.timestamp = item.timestamp;
+        }
+        metricData.push(tokenOutput);
+      });
     }
 
     this.logger.log(ctx, `${this.getTokenByCoinId.name} end call!`);
