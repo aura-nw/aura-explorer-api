@@ -1,13 +1,12 @@
+import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { find } from 'rxjs';
-import { SmartContractRepository } from 'src/components/contract/repositories/smart-contract.repository';
+import { lastValueFrom } from 'rxjs';
 import { In } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
   AkcLogger,
   AURA_INFO,
-  CONTRACT_TYPE,
   INDEXER_API,
   LENGTH,
   RequestContext,
@@ -34,10 +33,9 @@ export class Cw20TokenService {
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
-
-    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private accountService: AccountService,
+    private httpService: HttpService,
   ) {
     this.logger.setContext(Cw20TokenService.name);
     this.appParams = appConfig.default();
@@ -59,9 +57,32 @@ export class Cw20TokenService {
     const { list, count } =
       await this.tokenMarketsRepository.getCw20TokenMarkets(request);
 
+    const lstAddress = list?.map((i) => i.contract_address);
+
+    const holderResponse = await lastValueFrom(
+      this.httpService.get(
+        `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
+        {
+          params: { chainId: this.indexerChainId, addresses: lstAddress },
+        },
+      ),
+    ).then((rs) => rs.data);
+
+    const listHolder = holderResponse?.data || [];
+
     const tokens = list.map((item: TokenMarkets) => {
       const current_price = item.current_price || 0;
       const circulating_market_cap = item.circulating_market_cap || 0;
+      let holders_change_percentage_24h = 0;
+      let holders = 0;
+
+      const holderInfo = listHolder.find(
+        (f) => f.contract_address === item.contract_address,
+      );
+      if (holderInfo) {
+        holders = holderInfo.new_holders || 0;
+        holders_change_percentage_24h = holderInfo.change_percent || 0;
+      }
 
       return {
         coin_id: item.coin_id || '',
@@ -74,9 +95,10 @@ export class Cw20TokenService {
         volume_24h: item.total_volume || 0,
         price: current_price,
         price_change_percentage_24h: item.price_change_percentage_24h || 0,
-        holders_change_percentage_24h: item.holder_change_percentage_24h || 0,
-        holders: item.current_holder || 0,
+        holders_change_percentage_24h,
+        holders,
         max_total_supply: item.max_supply || 0,
+        fully_diluted_market_cap: item.fully_diluted_valuation || 0,
       };
     });
 
