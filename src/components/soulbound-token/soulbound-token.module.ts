@@ -9,11 +9,13 @@ import { SoulboundTokenController } from './controllers/soulbound-token.controll
 import { SoulboundTokenRepository } from './repositories/soulbound-token.repository';
 import { SoulboundTokenService } from './services/soulbound-token.service';
 
-
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([SmartContractRepository, SoulboundTokenRepository]),
+    TypeOrmModule.forFeature([
+      SmartContractRepository,
+      SoulboundTokenRepository,
+    ]),
     ConfigModule,
     HttpModule,
   ],
