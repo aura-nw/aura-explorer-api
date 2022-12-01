@@ -203,4 +203,5 @@ export enum SOULBOUND_TOKEN_STATUS {
   UNCLAIM = 'Unclaimed',
   EQUIPPED = 'Equipped',
   UNEQUIPPED = 'Unequipped',
+  PENDING = 'Pending',
 }

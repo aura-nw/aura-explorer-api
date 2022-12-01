@@ -171,7 +171,7 @@ export class SoulboundTokenService {
     const entity = await this.soulboundTokenRepos.findOne(req.id);
     if (entity) {
       if (entity.receiver_address === req.address) {
-        entity.status = req.status;
+        entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
         entity.signature = req.signature;
         const result = await this.soulboundTokenRepos.update(entity.id, entity);
         return { data: result, meta: 0 };
