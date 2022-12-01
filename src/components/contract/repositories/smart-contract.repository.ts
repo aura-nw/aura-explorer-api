@@ -183,7 +183,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getTokenByContractAddress(contractAddress: string) {
     return await this.createQueryBuilder('sc')
       .select(
-        `sc.token_name AS name, sc.token_symbol AS symbol, sc.num_tokens,
+        `sc.token_name AS name, sc.token_symbol AS symbol, sc.num_tokens, sc.decimals,
             sc.contract_address, sc.contract_verification, sc.tx_hash, scc.type, sc.request_id`,
       )
       .innerJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')

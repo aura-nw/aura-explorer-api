@@ -8,7 +8,12 @@ export class UpdateSoulboundTokenParamsDto {
   id: number;
 
   @ApiProperty()
+  @IsNotEmpty()
   signature: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  address: string;
 
   @ApiProperty()
   @IsNotEmpty()

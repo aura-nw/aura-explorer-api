@@ -153,6 +153,43 @@ export class SoulboundTokenService {
   }
 
   /**
+   * Update status token of Soulbound contract
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async update(
+    ctx: RequestContext,
+    @Body() req: UpdateSoulboundTokenParamsDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${
+        this.update.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
+    );
+    const entity = await this.soulboundTokenRepos.findOne(req.id);
+    if (entity) {
+      if (entity.receiver_address === req.address) {
+        entity.status = req.status;
+        entity.signature = req.signature;
+        const result = await this.soulboundTokenRepos.update(entity.id, entity);
+        return { data: result, meta: 0 };
+      } else {
+        return {
+          code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+          message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+        };
+      }
+    } else {
+      return {
+        code: ERROR_MAP.TOKEN_NOT_EXIST.Code,
+        message: ERROR_MAP.TOKEN_NOT_EXIST.Message,
+      };
+    }
+  }
+
+  /**
    * Pick or Unpick nft of soulbound token
    * @param ctx
    * @param req

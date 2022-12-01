@@ -98,6 +98,7 @@ export class Cw20TokenService {
         holders_change_percentage_24h,
         holders,
         max_total_supply: item.max_supply || 0,
+        fully_diluted_market_cap: item.fully_diluted_valuation || 0,
       };
     });
 

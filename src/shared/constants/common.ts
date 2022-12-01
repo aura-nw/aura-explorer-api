@@ -184,8 +184,12 @@ export const ERROR_MAP = {
     Code: 'E007',
     Message: `Attestor address or contract address invalid`,
   },
-  TOKEN_NOT_EXIST: {
+  YOUR_ADDRESS_INVALID: {
     Code: 'E008',
+    Message: `Receiver address invalid`,
+  },
+  TOKEN_NOT_EXIST: {
+    Code: 'E009',
     Message: `Token not exist`,
   },
 };

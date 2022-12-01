@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InfluxDBClient } from './influxdb-client';
 import { AkcLogger, RequestContext } from '../../../shared';
 import { BlockRepository } from '../../block/repositories/block.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
+import { TokenOutput } from '../dtos/token-output.dto';
 import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
   makeupData,
-  mergeByProperty,
+  mergeByProperty
 } from '../utils/utils';
+import { InfluxDBClient } from './influxdb-client';
 
 @Injectable()
 export class MetricService {
@@ -74,6 +75,68 @@ export class MetricService {
     );
 
     return await this.queryInfluxDb(range, 'validators');
+  }
+
+  /**
+   * Get token data by coid id
+   * @param ctx 
+   * @param coinId 
+   * @param range 
+   * @returns 
+   */
+  async getTokenByCoinId(
+    ctx: RequestContext,
+    coinId: string,
+    range: Range,
+  ): Promise<any[]> {
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} was called!`);
+
+    const { amount, step, fluxType } = buildCondition(range);
+    const startTime = `-${amount}${fluxType}`;
+    const queryStep = `${step}${fluxType}`;
+
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} call method from influxdb!`);
+    const output = await this.influxDbClient.getTokenByCoinId(
+      'token_cw20_measurement',
+      startTime,
+      queryStep,
+      coinId
+    ) as TokenOutput[];
+
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
+    const metricData: TokenOutput[] = [];   
+    if (range === Range.minute) {
+      const length = output?.length || 0;
+      for (let i = 0; i < length; i++) {
+        const item = output[i];
+        let tokenOutput = new TokenOutput();
+        tokenOutput = { ...item };
+        metricData.push(tokenOutput);
+        const currentTime = new Date();
+        currentTime.setSeconds(0, 0);
+        if (new Date(item.timestamp) < currentTime && i == (length - 1)) {
+          const cloneItem = { ...item };
+          cloneItem.timestamp = currentTime.toUTCString();
+          metricData.push(cloneItem);
+        }
+      }
+    } else {
+      const series = generateSeries(range);
+      series.forEach((item: MetricOutput) => {
+        let tokenOutput = new TokenOutput();
+        const find = output.find(f => f.timestamp === item.timestamp);
+        if (find) {
+          tokenOutput = { ...find };
+        } else {
+          tokenOutput.coinId = coinId;
+          tokenOutput.timestamp = item.timestamp;
+        }
+        metricData.push(tokenOutput);
+      });
+    }
+
+    this.logger.log(ctx, `${this.getTokenByCoinId.name} end call!`);
+    return metricData;
   }
 
   private async queryInfluxDb(
