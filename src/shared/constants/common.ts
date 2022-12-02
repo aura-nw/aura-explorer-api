@@ -205,3 +205,7 @@ export enum SOULBOUND_TOKEN_STATUS {
   UNEQUIPPED = 'Unequipped',
   PENDING = 'Pending',
 }
+
+export enum CW4973_CONTRACT {
+  AGREEMENT = 'Agreement(address active,address passive,string tokenURI)',
+}

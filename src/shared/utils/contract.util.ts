@@ -6,6 +6,7 @@ import {
 import { Secp256k1, Secp256k1Signature, sha256 } from '@cosmjs/crypto';
 import { fromBase64 } from '@cosmjs/encoding';
 import { Injectable } from '@nestjs/common';
+import { AURA_INFO } from '../constants';
 
 @Injectable()
 export class ContractUtil {
@@ -19,7 +20,10 @@ export class ContractUtil {
   async verifySignatue(signature: string, msg: string, pubkey: string) {
     try {
       const pubkeyFormated = encodeSecp256k1Pubkey(fromBase64(pubkey));
-      const address = pubkeyToAddress(pubkeyFormated, 'aura');
+      const address = pubkeyToAddress(
+        pubkeyFormated,
+        AURA_INFO.CONTRACT_ADDRESS,
+      );
       const msgDecode = this.createSignMessageByData(address, msg);
 
       const resultVerify = await Secp256k1.verifySignature(

@@ -2,6 +2,7 @@ import { Body, Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import {
   AkcLogger,
+  CW4973_CONTRACT,
   ERROR_MAP,
   RequestContext,
   SoulboundToken,
@@ -315,9 +316,7 @@ export class SoulboundTokenService {
     passive: string,
     uri: string,
   ) {
-    const AGREEMENT =
-      'Agreement(address active,address passive,string tokenURI)';
-    const message = AGREEMENT + active + passive + uri;
+    const message = CW4973_CONTRACT.AGREEMENT + active + passive + uri;
     const mess: any = {
       type: 'sign/MsgSignData',
       value: {
