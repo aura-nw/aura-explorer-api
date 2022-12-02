@@ -187,7 +187,9 @@ export class ContractService {
     });
     if (contract) {
       const result = await lastValueFrom(
-        this.httpService.get(this.verifyContractStatusUrl + contractAddress),
+        this.httpService.get(
+          this.verifyContractStatusUrl + String(contract.code_id),
+        ),
       ).then((rs) => rs.data);
 
       return result;
