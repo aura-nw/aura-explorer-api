@@ -348,4 +348,19 @@ export class ContractService {
 
     return token;
   }
+
+  /**
+   * Get contract by code id
+   * @param ctx
+   * @param codeId
+   * @returns
+   */
+  async getContractByCodeId(ctx: RequestContext, codeId: string) {
+    this.logger.log(ctx, `${this.getContractByCodeId.name} was called!`);
+    const contract = await this.smartContractRepository.findOne({
+      where: { code_id: codeId },
+    });
+
+    return contract;
+  }
 }
