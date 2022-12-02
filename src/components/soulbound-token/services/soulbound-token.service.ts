@@ -129,12 +129,24 @@ export class SoulboundTokenService {
         this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
+    // Verify signature
+    const address = await this.contractUtil.verifySignatue(
+      req.signature,
+      req.msg,
+      req.pubKey,
+    );
+    if (!address) {
+      return {
+        code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+      };
+    }
 
     const entity = new SoulboundToken();
     const contract = await this.smartContractRepos.findOne({
       where: {
         contract_address: req.contract_address,
-        minter_address: req.attestor_address,
+        minter_address: address,
       },
     });
     if (contract) {

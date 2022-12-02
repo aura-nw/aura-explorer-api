@@ -1,22 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
+import { VerifySignatureParasDto } from './verify-signature-paras.dto';
 
-export class PickedNftParasDto {
+export class PickedNftParasDto extends VerifySignatureParasDto {
   @ApiProperty()
   @IsNotEmpty()
   id: number;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  signature: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  msg: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  pubKey: string;
 
   @ApiProperty()
   @IsNotEmpty()
