@@ -149,7 +149,8 @@ export class SoulboundTokenService {
         req.token_uri,
       );
 
-      return await this.soulboundTokenRepos.save(entity);
+      const result = await this.soulboundTokenRepos.save(entity);
+      return { data: result, meta: 0 };
     } else {
       return {
         Code: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Code,

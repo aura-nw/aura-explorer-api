@@ -79,8 +79,7 @@ export class SoulboundTokenController {
       ctx,
       `============== ${this.create.name} was called! ==============`,
     );
-    const result = await this.soulboundTokenService.create(ctx, req);
-    return result;
+    return await this.soulboundTokenService.create(ctx, req);
   }
 
   @Put()
@@ -94,8 +93,7 @@ export class SoulboundTokenController {
       ctx,
       `============== ${this.update.name} was called! ==============`,
     );
-    const result = await this.soulboundTokenService.update(ctx, req);
-    return { data: result, meta: 0 };
+    return await this.soulboundTokenService.update(ctx, req);
   }
 
   @Put('picked-nft')
