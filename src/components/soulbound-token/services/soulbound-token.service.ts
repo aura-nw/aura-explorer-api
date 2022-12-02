@@ -18,9 +18,12 @@ import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-pa
 import { SoulboundTokenRepository } from '../repositories/soulbound-token.repository';
 
 import * as amino from '@cosmjs/amino';
-import { sha256 } from 'js-sha256';
 import * as appConfig from '../../../shared/configs/configuration';
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
+import { ContractUtil } from '../../../shared/utils/contract.util';
+import console from 'console';
+import { sha256 } from '@cosmjs/crypto';
+import { serializeSignDoc } from '@cosmjs/amino';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -30,6 +33,7 @@ export class SoulboundTokenService {
     private readonly logger: AkcLogger,
     private soulboundTokenRepos: SoulboundTokenRepository,
     private smartContractRepos: SmartContractRepository,
+    private contractUtil: ContractUtil,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
@@ -124,6 +128,7 @@ export class SoulboundTokenService {
         this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
+
     const entity = new SoulboundToken();
     const contract = await this.smartContractRepos.findOne({
       where: {
@@ -168,9 +173,23 @@ export class SoulboundTokenService {
         this.update.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
+
+    // Verify signature
+    const address = await this.contractUtil.verifySignatue(
+      req.signature,
+      req.msg,
+      req.pubKey,
+    );
+    if (!address) {
+      return {
+        code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+      };
+    }
+
     const entity = await this.soulboundTokenRepos.findOne(req.id);
     if (entity) {
-      if (entity.receiver_address === req.address) {
+      if (entity.receiver_address === address) {
         entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
         entity.signature = req.signature;
         const result = await this.soulboundTokenRepos.update(entity.id, entity);
@@ -202,6 +221,20 @@ export class SoulboundTokenService {
         this.pickedNft.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
+
+    // Verify signature
+    const address = await this.contractUtil.verifySignatue(
+      req.signature,
+      req.msg,
+      req.pubKey,
+    );
+    if (!address) {
+      return {
+        code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+      };
+    }
+
     const entity = await this.soulboundTokenRepos.findOne(req.id);
     if (entity) {
       SigningCosmWasmClient.connect(this.chainId)
@@ -213,7 +246,7 @@ export class SoulboundTokenService {
           }),
         )
         .then(async (config) => {
-          if (req.address === entity.receiver_address) {
+          if (address === entity.receiver_address) {
             entity.picked = req.picked;
             const result = await this.soulboundTokenRepos.update(
               entity.id,
@@ -237,26 +270,45 @@ export class SoulboundTokenService {
     }
   }
 
+  /**
+   * Create token Id
+   * @param chainID
+   * @param active
+   * @param passive
+   * @param uri
+   * @returns
+   */
   private createTokenId(
     chainID: string,
     active: string,
     passive: string,
     uri: string,
   ): string {
-    const messgae: any = this.createMessageToSign(
-      chainID,
-      active,
-      passive,
-      uri,
-    );
-    const hash: number[] = sha256.digest(messgae);
-    let tokenId = '';
-    hash.forEach((item) => {
-      tokenId += String.fromCharCode(item);
-    });
-    return tokenId;
+    try {
+      const messgae: any = this.createMessageToSign(
+        chainID,
+        active,
+        passive,
+        uri,
+      );
+      const serialize = serializeSignDoc(messgae);
+      const hash = sha256(serialize);
+      const tokenId = Buffer.from(hash).toString('base64');
+
+      return tokenId;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
+  /**
+   * Create message sign
+   * @param chainID
+   * @param active
+   * @param passive
+   * @param uri
+   * @returns
+   */
   private createMessageToSign(
     chainID: string,
     active: string,

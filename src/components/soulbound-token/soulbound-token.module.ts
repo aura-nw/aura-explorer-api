@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from '../../shared';
+import { ContractUtil } from '../../shared/utils/contract.util';
 import { ServiceUtil } from '../../shared/utils/service.util';
 import { SmartContractRepository } from '../contract/repositories/smart-contract.repository';
 import { SoulboundTokenController } from './controllers/soulbound-token.controller';
@@ -19,7 +20,7 @@ import { SoulboundTokenService } from './services/soulbound-token.service';
     ConfigModule,
     HttpModule,
   ],
-  providers: [SoulboundTokenService, ServiceUtil],
+  providers: [SoulboundTokenService, ServiceUtil, ContractUtil],
   controllers: [SoulboundTokenController],
   exports: [SoulboundTokenService],
 })

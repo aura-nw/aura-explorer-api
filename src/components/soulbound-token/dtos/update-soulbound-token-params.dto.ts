@@ -13,7 +13,11 @@ export class UpdateSoulboundTokenParamsDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  address: string;
+  msg: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  pubKey: string;
 
   @ApiProperty()
   @IsNotEmpty()

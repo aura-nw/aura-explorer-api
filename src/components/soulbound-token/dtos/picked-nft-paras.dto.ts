@@ -8,7 +8,15 @@ export class PickedNftParasDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  address: string;
+  signature: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  msg: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  pubKey: string;
 
   @ApiProperty()
   @IsNotEmpty()

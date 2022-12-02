@@ -83,6 +83,21 @@ export class SoulboundTokenController {
     return result;
   }
 
+  @Put()
+  @ApiOperation({ summary: 'Update status token of Soulbound contract' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async update(
+    @ReqContext() ctx: RequestContext,
+    @Body() req: UpdateSoulboundTokenParamsDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.update.name} was called! ==============`,
+    );
+    const result = await this.soulboundTokenService.update(ctx, req);
+    return { data: result, meta: 0 };
+  }
+
   @Put('picked-nft')
   @ApiOperation({ summary: 'Picked Nft of Soulbound contract' })
   @ApiResponse({ status: HttpStatus.OK, schema: {} })
