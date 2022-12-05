@@ -37,8 +37,9 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
           ? {
               [`${request.sort_column}`]:
                 request.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC',
+              updated_at: 'DESC',
             }
-          : { circulating_market_cap: 'DESC' },
+          : { circulating_market_cap: 'DESC', updated_at: 'DESC' },
       );
 
     const list = await queryBuilder.getRawMany();
