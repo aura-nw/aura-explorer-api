@@ -328,7 +328,7 @@ export class ContractService {
       token.circulating_market_cap =
         tokenMarketData?.circulating_market_cap || 0;
       token.price = tokenMarketData?.current_price || 0;
-      token.fully_diluted_market_cap = token.max_total_supply * token.price;
+      token.fully_diluted_market_cap = tokenMarketData?.fully_diluted_valuation || token.max_total_supply * token.price;
       token.price_change_percentage_24h = tokenMarketData?.price_change_percentage_24h || 0;
       token.num_holder = 0;
       token.holders_change_percentage_24h = 0;
