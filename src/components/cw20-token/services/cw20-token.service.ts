@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
+import { SmartContractRepository } from 'src/components/contract/repositories/smart-contract.repository';
 import { In } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
@@ -33,6 +34,7 @@ export class Cw20TokenService {
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
+    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private accountService: AccountService,
     private httpService: HttpService,
@@ -59,6 +61,11 @@ export class Cw20TokenService {
 
     const lstAddress = list?.map((i) => i.contract_address);
 
+    const tokensInfo =
+    await this.smartContractRepository.getTokensByListContractAddress(
+      lstAddress,
+    );
+
     const holderResponse = await lastValueFrom(
       this.httpService.get(
         `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
@@ -84,6 +91,12 @@ export class Cw20TokenService {
         holders_change_percentage_24h = holderInfo.change_percent || 0;
       }
 
+      const tokenFind = tokensInfo.find(
+        (f) => String(f.contract_address) === item.contract_address,
+      );
+     
+      let contract_verification = tokenFind?.contract_verification || '';
+
       return {
         coin_id: item.coin_id || '',
         contract_address: item.contract_address || '',
@@ -99,6 +112,7 @@ export class Cw20TokenService {
         holders,
         max_total_supply: item.max_supply || 0,
         fully_diluted_market_cap: item.fully_diluted_valuation || 0,
+        contract_verification,
       };
     });
 
