@@ -95,7 +95,7 @@ export class Cw20TokenService {
         (f) => String(f.contract_address) === item.contract_address,
       );
      
-      let contract_verification = tokenFind?.contract_verification || false;
+      let contract_verification = tokenFind?.contract_verification || '';
 
       return {
         coin_id: item.coin_id || '',
