@@ -187,7 +187,9 @@ export class ContractService {
     });
     if (contract) {
       const result = await lastValueFrom(
-        this.httpService.get(this.verifyContractStatusUrl + contractAddress),
+        this.httpService.get(
+          this.verifyContractStatusUrl + String(contract.code_id),
+        ),
       ).then((rs) => rs.data);
 
       return result;
@@ -327,23 +329,42 @@ export class ContractService {
         tokenMarketData?.circulating_market_cap || 0;
       token.price = tokenMarketData?.current_price || 0;
       token.fully_diluted_market_cap = token.max_total_supply * token.price;
+      token.price_change_percentage_24h = tokenMarketData?.price_change_percentage_24h || 0;
+      token.num_holder = 0;
+      token.holders_change_percentage_24h = 0;
 
-      const holdersData = await this.serviceUtil.getDataAPI(
-        `${this.indexerUrl}${util.format(
-          INDEXER_API.TOKEN_HOLDERS,
-          this.indexerChainId,
-          tokenData[0].type,
-          contractAddress,
-        )}`,
-        '',
-        ctx,
-      );
-      token.num_holders = 0;
-      if (holdersData?.data) {
-        token.num_holders = holdersData.data.resultCount;
+      const holderResponse = await lastValueFrom(
+        this.httpService.get(
+          `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
+          {
+            params: { chainId: this.indexerChainId, addresses: [contractAddress] },
+          },
+        ),
+      ).then((rs) => rs.data);
+  
+      const listHolder = holderResponse?.data || [];
+
+      if (listHolder.length > 0) {
+        token.num_holder = listHolder[0].new_holders || 0;
+        token.holders_change_percentage_24h = listHolder[0].change_percent || 0;
       }
     }
 
     return token;
+  }
+
+  /**
+   * Get contract by code id
+   * @param ctx
+   * @param codeId
+   * @returns
+   */
+  async getContractByCodeId(ctx: RequestContext, codeId: string) {
+    this.logger.log(ctx, `${this.getContractByCodeId.name} was called!`);
+    const contract = await this.smartContractRepository.findOne({
+      where: { code_id: codeId },
+    });
+
+    return contract;
   }
 }
