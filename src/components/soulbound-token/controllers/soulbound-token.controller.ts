@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   Post,
   Put,
   Query,
@@ -62,7 +63,51 @@ export class SoulboundTokenController {
       ctx,
       req,
     );
-    return { data, meta: count };
+    return { data, meta: { count } };
+  }
+
+  @Get('tokens/:receiverAddress')
+  @ApiOperation({
+    summary: 'Get list tokens by receiver address',
+  })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async getTokenByReceiverAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('receiverAddress') receiverAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+    );
+    const { data, count } =
+      await this.soulboundTokenService.getTokenByReceiverAddress(
+        ctx,
+        receiverAddress,
+      );
+    return { data, meta: { count } };
+  }
+
+  @Get('tokens/picked/:address/:limit')
+  @ApiOperation({
+    summary: 'Get picker list tokens by address',
+  })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async getTokenPickedByAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('address') address: string,
+    @Param('limit') limit: number,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getTokenPickedByAddress.name} was called with paras: address:${address}, limit: ${limit}! ==============`,
+    );
+    const { data, count } =
+      await this.soulboundTokenService.getTokenPickedByAddress(
+        ctx,
+        address,
+        limit,
+      );
+    return { data, meta: { count } };
   }
 
   @Post()

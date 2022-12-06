@@ -25,6 +25,8 @@ import { ContractUtil } from '../../../shared/utils/contract.util';
 import console from 'console';
 import { sha256 } from '@cosmjs/crypto';
 import { serializeSignDoc } from '@cosmjs/amino';
+import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
+import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -114,6 +116,55 @@ export class SoulboundTokenService {
   }
 
   /**
+   * Get list tokens by receiver address
+   * @param ctx
+   * @param receiverAddress
+   * @returns
+   */
+  async getTokenByReceiverAddress(
+    ctx: RequestContext,
+    receiverAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+    );
+    const tokens = await this.soulboundTokenRepos.find({
+      where: {
+        receiver_address: receiverAddress,
+      },
+    });
+    const data = plainToClass(TokenByReceiverAddressOutput, tokens, {
+      excludeExtraneousValues: true,
+    });
+    return { data, count: 0 };
+  }
+
+  async getTokenPickedByAddress(
+    ctx: RequestContext,
+    receiverAddress: string,
+    limit: number,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getTokenPickedByAddress.name} was called with paras: ${receiverAddress}! ==============`,
+    );
+    const tokens = await this.soulboundTokenRepos.find({
+      where: {
+        receiver_address: receiverAddress,
+      },
+      take: limit,
+      order: {
+        updated_at: 'DESC',
+      },
+    });
+    const data = plainToClass(TokenPickedByAddressOutput, tokens, {
+      excludeExtraneousValues: true,
+    });
+    return { data, count: 0 };
+  }
+
+  /**
    * Create token of Soulbound contract which user can clain or mint token
    * @param ctx
    * @param req
@@ -162,7 +213,7 @@ export class SoulboundTokenService {
       );
 
       const result = await this.soulboundTokenRepos.save(entity);
-      return { data: result, meta: 0 };
+      return { data: result, meta: {} };
     } else {
       return {
         Code: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Code,
@@ -207,7 +258,7 @@ export class SoulboundTokenService {
         entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
         entity.signature = req.signature;
         const result = await this.soulboundTokenRepos.update(entity.id, entity);
-        return { data: result, meta: 0 };
+        return { data: result, meta: {} };
       } else {
         return {
           code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
@@ -266,7 +317,7 @@ export class SoulboundTokenService {
               entity.id,
               entity,
             );
-            return { data: result, meta: 0 };
+            return { data: result, meta: {} };
           }
         })
         .catch((err) => {
