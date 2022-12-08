@@ -98,7 +98,7 @@ export class ContractService {
       });
       contract.type = contractCode ? contractCode.type : '';
       const result = contractCode ? contractCode.result : '';
-      if (result === 'Incorrect') {
+      if (result !== 'Incorrect') {
         contract.token_name = '';
         contract.token_symbol = '';
       }
