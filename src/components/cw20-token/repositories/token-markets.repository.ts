@@ -1,7 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TokenMarkets } from 'src/shared';
 import { EntityRepository, ObjectLiteral, Repository } from 'typeorm';
+import { CONTRACT_CODE_RESULT, TokenMarkets } from '../../../shared';
+import { SmartContractCode } from '../../../shared/entities/smart-contract-code.entity';
 import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
 
 @EntityRepository(TokenMarkets)
@@ -18,13 +19,18 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
   }
 
   async getCw20TokenMarkets(request: Cw20TokenParamsDto) {
-    const sqlSelect = `*`;
+    const sqlSelect = `tm.*`;
 
-    const queryBuilder = this.createQueryBuilder()
+    const queryBuilder = this.createQueryBuilder('tm')
       .select(sqlSelect)
-      .where(`coin_id NOT IN ('bitcoin','aura-network')`)
+      .innerJoin(
+        SmartContractCode,
+        'smc',
+        `smc.code_id = tm.code_id AND smc.result='${CONTRACT_CODE_RESULT.CORRECT}' `,
+      )
+      .where(`tm.coin_id NOT IN ('bitcoin','aura-network')`)
       .andWhere(
-        '(LOWER(name) LIKE :keyword OR LOWER(contract_address) LIKE :keyword)',
+        '(LOWER(tm.name) LIKE :keyword OR LOWER(tm.contract_address) LIKE :keyword)',
         {
           keyword: `%${(request.keyword || '').toLowerCase()}%`,
         },

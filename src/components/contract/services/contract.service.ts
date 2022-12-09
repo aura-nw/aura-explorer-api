@@ -7,6 +7,7 @@ import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
   AkcLogger,
+  CONTRACT_CODE_RESULT,
   CONTRACT_STATUS,
   ERROR_MAP,
   INDEXER_API,
@@ -97,6 +98,11 @@ export class ContractService {
         },
       });
       contract.type = contractCode ? contractCode.type : '';
+      const result = contractCode ? contractCode.result : '';
+      if (result !== CONTRACT_CODE_RESULT.CORRECT) {
+        contract.token_name = '';
+        contract.token_symbol = '';
+      }
     }
     return contract;
   }
