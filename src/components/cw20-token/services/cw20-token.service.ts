@@ -62,9 +62,9 @@ export class Cw20TokenService {
     const lstAddress = list?.map((i) => i.contract_address);
 
     const tokensInfo =
-    await this.smartContractRepository.getTokensByListContractAddress(
-      lstAddress,
-    );
+      await this.smartContractRepository.getTokensByListContractAddress(
+        lstAddress,
+      );
 
     const holderResponse = await lastValueFrom(
       this.httpService.get(
@@ -94,8 +94,8 @@ export class Cw20TokenService {
       const tokenFind = tokensInfo.find(
         (f) => String(f.contract_address) === item.contract_address,
       );
-     
-      let contract_verification = tokenFind?.contract_verification || '';
+
+      const contract_verification = tokenFind?.contract_verification || '';
 
       return {
         coin_id: item.coin_id || '',
