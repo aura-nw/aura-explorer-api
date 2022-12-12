@@ -133,7 +133,6 @@ export enum INDEXER_API {
   GET_NFTS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=%s&isBurned=false&countTotal=true&pageLimit=%s',
   GET_PROPOSAL = 'api/v1/proposal?chainid=%s&pageLimit=%s&pageOffset=%s&reverse=true',
   GET_CW20_TOKENS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=CW20&countTotal=true&pageLimit=%s&pageOffset=%s',
-  GET_HOLDER_TOKEN = 'api/v1/asset/holder?chainid=%s&contractType=CW20&contractAddress=%s&countTotal=true',
   GET_HOLDER_INFO_CW20 = 'api/v1/daily-cw20-holder',
 }
 

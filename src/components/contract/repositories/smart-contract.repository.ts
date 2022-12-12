@@ -195,7 +195,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
     return await this.createQueryBuilder()
-      .select('contract_address, token_name, token_symbol AS symbol')
+      .select('contract_address, token_name, token_symbol AS symbol, contract_verification')
       .where('contract_address IN (:...listContractAddress)', {
         listContractAddress: listContractAddress,
       })

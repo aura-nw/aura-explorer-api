@@ -187,4 +187,21 @@ export class ContractController {
 
     return { data: token, meta: {} };
   }
+
+  @Get('get-contract-by-code-id/:codeId')
+  @ApiOperation({ summary: 'Get contract detail by code id' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getContractByCodeId(
+    @ReqContext() ctx: RequestContext,
+    @Param('codeId') codeId: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractByCodeId.name} was called!`);
+    const contract = await this.contractService.getContractByCodeId(
+      ctx,
+      codeId,
+    );
+
+    return { data: contract, meta: {} };
+  }
 }
