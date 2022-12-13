@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class migrationName1670922214897 implements MigrationInterface {
-    name = 'migrationName1670922214897'
+export class changeDataTypeIdTableBlockSyncError1670922214897 implements MigrationInterface {
+    name = 'changeDataTypeIdTableBlockSyncError1670922214897'
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE \`block_sync_error\` DROP COLUMN \`block_hash\``);
         await queryRunner.query(`ALTER TABLE \`block_sync_error\` CHANGE COLUMN \`id\` \`id\` BIGINT NOT NULL AUTO_INCREMENT`);
