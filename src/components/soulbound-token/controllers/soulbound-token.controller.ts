@@ -16,6 +16,8 @@ import { SoulboundContractParasDto } from '../dtos/soulbound-contract-paras.dto'
 import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-params.dto';
 import { SoulboundTokenService } from '../services/soulbound-token.service';
 import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
+import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
+import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 
 @Controller('soulbound-token')
 @ApiTags('soulbound-token')
@@ -66,46 +68,44 @@ export class SoulboundTokenController {
     return { data, meta: { count } };
   }
 
-  @Get('tokens/:receiverAddress')
+  @Get('tokens-receiver-address')
   @ApiOperation({
     summary: 'Get list tokens by receiver address',
   })
   @ApiResponse({ status: HttpStatus.OK, schema: {} })
   async getTokenByReceiverAddress(
     @ReqContext() ctx: RequestContext,
-    @Param('receiverAddress') receiverAddress: string,
+    @Query() req: ReceiverTokenParasDto,
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${req.receiverAddress}! ==============`,
     );
     const { data, count } =
       await this.soulboundTokenService.getTokenByReceiverAddress(
         ctx,
-        receiverAddress,
+        req,
       );
     return { data, meta: { count } };
   }
 
-  @Get('tokens/picked/:address/:limit')
+  @Get('tokens-picked')
   @ApiOperation({
     summary: 'Get picker list tokens by address',
   })
   @ApiResponse({ status: HttpStatus.OK, schema: {} })
   async getTokenPickedByAddress(
     @ReqContext() ctx: RequestContext,
-    @Param('address') address: string,
-    @Param('limit') limit: number,
+    @Query() req: PickedTokenParasDto,
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokenPickedByAddress.name} was called with paras: address:${address}, limit: ${limit}! ==============`,
+      `============== ${this.getTokenPickedByAddress.name} was called with paras: address:${req.receiverAddress}, limit: ${req.limit}! ==============`,
     );
     const { data, count } =
       await this.soulboundTokenService.getTokenPickedByAddress(
         ctx,
-        address,
-        limit,
+        req
       );
     return { data, meta: { count } };
   }

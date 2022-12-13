@@ -15,9 +15,10 @@ export class SoulboundContractParasDto {
   @IsNumber()
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
+  @Min(0)
   @Max(PAGE_REQUEST.MAX)
-  limit = PAGE_REQUEST.MAX;
+  limit: number = PAGE_REQUEST.MAX;
 
-  @ApiProperty()
+  @ApiProperty({default: 0})
   offset: number;
 }

@@ -27,6 +27,8 @@ import { sha256 } from '@cosmjs/crypto';
 import { serializeSignDoc } from '@cosmjs/amino';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
+import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
+import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -51,8 +53,7 @@ export class SoulboundTokenService {
   async getContracts(ctx: RequestContext, req: SoulboundContractParasDto) {
     this.logger.log(
       ctx,
-      `============== ${
-        this.getContracts.name
+      `============== ${this.getContracts.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const { contracts, count } =
@@ -99,8 +100,7 @@ export class SoulboundTokenService {
   async getTokens(ctx: RequestContext, req: TokenParasDto) {
     this.logger.log(
       ctx,
-      `============== ${
-        this.getTokens.name
+      `============== ${this.getTokens.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const { tokens, count } = await this.soulboundTokenRepos.getTokens(
@@ -123,37 +123,42 @@ export class SoulboundTokenService {
    */
   async getTokenByReceiverAddress(
     ctx: RequestContext,
-    receiverAddress: string,
+    req: ReceiverTokenParasDto,
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    const tokens = await this.soulboundTokenRepos.find({
+    const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
       where: {
-        receiver_address: receiverAddress,
+        receiver_address: req.receiverAddress,
+      },
+      take: req.limit,
+      skip: req.offset,
+      order: {
+        updated_at: 'DESC',
       },
     });
     const data = plainToClass(TokenByReceiverAddressOutput, tokens, {
       excludeExtraneousValues: true,
     });
-    return { data, count: 0 };
+    return { data, count: count };
   }
 
   async getTokenPickedByAddress(
     ctx: RequestContext,
-    receiverAddress: string,
-    limit: number,
+    req: PickedTokenParasDto
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokenPickedByAddress.name} was called with paras: ${receiverAddress}! ==============`,
+      `============== ${this.getTokenPickedByAddress.name} was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    const tokens = await this.soulboundTokenRepos.find({
+    const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
       where: {
-        receiver_address: receiverAddress,
+        receiver_address: req.receiverAddress,
+        picked: true,
       },
-      take: limit,
+      take: req.limit,
       order: {
         updated_at: 'DESC',
       },
@@ -161,7 +166,7 @@ export class SoulboundTokenService {
     const data = plainToClass(TokenPickedByAddressOutput, tokens, {
       excludeExtraneousValues: true,
     });
-    return { data, count: 0 };
+    return { data, count: count };
   }
 
   /**
@@ -176,8 +181,7 @@ export class SoulboundTokenService {
   ) {
     this.logger.log(
       ctx,
-      `============== ${
-        this.create.name
+      `============== ${this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     // Verify signature
@@ -234,8 +238,7 @@ export class SoulboundTokenService {
   ) {
     this.logger.log(
       ctx,
-      `============== ${
-        this.update.name
+      `============== ${this.update.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
@@ -282,8 +285,7 @@ export class SoulboundTokenService {
   async pickedNft(ctx: RequestContext, @Body() req: PickedNftParasDto) {
     this.logger.log(
       ctx,
-      `============== ${
-        this.pickedNft.name
+      `============== ${this.pickedNft.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 

@@ -203,7 +203,12 @@ export enum SOULBOUND_TOKEN_STATUS {
   EQUIPPED = 'Equipped',
   UNEQUIPPED = 'Unequipped',
   PENDING = 'Pending',
-}
+};
+
+export const SOULBOUND_PICKED_TOKEN = {
+  MIN: 1,
+  MAX: 5,
+};
 
 export enum CW4973_CONTRACT {
   AGREEMENT = 'Agreement(address active,address passive,string tokenURI)',

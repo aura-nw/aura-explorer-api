@@ -1,14 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, Max, Min } from 'class-validator';
-import { PAGE_REQUEST } from '../../../shared';
+import { IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { PAGE_REQUEST } from 'src/shared';
 
-export class TokenParasDto {
+export class ReceiverTokenParasDto {
   @ApiProperty()
-  minterAddress: string;
-
-  @ApiProperty()
-  contractAddress: string;
+  @IsNotEmpty()
+  receiverAddress: string;
 
   @ApiPropertyOptional({
     description: `Optional, defaults to ${PAGE_REQUEST.MAX}`,
@@ -17,10 +15,13 @@ export class TokenParasDto {
   @IsNumber()
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
-  @Min(0)
   @Max(PAGE_REQUEST.MAX)
+  @Min(0)
   limit: number = PAGE_REQUEST.MAX;
 
   @ApiProperty({default: 0})
+  @IsNumber()
+  @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
+  @Min(0)
   offset: number;
 }
