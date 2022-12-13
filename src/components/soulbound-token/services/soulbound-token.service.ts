@@ -72,7 +72,7 @@ export class SoulboundTokenService {
         soulboundContract = { ...item };
 
         status
-          ?.find((f) => f.contract_address === item.contract_address)
+          ?.filter((f) => f.contract_address === item.contract_address)
           ?.forEach((m) => {
             if (m.status === SOULBOUND_TOKEN_STATUS.EQUIPPED) {
               claimedQty = Number(m.quanity) || 0;
