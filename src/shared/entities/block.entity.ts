@@ -35,10 +35,18 @@ export class Block extends BaseEntityIncrementId {
   @Column()
   timestamp: Date;
 
-  @Column({ default: 0 })
+  @Column({
+    name: 'gas_used',
+    default: 0,
+    type: 'bigint',
+  })
   gas_used: number;
 
-  @Column({ default: 0 })
+  @Column({
+    name: 'gas_wanted',
+    type: 'bigint',
+    default: 0,
+  })
   gas_wanted: number;
 
   @Column({ default: 0 })
@@ -47,7 +55,7 @@ export class Block extends BaseEntityIncrementId {
   @Column({
     name: 'json_data',
     type: 'json',
-    nullable: true
+    nullable: true,
   })
   json_data: any;
 }
