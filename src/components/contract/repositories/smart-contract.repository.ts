@@ -195,7 +195,9 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
     return await this.createQueryBuilder()
-      .select('contract_address, token_name, token_symbol AS symbol, contract_verification')
+      .select(
+        'contract_address, token_name, token_symbol AS symbol, contract_verification',
+      )
       .where('contract_address IN (:...listContractAddress)', {
         listContractAddress: listContractAddress,
       })
@@ -265,10 +267,10 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .orderBy(
         request?.sort_column && request?.sort_order
           ? {
-            [`${request.sort_column}`]:
-              request.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC',
-            upTime: 'DESC',
-          }
+              [`${request.sort_column}`]:
+                request.sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC',
+              upTime: 'DESC',
+            }
           : { transfers_24h: 'DESC', upTime: 'DESC' },
       );
 
@@ -280,26 +282,45 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
   /**
    * Get smart contract by minter
-   * @param minterAddress 
-   * @param limit 
-   * @param offset 
+   * @param minterAddress
+   * @param keyword
+   * @param limit
+   * @param offset
    */
-  async getContractByMinter(minterAddress: string, limit: number, offset: number) {
-    const builder = this.createQueryBuilder("sm")
-    .select('sm.id, sm.contract_address, sm.minter_address')
-    .where({
-      minter_address: minterAddress
-    });
+  async getContractByMinter(
+    minterAddress: string,
+    keyword: string,
+    limit: number,
+    offset: number,
+  ) {
+    const builder = this.createQueryBuilder('sm')
+      .select('sm.id, sm.contract_address, sm.minter_address')
+      .where({
+        minter_address: minterAddress,
+      });
 
-    const data =  await builder
-      .limit(limit)
-      .offset(offset)
-      .orderBy({
-        created_at: 'DESC'
-      })
-      .getRawMany();
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const data = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy({
+          created_at: 'DESC',
+        })
+        .getRawMany();
 
       const count = await builder.getCount();
-      return {contracts: data, count};
+      return { contracts: data, count };
+    };
+
+    if (!keyword) {
+      return await _finalizeResult(builder);
+    }
+
+    builder.where('LOWER(sm.contract_address) LIKE :keyword', {
+      keyword: `%${keyword}%`,
+    });
+    return await _finalizeResult(builder);
   }
 }

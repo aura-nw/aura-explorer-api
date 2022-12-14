@@ -1,4 +1,3 @@
-import { Optional } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional, Max, Min } from 'class-validator';
@@ -19,6 +18,9 @@ export class SoulboundContractParasDto {
   @Max(PAGE_REQUEST.MAX)
   limit: number = PAGE_REQUEST.MAX;
 
-  @ApiProperty({default: 0})
+  @ApiProperty({ default: 0 })
   offset: number;
+
+  @ApiPropertyOptional({ default: '' })
+  keyword: string;
 }

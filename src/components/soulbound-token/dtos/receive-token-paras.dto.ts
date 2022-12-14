@@ -19,7 +19,7 @@ export class ReceiverTokenParasDto {
   @Min(0)
   limit: number = PAGE_REQUEST.MAX;
 
-  @ApiProperty({default: 0})
+  @ApiProperty({ default: 0 })
   @IsNumber()
   @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
   @Min(0)

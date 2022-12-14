@@ -53,12 +53,14 @@ export class SoulboundTokenService {
   async getContracts(ctx: RequestContext, req: SoulboundContractParasDto) {
     this.logger.log(
       ctx,
-      `============== ${this.getContracts.name
+      `============== ${
+        this.getContracts.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const { contracts, count } =
       await this.smartContractRepos.getContractByMinter(
         req.minterAddress,
+        req.keyword,
         req.limit,
         req.offset,
       );
@@ -100,7 +102,8 @@ export class SoulboundTokenService {
   async getTokens(ctx: RequestContext, req: TokenParasDto) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokens.name
+      `============== ${
+        this.getTokens.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const { tokens, count } = await this.soulboundTokenRepos.getTokens(
@@ -127,7 +130,9 @@ export class SoulboundTokenService {
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${JSON.stringify(req)}! ==============`,
+      `============== ${
+        this.getTokenByReceiverAddress.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
       where: {
@@ -145,13 +150,12 @@ export class SoulboundTokenService {
     return { data, count: count };
   }
 
-  async getTokenPickedByAddress(
-    ctx: RequestContext,
-    req: PickedTokenParasDto
-  ) {
+  async getTokenPickedByAddress(ctx: RequestContext, req: PickedTokenParasDto) {
     this.logger.log(
       ctx,
-      `============== ${this.getTokenPickedByAddress.name} was called with paras: ${JSON.stringify(req)}! ==============`,
+      `============== ${
+        this.getTokenPickedByAddress.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
       where: {
@@ -181,7 +185,8 @@ export class SoulboundTokenService {
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.create.name
+      `============== ${
+        this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     // Verify signature
@@ -238,7 +243,8 @@ export class SoulboundTokenService {
   ) {
     this.logger.log(
       ctx,
-      `============== ${this.update.name
+      `============== ${
+        this.update.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
@@ -285,7 +291,8 @@ export class SoulboundTokenService {
   async pickedNft(ctx: RequestContext, @Body() req: PickedNftParasDto) {
     this.logger.log(
       ctx,
-      `============== ${this.pickedNft.name
+      `============== ${
+        this.pickedNft.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
