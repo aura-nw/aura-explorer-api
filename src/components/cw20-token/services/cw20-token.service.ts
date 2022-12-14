@@ -8,6 +8,7 @@ import { AccountService } from '../../../components/account/services/account.ser
 import {
   AkcLogger,
   AURA_INFO,
+  CONTRACT_TYPE,
   INDEXER_API,
   LENGTH,
   RequestContext,
@@ -75,7 +76,19 @@ export class Cw20TokenService {
       ),
     ).then((rs) => rs.data);
 
+    const newholderResponse = await lastValueFrom(
+      this.httpService.get(`${this.indexerUrl}${INDEXER_API.TOKEN_HOLDERS}`, {
+        params: {
+          chainid: this.indexerChainId,
+          contractType: CONTRACT_TYPE.CW20,
+          contractAddress: lstAddress,
+        },
+      }),
+    ).then((rs) => rs.data);
+
     const listHolder = holderResponse?.data || [];
+
+    const listNewHolder = newholderResponse?.data.resultAsset || [];
 
     const tokens = list.map((item: TokenMarkets) => {
       const current_price = item.current_price || 0;
@@ -86,10 +99,13 @@ export class Cw20TokenService {
       const holderInfo = listHolder.find(
         (f) => f.contract_address === item.contract_address,
       );
-      if (holderInfo) {
-        holders = holderInfo.new_holders || 0;
-        holders_change_percentage_24h = holderInfo.change_percent || 0;
-      }
+
+      const newHolderInfo = listNewHolder.find(
+        (f) => f.contract_address === item.contract_address,
+      );
+
+      holders = holderInfo?.new_holders || 0;
+      holders_change_percentage_24h = newHolderInfo?.percent_hold || 0;
 
       const tokenFind = tokensInfo.find(
         (f) => String(f.contract_address) === item.contract_address,
