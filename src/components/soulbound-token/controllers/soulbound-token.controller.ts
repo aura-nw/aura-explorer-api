@@ -82,10 +82,7 @@ export class SoulboundTokenController {
       `============== ${this.getTokenByReceiverAddress.name} was called with paras: ${req.receiverAddress}! ==============`,
     );
     const { data, count } =
-      await this.soulboundTokenService.getTokenByReceiverAddress(
-        ctx,
-        req,
-      );
+      await this.soulboundTokenService.getTokenByReceiverAddress(ctx, req);
     return { data, meta: { count } };
   }
 
@@ -103,10 +100,7 @@ export class SoulboundTokenController {
       `============== ${this.getTokenPickedByAddress.name} was called with paras: address:${req.receiverAddress}, limit: ${req.limit}! ==============`,
     );
     const { data, count } =
-      await this.soulboundTokenService.getTokenPickedByAddress(
-        ctx,
-        req
-      );
+      await this.soulboundTokenService.getTokenPickedByAddress(ctx, req);
     return { data, meta: { count } };
   }
 

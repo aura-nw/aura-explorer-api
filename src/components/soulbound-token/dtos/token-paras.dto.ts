@@ -21,6 +21,12 @@ export class TokenParasDto {
   @Max(PAGE_REQUEST.MAX)
   limit: number = PAGE_REQUEST.MAX;
 
-  @ApiProperty({default: 0})
+  @ApiProperty({ default: 0 })
   offset: number;
+
+  @ApiPropertyOptional({ default: '' })
+  keyword: string;
+
+  @ApiPropertyOptional({ default: '' })
+  status: string;
 }

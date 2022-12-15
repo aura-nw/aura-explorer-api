@@ -191,6 +191,10 @@ export const ERROR_MAP = {
     Code: 'E009',
     Message: `Token not exist`,
   },
+  RECEIVER_ADDRESS_INVALID: {
+    Code: 'E010',
+    Message: `Receiver address invalid`,
+  },
 };
 
 export const PAGE_REQUEST = {

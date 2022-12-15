@@ -2,8 +2,10 @@ import { Body, Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import {
   AkcLogger,
+  AURA_INFO,
   CW4973_CONTRACT,
   ERROR_MAP,
+  LENGTH,
   RequestContext,
   SoulboundToken,
   SOULBOUND_TOKEN_STATUS,
@@ -109,6 +111,8 @@ export class SoulboundTokenService {
     const { tokens, count } = await this.soulboundTokenRepos.getTokens(
       req.minterAddress,
       req.contractAddress,
+      req.keyword,
+      req.status,
       req.limit,
       req.offset,
     );
@@ -210,19 +214,38 @@ export class SoulboundTokenService {
       },
     });
     if (contract) {
+      const isReceiverAddress =
+        contract.contract_address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+        contract.contract_address.length === LENGTH.CONTRACT_ADDRESS;
+
+      if (!isReceiverAddress) {
+        return {
+          code: ERROR_MAP.RECEIVER_ADDRESS_INVALID.Code,
+          message: ERROR_MAP.RECEIVER_ADDRESS_INVALID.Message,
+        };
+      }
+
       entity.contract_address = contract.contract_address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
       entity.receiver_address = req.receiver_address;
       entity.token_uri = req.token_uri;
+      entity.signature = req.signature;
       entity.token_id = this.createTokenId(
         this.chainId,
         contract.minter_address,
         req.receiver_address,
         req.token_uri,
       );
-
-      const result = await this.soulboundTokenRepos.save(entity);
-      return { data: result, meta: {} };
+      try {
+        const result = await this.soulboundTokenRepos.save(entity);
+        return { data: result, meta: {} };
+      } catch (err) {
+        this.logger.error(
+          ctx,
+          `Class ${SoulboundTokenService.name} call ${this.create.name} method error: ${err.stack}`,
+        );
+        throw err;
+      }
     } else {
       return {
         Code: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Code,

@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { EntityRepository, In, Repository } from 'typeorm';
+import { EntityRepository, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { SoulboundToken } from '../../../shared';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 
@@ -11,6 +11,8 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
    * Get list tokens by minter address and contract address
    * @param minterAddress
    * @param contractAddress
+   * @param keyword
+   * @param status
    * @param limit
    * @param offset
    * @returns
@@ -18,6 +20,8 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
   async getTokens(
     minterAddress: string,
     contractAddress: string,
+    keyword: string,
+    status: string,
     limit: number,
     offset: number,
   ) {
@@ -38,15 +42,31 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
           contractAddress,
         },
       );
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SoulboundToken>,
+    ) => {
+      const tokens = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy('sbt.created_at', 'DESC')
+        .getRawMany();
 
-    const tokens = await builder
-      .limit(limit)
-      .offset(offset)
-      .orderBy('sbt.created_at', 'DESC')
-      .getRawMany();
+      const count = await builder.getCount();
+      return { tokens, count };
+    };
 
-    const count = await builder.getCount();
-    return { tokens, count };
+    if (keyword) {
+      builder.andWhere('LOWER(sbt.receiver_address) LIKE :keyword', {
+        keyword: `%${keyword}%`,
+      });
+    }
+
+    if (status) {
+      builder.andWhere('sbt.status = :status', {
+        status,
+      });
+    }
+    return await _finalizeResult(builder);
   }
 
   /**
