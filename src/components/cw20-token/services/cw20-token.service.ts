@@ -87,8 +87,8 @@ export class Cw20TokenService {
         (f) => f.contract_address === item.contract_address,
       );
       if (holderInfo) {
-        holders = holderInfo.new_holders || 0;
-        holders_change_percentage_24h = holderInfo.change_percent || 0;
+        holders = holderInfo.holders || 0;
+        holders_change_percentage_24h = holderInfo.percentage || 0;
       }
 
       const tokenFind = tokensInfo.find(
