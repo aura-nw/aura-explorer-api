@@ -81,105 +81,6 @@ export class SmartContractRepository extends Repository<SmartContract> {
     return await _finalizeResult(builder);
   }
 
-  /**
-   * Get list code id
-   * @description get code ids for 'Register Contracts to Deploy on Mainnet' screen.
-   * The code ids just for creator who owner that code (not deployer).
-   * So must to join smart_contract_codes to make sure that code id has synced and belong to creator
-   * @param creatorAddress: Creator address
-   * @returns List code id (number[])
-   */
-  async getCodeIds(creatorAddress: string) {
-    const result = await this.createQueryBuilder('sc')
-      .innerJoin(
-        SmartContractCode,
-        'scc',
-        'scc.code_id = sc.code_id AND scc.creator = sc.creator_address',
-      )
-      .distinct(true)
-      .select('sc.code_id `codeId`')
-      .where({ contract_verification: Not(CONTRACT_STATUS.UNVERIFIED) })
-      .andWhere({
-        mainnet_upload_status: In([
-          CONTRACT_STATUS.REJECTED,
-          CONTRACT_STATUS.NOT_REGISTERED,
-        ]),
-      })
-      .andWhere({ creator_address: creatorAddress })
-      .orderBy('sc.code_id', 'ASC')
-      .getRawMany();
-
-    return result.map((item) => Number(item.codeId));
-  }
-
-  /**
-   * Get list contract by Creator address
-   * @param creatorAddress
-   * @param codeId: Code id of contract
-   * @param status: Status of contract
-   * @param limit: Number of record on per page
-   * @param offset: Numer of record to skip
-   * @returns @returns List contract(any[])
-   */
-  async getContractByCreator(
-    creatorAddress: string,
-    codeId: number,
-    status: string,
-    limit: number,
-    offset: number,
-  ) {
-    const mainnetUploadStatus = [
-      CONTRACT_STATUS.TBD,
-      CONTRACT_STATUS.DEPLOYED,
-      CONTRACT_STATUS.REJECTED,
-      CONTRACT_STATUS.PENDING,
-      CONTRACT_STATUS.NOT_REGISTERED,
-      CONTRACT_STATUS.APPROVED,
-    ];
-
-    const builder = this.createQueryBuilder('sc')
-      .leftJoin(SmartContractCode, 'scc', 'scc.code_id = sc.code_id')
-
-      // select
-      .select('sc.*, scc.type `type`, scc.result `result`')
-      .addSelect(
-        `IF(
-          sc.mainnet_upload_status IN (:mainnetUploadStatus),
-          sc.mainnet_upload_status,
-          sc.contract_verification
-        )`,
-        'status',
-      )
-      .setParameters({ mainnetUploadStatus })
-      // select
-
-      .orderBy('sc.updated_at', 'DESC')
-      .where({ creator_address: creatorAddress });
-
-    if (codeId) {
-      builder.andWhere('sc.code_id LIKE :codeId', { codeId: `%${codeId}%` });
-    }
-
-    if (status) {
-      const isFilterContractVerificationStatus = [
-        CONTRACT_STATUS.UNVERIFIED,
-        CONTRACT_STATUS.EXACT_MATCH,
-        CONTRACT_STATUS.SIMILAR_MATCH,
-      ].includes(<CONTRACT_STATUS>status);
-
-      if (isFilterContractVerificationStatus) {
-        builder.andWhere({ contract_verification: status });
-      } else {
-        builder.andWhere({ mainnet_upload_status: status });
-      }
-    }
-
-    const count = await builder.getCount();
-    const contracts = await builder.limit(limit).offset(offset).getRawMany();
-
-    return [contracts, count];
-  }
-
   async getTokenByContractAddress(contractAddress: string) {
     return await this.createQueryBuilder('sc')
       .select(
@@ -195,7 +96,9 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
     return await this.createQueryBuilder()
-      .select('contract_address, token_name, token_symbol AS symbol, contract_verification')
+      .select(
+        'contract_address, token_name, token_symbol AS symbol, contract_verification',
+      )
       .where('contract_address IN (:...listContractAddress)', {
         listContractAddress: listContractAddress,
       })
