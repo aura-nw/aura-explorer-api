@@ -251,8 +251,8 @@ export class ContractService {
       const listHolder = holderResponse?.data || [];
 
       if (listHolder.length > 0) {
-        token.num_holder = listHolder[0].new_holders || 0;
-        token.holders_change_percentage_24h = listHolder[0].change_percent || 0;
+        token.num_holder = listHolder[0].holders || 0;
+        token.holders_change_percentage_24h = listHolder[0].percentage || 0;
       }
     }
 
