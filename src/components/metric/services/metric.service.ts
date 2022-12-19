@@ -10,7 +10,7 @@ import {
   buildCondition,
   generateSeries,
   makeupData,
-  mergeByProperty
+  mergeByProperty,
 } from '../utils/utils';
 import { InfluxDBClient } from './influxdb-client';
 
@@ -79,10 +79,10 @@ export class MetricService {
 
   /**
    * Get token data by coid id
-   * @param ctx 
-   * @param coinId 
-   * @param range 
-   * @returns 
+   * @param ctx
+   * @param coinId
+   * @param range
+   * @returns
    */
   async getTokenByCoinId(
     ctx: RequestContext,
@@ -95,16 +95,19 @@ export class MetricService {
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
 
-    this.logger.log(ctx, `${this.getTokenByCoinId.name} call method from influxdb!`);
-    const output = await this.influxDbClient.getTokenByCoinId(
+    this.logger.log(
+      ctx,
+      `${this.getTokenByCoinId.name} call method from influxdb!`,
+    );
+    const output = (await this.influxDbClient.getTokenByCoinId(
       'token_cw20_measurement',
       startTime,
       queryStep,
-      coinId
-    ) as TokenOutput[];
+      coinId,
+    )) as TokenOutput[];
 
     this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
-    const metricData: TokenOutput[] = [];   
+    const metricData: TokenOutput[] = [];
     if (range === Range.minute) {
       const length = output?.length || 0;
       for (let i = 0; i < length; i++) {
@@ -114,7 +117,7 @@ export class MetricService {
         metricData.push(tokenOutput);
         const currentTime = new Date();
         currentTime.setSeconds(0, 0);
-        if (new Date(item.timestamp) < currentTime && i == (length - 1)) {
+        if (new Date(item.timestamp) < currentTime && i == length - 1) {
           const cloneItem = { ...item };
           cloneItem.timestamp = currentTime.toUTCString();
           metricData.push(cloneItem);
@@ -124,7 +127,7 @@ export class MetricService {
       const series = generateSeries(range);
       series.forEach((item: MetricOutput) => {
         let tokenOutput = new TokenOutput();
-        const find = output.find(f => f.timestamp === item.timestamp);
+        const find = output.find((f) => f.timestamp === item.timestamp);
         if (find) {
           tokenOutput = { ...find };
         } else {
