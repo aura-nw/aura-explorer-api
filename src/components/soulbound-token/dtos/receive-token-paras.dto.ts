@@ -8,6 +8,9 @@ export class ReceiverTokenParasDto {
   @IsNotEmpty()
   receiverAddress: string;
 
+  @ApiProperty({ default: false })
+  isEquipToken: string;
+
   @ApiPropertyOptional({
     description: `Optional, defaults to ${PAGE_REQUEST.MAX}`,
     type: Number,

@@ -138,16 +138,15 @@ export class SoulboundTokenService {
         this.getTokenByReceiverAddress.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
-      where: {
-        receiver_address: req.receiverAddress,
-      },
-      take: req.limit,
-      skip: req.offset,
-      order: {
-        updated_at: 'DESC',
-      },
-    });
+
+    const { tokens, count } =
+      await this.soulboundTokenRepos.getTokenByReceiverAddress(
+        req.receiverAddress,
+        req.isEquipToken,
+        req.limit,
+        req.offset,
+      );
+
     const data = plainToClass(TokenByReceiverAddressOutput, tokens, {
       excludeExtraneousValues: true,
     });
@@ -220,8 +219,8 @@ export class SoulboundTokenService {
 
       if (!isReceiverAddress) {
         return {
-          code: ERROR_MAP.RECEIVER_ADDRESS_INVALID.Code,
-          message: ERROR_MAP.RECEIVER_ADDRESS_INVALID.Message,
+          code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+          message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
         };
       }
 

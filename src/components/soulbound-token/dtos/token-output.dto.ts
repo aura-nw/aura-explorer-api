@@ -15,6 +15,9 @@ export class TokenOutputDto {
   token_uri: string;
 
   @Expose()
+  token_name: string;
+
+  @Expose()
   receiver_address: string;
 
   @Expose()
