@@ -97,15 +97,23 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
   async getTokenByReceiverAddress(
     receiverAddress: string,
     isEquipToken: string,
+    keyword: string,
     limit: number,
     offset: number,
   ) {
     this._logger.log(
       `============== ${this.getTokenByReceiverAddress.name} was called! ==============`,
     );
-    const builder = this.createQueryBuilder('sbt').select('sbt.*').where({
-      receiver_address: receiverAddress,
-    });
+    const builder = this.createQueryBuilder('sbt')
+      .select('sbt.*, sm.token_name')
+      .innerJoin(
+        SmartContract,
+        'sm',
+        'sm.contract_address = sbt.contract_address',
+      )
+      .where({
+        receiver_address: receiverAddress,
+      });
     const _finalizeResult = async (
       _builder: SelectQueryBuilder<SoulboundToken>,
     ) => {
@@ -118,6 +126,18 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       const count = await builder.getCount();
       return { tokens, count };
     };
+
+    if (keyword) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(sbt.token_id) LIKE :keyword', {
+            keyword: `%${keyword}%`,
+          }).orWhere('LOWER(sm.token_name) LIKE LOWER(:keyword)', {
+            keyword: `%${keyword}%`,
+          });
+        }),
+      );
+    }
 
     if (isEquipToken === 'true') {
       builder.andWhere({ status: Equal(SOULBOUND_TOKEN_STATUS.EQUIPPED) });

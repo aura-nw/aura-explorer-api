@@ -11,6 +11,9 @@ export class ReceiverTokenParasDto {
   @ApiProperty({ default: false })
   isEquipToken: string;
 
+  @ApiPropertyOptional({ default: '' })
+  keyword: string;
+
   @ApiPropertyOptional({
     description: `Optional, defaults to ${PAGE_REQUEST.MAX}`,
     type: Number,

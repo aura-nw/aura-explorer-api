@@ -31,6 +31,7 @@ import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
 import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -41,6 +42,7 @@ export class SoulboundTokenService {
     private soulboundTokenRepos: SoulboundTokenRepository,
     private smartContractRepos: SmartContractRepository,
     private contractUtil: ContractUtil,
+    private serviceUtil: ServiceUtil,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
@@ -123,6 +125,54 @@ export class SoulboundTokenService {
   }
 
   /**
+   * Get list tokens by minter address and contract address
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async getTokensDetail(ctx: RequestContext, tokenId: string) {
+    this.logger.log(
+      ctx,
+      `============== ${
+        this.getTokens.name
+      } was called with paras: tokenId=${JSON.stringify(
+        tokenId,
+      )}! ==============`,
+    );
+    const token = await this.soulboundTokenRepos.findOne({
+      where: { token_id: tokenId },
+    });
+
+    const addresses = token?.contract_address || '';
+
+    const contract = await this.smartContractRepos.findOne({
+      where: { contract_address: addresses },
+    });
+
+    const ipfs = await this.serviceUtil.getDataAPI(token?.token_uri, '', ctx);
+
+    if (!ipfs) {
+      return {
+        code: ERROR_MAP.TOKEN_URI_INVALID.Code,
+        message: ERROR_MAP.TOKEN_URI_INVALID.Message,
+      };
+    }
+
+    return {
+      id: token?.id || '',
+      contract_address: addresses,
+      token_id: token?.token_id || '',
+      token_uri: token?.token_uri || '',
+      token_name: contract?.token_name || '',
+      receiver_address: token?.receiver_address || '',
+      status: token?.status || '',
+      signature: token?.signature || '',
+      minter_address: contract?.minter_address || '',
+      ipfs,
+    };
+  }
+
+  /**
    * Get list tokens by receiver address
    * @param ctx
    * @param receiverAddress
@@ -143,6 +193,7 @@ export class SoulboundTokenService {
       await this.soulboundTokenRepos.getTokenByReceiverAddress(
         req.receiverAddress,
         req.isEquipToken,
+        req.keyword,
         req.limit,
         req.offset,
       );
@@ -224,11 +275,21 @@ export class SoulboundTokenService {
         };
       }
 
+      const ipfs = await this.serviceUtil.getDataAPI(req.token_uri, '', ctx);
+
+      if (!ipfs) {
+        return {
+          code: ERROR_MAP.TOKEN_URI_INVALID.Code,
+          message: ERROR_MAP.TOKEN_URI_INVALID.Message,
+        };
+      }
+
       entity.contract_address = contract.contract_address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
       entity.receiver_address = req.receiver_address;
       entity.token_uri = req.token_uri;
       entity.signature = req.signature;
+      entity.token_img = ipfs.image;
       entity.token_id = this.createTokenId(
         this.chainId,
         contract.minter_address,
@@ -333,7 +394,7 @@ export class SoulboundTokenService {
 
     const entity = await this.soulboundTokenRepos.findOne(req.id);
     if (entity) {
-      SigningCosmWasmClient.connect(this.chainId)
+      await SigningCosmWasmClient.connect(this.chainId)
         .then((client) =>
           client.queryContractSmart(entity.contract_address, {
             owner_of: {

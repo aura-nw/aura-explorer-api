@@ -15,6 +15,9 @@ export class TokenPickedByAddressOutput {
   token_uri: string;
 
   @Expose()
+  token_img: string;
+
+  @Expose()
   receiver_address: string;
 
   @Expose()

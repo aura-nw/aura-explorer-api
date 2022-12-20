@@ -16,6 +16,9 @@ export class SoulboundToken extends BaseEntityIncrementId {
   token_uri: string;
 
   @Column()
+  token_img: string;
+
+  @Column()
   @Index({ unique: false })
   receiver_address: string;
 

@@ -191,6 +191,10 @@ export const ERROR_MAP = {
     Code: 'E009',
     Message: `Token not exist`,
   },
+  TOKEN_URI_INVALID: {
+    Code: 'E010',
+    Message: `Token URI invalid`,
+  },
 };
 
 export const PAGE_REQUEST = {
