@@ -71,7 +71,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
             .orWhere('LOWER(sbt.token_uri) LIKE :keyword', {
               keyword: `%${keyword}%`,
             })
-            .orWhere('LOWER(sm.token_name) LIKE :keyword', {
+            .orWhere('LOWER(sbt.token_id) LIKE :keyword', {
               keyword: `%${keyword}%`,
             });
         }),
