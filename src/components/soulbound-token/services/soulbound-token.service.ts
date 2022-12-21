@@ -36,6 +36,7 @@ import { ServiceUtil } from '../../../shared/utils/service.util';
 export class SoulboundTokenService {
   private appParams: any;
   private chainId: string;
+  private rpc: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -46,6 +47,7 @@ export class SoulboundTokenService {
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
+    this.rpc = this.appParams.node.rpc;
   }
 
   /**
@@ -394,7 +396,7 @@ export class SoulboundTokenService {
 
     const entity = await this.soulboundTokenRepos.findOne(req.id);
     if (entity) {
-      await SigningCosmWasmClient.connect(this.chainId)
+      SigningCosmWasmClient.connect(this.rpc)
         .then((client) =>
           client.queryContractSmart(entity.contract_address, {
             owner_of: {
