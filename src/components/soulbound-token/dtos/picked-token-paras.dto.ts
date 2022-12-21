@@ -14,6 +14,5 @@ export class PickedTokenParasDto {
   })
   @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
   @Min(0)
-  @Max(SOULBOUND_PICKED_TOKEN.MAX)
   limit: number = SOULBOUND_PICKED_TOKEN.MAX;
 }

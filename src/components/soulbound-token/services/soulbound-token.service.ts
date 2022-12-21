@@ -168,8 +168,10 @@ export class SoulboundTokenService {
       token_name: contract?.token_name || '',
       receiver_address: token?.receiver_address || '',
       status: token?.status || '',
+      picked: token?.picked || '',
       signature: token?.signature || '',
       minter_address: contract?.minter_address || '',
+      description: contract?.description || '',
       ipfs,
     };
   }
@@ -216,11 +218,11 @@ export class SoulboundTokenService {
     const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
       where: {
         receiver_address: req.receiverAddress,
-        picked: true,
       },
       take: req.limit,
       order: {
-        updated_at: 'DESC',
+        picked: 'DESC',
+        created_at: 'ASC',
       },
     });
     const data = plainToClass(TokenPickedByAddressOutput, tokens, {
@@ -346,7 +348,9 @@ export class SoulboundTokenService {
       };
     }
 
-    const entity = await this.soulboundTokenRepos.findOne(req.id);
+    const entity = await this.soulboundTokenRepos.findOne({
+      where: { token_id: req.id },
+    });
     if (entity) {
       if (entity.receiver_address === address) {
         entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
@@ -394,12 +398,14 @@ export class SoulboundTokenService {
       };
     }
 
-    const entity = await this.soulboundTokenRepos.findOne(req.id);
+    const entity = await this.soulboundTokenRepos.findOne({
+      where: { token_id: req.id },
+    });
     if (entity) {
       SigningCosmWasmClient.connect(this.rpc)
         .then((client) =>
           client.queryContractSmart(entity.contract_address, {
-            owner_of: {
+            nft_info: {
               token_id: entity.token_id,
             },
           }),
