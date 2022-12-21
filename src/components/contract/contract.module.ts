@@ -1,15 +1,15 @@
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { ServiceUtil } from "../../shared/utils/service.util";
-import { SharedModule } from "../../shared";
-import { ContractController } from "./controllers/contract.controller";
-import { SmartContractRepository } from "./repositories/smart-contract.repository";
-import { ContractService } from "./services/contract.service";
-import { ConfigModule } from "@nestjs/config";
-import { TagRepository } from "./repositories/tag.repository";
-import { HttpModule } from "@nestjs/axios";
-import { TokenContractRepository } from "./repositories/token-contract.repository";
-import { SmartContractCodeRepository } from "../contract-code/repositories/smart-contract-code.repository";
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServiceUtil } from '../../shared/utils/service.util';
+import { SharedModule } from '../../shared';
+import { ContractController } from './controllers/contract.controller';
+import { SmartContractRepository } from './repositories/smart-contract.repository';
+import { ContractService } from './services/contract.service';
+import { ConfigModule } from '@nestjs/config';
+import { TagRepository } from './repositories/tag.repository';
+import { HttpModule } from '@nestjs/axios';
+import { SmartContractCodeRepository } from '../contract-code/repositories/smart-contract-code.repository';
+import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
 
 @Module({
   imports: [
@@ -17,14 +17,14 @@ import { SmartContractCodeRepository } from "../contract-code/repositories/smart
     TypeOrmModule.forFeature([
       SmartContractRepository,
       TagRepository,
-      TokenContractRepository,
-      SmartContractCodeRepository
+      SmartContractCodeRepository,
+      TokenMarketsRepository,
     ]),
     ConfigModule,
-    HttpModule
+    HttpModule,
   ],
   providers: [ContractService, ServiceUtil],
   controllers: [ContractController],
   exports: [ContractService],
 })
-export class ContractModule { }
+export class ContractModule {}

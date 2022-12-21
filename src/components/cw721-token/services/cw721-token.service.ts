@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as util from 'util';
 import { SmartContractRepository } from '../../../components/contract/repositories/smart-contract.repository';
-import { TokenContractRepository } from '../../../components/contract/repositories/token-contract.repository';
 import {
   AkcLogger,
   AURA_INFO,
@@ -24,7 +23,6 @@ export class Cw721TokenService {
 
   constructor(
     private readonly logger: AkcLogger,
-    private tokenContractRepository: TokenContractRepository,
     private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
   ) {

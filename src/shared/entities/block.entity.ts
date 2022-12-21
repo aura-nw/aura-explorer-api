@@ -1,7 +1,6 @@
 import { Column, Entity, OneToMany, Unique } from 'typeorm';
 
 import { BaseEntityIncrementId } from './base/base.entity';
-import { Transaction } from './transaction.entity';
 
 @Entity('blocks')
 export class Block extends BaseEntityIncrementId {
@@ -36,22 +35,27 @@ export class Block extends BaseEntityIncrementId {
   @Column()
   timestamp: Date;
 
-  @Column({ default: 0 })
+  @Column({
+    name: 'gas_used',
+    default: 0,
+    type: 'bigint',
+  })
   gas_used: number;
 
-  @Column({ default: 0 })
+  @Column({
+    name: 'gas_wanted',
+    type: 'bigint',
+    default: 0,
+  })
   gas_wanted: number;
 
   @Column({ default: 0 })
   round: number;
 
-  @OneToMany(() => Transaction, (tx) => tx.block)
-  txs: Transaction[];
-
   @Column({
     name: 'json_data',
     type: 'json',
-    nullable: true
+    nullable: true,
   })
   json_data: any;
 }

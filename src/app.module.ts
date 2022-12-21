@@ -6,7 +6,6 @@ import { SharedModule } from './shared/shared.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ComponentsModule } from './components/components.module';
-import { TransactionModule } from './components/transaction/transaction.module';
 import { BlockModule } from './components/block/block.module';
 import { ValidatorModule } from './components/validator/validator.module';
 import { AccountModule } from './components/account/account.module';
@@ -25,7 +24,6 @@ import { MetricService } from './components/metric/services/metric.service';
     ComponentsModule,
     ConfigModule,
     HttpModule,
-    TransactionModule,
     BlockModule,
     ValidatorModule,
     AccountModule,
@@ -33,7 +31,7 @@ import { MetricService } from './components/metric/services/metric.service';
     ContractCodeModule,
     Cw20TokenModule,
     Cw721TokenModule,
-    TypeOrmModule.forFeature([SyncStatusRepository])
+    TypeOrmModule.forFeature([SyncStatusRepository]),
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil, MetricService],
