@@ -113,6 +113,7 @@ export enum CONTRACT_TRANSACTION_EXECUTE_TYPE {
 export enum CONTRACT_TYPE {
   CW20 = 'CW20',
   CW721 = 'CW721',
+  CW4973 = 'CW4973',
 }
 
 export enum CONTRACT_CODE_RESULT {
