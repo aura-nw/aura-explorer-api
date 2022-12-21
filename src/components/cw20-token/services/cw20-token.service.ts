@@ -259,7 +259,7 @@ export class Cw20TokenService {
         );
         const asset = new AssetDto();
         asset.contract_address = item.contract_address || '-';
-        asset.image = item.image || '';
+        asset.image = tokenMarketsInfo?.image || '';
         asset.name = item.asset_info?.data?.name || '';
         asset.symbol = item.asset_info?.data?.symbol || '';
         asset.balance = item.balance || 0;

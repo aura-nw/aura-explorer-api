@@ -9,6 +9,7 @@ import {
   AkcLogger,
   CONTRACT_CODE_RESULT,
   CONTRACT_STATUS,
+  CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API,
   RequestContext,
@@ -24,6 +25,8 @@ import { TagRepository } from '../repositories/tag.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
+import { SmartContract } from '../../../shared/entities/smart-contract.entity';
+import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 @Injectable()
 export class ContractService {
   private api;
@@ -43,6 +46,7 @@ export class ContractService {
     private configService: ConfigService,
     private httpService: HttpService,
     private tokenMarketsRepository: TokenMarketsRepository,
+    private soulboundTokenRepository: SoulboundTokenRepository,
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
@@ -334,8 +338,11 @@ export class ContractService {
       token.circulating_market_cap =
         tokenMarketData?.circulating_market_cap || 0;
       token.price = tokenMarketData?.current_price || 0;
-      token.fully_diluted_market_cap = tokenMarketData?.fully_diluted_valuation || token.max_total_supply * token.price;
-      token.price_change_percentage_24h = tokenMarketData?.price_change_percentage_24h || 0;
+      token.fully_diluted_market_cap =
+        tokenMarketData?.fully_diluted_valuation ||
+        token.max_total_supply * token.price;
+      token.price_change_percentage_24h =
+        tokenMarketData?.price_change_percentage_24h || 0;
       token.num_holder = 0;
       token.holders_change_percentage_24h = 0;
 
@@ -343,11 +350,14 @@ export class ContractService {
         this.httpService.get(
           `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
           {
-            params: { chainId: this.indexerChainId, addresses: [contractAddress] },
+            params: {
+              chainId: this.indexerChainId,
+              addresses: [contractAddress],
+            },
           },
         ),
       ).then((rs) => rs.data);
-  
+
       const listHolder = holderResponse?.data || [];
 
       if (listHolder.length > 0) {
@@ -372,5 +382,76 @@ export class ContractService {
     });
 
     return contract;
+  }
+
+  async getNftDetail(contractAddress: string, tokenId: string) {
+    // Get contract info
+    const smartContract = await this.smartContractRepository.findOne({
+      where: {
+        contract_address: contractAddress,
+      },
+    });
+    if (smartContract) {
+      // Get smartContratctCode info
+      const smartContratctCode = await this.smartContractCodeRepository.findOne(
+        {
+          where: {
+            code_id: smartContract.code_id,
+          },
+        },
+      );
+
+      if (smartContratctCode) {
+        switch (smartContratctCode.type) {
+          case CONTRACT_TYPE.CW4973:
+            break;
+          case CONTRACT_TYPE.CW721:
+            break;
+        }
+      }
+    }
+  }
+
+  async getCW721Token(
+    ctx: RequestContext,
+    smartContract: SmartContract,
+    tokenId: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getCW721Token.name} was called!`);
+    const contractAddress = smartContract.contract_address;
+
+    const url = `${this.indexerUrl}${util.format(
+      INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID,
+      this.indexerChainId,
+      CONTRACT_TYPE.CW721,
+      encodeURIComponent(tokenId),
+      contractAddress,
+    )}`;
+    const result = await this.serviceUtil.getDataAPI(url, '', ctx);
+    let nft = null;
+    if (result && result.data.assets.CW721.asset.length > 0) {
+      nft = result.data.assets.CW721.asset[0];
+      nft.name = '';
+      nft.creator = '';
+      nft.symbol = '';
+      nft.name = smartContract.token_name;
+      nft.creator = smartContract.creator_address;
+      nft.symbol = smartContract.token_symbol;
+      nft.owner = nft.is_burned ? '' : nft.owner;
+    }
+    return { data: nft, meta: {} };
+  }
+
+  async getCW4973Token(
+    ctx: RequestContext,
+    smartContract: SmartContract,
+    tokenId: string,
+  ) {
+    const token = await this.soulboundTokenRepository.findOne({
+      where: { token_id: tokenId },
+    });
+
+    // Get ipfs info
+    const ipfs = await this.serviceUtil.getDataAPI(token?.token_uri, '', ctx);
   }
 }

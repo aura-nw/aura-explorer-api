@@ -204,4 +204,12 @@ export class ContractController {
 
     return { data: contract, meta: {} };
   }
+
+  @Get(':contractAddress/nft/:tokenId')
+  @ApiOperation({ summary: 'Get NFT detail' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getNftDetail() {
+    
+  }
 }
