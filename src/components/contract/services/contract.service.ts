@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom } from 'rxjs';
+import { bufferTime, lastValueFrom } from 'rxjs';
 import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
@@ -384,7 +384,11 @@ export class ContractService {
     return contract;
   }
 
-  async getNftDetail(contractAddress: string, tokenId: string) {
+  async getNftDetail(
+    ctx: RequestContext,
+    contractAddress: string,
+    tokenId: string,
+  ) {
     // Get contract info
     const smartContract = await this.smartContractRepository.findOne({
       where: {
@@ -404,9 +408,9 @@ export class ContractService {
       if (smartContratctCode) {
         switch (smartContratctCode.type) {
           case CONTRACT_TYPE.CW4973:
-            break;
+            return this.getCW4973Token(ctx, smartContract, tokenId);
           case CONTRACT_TYPE.CW721:
-            break;
+            return this.getCW721Token(ctx, smartContract, tokenId);
         }
       }
     }
@@ -434,12 +438,13 @@ export class ContractService {
       nft.name = '';
       nft.creator = '';
       nft.symbol = '';
+      nft.type = CONTRACT_TYPE.CW721;
       nft.name = smartContract.token_name;
       nft.creator = smartContract.creator_address;
       nft.symbol = smartContract.token_symbol;
       nft.owner = nft.is_burned ? '' : nft.owner;
     }
-    return { data: nft, meta: {} };
+    return nft;
   }
 
   async getCW4973Token(
@@ -447,11 +452,28 @@ export class ContractService {
     smartContract: SmartContract,
     tokenId: string,
   ) {
+    this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
     const token = await this.soulboundTokenRepository.findOne({
       where: { token_id: tokenId },
     });
 
     // Get ipfs info
     const ipfs = await this.serviceUtil.getDataAPI(token?.token_uri, '', ctx);
+    const nft = {
+      id: token?.id || '',
+      contract_address: smartContract.contract_address,
+      token_id: token?.token_id || '',
+      token_uri: token?.token_uri || '',
+      token_name: smartContract?.token_name || '',
+      receiver_address: token?.receiver_address || '',
+      status: token?.status || '',
+      picked: token?.picked || '',
+      signature: token?.signature || '',
+      minter_address: smartContract?.minter_address || '',
+      description: smartContract?.description || '',
+      type: CONTRACT_TYPE.CW4973,
+      ipfs,
+    };
+    return nft;
   }
 }

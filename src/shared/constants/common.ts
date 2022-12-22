@@ -195,6 +195,10 @@ export const ERROR_MAP = {
     Code: 'E010',
     Message: `Token URI invalid`,
   },
+  ER_DUP_ENTRY: {
+    Code: 'E011',
+    Message: `Contract address and Receiver address is duplicate.`,
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -207,7 +211,7 @@ export enum SOULBOUND_TOKEN_STATUS {
   EQUIPPED = 'Equipped',
   UNEQUIPPED = 'Unequipped',
   PENDING = 'Pending',
-};
+}
 
 export const SOULBOUND_PICKED_TOKEN = {
   MIN: 1,

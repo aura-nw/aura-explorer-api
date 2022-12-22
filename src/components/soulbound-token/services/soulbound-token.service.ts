@@ -32,6 +32,7 @@ import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-outp
 import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { ServiceUtil } from '../../../shared/utils/service.util';
+import { EntityListenerMetadata } from 'typeorm/metadata/EntityListenerMetadata';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -297,7 +298,7 @@ export class SoulboundTokenService {
       entity.token_id = this.createTokenId(
         this.chainId,
         contract.minter_address,
-        req.receiver_address,
+        contract.creator_address,
         req.token_uri,
       );
       try {
@@ -308,6 +309,12 @@ export class SoulboundTokenService {
           ctx,
           `Class ${SoulboundTokenService.name} call ${this.create.name} method error: ${err.stack}`,
         );
+        if (err?.code === 'ER_DUP_ENTRY') {
+          return {
+            Code: ERROR_MAP.ER_DUP_ENTRY.Code,
+            Message: ERROR_MAP.ER_DUP_ENTRY.Message,
+          };
+        }
         throw err;
       }
     } else {
@@ -458,9 +465,13 @@ export class SoulboundTokenService {
       );
       const serialize = serializeSignDoc(messgae);
       const hash = sha256(serialize);
-      const tokenId = Buffer.from(hash).toString('base64');
+      // const tokenId = Buffer.from(hash).toString('base64');
 
-      return tokenId;
+      const hashArray = Array.from(hash);
+      const hashHex = hashArray
+        .map((bytes) => bytes.toString(16).padStart(2, '0'))
+        .join('');
+      return hashHex;
     } catch (err) {
       console.log(err);
     }
