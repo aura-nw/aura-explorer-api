@@ -469,6 +469,7 @@ export class ContractService {
       status: token?.status || '',
       picked: token?.picked || '',
       signature: token?.signature || '',
+      pub_key: token?.pub_key || '',
       minter_address: smartContract?.minter_address || '',
       description: smartContract?.description || '',
       type: CONTRACT_TYPE.CW4973,

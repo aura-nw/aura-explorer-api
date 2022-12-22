@@ -3,6 +3,7 @@ import { plainToClass } from 'class-transformer';
 import {
   AkcLogger,
   AURA_INFO,
+  CONTRACT_TYPE,
   CW4973_CONTRACT,
   ERROR_MAP,
   LENGTH,
@@ -171,8 +172,10 @@ export class SoulboundTokenService {
       status: token?.status || '',
       picked: token?.picked || '',
       signature: token?.signature || '',
+      pub_key: token?.pub_key || '',
       minter_address: contract?.minter_address || '',
       description: contract?.description || '',
+      type: CONTRACT_TYPE.CW4973,
       ipfs,
     };
   }
@@ -294,6 +297,7 @@ export class SoulboundTokenService {
       entity.receiver_address = req.receiver_address;
       entity.token_uri = req.token_uri;
       entity.signature = req.signature;
+      entity.pub_key = req.pubKey;
       entity.token_img = ipfs.image;
       entity.token_id = this.createTokenId(
         this.chainId,
@@ -362,6 +366,7 @@ export class SoulboundTokenService {
       if (entity.receiver_address === address) {
         entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
         entity.signature = req.signature;
+        entity.pub_key = req.pubKey;
         const result = await this.soulboundTokenRepos.update(entity.id, entity);
         return { data: result, meta: {} };
       } else {

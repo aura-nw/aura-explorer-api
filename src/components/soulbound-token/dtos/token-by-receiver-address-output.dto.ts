@@ -31,4 +31,7 @@ export class TokenByReceiverAddressOutput {
 
   @Expose()
   picked: boolean;
+
+  @Expose()
+  pub_key: string;
 }
