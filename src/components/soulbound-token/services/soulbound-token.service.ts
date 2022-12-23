@@ -301,8 +301,8 @@ export class SoulboundTokenService {
       entity.token_img = ipfs.image;
       entity.token_id = this.createTokenId(
         this.chainId,
+        req.receiver_address,
         contract.minter_address,
-        contract.creator_address,
         req.token_uri,
       );
       try {
@@ -315,16 +315,16 @@ export class SoulboundTokenService {
         );
         if (err?.code === 'ER_DUP_ENTRY') {
           return {
-            Code: ERROR_MAP.ER_DUP_ENTRY.Code,
-            Message: ERROR_MAP.ER_DUP_ENTRY.Message,
+            code: ERROR_MAP.ER_DUP_ENTRY.Code,
+            message: ERROR_MAP.ER_DUP_ENTRY.Message,
           };
         }
         throw err;
       }
     } else {
       return {
-        Code: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Code,
-        Message: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Message,
+        code: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.MINTER_OR_CONTRACT_ADDRESS_INVALID.Message,
       };
     }
   }
