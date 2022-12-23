@@ -1,12 +1,10 @@
-import { json } from 'stream/consumers';
-import { Column, Entity, Unique } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
-import { BaseEntityIncrementId } from './base/base.entity';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('validators')
-export class Validator extends BaseEntityIncrementId {
-  @Unique('operator_address', ['operator_address'])
-  @Column()
+export class Validator extends BaseEntity {
+  @PrimaryColumn({ name: 'operator_address', type: 'varchar' })
   operator_address: string;
 
   @Column({ default: '' })
@@ -54,7 +52,7 @@ export class Validator extends BaseEntityIncrementId {
   @Column({ default: '' })
   website: string;
 
-  @Column({nullable: true, type: 'text'})
+  @Column({ nullable: true, type: 'text' })
   details: string;
 
   @Column({ default: '' })
