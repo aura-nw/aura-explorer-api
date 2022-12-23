@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AkcLogger, RequestContext } from '../../../shared';
-import { BlockRepository } from '../../block/repositories/block.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { TokenOutput } from '../dtos/token-output.dto';
@@ -34,7 +33,7 @@ export class MetricService {
 
   async getBlock(ctx: RequestContext, range: Range): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getBlock.name} was called!`);
-    this.logger.log(ctx, `calling ${BlockRepository.name}.createQueryBuilder`);
+    this.logger.log(ctx, `calling ${this.getBlock.name}.createQueryBuilder`);
 
     return await this.queryInfluxDb(range, 'blocks');
   }
