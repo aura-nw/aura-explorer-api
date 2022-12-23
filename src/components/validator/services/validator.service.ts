@@ -1,15 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { BlockRepository } from '../../../components/block/repositories/block.repository';
 import { DelegationRepository } from '../repositories/delegation.repository';
 
-import {
-  AkcLogger,
-  CONST_NUM,
-  INDEXER_API,
-  RequestContext,
-  Validator,
-} from '../../../shared';
+import { AkcLogger, INDEXER_API, RequestContext } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import * as util from 'util';
@@ -34,7 +27,6 @@ export class ValidatorService {
     private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository,
     private delegationRepository: DelegationRepository,
-    private blockRepository: BlockRepository,
     private proposalVoteRepository: ProposalVoteRepository,
     private delegatorRewardRepository: DelegatorRewardRepository,
   ) {
@@ -148,17 +140,29 @@ export class ValidatorService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
-    const validator = await this.validatorRepository.getRankByAddress(address);
+    const requestUrl = `${this.indexerUrl}${util.format(
+      INDEXER_API.GET_VALIDATOR_BY_ADDRESS,
+      this.indexerChainId,
+      address,
+    )}`;
 
-    const validatorOutput = plainToClass(ValidatorOutput, validator, {
-      excludeExtraneousValues: true,
-    });
+    const [validator, validatorResponse] = await Promise.all([
+      this.validatorRepository.getRankByAddress(address),
+      this.serviceUtil.getDataAPI(requestUrl, '', ctx),
+    ]);
 
-    const minHeight = await this.blockRepository.getMinHeight(address);
+    let validatorOutput = new ValidatorOutput();
+    if (validator) {
+      validatorOutput = plainToClass(ValidatorOutput, validator, {
+        excludeExtraneousValues: true,
+      });
 
-    validatorOutput.bonded_height = 1;
-    if (minHeight > 0) {
-      validatorOutput.bonded_height = minHeight;
+      validatorOutput.bonded_height = 1;
+      const validators = validatorResponse?.data?.validators || [];
+      if (validators?.length > 0) {
+        validatorOutput.bonded_height =
+          Number(validators[0].val_signing_info?.start_height) || 1;
+      }
     }
 
     return validatorOutput;
@@ -294,14 +298,19 @@ export class ValidatorService {
     ctx: RequestContext,
     delegatorAddress: string,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getDelegationsByDelegatorAddress.name} was called!`);
+    this.logger.log(
+      ctx,
+      `${this.getDelegationsByDelegatorAddress.name} was called!`,
+    );
     //get delegation first
     let result: any = {};
     result = await this.delegationRepository.findOne({
       where: { delegator_address: delegatorAddress },
-      order: { created_at: 'ASC' }
+      order: { created_at: 'ASC' },
     });
-    const sumAmount = await this.delegationRepository.getSumAmountByAddress(delegatorAddress);
+    const sumAmount = await this.delegationRepository.getSumAmountByAddress(
+      delegatorAddress,
+    );
     if (sumAmount && Number(sumAmount.sum) <= 0) {
       result = {};
     }

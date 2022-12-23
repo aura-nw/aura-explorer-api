@@ -6,7 +6,6 @@ import { ServiceUtil } from '../../shared/utils/service.util';
 
 import { SharedModule } from '../../shared/shared.module';
 import { BlockModule } from '../block/block.module';
-import { BlockRepository } from '../block/repositories/block.repository';
 import { ProposalVoteRepository } from './repositories/proposal-vote.repository';
 import { DelegationRepository } from './repositories/delegation.repository';
 
@@ -21,9 +20,8 @@ import { DelegatorRewardRepository } from './repositories/delegator-reward.repos
     TypeOrmModule.forFeature([
       ValidatorRepository,
       DelegationRepository,
-      BlockRepository,
       ProposalVoteRepository,
-      DelegatorRewardRepository
+      DelegatorRewardRepository,
     ]),
     HttpModule,
     ConfigModule,
