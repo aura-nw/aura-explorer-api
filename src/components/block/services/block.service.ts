@@ -16,22 +16,4 @@ export class BlockService {
   ) {
     this.logger.setContext(BlockService.name);
   }
-
-  async getTopBlocks(
-    ctx: RequestContext,
-    query: BlockLatestDto,
-  ): Promise<{ blocks: LiteBlockOutput[]}> {
-    this.logger.log(ctx, `${this.getTopBlocks.name} was called!`);
-
-    const blocks = await this.blockRepository.find({
-      order: { height: 'DESC' },
-      take: query.limit,
-    });
-
-    const blocksOutput = plainToClass(LiteBlockOutput, blocks, {
-      excludeExtraneousValues: true,
-    });
-
-    return { blocks: blocksOutput};
-  }
 }
