@@ -34,6 +34,7 @@ import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { EntityListenerMetadata } from 'typeorm/metadata/EntityListenerMetadata';
+import { Not } from 'typeorm';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -222,6 +223,7 @@ export class SoulboundTokenService {
     const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
       where: {
         receiver_address: req.receiverAddress,
+        status: Not(SOULBOUND_TOKEN_STATUS.UNEQUIPPED),
       },
       take: req.limit,
       order: {
@@ -251,10 +253,16 @@ export class SoulboundTokenService {
         this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
+    let msg;
+    if (typeof req.msg !== 'string') {
+      msg = JSON.stringify(req.msg);
+    } else {
+      msg = req.msg;
+    }
     // Verify signature
     const address = await this.contractUtil.verifySignatue(
       req.signature,
-      req.msg,
+      msg,
       req.pubKey,
     );
     if (!address) {
@@ -346,10 +354,16 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
+    let msg;
+    if (typeof req.msg !== 'string') {
+      msg = JSON.stringify(req.msg);
+    } else {
+      msg = req.msg;
+    }
     // Verify signature
     const address = await this.contractUtil.verifySignatue(
       req.signature,
-      req.msg,
+      msg,
       req.pubKey,
     );
     if (!address) {
@@ -396,11 +410,16 @@ export class SoulboundTokenService {
         this.pickedNft.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-
+    let msg;
+    if (typeof req.msg !== 'string') {
+      msg = JSON.stringify(req.msg);
+    } else {
+      msg = req.msg;
+    }
     // Verify signature
     const address = await this.contractUtil.verifySignatue(
       req.signature,
-      req.msg,
+      msg,
       req.pubKey,
     );
     if (!address) {
