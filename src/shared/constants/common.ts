@@ -197,7 +197,16 @@ export const ERROR_MAP = {
   },
   ER_DUP_ENTRY: {
     Code: 'E011',
-    Message: `Contract address and Receiver address is duplicate.`,
+    Message: `Token is duplicate`,
+  },
+  PICKED_TOKEN_OVERSIZE: {
+    Code: 'E012',
+    Message: `You can only pick maximun 5 soulboud tokens to display. If you want to display this Soul Bound Token, please un-pick the previous picked one`,
+  },
+
+  PICKED_TOKEN_UNDERSIZE: {
+    Code: 'E013',
+    Message: `Currently you don't have any unclaimed SBT Token so you can not un-pick the last picked SBT Token in your porfolio`,
   },
 };
 
