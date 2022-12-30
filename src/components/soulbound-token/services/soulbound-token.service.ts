@@ -257,30 +257,25 @@ export class SoulboundTokenService {
         this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    // let msg;
-    // if (typeof req.msg !== 'string') {
-    //   msg = JSON.stringify(req.msg);
-    // } else {
-    //   msg = req.msg;
-    // }
+
     // Verify signature
-    // const address = await this.contractUtil.verifySignatue(
-    //   req.signature,
-    //   req.msg,
-    //   req.pubKey,
-    // );
-    // if (!address) {
-    //   return {
-    //     code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
-    //     message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
-    //   };
-    // }
+    const address = await this.contractUtil.verifySignatue(
+      req.signature,
+      req.msg,
+      req.pubKey,
+    );
+    if (!address) {
+      return {
+        code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+      };
+    }
 
     const entity = new SoulboundToken();
     const contract = await this.smartContractRepos.findOne({
       where: {
         contract_address: req.contract_address,
-        //minter_address: address,
+        minter_address: address,
       },
     });
     if (contract) {
@@ -302,8 +297,6 @@ export class SoulboundTokenService {
         .catch(() => {
           return null;
         });
-
-      // const ipfs = await this.serviceUtil.getDataAPI(req.token_uri, '', ctx);
 
       if (!ipfs) {
         return {
@@ -365,46 +358,35 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
-    // let msg;
-    // if (typeof req.msg !== 'string') {
-    //   msg = JSON.stringify(req.msg);
-    // } else {
-    //   msg = req.msg;
-    // }
-    // // Verify signature
-    // const address = await this.contractUtil.verifySignatue(
-    //   req.signature,
-    //   msg,
-    //   req.pubKey,
-    // );
-    // if (!address) {
-    //   return {
-    //     code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
-    //     message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
-    //   };
-    // }
+    // Verify signature
+    const address = await this.contractUtil.verifySignatue(
+      req.signature,
+      req.msg,
+      req.pubKey,
+    );
+    if (!address) {
+      return {
+        code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+      };
+    }
 
     const entity = await this.soulboundTokenRepos.findOne({
       where: { token_id: req.id },
     });
     if (entity) {
-      // if (entity.receiver_address === address) {
-      //   entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
-      //   entity.signature = req.signature;
-      //   entity.pub_key = req.pubKey;
-      //   const result = await this.soulboundTokenRepos.update(entity.id, entity);
-      //   return { data: result, meta: {} };
-      // } else {
-      //   return {
-      //     code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
-      //     message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
-      //   };
-      // }
-      entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
-      entity.signature = req.signature;
-      entity.pub_key = req.pubKey;
-      const result = await this.soulboundTokenRepos.update(entity.id, entity);
-      return { data: result, meta: {} };
+      if (entity.receiver_address === address) {
+        entity.status = SOULBOUND_TOKEN_STATUS.PENDING;
+        entity.signature = req.signature;
+        entity.pub_key = req.pubKey;
+        const result = await this.soulboundTokenRepos.update(entity.id, entity);
+        return { data: result, meta: {} };
+      } else {
+        return {
+          code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+          message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+        };
+      }
     } else {
       return {
         code: ERROR_MAP.TOKEN_NOT_EXIST.Code,
@@ -426,24 +408,19 @@ export class SoulboundTokenService {
         this.pickedNft.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    // let msg;
-    // if (typeof req.msg !== 'string') {
-    //   msg = JSON.stringify(req.msg);
-    // } else {
-    //   msg = req.msg;
-    // }
-    // // Verify signature
-    // const address = await this.contractUtil.verifySignatue(
-    //   req.signature,
-    //   msg,
-    //   req.pubKey,
-    // );
-    // if (!address) {
-    //   return {
-    //     code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
-    //     message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
-    //   };
-    // }
+
+    // Verify signature
+    const address = await this.contractUtil.verifySignatue(
+      req.signature,
+      req.msg,
+      req.pubKey,
+    );
+    if (!address) {
+      return {
+        code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
+        message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
+      };
+    }
 
     const entity = await this.soulboundTokenRepos.findOne({
       where: { token_id: req.id },
@@ -475,14 +452,14 @@ export class SoulboundTokenService {
           }),
         )
         .then(async (config) => {
-          // if (address === entity.receiver_address) {
-          entity.picked = req.picked;
-          const result = await this.soulboundTokenRepos.update(
-            entity.id,
-            entity,
-          );
-          return { data: result, meta: {} };
-          // }
+          if (address === entity.receiver_address) {
+            entity.picked = req.picked;
+            const result = await this.soulboundTokenRepos.update(
+              entity.id,
+              entity,
+            );
+            return { data: result, meta: {} };
+          }
         })
         .catch((err) => {
           this.logger.log(ctx, err.stack);
@@ -522,8 +499,6 @@ export class SoulboundTokenService {
       );
       const serialize = serializeSignDoc(messgae);
       const hash = sha256(serialize);
-      // const tokenId = Buffer.from(hash).toString('base64');
-
       const hashArray = Array.from(hash);
       const hashHex = hashArray
         .map((bytes) => bytes.toString(16).padStart(2, '0'))
