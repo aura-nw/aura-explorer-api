@@ -523,7 +523,8 @@ export class SoulboundTokenService {
     passive: string,
     uri: string,
   ) {
-    const message = CW4973_CONTRACT.AGREEMENT + active + passive + uri;
+    const message =
+      CW4973_CONTRACT.AGREEMENT + chainID + active + passive + uri;
     const mess: any = {
       type: 'sign/MsgSignData',
       value: {

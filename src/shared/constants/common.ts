@@ -228,5 +228,5 @@ export const SOULBOUND_PICKED_TOKEN = {
 };
 
 export enum CW4973_CONTRACT {
-  AGREEMENT = 'Agreement(address active,address passive,string tokenURI)',
+  AGREEMENT = 'Agreement(string chain_id,address active,address passive,string tokenURI)',
 }
