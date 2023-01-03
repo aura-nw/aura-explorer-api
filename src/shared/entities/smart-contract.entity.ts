@@ -81,7 +81,7 @@ export class SmartContract extends BaseEntityIncrementId {
   @Column({ name: 'image' })
   image: string;
 
-  @Column({ name: 'description' })
+  @Column({ name: 'description', type: 'text' })
   description: string;
 
   @Column()
