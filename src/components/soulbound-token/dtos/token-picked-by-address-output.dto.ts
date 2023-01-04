@@ -1,4 +1,5 @@
 import { Expose } from 'class-transformer';
+import { SOULBOUND_TOKEN_STATUS } from '../../../shared/constants/common';
 
 export class TokenPickedByAddressOutput {
   @Expose()
@@ -27,4 +28,7 @@ export class TokenPickedByAddressOutput {
 
   @Expose()
   pub_key: string;
+
+  @Expose()
+  status: SOULBOUND_TOKEN_STATUS;
 }

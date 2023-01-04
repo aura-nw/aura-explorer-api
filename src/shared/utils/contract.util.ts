@@ -61,7 +61,7 @@ export class ContractUtil {
           type: 'sign/MsgSignData',
           value: {
             signer: address,
-            data,
+            data: Buffer.from(data, 'utf8').toString('base64'),
           },
         },
       ],

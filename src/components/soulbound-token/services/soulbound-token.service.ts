@@ -22,22 +22,19 @@ import { TokenParasDto } from '../dtos/token-paras.dto';
 import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-params.dto';
 import { SoulboundTokenRepository } from '../repositories/soulbound-token.repository';
 
-import * as amino from '@cosmjs/amino';
-import * as appConfig from '../../../shared/configs/configuration';
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
-import { ContractUtil } from '../../../shared/utils/contract.util';
+import { HttpService } from '@nestjs/axios';
 import console from 'console';
-import { sha256 } from '@cosmjs/crypto';
-import { serializeSignDoc } from '@cosmjs/amino';
-import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
-import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
+import { sha256 } from 'js-sha256';
+import { lastValueFrom, timeout } from 'rxjs';
+import { Not } from 'typeorm';
+import * as appConfig from '../../../shared/configs/configuration';
+import { ContractUtil } from '../../../shared/utils/contract.util';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
-import { ServiceUtil } from '../../../shared/utils/service.util';
-import { EntityListenerMetadata } from 'typeorm/metadata/EntityListenerMetadata';
-import { Not } from 'typeorm';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom, timeout } from 'rxjs';
+import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
+import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -443,7 +440,7 @@ export class SoulboundTokenService {
           message: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Message,
         };
       }
-      SigningCosmWasmClient.connect(this.rpc)
+      const result = await SigningCosmWasmClient.connect(this.rpc)
         .then((client) =>
           client.queryContractSmart(entity.contract_address, {
             nft_info: {
@@ -468,6 +465,7 @@ export class SoulboundTokenService {
             message: ERROR_MAP.TOKEN_NOT_EXIST.Message,
           };
         });
+      return result;
     } else {
       return {
         code: ERROR_MAP.TOKEN_NOT_EXIST.Code,
@@ -491,19 +489,13 @@ export class SoulboundTokenService {
     uri: string,
   ): string {
     try {
-      const messgae: any = this.createMessageToSign(
+      const message: string = this.createMessageToSign(
         chainID,
         active,
         passive,
         uri,
       );
-      const serialize = serializeSignDoc(messgae);
-      const hash = sha256(serialize);
-      const hashArray = Array.from(hash);
-      const hashHex = hashArray
-        .map((bytes) => bytes.toString(16).padStart(2, '0'))
-        .join('');
-      return hashHex;
+      return sha256(message);
     } catch (err) {
       console.log(err);
     }
@@ -525,19 +517,25 @@ export class SoulboundTokenService {
   ) {
     const message =
       CW4973_CONTRACT.AGREEMENT + chainID + active + passive + uri;
-    const mess: any = {
-      type: 'sign/MsgSignData',
-      value: {
-        signer: String(passive),
-        data: String(message),
+    const doc: any = {
+      account_number: '0',
+      chain_id: '',
+      fee: {
+        amount: [],
+        gas: '0',
       },
+      memo: '',
+      msgs: [
+        {
+          type: 'sign/MsgSignData',
+          value: {
+            data: Buffer.from(message, 'utf8').toString('base64'),
+            signer: String(passive),
+          },
+        },
+      ],
+      sequence: '0',
     };
-    const fee = {
-      gas: '0',
-      amount: [],
-    };
-
-    const messageToSign = amino.makeSignDoc(mess, fee, chainID, '', 0, 0);
-    return messageToSign;
+    return JSON.stringify(doc);
   }
 }
