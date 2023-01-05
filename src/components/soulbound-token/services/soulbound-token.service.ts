@@ -229,7 +229,6 @@ export class SoulboundTokenService {
         },
         {
           receiver_address: req.receiverAddress,
-          picked: false,
           status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
         },
       ],
@@ -432,15 +431,28 @@ export class SoulboundTokenService {
     });
 
     if (entity) {
-      const numOfToken = await this.soulboundTokenRepos.count({
+      const numOfPickedToken = await this.soulboundTokenRepos.count({
         where: { receiver_address: entity.receiver_address, picked: true },
       });
-      if (numOfToken >= SOULBOUND_PICKED_TOKEN.MAX && req.picked) {
+      if (numOfPickedToken >= SOULBOUND_PICKED_TOKEN.MAX && req.picked) {
         return {
           code: ERROR_MAP.PICKED_TOKEN_OVERSIZE.Code,
           message: ERROR_MAP.PICKED_TOKEN_OVERSIZE.Message,
         };
       }
+
+      const numOfToken = await this.soulboundTokenRepos.count({
+        where: [
+          {
+            receiver_address: entity.receiver_address,
+            picked: true,
+          },
+          {
+            receiver_address: entity.receiver_address,
+            status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
+          },
+        ],
+      });
 
       if (numOfToken == SOULBOUND_PICKED_TOKEN.MIN && !req.picked) {
         return {

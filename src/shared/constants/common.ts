@@ -206,7 +206,7 @@ export const ERROR_MAP = {
 
   PICKED_TOKEN_UNDERSIZE: {
     Code: 'E013',
-    Message: `Currently , you don't have any unclaimed SBT Token so you can not un-pick the last picked SBT Token in your account`,
+    Message: `Currently , you don't have any unclaimed SBT so you can not un-pick the last picked SBT in your account`,
   },
 };
 
