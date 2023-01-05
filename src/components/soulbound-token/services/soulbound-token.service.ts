@@ -316,6 +316,7 @@ export class SoulboundTokenService {
       entity.signature = req.signature;
       entity.pub_key = req.pubKey;
       entity.token_img = ipfs.image;
+      entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
         req.receiver_address,
