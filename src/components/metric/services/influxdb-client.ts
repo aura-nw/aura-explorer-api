@@ -185,7 +185,12 @@ export class InfluxDBClient {
    * @returns
    */
   getNumberTransactions(start: string) {
-    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "blocks_measurement") |> filter(fn: (r) => r["_field"] == "num_txs")|> sum()`;
+    const query = ` from(bucket: "${this.bucket}")
+        |> range(start: ${start})
+        |> filter(fn: (r) => r._measurement == "blocks_measurement")
+        |> filter(fn: (r) => r["_field"] == "num_txs")
+        |> group(columns: ["_measurement"])
+        |> sum()`;
     return this.bindingData(query);
   }
 
