@@ -222,10 +222,18 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
-      where: {
-        receiver_address: req.receiverAddress,
-        status: Not(SOULBOUND_TOKEN_STATUS.UNEQUIPPED),
-      },
+      where: [
+        {
+          receiver_address: req.receiverAddress,
+          picked: true,
+        },
+        {
+          receiver_address: req.receiverAddress,
+          picked: false,
+          status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
+        },
+      ],
+
       take: req.limit,
       order: {
         picked: 'DESC',
