@@ -45,30 +45,6 @@ export class ContractController {
     return { data: contracts, meta: { count } };
   }
 
-  @Get('get-smart-contract-status')
-  @ApiOperation({ summary: 'Get list smart contract status' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  getSmartContractStatus() {
-    const status = this.contractService.getSmartContractStatus();
-    return { data: status, meta: {} };
-  }
-
-  @Get('get-contract-by-creator')
-  @ApiOperation({ summary: 'Get list smart contract by creator address' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getContractByCreator(
-    @ReqContext() ctx: RequestContext,
-    @Query() req: ContractByCreatorParamsDto,
-  ) {
-    const [constracts, count] = await this.contractService.getContractByCreator(
-      ctx,
-      req,
-    );
-    return { data: constracts, meta: { count } };
-  }
-
   @Get(':contractAddress')
   @ApiOperation({ summary: 'Get contract detail by contract address' })
   @ApiResponse({ status: HttpStatus.OK })
@@ -157,21 +133,6 @@ export class ContractController {
     );
 
     return { data: result, meta: {} };
-  }
-
-  @Get('get-code-ids/:creatorAddress')
-  @ApiOperation({ summary: 'Get list code id of contract' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getCodeIds(
-    @ReqContext() ctx: RequestContext,
-    @Param('creatorAddress') creatorAddress: string,
-  ) {
-    const codeIds: Array<number> = await this.contractService.getCodeIds(
-      ctx,
-      creatorAddress,
-    );
-    return { data: codeIds, meta: {} };
   }
 
   @Get('token/:contractAddress')

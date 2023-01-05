@@ -185,7 +185,12 @@ export class InfluxDBClient {
    * @returns
    */
   getNumberTransactions(start: string) {
-    const query = ` from(bucket: "${this.bucket}") |> range(start: ${start}) |> filter(fn: (r) => r._measurement == "blocks_measurement") |> filter(fn: (r) => r["_field"] == "num_txs")|> sum()`;
+    const query = ` from(bucket: "${this.bucket}")
+        |> range(start: ${start})
+        |> filter(fn: (r) => r._measurement == "blocks_measurement")
+        |> filter(fn: (r) => r["_field"] == "num_txs")
+        |> group(columns: ["_measurement"])
+        |> sum()`;
     return this.bindingData(query);
   }
 
@@ -245,9 +250,9 @@ export class InfluxDBClient {
       from(bucket: "${this.bucket}")
         |> range(start: ${start})
         |> filter(fn: (r) => r._measurement == "${measurement}")
+        |> filter(fn: (r) => r["token_id"]== "${coinId}")
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> drop(columns:["_value"])
-        |> filter(fn: (r) => r.coinId == "${coinId}")
         |> window(every: ${step}, createEmpty: true, timeColumn: "_time")
         |> last(column: "_start")
         |> map(fn: (r) => ({

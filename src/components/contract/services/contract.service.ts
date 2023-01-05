@@ -213,106 +213,6 @@ export class ContractService {
   }
 
   /**
-   * Get list status of smart contract
-   * @returns List status(Array<ContractStatusOutputDto>)
-   */
-  getSmartContractStatus() {
-    this.logger.log(null, `${this.getSmartContractStatus.name} was called!`);
-    try {
-      const smartContractStatus: Array<ContractStatusOutputDto> = [];
-      Object.keys(CONTRACT_STATUS).forEach((key) => {
-        const status: ContractStatusOutputDto = new ContractStatusOutputDto();
-        const value = CONTRACT_STATUS[key];
-
-        if (
-          value !== CONTRACT_STATUS.EXACT_MATCH &&
-          value !== CONTRACT_STATUS.SIMILAR_MATCH &&
-          value !== CONTRACT_STATUS.APPROVED &&
-          value !== CONTRACT_STATUS.PENDING
-        ) {
-          status.key = key;
-          status.label = value;
-          smartContractStatus.push(status);
-        }
-      });
-      return smartContractStatus;
-    } catch (err) {
-      this.logger.error(
-        null,
-        `Class ${ContractService.name} call ${this.getSmartContractStatus.name} method error: ${err.stack}`,
-      );
-      throw err;
-    }
-  }
-
-  /**
-   * Get list code id
-   * @param creatorAddress: Creator address
-   * @returns List code id (number[])
-   */
-  async getCodeIds(ctx: RequestContext, creatorAddress: string) {
-    this.logger.log(
-      ctx,
-      `${this.getCodeIds.name} was called with creator address: ${creatorAddress}`,
-    );
-    try {
-      const codeIds = await this.smartContractRepository.getCodeIds(
-        creatorAddress,
-      );
-      return codeIds;
-    } catch (err) {
-      this.logger.error(
-        ctx,
-        `Class ${ContractService.name} call ${this.getCodeIds.name} method error: ${err.stack}`,
-      );
-      throw err;
-    }
-  }
-
-  /**
-   * Get list contract by creator address
-   * @param ctx: RequestContext
-   * @param creatorAddress: Creator address
-   * @param codeId: Code id of contract
-   * @param status: Status of contract
-   * @param limit: Number of record on per page
-   * @param offset: Numer of record to skip
-   * @returns List contract (ContractByCreatorOutputDto[])
-   */
-
-  async getContractByCreator(
-    ctx: RequestContext,
-    req: ContractByCreatorParamsDto,
-  ) {
-    this.logger.log(
-      ctx,
-      `${this.getContractByCreator.name} was called with creator address: ${req}`,
-    );
-    try {
-      const [contracts, count] =
-        await this.smartContractRepository.getContractByCreator(
-          req.creatorAddress,
-          req.codeId,
-          req.status,
-          req.limit,
-          req.offset,
-        );
-
-      const mappingData = plainToClass(ContractByCreatorOutputDto, contracts, {
-        excludeExtraneousValues: true,
-      });
-
-      return [mappingData, count];
-    } catch (err) {
-      this.logger.error(
-        ctx,
-        `Class ${ContractService.name} call ${this.getContractByCreator.name} method error: ${err.stack}`,
-      );
-      throw err;
-    }
-  }
-
-  /**
    * Get token by contract address
    * @param ctx
    * @param contractAddress
@@ -361,8 +261,8 @@ export class ContractService {
       const listHolder = holderResponse?.data || [];
 
       if (listHolder.length > 0) {
-        token.num_holder = listHolder[0].new_holders || 0;
-        token.holders_change_percentage_24h = listHolder[0].change_percent || 0;
+        token.num_holder = listHolder[0].holders || 0;
+        token.holders_change_percentage_24h = listHolder[0].percentage || 0;
       }
     }
 

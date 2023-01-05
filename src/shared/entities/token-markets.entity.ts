@@ -1,9 +1,11 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('token_markets')
+@Unique(['contract_address'])
 export class TokenMarkets extends BaseEntityIncrementId {
   @Column({ name: 'contract_address' })
+  @Index()
   contract_address: string;
 
   @Column({ name: 'coin_id' })

@@ -87,8 +87,8 @@ export class Cw20TokenService {
         (f) => f.contract_address === item.contract_address,
       );
       if (holderInfo) {
-        holders = holderInfo.new_holders || 0;
-        holders_change_percentage_24h = holderInfo.change_percent || 0;
+        holders = holderInfo.holders || 0;
+        holders_change_percentage_24h = holderInfo.percentage || 0;
       }
 
       const tokenFind = tokensInfo.find(
@@ -159,42 +159,10 @@ export class Cw20TokenService {
     ).toString();
     result.push(assetDto);
 
-    //ibc
-    const accountData = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(
-        INDEXER_API.ACCOUNT_INFO,
-        request.account_address,
-        this.indexerChainId,
-      )}`,
-      '',
-      ctx,
-    );
-    const accountBalances = accountData.data.account_balances;
-    const ibcBalances = accountBalances.filter((str) => str.minimal_denom);
-    if (ibcBalances.length > 0) {
-      //get coin info from config
-      const configData = await this.serviceUtil.getDataAPI(
-        this.configUrl,
-        '',
-        ctx,
-      );
-      const coins = configData?.coins;
-      for (let i = 0; i < ibcBalances.length; i++) {
-        const item = ibcBalances[i];
-        const asset = new AssetDto();
-        asset.balance = Number(
-          (item.amount / this.precisionDiv).toFixed(this.decimals),
-        );
-        //get ibc info
-        const findCoin = coins?.find((f) => f.denom === item.minimal_denom);
-        if (findCoin) {
-          asset.name = findCoin.name;
-          asset.symbol = findCoin.display;
-          asset.image = findCoin.logo;
-          asset.denom = findCoin.denom;
-        }
-        result.push(asset);
-      }
+    //Get IBC tokens
+    const ibcTokens = await this.getIBCTokens(ctx, request.account_address);
+    if (ibcTokens && ibcTokens?.length > 0) {
+      result.push(...ibcTokens);
     }
 
     const keyword = request.keyword;
@@ -310,5 +278,52 @@ export class Cw20TokenService {
     const price = tokenData?.current_price || 0;
 
     return balance * price;
+  }
+
+  /**
+   * Get IBC token
+   * @param ctx
+   * @param accountAddress
+   */
+  async getIBCTokens(ctx: RequestContext, accountAddress: string) {
+    this.logger.log(ctx, `${this.getIBCTokens.name} was called!`);
+    const result = [];
+    const accountData = await this.serviceUtil.getDataAPI(
+      `${this.indexerUrl}${util.format(
+        INDEXER_API.ACCOUNT_INFO,
+        accountAddress,
+        this.indexerChainId,
+      )}`,
+      '',
+      ctx,
+    );
+    const accountBalances = accountData.data.account_balances;
+    const ibcBalances = accountBalances.filter((str) => str.minimal_denom);
+    if (ibcBalances.length > 0) {
+      //get coin info from config
+      const configData = await this.serviceUtil.getDataAPI(
+        this.configUrl,
+        '',
+        ctx,
+      );
+      const coins = configData?.coins;
+      for (let i = 0; i < ibcBalances.length; i++) {
+        const item = ibcBalances[i];
+        const asset = new AssetDto();
+        asset.balance = Number(
+          (item.amount / this.precisionDiv).toFixed(this.decimals),
+        );
+        //get ibc info
+        const findCoin = coins?.find((f) => f.denom === item.minimal_denom);
+        if (findCoin) {
+          asset.name = findCoin.name;
+          asset.symbol = findCoin.display;
+          asset.image = findCoin.logo;
+          asset.denom = findCoin.denom;
+        }
+        result.push(asset);
+      }
+    }
+    return result;
   }
 }

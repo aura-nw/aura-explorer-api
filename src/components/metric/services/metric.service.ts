@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AkcLogger, RequestContext } from '../../../shared';
-import { BlockRepository } from '../../block/repositories/block.repository';
 import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { TokenOutput } from '../dtos/token-output.dto';
@@ -10,7 +9,7 @@ import {
   buildCondition,
   generateSeries,
   makeupData,
-  mergeByProperty
+  mergeByProperty,
 } from '../utils/utils';
 import { InfluxDBClient } from './influxdb-client';
 
@@ -34,7 +33,7 @@ export class MetricService {
 
   async getBlock(ctx: RequestContext, range: Range): Promise<MetricOutput[]> {
     this.logger.log(ctx, `${this.getBlock.name} was called!`);
-    this.logger.log(ctx, `calling ${BlockRepository.name}.createQueryBuilder`);
+    this.logger.log(ctx, `calling ${this.getBlock.name}.createQueryBuilder`);
 
     return await this.queryInfluxDb(range, 'blocks');
   }
@@ -79,10 +78,10 @@ export class MetricService {
 
   /**
    * Get token data by coid id
-   * @param ctx 
-   * @param coinId 
-   * @param range 
-   * @returns 
+   * @param ctx
+   * @param coinId
+   * @param range
+   * @returns
    */
   async getTokenByCoinId(
     ctx: RequestContext,
@@ -95,16 +94,19 @@ export class MetricService {
     const startTime = `-${amount}${fluxType}`;
     const queryStep = `${step}${fluxType}`;
 
-    this.logger.log(ctx, `${this.getTokenByCoinId.name} call method from influxdb!`);
-    const output = await this.influxDbClient.getTokenByCoinId(
+    this.logger.log(
+      ctx,
+      `${this.getTokenByCoinId.name} call method from influxdb!`,
+    );
+    const output = (await this.influxDbClient.getTokenByCoinId(
       'token_cw20_measurement',
       startTime,
       queryStep,
-      coinId
-    ) as TokenOutput[];
+      coinId,
+    )) as TokenOutput[];
 
     this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
-    const metricData: TokenOutput[] = [];   
+    const metricData: TokenOutput[] = [];
     if (range === Range.minute) {
       const length = output?.length || 0;
       for (let i = 0; i < length; i++) {
@@ -114,7 +116,7 @@ export class MetricService {
         metricData.push(tokenOutput);
         const currentTime = new Date();
         currentTime.setSeconds(0, 0);
-        if (new Date(item.timestamp) < currentTime && i == (length - 1)) {
+        if (new Date(item.timestamp) < currentTime && i == length - 1) {
           const cloneItem = { ...item };
           cloneItem.timestamp = currentTime.toUTCString();
           metricData.push(cloneItem);
@@ -124,7 +126,7 @@ export class MetricService {
       const series = generateSeries(range);
       series.forEach((item: MetricOutput) => {
         let tokenOutput = new TokenOutput();
-        const find = output.find(f => f.timestamp === item.timestamp);
+        const find = output.find((f) => f.timestamp === item.timestamp);
         if (find) {
           tokenOutput = { ...find };
         } else {
