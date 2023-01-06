@@ -1,10 +1,4 @@
-import {
-  InfluxDB,
-  Point,
-  QueryApi,
-  WriteApi,
-} from '@influxdata/influxdb-client';
-import { number } from 'joi';
+import { InfluxDB, QueryApi, WriteApi } from '@influxdata/influxdb-client';
 import { TokenOutput } from '../dtos/token-output.dto';
 
 export class InfluxDBClient {
@@ -23,17 +17,6 @@ export class InfluxDBClient {
 
   initQueryApi(): void {
     this.queryApi = this.client.getQueryApi(this.org);
-  }
-
-  initWriteApi(): void {
-    this.writeApi = this.client.getWriteApi(this.org, this.bucket);
-    return;
-  }
-
-  closeWriteApi(): void {
-    this.writeApi.close().then(() => {
-      return;
-    });
   }
 
   queryData(measurement, statTime, step) {
@@ -63,66 +46,6 @@ export class InfluxDBClient {
       });
     });
     return output;
-  }
-
-  writeBlock(height, block_hash, num_txs, chainid, timestamp): void {
-    const point = new Point('blocks')
-      .tag('chainid', chainid)
-      .stringField('block_hash', block_hash)
-      .intField('height', height)
-      .intField('num_txs', num_txs)
-      .timestamp(this.convertDate(timestamp));
-    this.writeApi.writePoint(point);
-  }
-
-  writeTx(tx_hash, height, type, timestamp): void {
-    const point = new Point('txs')
-      // .tag('chainid', chainid)
-      .stringField('tx_hash', tx_hash)
-      .intField('height', height)
-      .stringField('type', type)
-      .timestamp(this.convertDate(timestamp));
-    this.writeApi.writePoint(point);
-  }
-
-  private convertDate(timestamp: any): Date {
-    return new Date(timestamp.toString());
-  }
-
-  writeValidator(operator_address, title, jailed, power): void {
-    const point = new Point('validators')
-      .stringField('operator_address', operator_address)
-      .stringField('title', title)
-      .stringField('jailed', jailed)
-      .intField('power', power);
-    this.writeApi.writePoint(point);
-  }
-
-  writeDelegation(
-    delegator_address,
-    validator_address,
-    shares,
-    amount,
-    tx_hash,
-    created_at,
-    type,
-  ): void {
-    const point = new Point('delegation')
-      .stringField('delegator_address', delegator_address)
-      .stringField('validator_address', validator_address)
-      .stringField('shares', shares)
-      .stringField('amount', amount)
-      .stringField('tx_hash', tx_hash)
-      .stringField('created_at', created_at)
-      .stringField('type', type);
-    this.writeApi.writePoint(point);
-  }
-
-  writeMissedBlock(validator_address, height): void {
-    const point = new Point('delegation')
-      .stringField('validator_address', validator_address)
-      .stringField('height', height);
-    this.writeApi.writePoint(point);
   }
 
   /**
@@ -199,7 +122,7 @@ export class InfluxDBClient {
    * @param query
    * @returns
    */
-  private bindingData(query: String): Promise<any> {
+  private bindingData(query: string): Promise<any> {
     const results: {
       total: string;
       timestamp: string;
@@ -209,7 +132,7 @@ export class InfluxDBClient {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
           const o = tableMeta.toObject(row);
-          let date = new Date(o._stop);
+          const date = new Date(o._stop);
           date.setMinutes(0, 0, 0);
           results.push({
             timestamp: o._start,
@@ -231,14 +154,14 @@ export class InfluxDBClient {
   }
 
   /**
-   * Get token by coin id
-   * @param measurement 
-   * @param start 
-   * @param step 
-   * @param coinId 
-   * @returns 
+   * Get market info of token
+   * @param measurement
+   * @param start
+   * @param step
+   * @param coinId
+   * @returns
    */
-  getTokenByCoinId(
+  getTokenMarketInfo(
     measurement: string,
     start: string,
     step: string,
@@ -251,18 +174,14 @@ export class InfluxDBClient {
         |> range(start: ${start})
         |> filter(fn: (r) => r._measurement == "${measurement}")
         |> filter(fn: (r) => r["token_id"]== "${coinId}")
+        |> last(column: "_start")
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> drop(columns:["_value"])
-        |> window(every: ${step}, createEmpty: true, timeColumn: "_time")
         |> last(column: "_start")
         |> map(fn: (r) => ({
             coinId: r.coinId,
             current_price: r.current_price,
-            max_supply: r.max_supply,
-            circulating_supply: r.circulating_supply,
             total_volume: r.total_volume,
-            current_holder: r.current_holder,
-            current_holder: r.current_holder,
             market_cap: r.market_cap,
             price_change_percentage_24h: r.price_change_percentage_24h,
             time: date.truncate(t: r._start, unit: ${step})
@@ -276,10 +195,70 @@ export class InfluxDBClient {
           tokenOutput.timestamp = output.time;
           tokenOutput.coinId = String(output.coinId);
           tokenOutput.current_price = Number(output.current_price) || 0;
-          tokenOutput.max_supply = Number(output.max_supply) || 0;
           tokenOutput.total_volume = Number(output.total_volume) || 0;
           tokenOutput.market_cap = Number(output.market_cap) || 0;
-          tokenOutput.price_change_percentage_24h = Number(output.price_change_percentage_24h) || 0;
+          tokenOutput.price_change_percentage_24h =
+            Number(output.price_change_percentage_24h) || 0;
+          results.push(tokenOutput);
+        },
+        error(error) {
+          console.error(error);
+          console.log('Finished ERROR');
+          return resolve(results);
+        },
+        complete() {
+          console.log('Finished SUCCESS');
+          return resolve(results);
+        },
+      });
+    });
+    return output;
+  }
+
+  /**
+   * Get token info
+   * @param measurement
+   * @param start
+   * @param step
+   * @param coinId
+   * @returns
+   */
+  getTokenInfo(
+    measurement: string,
+    start: string,
+    stop: string,
+    step: string,
+    coinId: string,
+  ): Promise<any> {
+    const results: Array<TokenOutput> = [];
+    const query = `
+      import "date"
+      from(bucket: "${this.bucket}")
+        |> range(start:${start}, stop:${stop})
+        |> filter(fn: (r) => r._measurement == "${measurement}")
+        |> filter(fn: (r) => r["token_id"]== "${coinId}")
+        |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
+        |> drop(columns:["_value"])
+        |> window(every: ${step}, createEmpty: true, timeColumn: "_time")
+        |> last(column: "_start")
+        |> map(fn: (r) => ({
+            coinId: r.coinId,
+            current_price: r.current_price,
+            price_change_percentage_24h: r.price_change_percentage_24h,
+            total_volume: r.total_volume,
+            time: date.truncate(t: r._start, unit: ${step})
+        }))`;
+    const output = new Promise((resolve) => {
+      this.queryApi.queryRows(query, {
+        next(row, tableMeta) {
+          const output = tableMeta.toObject(row);
+          const tokenOutput = new TokenOutput();
+          tokenOutput.timestamp = output.time;
+          tokenOutput.coinId = String(output.coinId);
+          tokenOutput.current_price = Number(output.current_price) || 0;
+          tokenOutput.total_volume = Number(output.total_volume) || 0;
+          tokenOutput.price_change_percentage_24h =
+            Number(output.price_change_percentage_24h) || 0;
           results.push(tokenOutput);
         },
         error(error) {
