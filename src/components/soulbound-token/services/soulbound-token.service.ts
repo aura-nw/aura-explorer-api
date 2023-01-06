@@ -88,9 +88,9 @@ export class SoulboundTokenService {
           ?.filter((f) => f.contract_address === item.contract_address)
           ?.forEach((m) => {
             if (m.status === SOULBOUND_TOKEN_STATUS.EQUIPPED) {
-              claimedQty = Number(m.quanity) || 0;
+              claimedQty = Number(m.quantity) || 0;
             } else {
-              unclaimedQty += Number(m.quanity) || 0;
+              unclaimedQty += Number(m.quantity) || 0;
             }
           });
 
@@ -139,11 +139,7 @@ export class SoulboundTokenService {
   async getTokensDetail(ctx: RequestContext, tokenId: string) {
     this.logger.log(
       ctx,
-      `============== ${
-        this.getTokens.name
-      } was called with paras: tokenId=${JSON.stringify(
-        tokenId,
-      )}! ==============`,
+      `============== ${this.getTokens.name} was called with paras: tokenId=${tokenId}! ==============`,
     );
     const token = await this.soulboundTokenRepos.findOne({
       where: { token_id: tokenId },
@@ -428,17 +424,7 @@ export class SoulboundTokenService {
           message: ERROR_MAP.PICKED_TOKEN_OVERSIZE.Message,
         };
       }
-
-      const numOfToken = await this.soulboundTokenRepos.count({
-        where: [
-          {
-            receiver_address: entity.receiver_address,
-            picked: true,
-          },
-        ],
-      });
-
-      if (numOfToken == SOULBOUND_PICKED_TOKEN.MIN && !req.picked) {
+      if (numOfPickedToken == SOULBOUND_PICKED_TOKEN.MIN && !req.picked) {
         return {
           code: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Code,
           message: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Message,
