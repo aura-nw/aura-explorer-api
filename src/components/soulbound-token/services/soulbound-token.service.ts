@@ -27,7 +27,7 @@ import { HttpService } from '@nestjs/axios';
 import console from 'console';
 import { sha256 } from 'js-sha256';
 import { lastValueFrom, timeout } from 'rxjs';
-import { Not } from 'typeorm';
+import { In, Not } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
@@ -221,24 +221,11 @@ export class SoulboundTokenService {
         this.getTokenPickedByAddress.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    const [tokens, count] = await this.soulboundTokenRepos.findAndCount({
-      where: [
-        {
-          receiver_address: req.receiverAddress,
-          picked: true,
-        },
-        {
-          receiver_address: req.receiverAddress,
-          status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
-        },
-      ],
 
-      take: req.limit,
-      order: {
-        picked: 'DESC',
-        created_at: 'ASC',
-      },
-    });
+    const { tokens, count } = await this.soulboundTokenRepos.getPickedToken(
+      req.receiverAddress,
+      req.limit,
+    );
     const data = plainToClass(TokenPickedByAddressOutput, tokens, {
       excludeExtraneousValues: true,
     });
@@ -447,10 +434,6 @@ export class SoulboundTokenService {
           {
             receiver_address: entity.receiver_address,
             picked: true,
-          },
-          {
-            receiver_address: entity.receiver_address,
-            status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
           },
         ],
       });

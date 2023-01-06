@@ -7,7 +7,11 @@ import {
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
+import {
+  SoulboundToken,
+  SOULBOUND_PICKED_TOKEN,
+  SOULBOUND_TOKEN_STATUS,
+} from '../../../shared';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 
 @EntityRepository(SoulboundToken)
@@ -120,7 +124,8 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
-        .orderBy('sbt.updated_at', 'DESC')
+        .orderBy('sbt.status', 'ASC')
+        .addOrderBy('sbt.updated_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();
@@ -149,6 +154,42 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         ]),
       });
     }
+    return await _finalizeResult(builder);
+  }
+
+  async getPickedToken(receiverAddress: string, limit: number) {
+    this._logger.log(
+      `============== ${this.getPickedToken.name} was called! ==============`,
+    );
+
+    const builder = this.createQueryBuilder('sbt')
+      .select('sbt.*')
+      .where({
+        receiver_address: receiverAddress,
+      })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where({
+            picked: true,
+          }).orWhere({
+            status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
+          });
+        }),
+      );
+
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SoulboundToken>,
+    ) => {
+      const tokens = await builder
+        .limit(limit)
+        .orderBy('sbt.picked', 'DESC')
+        .addOrderBy('sbt.created_at', 'ASC')
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { tokens, count };
+    };
+
     return await _finalizeResult(builder);
   }
 
