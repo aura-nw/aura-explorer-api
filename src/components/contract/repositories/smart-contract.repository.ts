@@ -219,7 +219,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       return await _finalizeResult(builder);
     }
 
-    builder.where('LOWER(sm.contract_address) LIKE :keyword', {
+    builder.andWhere('LOWER(sm.contract_address) LIKE :keyword', {
       keyword: `%${keyword}%`,
     });
     return await _finalizeResult(builder);
