@@ -165,4 +165,22 @@ export class ContractController {
 
     return { data: contract, meta: {} };
   }
+
+  @Get(':contractAddress/nft/:tokenId')
+  @ApiOperation({ summary: 'Get NFT detail' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getNftDetail(
+    @ReqContext() ctx: RequestContext,
+    @Param('contractAddress') contractAddress: string,
+    @Param('tokenId') tokenId: string,
+  ) {
+    this.logger.log(ctx, `${this.getNftDetail.name} was called!`);
+    const nft = await this.contractService.getNftDetail(
+      ctx,
+      contractAddress,
+      tokenId,
+    );
+    return { data: nft, meta: {} };
+  }
 }
