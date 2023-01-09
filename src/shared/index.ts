@@ -24,3 +24,4 @@ export * from './entities/validator.entity';
 export * from './entities/delegation.entity';
 export * from './entities/missed-block.entity';
 export * from './entities/token-markets.entity';
+export * from './entities/soulbound-token.entity';

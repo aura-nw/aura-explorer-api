@@ -10,6 +10,7 @@ import { TagRepository } from './repositories/tag.repository';
 import { HttpModule } from '@nestjs/axios';
 import { SmartContractCodeRepository } from '../contract-code/repositories/smart-contract-code.repository';
 import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
+import { SoulboundTokenRepository } from '../soulbound-token/repositories/soulbound-token.repository';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets
       TagRepository,
       SmartContractCodeRepository,
       TokenMarketsRepository,
+      SoulboundTokenRepository,
     ]),
     ConfigModule,
     HttpModule,

@@ -180,9 +180,54 @@ export const ERROR_MAP = {
     Code: 'E006',
     Message: `Result is correct, you cannot update this record`,
   },
+  MINTER_OR_CONTRACT_ADDRESS_INVALID: {
+    Code: 'E007',
+    Message: `Attestor address or contract address invalid`,
+  },
+  YOUR_ADDRESS_INVALID: {
+    Code: 'E008',
+    Message: `Receiver address invalid`,
+  },
+  TOKEN_NOT_EXIST: {
+    Code: 'E009',
+    Message: `Token not exist`,
+  },
+  TOKEN_URI_INVALID: {
+    Code: 'E010',
+    Message: `Token URI invalid`,
+  },
+  ER_DUP_ENTRY: {
+    Code: 'E011',
+    Message: `Token is duplicate`,
+  },
+  PICKED_TOKEN_OVERSIZE: {
+    Code: 'E012',
+    Message: `You can only pick maximun 5 soulboud tokens to display. If you want to display this Soul Bound Token, please un-pick the previous picked one`,
+  },
+
+  PICKED_TOKEN_UNDERSIZE: {
+    Code: 'E013',
+    Message: `You can not un-pick the last picked SBT in your account. In order to un-pick this token, you need to pick another equipped SBT first then un-pick it later`,
+  },
 };
 
 export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
 };
+
+export enum SOULBOUND_TOKEN_STATUS {
+  UNCLAIM = 'Unclaimed',
+  EQUIPPED = 'Equipped',
+  UNEQUIPPED = 'Unequipped',
+  PENDING = 'Pending',
+}
+
+export const SOULBOUND_PICKED_TOKEN = {
+  MIN: 1,
+  MAX: 5,
+};
+
+export enum CW4973_CONTRACT {
+  AGREEMENT = 'Agreement(string chain_id,address active,address passive,string tokenURI)',
+}

@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('smart_contracts')
@@ -84,6 +84,10 @@ export class SmartContract extends BaseEntityIncrementId {
   @Column({ name: 'description', type: 'text' })
   description: string;
 
+  @Column({ name: 'minter_address', nullable: true })
+  @Index({ unique: false })
+  minter_address: string;
+  
   @Column()
   decimals: number;
 }

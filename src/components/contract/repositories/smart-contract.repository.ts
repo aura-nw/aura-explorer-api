@@ -180,4 +180,48 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
     return [list, count];
   }
+
+  /**
+   * Get smart contract by minter
+   * @param minterAddress
+   * @param keyword
+   * @param limit
+   * @param offset
+   */
+  async getContractByMinter(
+    minterAddress: string,
+    keyword: string,
+    limit: number,
+    offset: number,
+  ) {
+    const builder = this.createQueryBuilder('sm')
+      .select('sm.id, sm.contract_address, sm.minter_address')
+      .where({
+        minter_address: minterAddress,
+      });
+
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const data = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy({
+          created_at: 'DESC',
+        })
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { contracts: data, count };
+    };
+
+    if (!keyword) {
+      return await _finalizeResult(builder);
+    }
+
+    builder.where('LOWER(sm.contract_address) LIKE :keyword', {
+      keyword: `%${keyword}%`,
+    });
+    return await _finalizeResult(builder);
+  }
 }
