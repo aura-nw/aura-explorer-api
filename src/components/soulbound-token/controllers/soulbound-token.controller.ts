@@ -43,7 +43,7 @@ export class SoulboundTokenController {
       query,
     );
 
-    return { data: contracts, meta: count };
+    return { data: contracts, meta: { count } };
   }
 
   @Get('tokens')
