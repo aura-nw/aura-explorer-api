@@ -196,7 +196,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       `============== ${this.countStatus.name} was called! ==============`,
     );
     return this.createQueryBuilder('sbt')
-      .select('sbt.contract_address, COUNT(sbt.id) as quantity')
+      .select('sbt.contract_address, sbt.status, COUNT(sbt.id) as quantity')
       .where({
         contract_address: In(contractAddress),
       })
