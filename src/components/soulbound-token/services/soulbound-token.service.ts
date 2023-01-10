@@ -285,7 +285,7 @@ export class SoulboundTokenService {
           return null;
         });
 
-      if (!ipfs) {
+      if (!ipfs || !ipfs.hasOwnProperty('image')) {
         return {
           code: ERROR_MAP.TOKEN_URI_INVALID.Code,
           message: ERROR_MAP.TOKEN_URI_INVALID.Message,
