@@ -47,15 +47,17 @@ export class MetricService {
     const { step, fluxType, amount } = buildCondition(range);
     const queryStep = `${step}${fluxType}`;
 
+    let value = amount;
     let currentDate = new Date();
     if (minDate) {
       currentDate = moment(minDate).toDate();
+      value = value * 2;
     }
-    const { start, stop } = this.createRange(currentDate, amount, range);
+    const { start, stop } = this.createRange(currentDate, value, range);
 
     this.logger.log(
       ctx,
-      `${this.getTokenInfo.name} call method from influxdb!`,
+      `${this.getTokenInfo.name} call method from influxdb, start: ${start}, stop: ${stop}`,
     );
     const output = (await this.influxDbClient.getTokenInfo(
       'token_cw20_measurement',
@@ -78,7 +80,8 @@ export class MetricService {
         currentTime.setSeconds(0, 0);
         if (new Date(item.timestamp) < currentTime && i == length - 1) {
           const cloneItem = { ...item };
-          cloneItem.timestamp = currentTime.toUTCString();
+          cloneItem.timestamp =
+            moment(currentTime).utc().format('YYYY-MM-DDTHH:mm:00.00') + 'Z';
           metricData.push(cloneItem);
         }
       }
@@ -159,16 +162,16 @@ export class MetricService {
     const stop = utcDate.toISOString();
     switch (range) {
       case Range.day:
-        start = utcDate.day(-amount).format('YYYY-MM-DDT00:00:00.000');
+        start = utcDate.add(-amount, 'd').format('YYYY-MM-DDT00:00:00.000');
         break;
       case Range.month:
-        start = utcDate.month(-amount).format('YYYY-MM-01T00:00:00.000');
+        start = utcDate.add(-amount, 'M').format('YYYY-MM-01T00:00:00.000');
         break;
       case Range.hour:
-        start = utcDate.hours(-amount).format('YYYY-MM-DDTHH:00:00.000');
+        start = utcDate.add(-amount, 'h').format('YYYY-MM-DDTHH:00:00.000');
         break;
       default:
-        start = utcDate.minutes(-amount).format('YYYY-MM-DDTHH:mm:00.000');
+        start = utcDate.add(-amount, 'm').format('YYYY-MM-DDTHH:mm:00.000');
         break;
     }
 
