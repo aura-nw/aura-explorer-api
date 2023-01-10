@@ -196,6 +196,11 @@ export class SmartContractRepository extends Repository<SmartContract> {
   ) {
     const builder = this.createQueryBuilder('sm')
       .select('sm.id, sm.contract_address, sm.minter_address')
+      .innerJoin(
+        SmartContractCode,
+        'smc',
+        `sm.code_id = smc.code_id AND smc.result != '${CONTRACT_CODE_RESULT.INCORRECT}' AND smc.type = '${CONTRACT_TYPE.CW4973}'`,
+      )
       .where({
         minter_address: minterAddress,
       });
@@ -206,9 +211,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       const data = await builder
         .limit(limit)
         .offset(offset)
-        .orderBy({
-          created_at: 'DESC',
-        })
+        .orderBy('sm.created_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();
