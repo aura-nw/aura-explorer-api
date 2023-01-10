@@ -40,7 +40,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       `============== ${this.getTokens.name} was called! ==============`,
     );
     const builder = this.createQueryBuilder('sbt')
-      .select('sbt.*, sm.token_name')
+      .select('sbt.*')
       .innerJoin(
         SmartContract,
         'sm',
@@ -108,16 +108,9 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     this._logger.log(
       `============== ${this.getTokenByReceiverAddress.name} was called! ==============`,
     );
-    const builder = this.createQueryBuilder('sbt')
-      .select('sbt.*, sm.token_name')
-      .innerJoin(
-        SmartContract,
-        'sm',
-        'sm.contract_address = sbt.contract_address',
-      )
-      .where({
-        receiver_address: receiverAddress,
-      });
+    const builder = this.createQueryBuilder('sbt').select('sbt.*').where({
+      receiver_address: receiverAddress,
+    });
     const _finalizeResult = async (
       _builder: SelectQueryBuilder<SoulboundToken>,
     ) => {
@@ -137,7 +130,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         new Brackets((qb) => {
           qb.where('LOWER(sbt.token_id) LIKE :keyword', {
             keyword: `%${keyword}%`,
-          }).orWhere('LOWER(sm.token_name) LIKE LOWER(:keyword)', {
+          }).orWhere('LOWER(sbt.token_name) LIKE LOWER(:keyword)', {
             keyword: `%${keyword}%`,
           });
         }),
