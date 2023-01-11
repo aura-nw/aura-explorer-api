@@ -180,6 +180,12 @@ export class MetricService {
     return { start: start + 'Z', stop };
   }
 
+  /**
+   * Determine the last date to get data from influxdb
+   * @param date
+   * @param range
+   * @returns
+   */
   getLastDate(date: Date, range: Range) {
     const lastDate = new Date(date.toISOString());
     const minute = 59,
