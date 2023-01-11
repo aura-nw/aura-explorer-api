@@ -90,17 +90,19 @@ export class MetricService {
     } else {
       const uctHours = (new Date().getTimezoneOffset() / 60) * -1;
       const series = generateSeries(currentDate, range, uctHours);
-      series.forEach((item: MetricOutput) => {
-        let tokenOutput = new TokenOutput();
-        const find = output.find((f) => f.timestamp === item.timestamp);
-        if (find) {
-          tokenOutput = { ...find };
-        } else {
-          tokenOutput.coinId = coinId;
-          tokenOutput.timestamp = item.timestamp;
-        }
-        metricData.push(tokenOutput);
-      });
+      if (output.length > 0) {
+        series.forEach((item: MetricOutput) => {
+          let tokenOutput = new TokenOutput();
+          const find = output.find((f) => f.timestamp === item.timestamp);
+          if (find) {
+            tokenOutput = { ...find };
+          } else {
+            tokenOutput.coinId = coinId;
+            tokenOutput.timestamp = item.timestamp;
+          }
+          metricData.push(tokenOutput);
+        });
+      }
     }
 
     this.logger.log(ctx, `${this.getTokenInfo.name} end call!`);
@@ -196,6 +198,7 @@ export class MetricService {
         break;
       case Range.day:
         lastDate.setDate(lastDate.getDate() - 1);
+        lastDate.setHours(23, minute, second);
         break;
       case Range.hour:
         lastDate.setHours(lastDate.getHours() - 1, minute, second);
