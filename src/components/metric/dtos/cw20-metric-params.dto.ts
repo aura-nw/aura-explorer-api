@@ -23,5 +23,5 @@ export class Cw20MetricParamsDto {
     default: undefined,
   })
   @ApiProperty()
-  readonly minDate: Date = undefined;
+  readonly maxDate: Date = undefined;
 }
