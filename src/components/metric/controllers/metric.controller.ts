@@ -61,11 +61,11 @@ export class MetricController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getTokenMarketInfoMetric(
     @ReqContext() ctx: RequestContext,
-    @Query('coinid') coinid: string,
+    @Query('coinId') coinId: string,
   ): Promise<BaseApiResponse<TokenOutput>> {
     this.logger.log(ctx, `${this.getTokenMarketInfoMetric.name} was called!`);
 
-    const metric = await this.metricService.getTokenMarketInfo(ctx, coinid);
+    const metric = await this.metricService.getTokenMarketInfo(ctx, coinId);
 
     return { data: metric, meta: null };
   }
