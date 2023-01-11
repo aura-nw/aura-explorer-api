@@ -44,7 +44,7 @@ export class MetricController {
 
     const metrics = await this.metricService.getTokenInfo(
       ctx,
-      query.minDate,
+      query.maxDate,
       query.range,
       query.coinId,
     );
