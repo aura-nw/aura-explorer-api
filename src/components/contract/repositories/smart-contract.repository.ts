@@ -199,7 +199,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .innerJoin(
         SmartContractCode,
         'smc',
-        `sm.code_id = smc.code_id AND smc.result != '${CONTRACT_CODE_RESULT.INCORRECT}' AND smc.type = '${CONTRACT_TYPE.CW4973}'`,
+        `sm.code_id = smc.code_id AND smc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND smc.type = '${CONTRACT_TYPE.CW4973}'`,
       )
       .where({
         minter_address: minterAddress,
