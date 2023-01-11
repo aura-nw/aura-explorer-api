@@ -27,7 +27,6 @@ import { HttpService } from '@nestjs/axios';
 import console from 'console';
 import { sha256 } from 'js-sha256';
 import { lastValueFrom, timeout } from 'rxjs';
-import { In, Not } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
@@ -292,6 +291,24 @@ export class SoulboundTokenService {
         };
       }
 
+      let contentType;
+      if (ipfs.image) {
+        contentType = await lastValueFrom(
+          this.httpService.get(this.transform(ipfs.image)).pipe(timeout(8000)),
+        )
+          .then((rs) => rs?.headers['content-type'])
+          .catch(() => {
+            return null;
+          });
+
+        if (!contentType) {
+          return {
+            code: ERROR_MAP.VERIFY_IMG_TYPE.Code,
+            message: ERROR_MAP.VERIFY_IMG_TYPE.Message,
+          };
+        }
+      }
+
       entity.contract_address = contract.contract_address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
       entity.receiver_address = req.receiver_address;
@@ -300,6 +317,7 @@ export class SoulboundTokenService {
       entity.pub_key = req.pubKey;
       entity.token_img = ipfs.image;
       entity.token_name = ipfs.name;
+      entity.img_type = contentType;
       entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
@@ -528,5 +546,9 @@ export class SoulboundTokenService {
       sequence: '0',
     };
     return JSON.stringify(doc);
+  }
+
+  private transform(value: string): string {
+    return 'https://ipfs.io/' + value.replace('://', '/');
   }
 }
