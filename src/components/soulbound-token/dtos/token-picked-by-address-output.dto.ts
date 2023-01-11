@@ -18,6 +18,9 @@ export class TokenPickedByAddressOutput {
   token_img: string;
 
   @Expose()
+  img_type: string;
+
+  @Expose()
   animation_url: string;
 
   @Expose()

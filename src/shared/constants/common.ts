@@ -209,6 +209,11 @@ export const ERROR_MAP = {
     Code: 'E013',
     Message: `You can not un-pick the last picked SBT in your account. In order to un-pick this token, you need to pick another equipped SBT first then un-pick it later`,
   },
+
+  VERIFY_IMG_TYPE: {
+    Code: 'E014',
+    Message: `Can't verify image content-type`,
+  },
 };
 
 export const PAGE_REQUEST = {
