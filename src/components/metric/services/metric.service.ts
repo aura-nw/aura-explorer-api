@@ -39,7 +39,7 @@ export class MetricService {
    */
   async getTokenInfo(
     ctx: RequestContext,
-    minDate: Date = undefined,
+    maxDate: Date = undefined,
     range: Range,
     coinId: string,
   ): Promise<TokenOutput[]> {
@@ -49,8 +49,8 @@ export class MetricService {
 
     const value = range === Range.minute ? amount - 3 : amount - 1;
     let currentDate = new Date();
-    if (minDate) {
-      currentDate = moment(minDate).toDate();
+    if (maxDate) {
+      currentDate = this.getLastDate(moment(maxDate).toDate(), range);
       // value = value * 2;
     }
     const { start, stop } = this.createRange(currentDate, value, range);
@@ -78,7 +78,7 @@ export class MetricService {
         metricData.push(tokenOutput);
         const currentTime = new Date();
         currentTime.setSeconds(0, 0);
-        if (!minDate) {
+        if (!maxDate) {
           if (new Date(item.timestamp) < currentTime && i == length - 1) {
             const cloneItem = { ...item };
             cloneItem.timestamp =
@@ -178,5 +178,32 @@ export class MetricService {
     }
 
     return { start: start + 'Z', stop };
+  }
+
+  /**
+   * Determine the last date to get data from influxdb
+   * @param date
+   * @param range
+   * @returns
+   */
+  getLastDate(date: Date, range: Range) {
+    const lastDate = new Date(date.toISOString());
+    const minute = 59,
+      second = 59;
+    switch (range) {
+      case Range.month:
+        lastDate.setMonth(lastDate.getMonth() - 1);
+        break;
+      case Range.day:
+        lastDate.setDate(lastDate.getDate() - 1);
+        break;
+      case Range.hour:
+        lastDate.setHours(lastDate.getHours() - 1, minute, second);
+        break;
+      default:
+        lastDate.setMinutes(lastDate.getMinutes() - 3, second);
+        break;
+    }
+    return lastDate;
   }
 }
