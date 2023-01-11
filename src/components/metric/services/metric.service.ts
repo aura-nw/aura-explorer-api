@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as moment from 'moment';
 import { AkcLogger, RequestContext } from '../../../shared';
-import { ValidatorRepository } from '../../validator/repositories/validator.repository';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { TokenOutput } from '../dtos/token-output.dto';
 import { Range } from '../utils/enum';
 import {
   buildCondition,
   generateSeries,
-  makeupData,
   mergeByProperty,
 } from '../utils/utils';
 import { InfluxDBClient } from './influxdb-client';
@@ -31,81 +30,44 @@ export class MetricService {
     this.influxDbClient.initQueryApi();
   }
 
-  async getBlock(ctx: RequestContext, range: Range): Promise<MetricOutput[]> {
-    this.logger.log(ctx, `${this.getBlock.name} was called!`);
-    this.logger.log(ctx, `calling ${this.getBlock.name}.createQueryBuilder`);
-
-    return await this.queryInfluxDb(range, 'blocks');
-  }
-
-  async getTransaction(
-    ctx: RequestContext,
-    range: Range,
-    timezoneOffset: number,
-  ): Promise<MetricOutput[]> {
-    this.logger.log(ctx, `${this.getTransaction.name} was called!`);
-
-    const { amount, step, fluxType } = buildCondition(range);
-    const startTime = `-${amount}${fluxType}`;
-    const queryStep = `${step}${fluxType}`;
-
-    const withTimezone = [Range.day, Range.month].includes(range);
-    const offsetInHours = Math.round(timezoneOffset / 60);
-
-    const metricData = (await this.influxDbClient.sumDataWithTimezoneOffset(
-      'blocks_measurement',
-      startTime,
-      queryStep,
-      'num_txs',
-      withTimezone,
-      offsetInHours,
-    )) as MetricOutput[];
-    return makeupData(metricData, amount);
-  }
-
-  async getValidator(
-    ctx: RequestContext,
-    range: Range,
-  ): Promise<MetricOutput[]> {
-    this.logger.log(ctx, `${this.getValidator.name} was called!`);
-    this.logger.log(
-      ctx,
-      `calling ${ValidatorRepository.name}.createQueryBuilder`,
-    );
-
-    return await this.queryInfluxDb(range, 'validators');
-  }
-
   /**
-   * Get token data by coid id
+   * Get token info
    * @param ctx
    * @param coinId
    * @param range
    * @returns
    */
-  async getTokenByCoinId(
+  async getTokenInfo(
     ctx: RequestContext,
-    coinId: string,
+    minDate: Date = undefined,
     range: Range,
-  ): Promise<any[]> {
-    this.logger.log(ctx, `${this.getTokenByCoinId.name} was called!`);
-
-    const { amount, step, fluxType } = buildCondition(range);
-    const startTime = `-${amount}${fluxType}`;
+    coinId: string,
+  ): Promise<TokenOutput[]> {
+    this.logger.log(ctx, `${this.getTokenInfo.name} was called!`);
+    const { step, fluxType, amount } = buildCondition(range);
     const queryStep = `${step}${fluxType}`;
+
+    const value = range === Range.minute ? amount - 3 : amount - 1;
+    let currentDate = new Date();
+    if (minDate) {
+      currentDate = moment(minDate).toDate();
+      // value = value * 2;
+    }
+    const { start, stop } = this.createRange(currentDate, value, range);
 
     this.logger.log(
       ctx,
-      `${this.getTokenByCoinId.name} call method from influxdb!`,
+      `${this.getTokenInfo.name} call method from influxdb, start: ${start}, stop: ${stop}`,
     );
-    const output = (await this.influxDbClient.getTokenByCoinId(
+    const output = (await this.influxDbClient.getTokenInfo(
       'token_cw20_measurement',
-      startTime,
+      start,
+      stop,
       queryStep,
       coinId,
     )) as TokenOutput[];
 
-    this.logger.log(ctx, `${this.getTokenByCoinId.name} generation data!`);
+    this.logger.log(ctx, `${this.getTokenInfo.name} generation data!`);
     const metricData: TokenOutput[] = [];
     if (range === Range.minute) {
       const length = output?.length || 0;
@@ -116,14 +78,18 @@ export class MetricService {
         metricData.push(tokenOutput);
         const currentTime = new Date();
         currentTime.setSeconds(0, 0);
-        if (new Date(item.timestamp) < currentTime && i == length - 1) {
-          const cloneItem = { ...item };
-          cloneItem.timestamp = currentTime.toUTCString();
-          metricData.push(cloneItem);
+        if (!minDate) {
+          if (new Date(item.timestamp) < currentTime && i == length - 1) {
+            const cloneItem = { ...item };
+            cloneItem.timestamp =
+              moment(currentTime).utc().format('YYYY-MM-DDTHH:mm:00.00') + 'Z';
+            metricData.push(cloneItem);
+          }
         }
       }
     } else {
-      const series = generateSeries(range);
+      const uctHours = (new Date().getTimezoneOffset() / 60) * -1;
+      const series = generateSeries(currentDate, range, uctHours);
       series.forEach((item: MetricOutput) => {
         let tokenOutput = new TokenOutput();
         const find = output.find((f) => f.timestamp === item.timestamp);
@@ -137,7 +103,23 @@ export class MetricService {
       });
     }
 
-    this.logger.log(ctx, `${this.getTokenByCoinId.name} end call!`);
+    this.logger.log(ctx, `${this.getTokenInfo.name} end call!`);
+    return metricData;
+  }
+
+  async getTokenMarketInfo(ctx: RequestContext, coinId: string) {
+    const output = (await this.influxDbClient.getTokenMarketInfo(
+      'token_cw20_measurement',
+      '-1h',
+      '1h',
+      coinId,
+    )) as TokenOutput[];
+
+    let metricData = new TokenOutput();
+    if (output.length > 0) {
+      metricData = { ...output[0] };
+    }
+
     return metricData;
   }
 
@@ -153,7 +135,7 @@ export class MetricService {
       startTime,
       queryStep,
     )) as MetricOutput[];
-    const series = generateSeries(range);
+    const series = generateSeries(new Date(), range);
     return mergeByProperty(data, series);
   }
 
@@ -166,5 +148,35 @@ export class MetricService {
     return (await this.influxDbClient.getNumberTransactions(
       start,
     )) as MetricOutput[];
+  }
+
+  /**
+   * Create range to get data from influxdb
+   * @param date
+   * @param format
+   * @param amount
+   * @param range
+   * @returns
+   */
+  createRange(date: Date, amount: number, range: Range) {
+    let start = '';
+    const utcDate = moment(date).utc();
+    const stop = utcDate.toISOString();
+    switch (range) {
+      case Range.day:
+        start = utcDate.add(-amount, 'd').format('YYYY-MM-DDT00:00:00.000');
+        break;
+      case Range.month:
+        start = utcDate.add(-amount, 'M').format('YYYY-MM-01T00:00:00.000');
+        break;
+      case Range.hour:
+        start = utcDate.add(-amount, 'h').format('YYYY-MM-DDTHH:00:00.000');
+        break;
+      default:
+        start = utcDate.add(-amount, 'm').format('YYYY-MM-DDTHH:mm:00.000');
+        break;
+    }
+
+    return { start: start + 'Z', stop };
   }
 }
