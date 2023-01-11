@@ -16,7 +16,7 @@ export class Cw20MetricParamsDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  coidId: string;
+  coinId: string;
 
   @ApiPropertyOptional({
     description: 'Optional, defaults undefined',

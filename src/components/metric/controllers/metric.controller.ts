@@ -46,7 +46,7 @@ export class MetricController {
       ctx,
       query.minDate,
       query.range,
-      query.coidId,
+      query.coinId,
     );
 
     return { data: metrics, meta: null };

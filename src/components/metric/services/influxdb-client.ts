@@ -186,7 +186,6 @@ export class InfluxDBClient {
             price_change_percentage_24h: r.price_change_percentage_24h,
             time: date.truncate(t: r._start, unit: ${step})
         }))`;
-
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
@@ -248,6 +247,7 @@ export class InfluxDBClient {
             total_volume: r.total_volume,
             time: date.truncate(t: r._start, unit: ${step})
         }))`;
+
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {

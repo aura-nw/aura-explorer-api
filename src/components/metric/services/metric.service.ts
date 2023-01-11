@@ -47,11 +47,11 @@ export class MetricService {
     const { step, fluxType, amount } = buildCondition(range);
     const queryStep = `${step}${fluxType}`;
 
-    let value = amount;
+    const value = range === Range.minute ? amount - 3 : amount - 1;
     let currentDate = new Date();
     if (minDate) {
       currentDate = moment(minDate).toDate();
-      value = value * 2;
+      // value = value * 2;
     }
     const { start, stop } = this.createRange(currentDate, value, range);
 
@@ -78,11 +78,13 @@ export class MetricService {
         metricData.push(tokenOutput);
         const currentTime = new Date();
         currentTime.setSeconds(0, 0);
-        if (new Date(item.timestamp) < currentTime && i == length - 1) {
-          const cloneItem = { ...item };
-          cloneItem.timestamp =
-            moment(currentTime).utc().format('YYYY-MM-DDTHH:mm:00.00') + 'Z';
-          metricData.push(cloneItem);
+        if (!minDate) {
+          if (new Date(item.timestamp) < currentTime && i == length - 1) {
+            const cloneItem = { ...item };
+            cloneItem.timestamp =
+              moment(currentTime).utc().format('YYYY-MM-DDTHH:mm:00.00') + 'Z';
+            metricData.push(cloneItem);
+          }
         }
       }
     } else {
@@ -108,7 +110,7 @@ export class MetricService {
   async getTokenMarketInfo(ctx: RequestContext, coinId: string) {
     const output = (await this.influxDbClient.getTokenMarketInfo(
       'token_cw20_measurement',
-      '-1',
+      '-1h',
       '1h',
       coinId,
     )) as TokenOutput[];
