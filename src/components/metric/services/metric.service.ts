@@ -21,13 +21,7 @@ export class MetricService {
     private configService: ConfigService,
   ) {
     this.logger.setContext(MetricService.name);
-    this.influxDbClient = new InfluxDBClient(
-      this.configService.get<string>('influxdb.bucket'),
-      this.configService.get<string>('influxdb.org'),
-      this.configService.get<string>('influxdb.url'),
-      this.configService.get<string>('influxdb.token'),
-    );
-    this.influxDbClient.initQueryApi();
+    this.connectInfluxDB();
   }
 
   /**
@@ -43,86 +37,102 @@ export class MetricService {
     range: Range,
     coinId: string,
   ): Promise<TokenOutput[]> {
-    this.logger.log(ctx, `${this.getTokenInfo.name} was called!`);
-    const { step, fluxType, amount } = buildCondition(range);
-    const queryStep = `${step}${fluxType}`;
+    try {
+      this.logger.log(ctx, `${this.getTokenInfo.name} was called!`);
+      const { step, fluxType, amount } = buildCondition(range);
+      const queryStep = `${step}${fluxType}`;
 
-    const value = range === Range.minute ? amount - 3 : amount - 1;
-    let currentDate = new Date();
-    if (maxDate) {
-      currentDate = this.getLastDate(moment(maxDate).toDate(), range);
-      // value = value * 2;
-    }
-    const { start, stop } = this.createRange(currentDate, value, range);
+      const value = range === Range.minute ? amount - 3 : amount - 1;
+      let currentDate = new Date();
+      if (maxDate) {
+        currentDate = this.getLastDate(moment(maxDate).toDate(), range);
+        // value = value * 2;
+      }
+      const { start, stop } = this.createRange(currentDate, value, range);
 
-    this.logger.log(
-      ctx,
-      `${this.getTokenInfo.name} call method from influxdb, start: ${start}, stop: ${stop}`,
-    );
-    const output = (await this.influxDbClient.getTokenInfo(
-      'token_cw20_measurement',
-      start,
-      stop,
-      queryStep,
-      coinId,
-    )) as TokenOutput[];
+      this.logger.log(
+        ctx,
+        `${this.getTokenInfo.name} call method from influxdb, start: ${start}, stop: ${stop}`,
+      );
+      const output = (await this.influxDbClient.getTokenInfo(
+        'token_cw20_measurement',
+        start,
+        stop,
+        queryStep,
+        coinId,
+      )) as TokenOutput[];
 
-    this.logger.log(ctx, `${this.getTokenInfo.name} generation data!`);
-    const metricData: TokenOutput[] = [];
-    if (range === Range.minute) {
-      const length = output?.length || 0;
-      for (let i = 0; i < length; i++) {
-        const item = output[i];
-        let tokenOutput = new TokenOutput();
-        tokenOutput = { ...item };
-        metricData.push(tokenOutput);
-        const currentTime = new Date();
-        currentTime.setSeconds(0, 0);
-        if (!maxDate) {
-          if (new Date(item.timestamp) < currentTime && i == length - 1) {
-            const cloneItem = { ...item };
-            cloneItem.timestamp =
-              moment(currentTime).utc().format('YYYY-MM-DDTHH:mm:00.00') + 'Z';
-            metricData.push(cloneItem);
+      this.logger.log(ctx, `${this.getTokenInfo.name} generation data!`);
+      const metricData: TokenOutput[] = [];
+      if (range === Range.minute) {
+        const length = output?.length || 0;
+        for (let i = 0; i < length; i++) {
+          const item = output[i];
+          let tokenOutput = new TokenOutput();
+          tokenOutput = { ...item };
+          metricData.push(tokenOutput);
+          const currentTime = new Date();
+          currentTime.setSeconds(0, 0);
+          if (!maxDate) {
+            if (new Date(item.timestamp) < currentTime && i == length - 1) {
+              const cloneItem = { ...item };
+              cloneItem.timestamp =
+                moment(currentTime).utc().format('YYYY-MM-DDTHH:mm:00.00') +
+                'Z';
+              metricData.push(cloneItem);
+            }
           }
         }
+      } else {
+        const uctHours = (new Date().getTimezoneOffset() / 60) * -1;
+        const series = generateSeries(currentDate, range, uctHours);
+        if (output.length > 0) {
+          series.forEach((item: MetricOutput) => {
+            let tokenOutput = new TokenOutput();
+            const find = output.find((f) => f.timestamp === item.timestamp);
+            if (find) {
+              tokenOutput = { ...find };
+            } else {
+              tokenOutput.coinId = coinId;
+              tokenOutput.timestamp = item.timestamp;
+            }
+            metricData.push(tokenOutput);
+          });
+        }
       }
-    } else {
-      const uctHours = (new Date().getTimezoneOffset() / 60) * -1;
-      const series = generateSeries(currentDate, range, uctHours);
-      if (output.length > 0) {
-        series.forEach((item: MetricOutput) => {
-          let tokenOutput = new TokenOutput();
-          const find = output.find((f) => f.timestamp === item.timestamp);
-          if (find) {
-            tokenOutput = { ...find };
-          } else {
-            tokenOutput.coinId = coinId;
-            tokenOutput.timestamp = item.timestamp;
-          }
-          metricData.push(tokenOutput);
-        });
-      }
-    }
 
-    this.logger.log(ctx, `${this.getTokenInfo.name} end call!`);
-    return metricData;
+      this.logger.log(ctx, `${this.getTokenInfo.name} end call!`);
+      return metricData;
+    } catch (err) {
+      this.logger.log(ctx, `${this.getTokenInfo.name} has error: ${err.stack}`);
+      this.reconnectInfluxdb(err);
+      throw err;
+    }
   }
 
   async getTokenMarketInfo(ctx: RequestContext, coinId: string) {
-    const output = (await this.influxDbClient.getTokenMarketInfo(
-      'token_cw20_measurement',
-      '-1h',
-      '1h',
-      coinId,
-    )) as TokenOutput[];
+    try {
+      const output = (await this.influxDbClient.getTokenMarketInfo(
+        'token_cw20_measurement',
+        '-1h',
+        '1h',
+        coinId,
+      )) as TokenOutput[];
 
-    let metricData = new TokenOutput();
-    if (output.length > 0) {
-      metricData = { ...output[0] };
+      let metricData = new TokenOutput();
+      if (output.length > 0) {
+        metricData = { ...output[0] };
+      }
+
+      return metricData;
+    } catch (err) {
+      this.logger.log(
+        ctx,
+        `${this.getTokenMarketInfo.name} has error: ${err.stack}`,
+      );
+      this.reconnectInfluxdb(err);
+      throw err;
     }
-
-    return metricData;
   }
 
   private async queryInfluxDb(
@@ -208,5 +218,29 @@ export class MetricService {
         break;
     }
     return lastDate;
+  }
+
+  /**
+   * Setting connection to Influxdb
+   */
+  connectInfluxDB() {
+    this.influxDbClient = new InfluxDBClient(
+      this.configService.get<string>('influxdb.bucket'),
+      this.configService.get<string>('influxdb.org'),
+      this.configService.get<string>('influxdb.url'),
+      this.configService.get<string>('influxdb.token'),
+    );
+    this.influxDbClient.initQueryApi();
+  }
+
+  /**
+   * Reconnect Influxdb
+   * @param error
+   */
+  reconnectInfluxdb(error: any) {
+    const errorCode = error?.code || '';
+    if (errorCode === 'ECONNREFUSED' || errorCode === 'ETIMEDOUT') {
+      this.connectInfluxDB();
+    }
   }
 }
