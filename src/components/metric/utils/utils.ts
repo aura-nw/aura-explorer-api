@@ -30,21 +30,21 @@ export function makeupData(
 }
 
 export function generateSeries(
+  now: Date,
   range: Range,
-  hours: number = 0,
+  hours = 0,
 ): MetricOutput[] {
   const series: MetricOutput[] = [];
-  const now = new Date();
   const past = new Date(now);
   const condition = buildCondition(range);
   switch (condition.type) {
     case TypeDate.month: {
       past.setMonth(now.getMonth() - condition.amount);
       for (let i = 1; i <= condition.amount; i++) {
-        let date = new Date(
-          new Date(past.getFullYear(), past.getMonth() + i, 0),
+        const date = new Date(
+          new Date(past.getFullYear(), past.getMonth() + i, 1),
         );
-        date.setDate(date.getDate() + 1);
+        // date.setDate(date.getDate() + 1);
         date.setHours(hours, 0, 0, 0);
         series.push(makeData(date));
       }
@@ -52,7 +52,7 @@ export function generateSeries(
     }
     case TypeDate.day: {
       past.setDate(now.getDate() - condition.amount);
-      let date = new Date(new Date(past).setHours(hours, 0, 0, 0));
+      const date = new Date(new Date(past).setHours(hours, 0, 0, 0));
       for (let i = 1; i <= condition.amount; i++) {
         date.setDate(date.getDate() + condition.step);
         series.push(makeData(date));
@@ -60,7 +60,7 @@ export function generateSeries(
       break;
     }
     case TypeDate.hour: {
-      past.setHours((now.getHours() - condition.amount) + 1);
+      past.setHours(now.getHours() - condition.amount + 1);
       for (
         let date = new Date(new Date(past).setUTCMinutes(0, 0, 0));
         date <= now;
@@ -71,7 +71,7 @@ export function generateSeries(
       break;
     }
     case TypeDate.minute: {
-      past.setMinutes((now.getMinutes() - condition.amount) + 1);
+      past.setMinutes(now.getMinutes() - condition.amount + 1);
       for (
         let date = new Date(new Date(past).setUTCSeconds(0, 0));
         date <= now;

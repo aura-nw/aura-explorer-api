@@ -21,6 +21,9 @@ export class TokenByReceiverAddressOutput {
   token_img: string;
 
   @Expose()
+  img_type: string;
+
+  @Expose()
   animation_url: string;
 
   @Expose()
