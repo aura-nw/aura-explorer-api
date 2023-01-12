@@ -26,7 +26,7 @@ import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { HttpService } from '@nestjs/axios';
 import console from 'console';
 import { sha256 } from 'js-sha256';
-import { lastValueFrom, timeout } from 'rxjs';
+import { lastValueFrom, retry, timeout } from 'rxjs';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
@@ -165,6 +165,7 @@ export class SoulboundTokenService {
       token_id: token?.token_id || '',
       token_uri: token?.token_uri || '',
       token_name: contract?.token_name || '',
+      img_type: token?.img_type || '',
       receiver_address: token?.receiver_address || '',
       status: token?.status || '',
       picked: token?.picked || '',
@@ -277,7 +278,7 @@ export class SoulboundTokenService {
       }
 
       const ipfs = await lastValueFrom(
-        this.httpService.get(req.token_uri).pipe(timeout(8000)),
+        this.httpService.get(req.token_uri).pipe(timeout(8000), retry(5)),
       )
         .then((rs) => rs.data)
         .catch(() => {
@@ -294,7 +295,9 @@ export class SoulboundTokenService {
       let contentType;
       if (ipfs.image) {
         contentType = await lastValueFrom(
-          this.httpService.get(this.transform(ipfs.image)).pipe(timeout(8000)),
+          this.httpService
+            .get(this.transform(ipfs.image))
+            .pipe(timeout(8000), retry(5)),
         )
           .then((rs) => rs?.headers['content-type'])
           .catch(() => {
