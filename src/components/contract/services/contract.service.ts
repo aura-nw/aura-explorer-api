@@ -365,6 +365,7 @@ export class ContractService {
       token_id: token?.token_id || '',
       token_uri: token?.token_uri || '',
       token_name: smartContract?.token_name || '',
+      img_type: token?.img_type || '',
       receiver_address: token?.receiver_address || '',
       status: token?.status || '',
       picked: token?.picked || '',
