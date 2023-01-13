@@ -278,7 +278,9 @@ export class SoulboundTokenService {
       }
 
       const ipfs = await lastValueFrom(
-        this.httpService.get(req.token_uri).pipe(timeout(8000), retry(5)),
+        this.httpService
+          .get(this.transform(req.token_uri))
+          .pipe(timeout(8000), retry(5)),
       )
         .then((rs) => rs.data)
         .catch(() => {
