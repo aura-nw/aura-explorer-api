@@ -236,6 +236,11 @@ export class InfluxDBClient {
         |> range(start:${start}, stop:${stop})
         |> filter(fn: (r) => r._measurement == "${measurement}")
         |> filter(fn: (r) => r["token_id"]== "${coinId}")
+        |> filter(fn: (r) => r["_field"]== "coinId" 
+            or r["_field"]== "current_price"
+            or r["_field"]== "price_change_percentage_24h"
+            or r["_field"]== "total_volume"
+        )
         |> pivot(rowKey:["_time"], columnKey:["_field"], valueColumn:"_value")
         |> drop(columns:["_value"])
         |> window(every: ${step}, createEmpty: true, timeColumn: "_time")
@@ -247,6 +252,8 @@ export class InfluxDBClient {
             total_volume: r.total_volume,
             time: date.truncate(t: r._start, unit: ${step})
         }))`;
+
+    console.log(query);
 
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
