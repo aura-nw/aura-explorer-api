@@ -150,7 +150,11 @@ export class SoulboundTokenService {
       where: { contract_address: addresses },
     });
 
-    const ipfs = await this.serviceUtil.getDataAPI(token?.token_uri, '', ctx);
+    const ipfs = await this.serviceUtil.getDataAPI(
+      this.transform(token?.token_uri),
+      '',
+      ctx,
+    );
 
     if (!ipfs) {
       return {
@@ -554,6 +558,10 @@ export class SoulboundTokenService {
   }
 
   private transform(value: string): string {
-    return 'https://ipfs.io/' + value.replace('://', '/');
+    if (!value.includes('https://ipfs.io/')) {
+      return 'https://ipfs.io/' + value.replace('://', '/');
+    } else {
+      return value;
+    }
   }
 }

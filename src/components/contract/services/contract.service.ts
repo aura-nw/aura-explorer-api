@@ -358,7 +358,11 @@ export class ContractService {
     });
 
     // Get ipfs info
-    const ipfs = await this.serviceUtil.getDataAPI(token?.token_uri, '', ctx);
+    const ipfs = await this.serviceUtil.getDataAPI(
+      this.transform(token?.token_uri),
+      '',
+      ctx,
+    );
     const nft = {
       id: token?.id || '',
       contract_address: smartContract.contract_address,
@@ -377,5 +381,13 @@ export class ContractService {
       ipfs,
     };
     return nft;
+  }
+
+  private transform(value: string): string {
+    if (!value.includes('https://ipfs.io/')) {
+      return 'https://ipfs.io/' + value.replace('://', '/');
+    } else {
+      return value;
+    }
   }
 }
