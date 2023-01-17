@@ -14,50 +14,37 @@ export function makeupData(
   metricData: MetricOutput[],
   length: number,
 ): MetricOutput[] {
-  const _metricData = metricData
-    .filter((i) => {
-      return i.timestamp.substring(i.timestamp.lastIndexOf(':')) === ':00Z';
-    })
-    .reduce((pre, curr) => {
-      const total: any =
-        Number(curr.total) && Number(curr.total) > 0 ? Number(curr.total) : 0;
-
-      const mergeTarget = pre.find((i) => i.timestamp === curr.timestamp);
-      if (mergeTarget) {
-        mergeTarget.total += total;
-        return pre;
-      }
-
-      curr.total = total;
-      return [...pre, curr];
-    }, []);
-
+  const _metricData = metricData.filter((i) => {
+    return i.timestamp.substring(i.timestamp.lastIndexOf(':')) === ':00Z';
+  });
   _metricData.length > length && _metricData.shift();
 
   return _metricData.map((i) => {
+    const total = Number(i.total) && Number(i.total) >= 0 ? Number(i.total) : 0;
+
     return {
-      total: `${i.total}`,
+      total: `${total}`,
       timestamp: i.timestamp,
     };
   });
 }
 
 export function generateSeries(
+  now: Date,
   range: Range,
-  hours: number = 0,
+  hours = 0,
 ): MetricOutput[] {
   const series: MetricOutput[] = [];
-  const now = new Date();
   const past = new Date(now);
   const condition = buildCondition(range);
   switch (condition.type) {
     case TypeDate.month: {
       past.setMonth(now.getMonth() - condition.amount);
       for (let i = 1; i <= condition.amount; i++) {
-        let date = new Date(
-          new Date(past.getFullYear(), past.getMonth() + i, 0),
+        const date = new Date(
+          new Date(past.getFullYear(), past.getMonth() + i, 1),
         );
-        date.setDate(date.getDate() + 1);
+        // date.setDate(date.getDate() + 1);
         date.setHours(hours, 0, 0, 0);
         series.push(makeData(date));
       }
@@ -65,7 +52,7 @@ export function generateSeries(
     }
     case TypeDate.day: {
       past.setDate(now.getDate() - condition.amount);
-      let date = new Date(new Date(past).setHours(hours, 0, 0, 0));
+      const date = new Date(new Date(past).setHours(hours, 0, 0, 0));
       for (let i = 1; i <= condition.amount; i++) {
         date.setDate(date.getDate() + condition.step);
         series.push(makeData(date));
@@ -73,7 +60,7 @@ export function generateSeries(
       break;
     }
     case TypeDate.hour: {
-      past.setHours((now.getHours() - condition.amount) + 1);
+      past.setHours(now.getHours() - condition.amount + 1);
       for (
         let date = new Date(new Date(past).setUTCMinutes(0, 0, 0));
         date <= now;
@@ -84,7 +71,7 @@ export function generateSeries(
       break;
     }
     case TypeDate.minute: {
-      past.setMinutes((now.getMinutes() - condition.amount) + 1);
+      past.setMinutes(now.getMinutes() - condition.amount + 1);
       for (
         let date = new Date(new Date(past).setUTCSeconds(0, 0));
         date <= now;
