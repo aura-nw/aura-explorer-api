@@ -262,6 +262,13 @@ export class SoulboundTokenService {
       };
     }
 
+    if (req.receiver_address === address) {
+      return {
+        code: ERROR_MAP.TAKE_SELF_TOKEN.Code,
+        message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
+      };
+    }
+
     const entity = new SoulboundToken();
     const contract = await this.smartContractRepos.findOne({
       where: {
@@ -299,11 +306,12 @@ export class SoulboundTokenService {
       }
 
       let contentType;
-      if (ipfs.image) {
+      const imgUrl = !!ipfs.animation_url ? ipfs.animation_url : ipfs.image;
+      if (imgUrl) {
         contentType = await lastValueFrom(
           this.httpService
-            .get(this.transform(ipfs.image))
-            .pipe(timeout(8000), retry(5)),
+            .get(this.transform(imgUrl))
+            .pipe(timeout(18000), retry(5)),
         )
           .then((rs) => rs?.headers['content-type'])
           .catch(() => {

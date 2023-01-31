@@ -165,7 +165,10 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
           qb.where({
             picked: true,
           }).orWhere({
-            status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
+            status: In([
+              SOULBOUND_TOKEN_STATUS.UNCLAIM,
+              SOULBOUND_TOKEN_STATUS.UNEQUIPPED,
+            ]),
           });
         }),
       );
@@ -176,6 +179,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       const tokens = await builder
         .limit(limit)
         .orderBy('sbt.picked', 'DESC')
+        .addOrderBy('sbt.status', 'ASC')
         .addOrderBy('sbt.created_at', 'ASC')
         .getRawMany();
 
