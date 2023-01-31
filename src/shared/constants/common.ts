@@ -214,6 +214,11 @@ export const ERROR_MAP = {
     Code: 'E014',
     Message: `Can't verify image content-type`,
   },
+
+  TAKE_SELF_TOKEN: {
+    Code: 'E015',
+    Message: `You can not attest a Soulbound Token for yourself`,
+  },
 };
 
 export const PAGE_REQUEST = {
