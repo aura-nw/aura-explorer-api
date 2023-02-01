@@ -460,7 +460,14 @@ export class SoulboundTokenService {
           message: ERROR_MAP.PICKED_TOKEN_OVERSIZE.Message,
         };
       }
-      if (numOfPickedToken == SOULBOUND_PICKED_TOKEN.MIN && !req.picked) {
+      const numOfToken = await this.soulboundTokenRepos.count({
+        where: { receiver_address: entity.receiver_address },
+      });
+      if (
+        numOfToken == SOULBOUND_PICKED_TOKEN.MIN &&
+        numOfPickedToken == SOULBOUND_PICKED_TOKEN.MIN &&
+        !req.picked
+      ) {
         return {
           code: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Code,
           message: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Message,
