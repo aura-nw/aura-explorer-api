@@ -34,6 +34,7 @@ import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
+import { In } from 'typeorm';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -461,10 +462,16 @@ export class SoulboundTokenService {
         };
       }
       const numOfToken = await this.soulboundTokenRepos.count({
-        where: { receiver_address: entity.receiver_address },
+        where: {
+          receiver_address: entity.receiver_address,
+          status: In([
+            SOULBOUND_TOKEN_STATUS.UNCLAIM,
+            SOULBOUND_TOKEN_STATUS.UNEQUIPPED,
+          ]),
+        },
       });
       if (
-        numOfToken == SOULBOUND_PICKED_TOKEN.MIN &&
+        numOfToken == 0 &&
         numOfPickedToken == SOULBOUND_PICKED_TOKEN.MIN &&
         !req.picked
       ) {
