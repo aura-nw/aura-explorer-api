@@ -35,6 +35,8 @@ import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
 import { In } from 'typeorm';
+import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
+import { SoulboundTokenOutputDto } from '../dtos/soulbound-token-output.dto';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
@@ -52,6 +54,37 @@ export class SoulboundTokenService {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
     this.rpc = this.appParams.node.rpc;
+  }
+
+  /**
+   * Get data soulbound token list
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async getSoulboundTokenList(
+    ctx: RequestContext,
+    req: SoulboundTokenParasDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${
+        this.getSoulboundTokenList.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
+    );
+
+    const { tokens, count } =
+      await this.smartContractRepos.getSoulboundTokensList(
+        req.keyword,
+        req.limit,
+        req.offset,
+      );
+
+    const data = plainToClass(SoulboundTokenOutputDto, tokens, {
+      excludeExtraneousValues: true,
+    });
+
+    return { data: data, count };
   }
 
   /**

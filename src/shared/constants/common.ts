@@ -202,12 +202,12 @@ export const ERROR_MAP = {
   },
   PICKED_TOKEN_OVERSIZE: {
     Code: 'E012',
-    Message: `You can only pick maximun 5 soulboud tokens to display. If you want to display this Soul Bound Token, please un-pick the previous picked one`,
+    Message: `You can only pick maximun 5 Account Bound tokens to display. If you want to display this Account Bound Token, please un-pick the previous picked one`,
   },
 
   PICKED_TOKEN_UNDERSIZE: {
     Code: 'E013',
-    Message: `You can not un-pick the last picked SBT in your account. In order to un-pick this token, you need to pick another equipped SBT first then un-pick it later`,
+    Message: `You can not un-pick the last picked ABT in your account. In order to un-pick this token, you need to pick another equipped ABT first then un-pick it later`,
   },
 
   VERIFY_IMG_TYPE: {
@@ -217,7 +217,7 @@ export const ERROR_MAP = {
 
   TAKE_SELF_TOKEN: {
     Code: 'E015',
-    Message: `You can not attest a Soulbound Token for yourself`,
+    Message: `You can not attest a Account Bound Token for yourself`,
   },
 };
 
