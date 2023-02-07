@@ -240,12 +240,12 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getSoulboundTokensList(keyword: string, limit: number, offset: number) {
     const builder = this.createQueryBuilder('sm')
       .select(
-        'sm.id, sm.contract_address, sm.token_name, sm.minter_address, sm.created_at',
+        'sm.id, sm.contract_address, sm.token_name, sm.minter_address, sm.created_at, sm.token_symbol',
       )
       .innerJoin(
-        SoulboundToken,
-        'sbt',
-        'sm.contract_address = sbt.contract_address',
+        SmartContractCode,
+        'scc',
+        `sm.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW4973}'`,
       );
     const _finalizeResult = async (
       _builder: SelectQueryBuilder<SmartContract>,
@@ -264,7 +264,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('LOWER(sbt.contract_address) LIKE :keyword', {
+          qb.where('LOWER(sm.contract_address) LIKE :keyword', {
             keyword: `%${keyword}%`,
           })
             .orWhere('LOWER(sm.minter_address) LIKE :keyword', {
