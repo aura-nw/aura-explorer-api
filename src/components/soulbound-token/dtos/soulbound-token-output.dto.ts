@@ -12,4 +12,7 @@ export class SoulboundTokenOutputDto {
 
   @Expose()
   minter_address: string;
+
+  @Expose()
+  token_symbol: string;
 }
