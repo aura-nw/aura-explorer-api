@@ -28,7 +28,7 @@ export class SoulboundTokenController {
     private soulboundTokenService: SoulboundTokenService,
   ) {}
 
-  @Get()
+  @Get('tokens-list')
   @ApiOperation({ summary: 'Get list token of Soulbound' })
   @ApiResponse({ status: HttpStatus.OK, schema: {} })
   async getListSoulboundToken(
