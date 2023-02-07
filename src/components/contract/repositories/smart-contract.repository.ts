@@ -1,4 +1,5 @@
 import {
+  Brackets,
   EntityRepository,
   In,
   Not,
@@ -15,6 +16,7 @@ import {
   CONTRACT_STATUS,
   CONTRACT_TYPE,
   LENGTH,
+  SoulboundToken,
   SYNC_CONTRACT_TRANSACTION_TYPE,
   Transaction,
 } from '../../../shared';
@@ -225,6 +227,55 @@ export class SmartContractRepository extends Repository<SmartContract> {
     builder.andWhere('LOWER(sm.contract_address) LIKE :keyword', {
       keyword: `%${keyword}%`,
     });
+    return await _finalizeResult(builder);
+  }
+
+  /**
+   * Get list tokens of soulbound
+   * @param keyword
+   * @param limit
+   * @param offset
+   * @returns
+   */
+  async getSoulboundTokensList(keyword: string, limit: number, offset: number) {
+    const builder = this.createQueryBuilder('sm')
+      .select(
+        'sm.id, sm.contract_address, sm.token_name, sm.minter_address, sm.created_at',
+      )
+      .innerJoin(
+        SoulboundToken,
+        'sbt',
+        'sm.contract_address = sbt.contract_address',
+      );
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const tokens = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy('sm.created_at', 'DESC')
+        .groupBy('sm.contract_address, sm.minter_address')
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { tokens, count };
+    };
+
+    if (keyword) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(sbt.contract_address) LIKE :keyword', {
+            keyword: `%${keyword}%`,
+          })
+            .orWhere('LOWER(sm.minter_address) LIKE :keyword', {
+              keyword: `%${keyword}%`,
+            })
+            .orWhere('LOWER(sm.token_name) LIKE LOWER(:keyword)', {
+              keyword: `%${keyword}%`,
+            });
+        }),
+      );
+    }
     return await _finalizeResult(builder);
   }
 }

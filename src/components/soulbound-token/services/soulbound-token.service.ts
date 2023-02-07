@@ -74,7 +74,7 @@ export class SoulboundTokenService {
     );
 
     const { tokens, count } =
-      await this.soulboundTokenRepos.getSoulboundTokensList(
+      await this.smartContractRepos.getSoulboundTokensList(
         req.keyword,
         req.limit,
         req.offset,
