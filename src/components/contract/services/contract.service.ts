@@ -357,6 +357,10 @@ export class ContractService {
       where: { token_id: tokenId },
     });
 
+    if (!token) {
+      return null;
+    }
+
     // Get ipfs info
     const ipfs = await this.serviceUtil.getDataAPI(
       this.transform(token?.token_uri),
