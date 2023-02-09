@@ -295,8 +295,8 @@ export class SoulboundTokenService {
         message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
       };
     }
-
-    if (req.receiver_address === address) {
+    const receiver_address = req.receiver_address.trim();
+    if (receiver_address === address) {
       return {
         code: ERROR_MAP.TAKE_SELF_TOKEN.Code,
         message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
@@ -362,7 +362,7 @@ export class SoulboundTokenService {
 
       entity.contract_address = contract.contract_address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
-      entity.receiver_address = req.receiver_address;
+      entity.receiver_address = receiver_address;
       entity.token_uri = req.token_uri;
       entity.signature = req.signature;
       entity.pub_key = req.pubKey;
@@ -372,7 +372,7 @@ export class SoulboundTokenService {
       entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
-        req.receiver_address,
+        receiver_address,
         contract.minter_address,
         req.token_uri,
       );
