@@ -360,9 +360,11 @@ export class SoulboundTokenService {
         }
       }
 
+      const receiver_address = req.receiver_address.trim();
+
       entity.contract_address = contract.contract_address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
-      entity.receiver_address = req.receiver_address;
+      entity.receiver_address = receiver_address;
       entity.token_uri = req.token_uri;
       entity.signature = req.signature;
       entity.pub_key = req.pubKey;
@@ -372,7 +374,7 @@ export class SoulboundTokenService {
       entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
-        req.receiver_address,
+        receiver_address,
         contract.minter_address,
         req.token_uri,
       );
