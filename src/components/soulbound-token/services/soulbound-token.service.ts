@@ -295,8 +295,8 @@ export class SoulboundTokenService {
         message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
       };
     }
-
-    if (req.receiver_address === address) {
+    const receiver_address = req.receiver_address.trim();
+    if (receiver_address === address) {
       return {
         code: ERROR_MAP.TAKE_SELF_TOKEN.Code,
         message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
@@ -359,8 +359,6 @@ export class SoulboundTokenService {
           };
         }
       }
-
-      const receiver_address = req.receiver_address.trim();
 
       entity.contract_address = contract.contract_address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
