@@ -1,4 +1,5 @@
 import {
+  Brackets,
   EntityRepository,
   In,
   Not,
@@ -15,6 +16,7 @@ import {
   CONTRACT_STATUS,
   CONTRACT_TYPE,
   LENGTH,
+  SoulboundToken,
   SYNC_CONTRACT_TRANSACTION_TYPE,
   Transaction,
 } from '../../../shared';
@@ -179,5 +181,101 @@ export class SmartContractRepository extends Repository<SmartContract> {
     const count = await queryBuilder.getCount();
 
     return [list, count];
+  }
+
+  /**
+   * Get smart contract by minter
+   * @param minterAddress
+   * @param keyword
+   * @param limit
+   * @param offset
+   */
+  async getContractByMinter(
+    minterAddress: string,
+    keyword: string,
+    limit: number,
+    offset: number,
+  ) {
+    const builder = this.createQueryBuilder('sm')
+      .select('sm.id, sm.contract_address, sm.minter_address')
+      .innerJoin(
+        SmartContractCode,
+        'smc',
+        `sm.code_id = smc.code_id AND smc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND smc.type = '${CONTRACT_TYPE.CW4973}'`,
+      )
+      .where({
+        minter_address: minterAddress,
+      });
+
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const data = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy('sm.created_at', 'DESC')
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { contracts: data, count };
+    };
+
+    if (!keyword) {
+      return await _finalizeResult(builder);
+    }
+
+    builder.andWhere('LOWER(sm.contract_address) LIKE :keyword', {
+      keyword: `%${keyword}%`,
+    });
+    return await _finalizeResult(builder);
+  }
+
+  /**
+   * Get list tokens of soulbound
+   * @param keyword
+   * @param limit
+   * @param offset
+   * @returns
+   */
+  async getSoulboundTokensList(keyword: string, limit: number, offset: number) {
+    const builder = this.createQueryBuilder('sm')
+      .select(
+        'sm.id, sm.contract_address, sm.token_name, sm.minter_address, sm.created_at, sm.token_symbol',
+      )
+      .innerJoin(
+        SmartContractCode,
+        'scc',
+        `sm.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW4973}'`,
+      );
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const tokens = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy('sm.created_at', 'DESC')
+        .groupBy('sm.contract_address, sm.minter_address')
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { tokens, count };
+    };
+
+    if (keyword) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(sm.contract_address) LIKE :keyword', {
+            keyword: `%${keyword}%`,
+          })
+            .orWhere('LOWER(sm.minter_address) LIKE :keyword', {
+              keyword: `%${keyword}%`,
+            })
+            .orWhere('LOWER(sm.token_name) LIKE LOWER(:keyword)', {
+              keyword: `%${keyword}%`,
+            });
+        }),
+      );
+    }
+    return await _finalizeResult(builder);
   }
 }

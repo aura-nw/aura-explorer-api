@@ -180,9 +180,64 @@ export const ERROR_MAP = {
     Code: 'E006',
     Message: `Result is correct, you cannot update this record`,
   },
+  MINTER_OR_CONTRACT_ADDRESS_INVALID: {
+    Code: 'E007',
+    Message: `Attestor address or contract address invalid`,
+  },
+  YOUR_ADDRESS_INVALID: {
+    Code: 'E008',
+    Message: `Receiver address invalid`,
+  },
+  TOKEN_NOT_EXIST: {
+    Code: 'E009',
+    Message: `Token not exist`,
+  },
+  TOKEN_URI_INVALID: {
+    Code: 'E010',
+    Message: `Token URI invalid`,
+  },
+  ER_DUP_ENTRY: {
+    Code: 'E011',
+    Message: `Token is duplicate`,
+  },
+  PICKED_TOKEN_OVERSIZE: {
+    Code: 'E012',
+    Message: `You can only pick maximun 5 Account Bound tokens to display. If you want to display this Account Bound Token, please un-pick the previous picked one`,
+  },
+
+  PICKED_TOKEN_UNDERSIZE: {
+    Code: 'E013',
+    Message: `You can not un-pick the last picked ABT in your account. In order to un-pick this token, you need to pick another equipped ABT first then un-pick it later`,
+  },
+
+  VERIFY_IMG_TYPE: {
+    Code: 'E014',
+    Message: `Can't verify image content-type`,
+  },
+
+  TAKE_SELF_TOKEN: {
+    Code: 'E015',
+    Message: `You can not attest a Account Bound Token for yourself`,
+  },
 };
 
 export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
 };
+
+export enum SOULBOUND_TOKEN_STATUS {
+  UNCLAIM = 'Unclaimed',
+  EQUIPPED = 'Equipped',
+  UNEQUIPPED = 'Unequipped',
+  PENDING = 'Pending',
+}
+
+export const SOULBOUND_PICKED_TOKEN = {
+  MIN: 1,
+  MAX: 5,
+};
+
+export enum CW4973_CONTRACT {
+  AGREEMENT = 'Agreement(string chain_id,address active,address passive,string tokenURI)',
+}

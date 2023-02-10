@@ -17,6 +17,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
 import { Cw721TokenModule } from './components/cw721-token/cw721-token.module';
 import { MetricService } from './components/metric/services/metric.service';
+import { SoulboundTokenModule } from './components/soulbound-token/soulbound-token.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MetricService } from './components/metric/services/metric.service';
     ContractCodeModule,
     Cw20TokenModule,
     Cw721TokenModule,
+    SoulboundTokenModule,
     TypeOrmModule.forFeature([SyncStatusRepository]),
   ],
   controllers: [AppController],

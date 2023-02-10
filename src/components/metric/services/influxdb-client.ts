@@ -91,7 +91,6 @@ export class InfluxDBClient {
           |> sum()`;
       return this.bindingData(query);
     }
-
     const query = `
       from(bucket: "${this.bucket}")
         |> range(start: ${start})
@@ -252,6 +251,8 @@ export class InfluxDBClient {
             total_volume: r.total_volume,
             time: date.truncate(t: r._start, unit: ${step})
         }))`;
+
+    console.log(query);
 
     const output = new Promise((resolve) => {
       this.queryApi.queryRows(query, {
