@@ -302,7 +302,6 @@ export class SoulboundTokenService {
         message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
       };
     }
-
     const entity = new SoulboundToken();
     const contract = await this.smartContractRepos.findOne({
       where: {
