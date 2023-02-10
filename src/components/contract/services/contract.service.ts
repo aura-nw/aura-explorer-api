@@ -354,7 +354,10 @@ export class ContractService {
   ) {
     this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
     const token = await this.soulboundTokenRepository.findOne({
-      where: { token_id: tokenId },
+      where: {
+        token_id: tokenId,
+        contract_address: smartContract.contract_address,
+      },
     });
 
     if (!token) {
