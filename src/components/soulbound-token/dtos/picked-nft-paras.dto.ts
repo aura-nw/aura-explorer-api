@@ -9,5 +9,9 @@ export class PickedNftParasDto extends VerifySignatureParasDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  contractAddress: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
   picked: boolean;
 }

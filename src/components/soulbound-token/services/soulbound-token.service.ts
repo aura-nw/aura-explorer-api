@@ -302,14 +302,6 @@ export class SoulboundTokenService {
         message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
       };
     }
-
-    if (req.receiver_address === address) {
-      return {
-        code: ERROR_MAP.TAKE_SELF_TOKEN.Code,
-        message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
-      };
-    }
-
     const entity = new SoulboundToken();
     const contract = await this.smartContractRepos.findOne({
       where: {
@@ -437,7 +429,7 @@ export class SoulboundTokenService {
     }
 
     const entity = await this.soulboundTokenRepos.findOne({
-      where: { token_id: req.id },
+      where: { token_id: req.id, contract_address: req.contractAddress },
     });
     if (entity) {
       if (entity.receiver_address === address) {
@@ -488,7 +480,7 @@ export class SoulboundTokenService {
     }
 
     const entity = await this.soulboundTokenRepos.findOne({
-      where: { token_id: req.id },
+      where: { token_id: req.id, contract_address: req.contractAddress },
     });
 
     if (entity) {
