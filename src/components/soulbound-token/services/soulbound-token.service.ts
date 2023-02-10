@@ -430,7 +430,7 @@ export class SoulboundTokenService {
     }
 
     const entity = await this.soulboundTokenRepos.findOne({
-      where: { token_id: req.id },
+      where: { token_id: req.id, contract_address: req.contractAddress },
     });
     if (entity) {
       if (entity.receiver_address === address) {
@@ -481,7 +481,7 @@ export class SoulboundTokenService {
     }
 
     const entity = await this.soulboundTokenRepos.findOne({
-      where: { token_id: req.id },
+      where: { token_id: req.id, contract_address: req.contractAddress },
     });
 
     if (entity) {
