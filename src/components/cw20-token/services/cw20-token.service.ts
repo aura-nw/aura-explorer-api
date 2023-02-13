@@ -59,6 +59,10 @@ export class Cw20TokenService {
     const { list, count } =
       await this.tokenMarketsRepository.getCw20TokenMarkets(request);
 
+    if (count == 0) {
+      return { tokens: list, count: count };
+    }
+
     const lstAddress = list?.map((i) => i.contract_address);
 
     const tokensInfo =
