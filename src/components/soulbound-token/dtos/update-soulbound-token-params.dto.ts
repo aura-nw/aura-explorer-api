@@ -10,6 +10,10 @@ export class UpdateSoulboundTokenParamsDto extends VerifySignatureParasDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  contractAddress: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
   @IsEnum(SOULBOUND_TOKEN_STATUS)
   status: SOULBOUND_TOKEN_STATUS;
 }
