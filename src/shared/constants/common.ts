@@ -241,3 +241,10 @@ export const SOULBOUND_PICKED_TOKEN = {
 export enum CW4973_CONTRACT {
   AGREEMENT = 'Agreement(string chain_id,address active,address passive,string tokenURI)',
 }
+
+export enum VERIFY_CODE_RESULT {
+  FAIL = 'Fail',
+  IN_PROGRESS = 'In-progress',
+  SUCCESS = 'Success',
+  PENDING = 'Pending',
+}
