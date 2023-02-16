@@ -8,15 +8,15 @@ export class VerifyCodeStep extends BaseEntityIncrementId {
   @Column()
   code_id: number;
 
+  @Column()
+  check_id: number;
+
   @Column({
     type: 'enum',
     enum: VERIFY_CODE_RESULT,
     default: VERIFY_CODE_RESULT.PENDING,
   })
   result: VERIFY_CODE_RESULT;
-
-  @Column()
-  check_id: number;
 
   @Column()
   msg_code: string;
