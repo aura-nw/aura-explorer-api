@@ -96,6 +96,33 @@ export class ContractController {
     return { data: result, meta: {} };
   }
 
+  @Post('verify-code-id')
+  @ApiOperation({ summary: 'Verify code id' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async verifyCodeId(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: VerifyContractParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    const result = await this.contractService.verifyCodeId(ctx, request);
+
+    return { data: result, meta: {} };
+  }
+
+  @Get('verify-code-id/:codeId')
+  @ApiOperation({ summary: 'Get verify code steps' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async getVerifyCodeStep(
+    @ReqContext() ctx: RequestContext,
+    @Param('codeId') codeId: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    const result = await this.contractService.getVerifyCodeStep(ctx, codeId);
+    return { data: result, meta: {} };
+  }
+
   @Get('match-creation-code/:contractAddress')
   @ApiOperation({ summary: 'Get list contracts match creation code' })
   @ApiResponse({ status: HttpStatus.OK })

@@ -11,6 +11,7 @@ import { HttpModule } from '@nestjs/axios';
 import { SmartContractCodeRepository } from '../contract-code/repositories/smart-contract-code.repository';
 import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
 import { SoulboundTokenRepository } from '../soulbound-token/repositories/soulbound-token.repository';
+import { VerifyCodeStepRepository } from './repositories/verify-code-step.repository';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SoulboundTokenRepository } from '../soulbound-token/repositories/soulbo
       SmartContractCodeRepository,
       TokenMarketsRepository,
       SoulboundTokenRepository,
+      VerifyCodeStepRepository,
     ]),
     ConfigModule,
     HttpModule,

@@ -13,6 +13,7 @@ import {
   ERROR_MAP,
   INDEXER_API,
   RequestContext,
+  VERIFY_CODE_RESULT,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ContractByCreatorOutputDto } from '../dtos/contract-by-creator-output.dto';
@@ -27,6 +28,9 @@ import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
+import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity';
+import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
+import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 @Injectable()
 export class ContractService {
   private api;
@@ -47,6 +51,7 @@ export class ContractService {
     private httpService: HttpService,
     private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
+    private verifyCodeStepRepository: VerifyCodeStepRepository,
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
@@ -158,6 +163,80 @@ export class ContractService {
     ).then((rs) => rs.data);
 
     return result;
+  }
+
+  async verifyCodeId(
+    ctx: RequestContext,
+    request: VerifyContractParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    const contract = await this.smartContractRepository.findOne({
+      where: { contract_address: request.contract_address },
+    });
+    if (
+      !contract ||
+      (contract &&
+        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
+    ) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
+        Message: ERROR_MAP.CONTRACT_VERIFIED.Message,
+      };
+      return error;
+    }
+
+    const verifyCodeSteps = await this.verifyCodeStepRepository.findOne({
+      where: { code_id: contract.code_id },
+    });
+
+    if (!verifyCodeSteps) {
+      const verifySteps = [];
+      // Generate code step
+      for (let index = 1; index < 9; index++) {
+        const step = {
+          code_id: contract.code_id,
+          check_id: index,
+          result:
+            index == 1
+              ? VERIFY_CODE_RESULT.IN_PROGRESS
+              : VERIFY_CODE_RESULT.PENDING,
+        };
+        verifySteps.push(step);
+      }
+
+      try {
+        await this.verifyCodeStepRepository.save(verifySteps);
+      } catch (err) {
+        this.logger.error(
+          ctx,
+          `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
+        );
+      }
+    }
+
+    const properties = {
+      commit: request.commit,
+      compilerVersion: request.compiler_version,
+      contractAddress: request.contract_address,
+      contractUrl: request.url,
+      wasmFile: request.wasm_file,
+    };
+    const result = await lastValueFrom(
+      this.httpService.post(this.verifyContractUrl, properties),
+    ).then((rs) => rs.data);
+
+    return result;
+  }
+
+  async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
+    this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
+    const verifyCodeSteps =
+      await this.verifyCodeStepRepository.getVerifyCodeStep(codeId);
+
+    const data = plainToClass(VerifyCodeStepOutputDto, verifyCodeSteps, {
+      excludeExtraneousValues: true,
+    });
+    return data;
   }
 
   async getContractsMatchCreationCode(
