@@ -34,6 +34,15 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .select(['sc.*', 'scc.type `type`', 'scc.result `result`'])
       .orderBy('sc.updated_at', 'DESC');
 
+    if (request.contractType && request.contractType.length > 0) {
+      builder.where('scc.type IN (:contractType)', {
+        contractType: request.contractType,
+      });
+      if (request.contractType.includes('')) {
+        builder.orWhere('scc.type IS NULL');
+      }
+    }
+
     const _finalizeResult = async (
       _builder: SelectQueryBuilder<SmartContract>,
     ) => {
