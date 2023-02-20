@@ -34,7 +34,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .select(['sc.*', 'scc.type `type`', 'scc.result `result`'])
       .orderBy('sc.updated_at', 'DESC');
 
-    if (request.contractType.length > 0) {
+    if (request.contractType && request.contractType.length > 0) {
       builder.where('scc.type IN (:contractType)', {
         contractType: request.contractType,
       });
