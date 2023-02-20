@@ -38,6 +38,9 @@ export class SmartContractRepository extends Repository<SmartContract> {
       builder.where('scc.type IN (:contractType)', {
         contractType: request.contractType,
       });
+      if (request.contractType.includes('')) {
+        builder.orWhere('scc.type IS NULL');
+      }
     }
 
     const _finalizeResult = async (
