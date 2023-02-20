@@ -219,6 +219,11 @@ export const ERROR_MAP = {
     Code: 'E015',
     Message: `You can not attest a Account Bound Token for yourself`,
   },
+
+  CONTRACT_VERIFIED_TBD: {
+    Code: 'E016',
+    Message: `Contract has been verified or TBD`,
+  },
 };
 
 export const PAGE_REQUEST = {

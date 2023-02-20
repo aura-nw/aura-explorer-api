@@ -146,8 +146,8 @@ export class ContractService {
         contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
     ) {
       const error = {
-        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
-        Message: ERROR_MAP.CONTRACT_VERIFIED.Message,
+        Code: ERROR_MAP.CONTRACT_VERIFIED_TBD.Code,
+        Message: ERROR_MAP.CONTRACT_VERIFIED_TBD.Message,
       };
       return error;
     }
@@ -197,7 +197,7 @@ export class ContractService {
           code_id: contract.code_id,
           check_id: index,
           result:
-            index == 1
+            index === 1
               ? VERIFY_CODE_RESULT.IN_PROGRESS
               : VERIFY_CODE_RESULT.PENDING,
         };

@@ -11,9 +11,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AkcLogger, ReqContext, RequestContext } from '../../../shared';
+import {
+  AkcLogger,
+  ReqContext,
+  RequestContext,
+  SwaggerBaseApiResponse,
+} from '../../../shared';
 import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
+import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { ContractService } from '../services/contract.service';
 
@@ -98,7 +104,10 @@ export class ContractController {
 
   @Post('verify-code-id')
   @ApiOperation({ summary: 'Verify code id' })
-  @ApiResponse({ status: HttpStatus.OK })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Successfully create data',
+  })
   @UseInterceptors(ClassSerializerInterceptor)
   @UseInterceptors(CacheInterceptor)
   async verifyCodeId(
@@ -113,7 +122,11 @@ export class ContractController {
 
   @Get('verify-code-id/:codeId')
   @ApiOperation({ summary: 'Get verify code steps' })
-  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieve data',
+    type: SwaggerBaseApiResponse(VerifyCodeStepOutputDto),
+  })
   async getVerifyCodeStep(
     @ReqContext() ctx: RequestContext,
     @Param('codeId') codeId: number,
