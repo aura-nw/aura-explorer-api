@@ -14,4 +14,7 @@ export class ContractParamsDto {
 
   @ApiProperty({ default: '' })
   keyword: string;
+
+  @ApiProperty({ default: [] })
+  contractType: Array<string>;
 }
