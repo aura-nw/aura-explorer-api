@@ -10,10 +10,10 @@ export class addTableVerifyItemCheck1676446936888
       `CREATE TABLE \`verify_item_check\` (\`created_at\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`id\` int NOT NULL AUTO_INCREMENT, \`group_stage\` int NOT NULL, \`check_name\` varchar(255) NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
     );
     await queryRunner.query(
-      `INSERT INTO \`verify_item_check\` (\`id\`, \`check_name\`, \`group_stage\`) VALUES ('1', 'Compiler image format', '1');`,
+      `INSERT INTO \`verify_item_check\` (\`id\`, \`check_name\`, \`group_stage\`) VALUES ('1', 'Code ID valid', '1');`,
     );
     await queryRunner.query(
-      `INSERT INTO \`verify_item_check\` (\`id\`, \`check_name\`, \`group_stage\`) VALUES ('2', 'Code ID valid', '1');`,
+      `INSERT INTO \`verify_item_check\` (\`id\`, \`check_name\`, \`group_stage\`) VALUES ('2', 'Compiler image format', '1');`,
     );
     await queryRunner.query(
       `INSERT INTO \`verify_item_check\` (\`id\`, \`check_name\`, \`group_stage\`) VALUES ('3', 'Code ID verification session valid', '1');`,
