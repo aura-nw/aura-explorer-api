@@ -143,7 +143,8 @@ export class ContractService {
     if (
       !contract ||
       (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
+        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
+        contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL)
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED_TBD.Code,
@@ -185,12 +186,26 @@ export class ContractService {
       return error;
     }
 
-    const verifyCodeSteps = await this.verifyCodeStepRepository.findOne({
+    const verifyCodeSteps = await this.verifyCodeStepRepository.find({
       where: { code_id: contract.code_id },
     });
 
-    if (!verifyCodeSteps) {
-      const verifySteps = [];
+    const verifySteps = [];
+    if (verifyCodeSteps && verifyCodeSteps.length > 0) {
+      for (let index = 1; index < 9; index++) {
+        const step = {
+          id: verifyCodeSteps[index - 1].id,
+          code_id: contract.code_id,
+          check_id: index,
+          msg_code: null,
+          result:
+            index === 1
+              ? VERIFY_CODE_RESULT.IN_PROGRESS
+              : VERIFY_CODE_RESULT.PENDING,
+        };
+        verifySteps.push(step);
+      }
+    } else {
       // Generate code step
       for (let index = 1; index < 9; index++) {
         const step = {
@@ -203,15 +218,15 @@ export class ContractService {
         };
         verifySteps.push(step);
       }
+    }
 
-      try {
-        await this.verifyCodeStepRepository.save(verifySteps);
-      } catch (err) {
-        this.logger.error(
-          ctx,
-          `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
-        );
-      }
+    try {
+      await this.verifyCodeStepRepository.save(verifySteps);
+    } catch (err) {
+      this.logger.error(
+        ctx,
+        `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
+      );
     }
 
     const properties = {
