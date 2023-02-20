@@ -143,8 +143,7 @@ export class ContractService {
     if (
       !contract ||
       (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
-        contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL)
+        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED_TBD.Code,
@@ -177,7 +176,8 @@ export class ContractService {
     if (
       !contract ||
       (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
+        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
+        contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL)
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
@@ -186,15 +186,15 @@ export class ContractService {
       return error;
     }
 
-    const verifyCodeSteps = await this.verifyCodeStepRepository.find({
-      where: { code_id: contract.code_id },
-    });
-
     const verifySteps = [];
-    if (verifyCodeSteps && verifyCodeSteps.length > 0) {
+    // update to initial data when re-verify at contract verify fail
+    if (contract.contract_verification === CONTRACT_STATUS.VERIFYFAIL) {
+      const verifyCodeSteps = await this.verifyCodeStepRepository.find({
+        where: { code_id: contract.code_id },
+      });
       for (let index = 1; index < 9; index++) {
         const step = {
-          id: verifyCodeSteps[index - 1].id,
+          id: verifyCodeSteps[index - 1]?.id,
           code_id: contract.code_id,
           check_id: index,
           msg_code: null,
@@ -220,13 +220,15 @@ export class ContractService {
       }
     }
 
-    try {
-      await this.verifyCodeStepRepository.save(verifySteps);
-    } catch (err) {
-      this.logger.error(
-        ctx,
-        `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
-      );
+    if (verifySteps.length > 0) {
+      try {
+        await this.verifyCodeStepRepository.save(verifySteps);
+      } catch (err) {
+        this.logger.error(
+          ctx,
+          `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
+        );
+      }
     }
 
     const properties = {
