@@ -21,6 +21,7 @@ import {
   Transaction,
 } from '../../../shared';
 import { Cw721TokenParamsDto } from '../../cw721-token/dtos/cw721-token-params.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {

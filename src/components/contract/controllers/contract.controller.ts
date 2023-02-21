@@ -18,6 +18,7 @@ import {
   SwaggerBaseApiResponse,
 } from '../../../shared';
 import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
@@ -100,6 +101,24 @@ export class ContractController {
     const result = await this.contractService.verifyContract(ctx, request);
 
     return { data: result, meta: {} };
+  }
+
+  @Post('contract-code-id')
+  @ApiOperation({ summary: 'Get list contracts code id' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getContractsCodeId(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: ContractCodeIdParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContracts.name} was called!`);
+    const { contracts, count } = await this.contractService.getContractsCodeId(
+      ctx,
+      request,
+    );
+
+    return { data: contracts, meta: { count } };
   }
 
   @Post('verify-code-id')

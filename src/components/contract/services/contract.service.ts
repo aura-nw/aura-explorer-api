@@ -31,6 +31,7 @@ import { SoulboundTokenRepository } from '../../soulbound-token/repositories/sou
 import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity';
 import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 @Injectable()
 export class ContractService {
   private api;
@@ -73,6 +74,17 @@ export class ContractService {
     const [contracts, count] = await this.smartContractRepository.getContracts(
       request,
     );
+
+    return { contracts, count };
+  }
+
+  async getContractsCodeId(
+    ctx: RequestContext,
+    request: ContractCodeIdParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContracts.name} was called!`);
+    const [contracts, count] =
+      await this.smartContractCodeRepository.getContractsCodeId(request);
 
     return { contracts, count };
   }
@@ -173,11 +185,17 @@ export class ContractService {
     const contract = await this.smartContractRepository.findOne({
       where: { contract_address: request.contract_address },
     });
+    if (!contract) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
+        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
+      };
+      return error;
+    }
+
     if (
-      !contract ||
-      (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
-        contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL)
+      contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
+      contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
@@ -222,6 +240,10 @@ export class ContractService {
 
     if (verifySteps.length > 0) {
       try {
+        // change status contract to verifying
+        contract.contract_verification = CONTRACT_STATUS.VERIFYING;
+        await this.smartContractRepository.save(contract);
+        // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
       } catch (err) {
         this.logger.error(
