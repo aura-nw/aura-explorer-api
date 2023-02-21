@@ -79,6 +79,7 @@ export enum CONTRACT_STATUS {
   EXACT_MATCH = 'EXACT MATCH',
   SIMILAR_MATCH = 'SIMILAR MATCH',
   UNVERIFIED = 'UNVERIFIED',
+  VERIFYFAIL = 'VERIFYFAIL',
   NOT_REGISTERED = 'Not registered',
   TBD = 'TBD',
   DEPLOYED = 'Deployed',
@@ -218,6 +219,11 @@ export const ERROR_MAP = {
   TAKE_SELF_TOKEN: {
     Code: 'E015',
     Message: `You can not attest a Account Bound Token for yourself`,
+  },
+
+  CONTRACT_VERIFIED_TBD: {
+    Code: 'E016',
+    Message: `Contract has been verified or TBD`,
   },
 };
 

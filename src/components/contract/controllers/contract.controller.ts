@@ -11,9 +11,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AkcLogger, ReqContext, RequestContext } from '../../../shared';
+import {
+  AkcLogger,
+  ReqContext,
+  RequestContext,
+  SwaggerBaseApiResponse,
+} from '../../../shared';
 import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
+import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { ContractService } from '../services/contract.service';
 
@@ -93,6 +99,40 @@ export class ContractController {
     this.logger.log(ctx, `${this.verifyContract.name} was called!`);
     const result = await this.contractService.verifyContract(ctx, request);
 
+    return { data: result, meta: {} };
+  }
+
+  @Post('verify-code-id')
+  @ApiOperation({ summary: 'Verify code id' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Successfully create data',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async verifyCodeId(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: VerifyContractParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    const result = await this.contractService.verifyCodeId(ctx, request);
+
+    return { data: result, meta: {} };
+  }
+
+  @Get('verify-code-id/:codeId')
+  @ApiOperation({ summary: 'Get verify code steps' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieve data',
+    type: SwaggerBaseApiResponse(VerifyCodeStepOutputDto),
+  })
+  async getVerifyCodeStep(
+    @ReqContext() ctx: RequestContext,
+    @Param('codeId') codeId: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    const result = await this.contractService.getVerifyCodeStep(ctx, codeId);
     return { data: result, meta: {} };
   }
 

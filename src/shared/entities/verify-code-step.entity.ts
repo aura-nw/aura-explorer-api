@@ -18,6 +18,6 @@ export class VerifyCodeStep extends BaseEntityIncrementId {
   })
   result: VERIFY_CODE_RESULT;
 
-  @Column()
+  @Column({ name: 'msg_code', nullable: true })
   msg_code: string;
 }
