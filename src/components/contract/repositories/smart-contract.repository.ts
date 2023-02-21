@@ -34,6 +34,19 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .select(['sc.*', 'scc.type `type`', 'scc.result `result`'])
       .orderBy('sc.updated_at', 'DESC');
 
+    if (request.contractType && request.contractType.length > 0) {
+      builder.where(
+        new Brackets((qb) => {
+          qb.where('scc.type IN (:contractType)', {
+            contractType: request.contractType,
+          });
+          if (request.contractType.includes('')) {
+            qb.orWhere('scc.type IS NULL');
+          }
+        }),
+      );
+    }
+
     const _finalizeResult = async (
       _builder: SelectQueryBuilder<SmartContract>,
     ) => {
@@ -55,7 +68,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
     const byCodeId = Number(keyword) && Number(keyword) > 0;
     if (byCodeId) {
-      builder.where({ code_id: keyword });
+      builder.andWhere({ code_id: keyword });
       return await _finalizeResult(builder);
     }
 
@@ -63,7 +76,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       keyword.length === LENGTH.ACCOUNT_ADDRESS;
     if (byCreatorAddress) {
-      builder.where({ creator_address: keyword });
+      builder.andWhere({ creator_address: keyword });
       return await _finalizeResult(builder);
     }
 
@@ -71,13 +84,17 @@ export class SmartContractRepository extends Repository<SmartContract> {
       keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       keyword.length === LENGTH.CONTRACT_ADDRESS;
     if (byCreatorOrContractAddress) {
-      builder
-        .where({ contract_address: keyword })
-        .orWhere({ creator_address: keyword });
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where({ contract_address: keyword }).orWhere({
+            creator_address: keyword,
+          });
+        }),
+      );
       return await _finalizeResult(builder);
     }
 
-    builder.where('LOWER(sc.contract_name) LIKE :keyword', {
+    builder.andWhere('LOWER(sc.contract_name) LIKE :keyword', {
       keyword: `%${keyword}%`,
     });
     return await _finalizeResult(builder);
