@@ -241,8 +241,14 @@ export class ContractService {
     if (verifySteps.length > 0) {
       try {
         // change status contract to verifying
-        contract.contract_verification = CONTRACT_STATUS.VERIFYING;
-        await this.smartContractRepository.save(contract);
+        const contractVerify = await this.smartContractRepository.find({
+          where: { code_id: contract.code_id },
+        });
+        contractVerify.forEach(
+          (el) => (el.contract_verification = CONTRACT_STATUS.VERIFYING),
+        );
+
+        await this.smartContractRepository.save(contractVerify);
         // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
       } catch (err) {
