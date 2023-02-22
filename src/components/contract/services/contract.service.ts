@@ -93,7 +93,7 @@ export class ContractService {
     ctx: RequestContext,
     codeId: number,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
+    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
     const contracts =
       await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
 

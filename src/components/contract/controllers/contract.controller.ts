@@ -112,7 +112,7 @@ export class ContractController {
     @ReqContext() ctx: RequestContext,
     @Body() request: ContractCodeIdParamsDto,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
+    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
     const { contracts, count } = await this.contractService.getContractsCodeId(
       ctx,
       request,
@@ -130,7 +130,7 @@ export class ContractController {
     @ReqContext() ctx: RequestContext,
     @Param('codeId') codeId: number,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
+    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
     const contracts = await this.contractService.getContractsCodeIdDetail(
       ctx,
       codeId,
