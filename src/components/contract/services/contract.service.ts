@@ -315,27 +315,13 @@ export class ContractService {
 
   async verifyContractStatus(
     ctx: RequestContext,
-    contractAddress: string,
+    codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: contractAddress },
-    });
-    if (contract) {
-      const result = await lastValueFrom(
-        this.httpService.get(
-          this.verifyContractStatusUrl + String(contract.code_id),
-        ),
-      ).then((rs) => rs.data);
-
-      return result;
-    } else {
-      const error = {
-        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
-        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
-      };
-      return error;
-    }
+    const result = await lastValueFrom(
+      this.httpService.get(this.verifyContractStatusUrl + String(codeId)),
+    ).then((rs) => rs.data);
+    return result;
   }
 
   /**
