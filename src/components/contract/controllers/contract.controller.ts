@@ -194,20 +194,17 @@ export class ContractController {
     return { data: contracts, meta: { count } };
   }
 
-  @Get('verify/status/:contractAddress')
+  @Get('verify/status/:codeId')
   @ApiOperation({ summary: 'Verify contract status' })
   @ApiResponse({ status: HttpStatus.OK })
   @UseInterceptors(ClassSerializerInterceptor)
   @UseInterceptors(CacheInterceptor)
   async verifyContractStatus(
     @ReqContext() ctx: RequestContext,
-    @Param('contractAddress') contractAddress: string,
+    @Param('codeId') codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const result = await this.contractService.verifyContractStatus(
-      ctx,
-      contractAddress,
-    );
+    const result = await this.contractService.verifyContractStatus(ctx, codeId);
 
     return { data: result, meta: {} };
   }
