@@ -13,12 +13,14 @@ import { ContractCodeIdParamsDto } from '../../contract/dtos/contract-code-id-pa
 export class SmartContractCodeRepository extends Repository<SmartContractCode> {
   async getContractsCodeId(request: ContractCodeIdParamsDto) {
     const builder = this.createQueryBuilder('scc')
-      .select(['scc.*, sbt.instantiates'])
+      .select(['scc.*, sbt.instantiates, sbt.verified_at'])
       .innerJoin(
         (qb: SelectQueryBuilder<SmartContract>) => {
           const queryBuilder = qb
             .from(SmartContract, 'sc')
-            .select('sc.code_id, count(sc.code_id) AS instantiates')
+            .select(
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at',
+            )
             .groupBy('sc.code_id');
 
           if (!request?.keyword) {
@@ -85,12 +87,14 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
 
   async getContractsCodeIdDetail(codeId: number) {
     return await this.createQueryBuilder('scc')
-      .select(['scc.*, sbt.instantiates'])
+      .select(['scc.*, sbt.instantiates, sbt.verified_at'])
       .innerJoin(
         (qb: SelectQueryBuilder<SmartContract>) => {
           const queryBuilder = qb
             .from(SmartContract, 'sc')
-            .select('sc.code_id, count(sc.code_id) AS instantiates')
+            .select(
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at',
+            )
             .groupBy('sc.code_id');
           return queryBuilder;
         },
