@@ -82,11 +82,22 @@ export class ContractService {
     ctx: RequestContext,
     request: ContractCodeIdParamsDto,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
+    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
     const [contracts, count] =
       await this.smartContractCodeRepository.getContractsCodeId(request);
 
     return { contracts, count };
+  }
+
+  async getContractsCodeIdDetail(
+    ctx: RequestContext,
+    codeId: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
+    const contracts =
+      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+
+    return contracts;
   }
 
   async getContractByAddress(
@@ -240,15 +251,6 @@ export class ContractService {
 
     if (verifySteps.length > 0) {
       try {
-        // change status contract to verifying
-        const contractVerify = await this.smartContractRepository.find({
-          where: { code_id: contract.code_id },
-        });
-        contractVerify.forEach(
-          (el) => (el.contract_verification = CONTRACT_STATUS.VERIFYING),
-        );
-
-        await this.smartContractRepository.save(contractVerify);
         // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
       } catch (err) {
