@@ -18,6 +18,7 @@ import {
   SwaggerBaseApiResponse,
 } from '../../../shared';
 import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
@@ -102,6 +103,42 @@ export class ContractController {
     return { data: result, meta: {} };
   }
 
+  @Post('contract-code/list')
+  @ApiOperation({ summary: 'Get list contracts code' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getContractsCodeId(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: ContractCodeIdParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
+    const { contracts, count } = await this.contractService.getContractsCodeId(
+      ctx,
+      request,
+    );
+
+    return { data: contracts, meta: { count } };
+  }
+
+  @Get('contract-code/:codeId')
+  @ApiOperation({ summary: 'Get contracts code id detail' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getContractsCodeIdDetail(
+    @ReqContext() ctx: RequestContext,
+    @Param('codeId') codeId: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
+    const contracts = await this.contractService.getContractsCodeIdDetail(
+      ctx,
+      codeId,
+    );
+
+    return { data: contracts, meta: {} };
+  }
+
   @Post('verify-code-id')
   @ApiOperation({ summary: 'Verify code id' })
   @ApiResponse({
@@ -131,7 +168,7 @@ export class ContractController {
     @ReqContext() ctx: RequestContext,
     @Param('codeId') codeId: number,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
     const result = await this.contractService.getVerifyCodeStep(ctx, codeId);
     return { data: result, meta: {} };
   }

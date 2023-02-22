@@ -31,6 +31,7 @@ import { SoulboundTokenRepository } from '../../soulbound-token/repositories/sou
 import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity';
 import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 @Injectable()
 export class ContractService {
   private api;
@@ -75,6 +76,28 @@ export class ContractService {
     );
 
     return { contracts, count };
+  }
+
+  async getContractsCodeId(
+    ctx: RequestContext,
+    request: ContractCodeIdParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
+    const [contracts, count] =
+      await this.smartContractCodeRepository.getContractsCodeId(request);
+
+    return { contracts, count };
+  }
+
+  async getContractsCodeIdDetail(
+    ctx: RequestContext,
+    codeId: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
+    const contracts =
+      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+
+    return contracts;
   }
 
   async getContractByAddress(
@@ -173,11 +196,17 @@ export class ContractService {
     const contract = await this.smartContractRepository.findOne({
       where: { contract_address: request.contract_address },
     });
+    if (!contract) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
+        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
+      };
+      return error;
+    }
+
     if (
-      !contract ||
-      (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
-        contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL)
+      contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
+      contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
@@ -222,6 +251,7 @@ export class ContractService {
 
     if (verifySteps.length > 0) {
       try {
+        // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
       } catch (err) {
         this.logger.error(
