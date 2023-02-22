@@ -251,6 +251,16 @@ export class ContractService {
 
     if (verifySteps.length > 0) {
       try {
+        // Update contract verify status to verifying
+        const contractVerify = await this.smartContractRepository.find({
+          where: { code_id: contract.code_id },
+        });
+        contractVerify.forEach(
+          (el) => (el.contract_verification = CONTRACT_STATUS.VERIFYING),
+        );
+
+        await this.smartContractRepository.save(contractVerify);
+
         // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
       } catch (err) {
@@ -262,6 +272,7 @@ export class ContractService {
     }
 
     const properties = {
+      codeId: contract.code_id,
       commit: request.commit,
       compilerVersion: request.compiler_version,
       contractAddress: request.contract_address,
@@ -318,10 +329,10 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const result = await lastValueFrom(
-      this.httpService.get(this.verifyContractStatusUrl + String(codeId)),
-    ).then((rs) => rs.data);
-    return result;
+    const contract = await this.smartContractRepository.findOne({
+      where: { code_id: codeId },
+    });
+    return { codeId: contract.code_id, status: contract.contract_verification };
   }
 
   /**
