@@ -87,7 +87,9 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
 
   async getContractsCodeIdDetail(codeId: number) {
     return await this.createQueryBuilder('scc')
-      .select(['scc.*, sbt.instantiates, sbt.verified_at'])
+      .select([
+        'scc.*, sbt.instantiates, sbt.verified_at, sbc.compiler_version, sbc.url',
+      ])
       .innerJoin(
         (qb: SelectQueryBuilder<SmartContract>) => {
           const queryBuilder = qb
@@ -100,6 +102,21 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
         },
         'sbt',
         'sbt.code_id = scc.code_id',
+      )
+      .leftJoin(
+        (qb: SelectQueryBuilder<SmartContract>) => {
+          const queryBuilder = qb
+            .from(SmartContract, 'sc')
+            .select('sc.code_id, sc.compiler_version, sc.url')
+            .orderBy('sc.compiler_version', 'DESC')
+            .limit(1)
+            .where('sc.code_id = :code_id', {
+              code_id: codeId,
+            });
+          return queryBuilder;
+        },
+        'sbc',
+        'sbc.code_id = scc.code_id',
       )
       .where('scc.code_id = :code_id', {
         code_id: codeId,
