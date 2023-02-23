@@ -300,7 +300,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getContractsCodeId(request: ContractCodeIdParamsDto) {
     const builder = this.createQueryBuilder('sc')
       .select([
-        'sc.code_id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at',
+        'sc.code_id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at, sbt.updated_at, MAX(sc.id) as id',
       ])
       .leftJoin(SmartContractCode, 'scc', `sc.code_id = scc.code_id`)
       .leftJoin(
@@ -308,7 +308,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
           const queryBuilder = qb
             .from(SmartContract, 'sc')
             .select(
-              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at',
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at, MAX(sc.updated_at) as updated_at',
             )
             .groupBy('sc.code_id');
           return queryBuilder;
@@ -316,7 +316,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
         'sbt',
         'sbt.code_id = sc.code_id',
       )
-      .orderBy('sbt.created_at', 'DESC')
+      .orderBy('sbt.updated_at', 'DESC')
       .groupBy('sc.code_id');
 
     const _finalizeResult = async (
@@ -372,7 +372,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getContractsCodeIdDetail(codeId: number) {
     return await this.createQueryBuilder('sc')
       .select([
-        'sc.code_id, MAX(sc.compiler_version) AS compiler_version, MAX(sc.url) AS url, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at',
+        'sc.code_id, MAX(sc.compiler_version) AS compiler_version, MAX(sc.url) AS url, MAX(sc.id) as id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at, sbt.updated_at',
       ])
       .leftJoin(SmartContractCode, 'scc', `sc.code_id = scc.code_id`)
       .leftJoin(
@@ -380,7 +380,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
           const queryBuilder = qb
             .from(SmartContract, 'sc')
             .select(
-              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at',
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at, MAX(sc.updated_at) as updated_at',
             )
             .groupBy('sc.code_id');
           return queryBuilder;
