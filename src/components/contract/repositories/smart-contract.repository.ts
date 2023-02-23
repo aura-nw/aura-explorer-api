@@ -296,4 +296,102 @@ export class SmartContractRepository extends Repository<SmartContract> {
     }
     return await _finalizeResult(builder);
   }
+
+  async getContractsCodeId(request: ContractCodeIdParamsDto) {
+    const builder = this.createQueryBuilder('sc')
+      .select([
+        'sc.code_id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at, sbt.updated_at, MAX(sc.id) as id',
+      ])
+      .leftJoin(SmartContractCode, 'scc', `sc.code_id = scc.code_id`)
+      .leftJoin(
+        (qb: SelectQueryBuilder<SmartContract>) => {
+          const queryBuilder = qb
+            .from(SmartContract, 'sc')
+            .select(
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at, MAX(sc.updated_at) as updated_at',
+            )
+            .groupBy('sc.code_id');
+          return queryBuilder;
+        },
+        'sbt',
+        'sbt.code_id = sc.code_id',
+      )
+      .orderBy('sbt.updated_at', 'DESC')
+      .groupBy('sc.code_id');
+
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const count = (await _builder.getRawMany()).length;
+      if (request.limit > 0) {
+        _builder.limit(request.limit).offset(request.offset);
+      }
+
+      const contracts = await _builder.getRawMany();
+
+      return [contracts, count];
+    };
+
+    if (!request?.keyword) {
+      return await _finalizeResult(builder);
+    }
+
+    const keyword = request.keyword.toLowerCase();
+
+    const byCodeId = Number(keyword) && Number(keyword) > 0;
+    if (byCodeId) {
+      builder.andWhere({ code_id: keyword });
+    }
+
+    const byCreatorAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.ACCOUNT_ADDRESS;
+    if (byCreatorAddress) {
+      builder.andWhere('sbt.creator = :keyword', {
+        keyword: keyword,
+      });
+    }
+
+    const byCreatorOrContractAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.CONTRACT_ADDRESS;
+    if (byCreatorOrContractAddress) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('sc.contract_address = :keyword', {
+            keyword: keyword,
+          }).orWhere('sbt.creator = :keyword', {
+            keyword: keyword,
+          });
+        }),
+      );
+    }
+    return await _finalizeResult(builder);
+  }
+
+  async getContractsCodeIdDetail(codeId: number) {
+    return await this.createQueryBuilder('sc')
+      .select([
+        'sc.code_id, MAX(sc.compiler_version) AS compiler_version, MAX(sc.url) AS url, MAX(sc.id) as id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at, sbt.updated_at',
+      ])
+      .leftJoin(SmartContractCode, 'scc', `sc.code_id = scc.code_id`)
+      .leftJoin(
+        (qb: SelectQueryBuilder<SmartContract>) => {
+          const queryBuilder = qb
+            .from(SmartContract, 'sc')
+            .select(
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at, MAX(sc.updated_at) as updated_at',
+            )
+            .groupBy('sc.code_id');
+          return queryBuilder;
+        },
+        'sbt',
+        'sbt.code_id = sc.code_id',
+      )
+      .where('sc.code_id = :code_id', {
+        code_id: codeId,
+      })
+      .groupBy('sc.code_id')
+      .getRawOne();
+  }
 }
