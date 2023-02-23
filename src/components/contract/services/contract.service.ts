@@ -84,7 +84,7 @@ export class ContractService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
     const [contracts, count] =
-      await this.smartContractCodeRepository.getContractsCodeId(request);
+      await this.smartContractRepository.getContractsCodeId(request);
 
     return { contracts, count };
   }
@@ -95,7 +95,7 @@ export class ContractService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
     const contracts =
-      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+      await this.smartContractRepository.getContractsCodeIdDetail(codeId);
 
     return contracts;
   }
