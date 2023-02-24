@@ -42,6 +42,10 @@ export class SmartContractRepository extends Repository<SmartContract> {
           });
           if (request.contractType.includes('')) {
             qb.orWhere('scc.type IS NULL');
+            qb.orWhere(`scc.result = '${CONTRACT_CODE_RESULT.TBD}'`);
+            qb.orWhere(`scc.result = '${CONTRACT_CODE_RESULT.INCORRECT}'`);
+          } else {
+            qb.andWhere(`scc.result = '${CONTRACT_CODE_RESULT.CORRECT}'`);
           }
         }),
       );
