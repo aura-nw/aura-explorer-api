@@ -222,9 +222,9 @@ export const ERROR_MAP = {
     Message: `You can not attest a Account Bound Token for yourself`,
   },
 
-  CONTRACT_VERIFIED_TBD: {
+  CONTRACT_VERIFIED_VERIFYING: {
     Code: 'E016',
-    Message: `Contract has been verified or TBD`,
+    Message: `Contract has been verified or verifying`,
   },
 };
 
