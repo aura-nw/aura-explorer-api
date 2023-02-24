@@ -20,6 +20,7 @@ import {
 import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
+import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { ContractService } from '../services/contract.service';
@@ -149,7 +150,7 @@ export class ContractController {
   @UseInterceptors(CacheInterceptor)
   async verifyCodeId(
     @ReqContext() ctx: RequestContext,
-    @Body() request: VerifyContractParamsDto,
+    @Body() request: VerifyCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
     const result = await this.contractService.verifyCodeId(ctx, request);

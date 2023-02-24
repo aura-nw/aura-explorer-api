@@ -32,6 +32,7 @@ import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity
 import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
+import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 @Injectable()
 export class ContractService {
   private api;
@@ -169,8 +170,8 @@ export class ContractService {
         contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
     ) {
       const error = {
-        Code: ERROR_MAP.CONTRACT_VERIFIED_TBD.Code,
-        Message: ERROR_MAP.CONTRACT_VERIFIED_TBD.Message,
+        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
+        Message: ERROR_MAP.CONTRACT_VERIFIED.Message,
       };
       return error;
     }
@@ -190,11 +191,11 @@ export class ContractService {
 
   async verifyCodeId(
     ctx: RequestContext,
-    request: VerifyContractParamsDto,
+    request: VerifyCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
     const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: request.contract_address },
+      where: { code_id: request.code_id },
     });
     if (!contract) {
       const error = {
@@ -209,8 +210,8 @@ export class ContractService {
       contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL
     ) {
       const error = {
-        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
-        Message: ERROR_MAP.CONTRACT_VERIFIED.Message,
+        Code: ERROR_MAP.CONTRACT_VERIFIED_VERIFYING.Code,
+        Message: ERROR_MAP.CONTRACT_VERIFIED_VERIFYING.Message,
       };
       return error;
     }
@@ -275,7 +276,7 @@ export class ContractService {
       codeId: contract.code_id,
       commit: request.commit,
       compilerVersion: request.compiler_version,
-      contractAddress: request.contract_address,
+      contractAddress: contract.contract_address,
       contractUrl: request.url,
       wasmFile: request.wasm_file,
     };
