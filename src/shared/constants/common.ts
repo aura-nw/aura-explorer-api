@@ -79,6 +79,8 @@ export enum CONTRACT_STATUS {
   EXACT_MATCH = 'EXACT MATCH',
   SIMILAR_MATCH = 'SIMILAR MATCH',
   UNVERIFIED = 'UNVERIFIED',
+  VERIFYFAIL = 'VERIFYFAIL',
+  VERIFYING = 'VERIFYING',
   NOT_REGISTERED = 'Not registered',
   TBD = 'TBD',
   DEPLOYED = 'Deployed',
@@ -219,6 +221,11 @@ export const ERROR_MAP = {
     Code: 'E015',
     Message: `You can not attest a Account Bound Token for yourself`,
   },
+
+  CONTRACT_VERIFIED_VERIFYING: {
+    Code: 'E016',
+    Message: `Contract has been verified or verifying`,
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -240,4 +247,11 @@ export const SOULBOUND_PICKED_TOKEN = {
 
 export enum CW4973_CONTRACT {
   AGREEMENT = 'Agreement(string chain_id,address active,address passive,string tokenURI)',
+}
+
+export enum VERIFY_CODE_RESULT {
+  FAIL = 'Fail',
+  IN_PROGRESS = 'In-progress',
+  SUCCESS = 'Success',
+  PENDING = 'Pending',
 }
