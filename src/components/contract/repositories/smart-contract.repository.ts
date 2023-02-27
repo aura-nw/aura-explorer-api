@@ -184,7 +184,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .where(
         'LOWER(sc.token_name) LIKE :keyword OR LOWER(sc.contract_address) LIKE :keyword',
         {
-          keyword: `%${request.keyword.toLowerCase()}%`,
+          keyword: `%${(request.keyword || '').toLowerCase()}%`,
         },
       )
       .limit(request.limit)
