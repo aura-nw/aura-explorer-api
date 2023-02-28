@@ -7,7 +7,7 @@ export class addColumnSmartContractCodeTable1677553653180
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE \`smart_contract_codes\` ADD \`contract_verification\` varchar(255) NULL`,
+      `ALTER TABLE \`smart_contract_codes\` ADD \`contract_verification\` varchar(255) NOT NULL DEFAULT 'UNVERIFIED'`,
     );
     await queryRunner.query(
       `ALTER TABLE \`smart_contract_codes\` ADD \`compiler_version\` varchar(255) NULL`,
