@@ -85,7 +85,7 @@ export class ContractService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
     const [contracts, count] =
-      await this.smartContractRepository.getContractsCodeId(request);
+      await this.smartContractCodeRepository.getContractsCodeId(request);
 
     return { contracts, count };
   }
@@ -96,7 +96,7 @@ export class ContractService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
     const contracts =
-      await this.smartContractRepository.getContractsCodeIdDetail(codeId);
+      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
 
     return contracts;
   }
@@ -194,7 +194,7 @@ export class ContractService {
     request: VerifyCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
+    const contract = await this.smartContractCodeRepository.findOne({
       where: { code_id: request.code_id },
     });
     if (!contract) {
@@ -253,14 +253,8 @@ export class ContractService {
     if (verifySteps.length > 0) {
       try {
         // Update contract verify status to verifying
-        const contractVerify = await this.smartContractRepository.find({
-          where: { code_id: contract.code_id },
-        });
-        contractVerify.forEach(
-          (el) => (el.contract_verification = CONTRACT_STATUS.VERIFYING),
-        );
-
-        await this.smartContractRepository.save(contractVerify);
+        contract.contract_verification = CONTRACT_STATUS.VERIFYING;
+        await this.smartContractRepository.save(contract);
 
         // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
@@ -276,7 +270,6 @@ export class ContractService {
       codeId: contract.code_id,
       commit: request.commit,
       compilerVersion: request.compiler_version,
-      contractAddress: contract.contract_address,
       contractUrl: request.url,
       wasmFile: request.wasm_file,
     };
@@ -330,10 +323,20 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
+    const contract = await this.smartContractCodeRepository.findOne({
       where: { code_id: codeId },
     });
-    return { codeId: contract.code_id, status: contract.contract_verification };
+    if (!contract) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
+        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
+      };
+      return error;
+    }
+    return {
+      codeId: contract?.code_id,
+      status: contract?.contract_verification || CONTRACT_STATUS.UNVERIFIED,
+    };
   }
 
   /**
