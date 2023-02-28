@@ -13,7 +13,7 @@ import { ContractCodeIdParamsDto } from '../../contract/dtos/contract-code-id-pa
 export class SmartContractCodeRepository extends Repository<SmartContractCode> {
   async getContractsCodeId(request: ContractCodeIdParamsDto) {
     const builder = this.createQueryBuilder('scc')
-      .select(['scc.*, sbt.instantiates'])
+      .select(['scc.*, IFNULL(sbt.instantiates,0) AS instantiates'])
       .leftJoin(
         (qb: SelectQueryBuilder<SmartContract>) => {
           const queryBuilder = qb
@@ -81,8 +81,8 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
 
   async getContractsCodeIdDetail(codeId: number) {
     return await this.createQueryBuilder('scc')
-      .select(['scc.*, sbt.instantiates'])
-      .innerJoin(
+      .select(['scc.*, IFNULL(sbt.instantiates,0) AS instantiates'])
+      .leftJoin(
         (qb: SelectQueryBuilder<SmartContract>) => {
           const queryBuilder = qb
             .from(SmartContract, 'sc')
