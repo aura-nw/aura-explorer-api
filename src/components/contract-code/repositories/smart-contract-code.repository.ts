@@ -64,7 +64,6 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
     } else {
       builder.where({ creator: keyword });
     }
-
     return await _finalizeResult(builder);
   }
 
