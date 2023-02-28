@@ -1,4 +1,5 @@
 import { Column, Entity } from 'typeorm';
+import { CONTRACT_STATUS } from '../constants/common';
 import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('smart_contract_codes')
@@ -33,7 +34,10 @@ export class SmartContractCode extends BaseEntityIncrementId {
   @Column({ name: 's3_location', nullable: true })
   s3_location: string;
 
-  @Column({ name: 'contract_verification', nullable: true })
+  @Column({
+    name: 'contract_verification',
+    default: CONTRACT_STATUS.UNVERIFIED,
+  })
   contract_verification: string;
 
   @Column({ name: 'compiler_version', nullable: true })

@@ -49,13 +49,7 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
     const byCodeId = Number(keyword) && Number(keyword) > 0;
     if (byCodeId) {
       builder.where({ code_id: keyword });
-      return await _finalizeResult(builder);
-    }
-
-    const byContractAddress =
-      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-      keyword.length !== LENGTH.ACCOUNT_ADDRESS;
-    if (byContractAddress) {
+    } else if (keyword.length === LENGTH.CONTRACT_ADDRESS) {
       builder.innerJoin(
         (sqb: SelectQueryBuilder<SmartContract>) => {
           const subQueryBuilder = sqb
@@ -67,14 +61,8 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
         'sbq',
         'sbq.ssc_code_id = scc.code_id',
       );
-    }
-
-    const byCreatorAddress =
-      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-      keyword.length === LENGTH.ACCOUNT_ADDRESS;
-    if (byCreatorAddress) {
+    } else {
       builder.where({ creator: keyword });
-      return await _finalizeResult(builder);
     }
     return await _finalizeResult(builder);
   }
