@@ -254,7 +254,7 @@ export class ContractService {
       try {
         // Update contract verify status to verifying
         contract.contract_verification = CONTRACT_STATUS.VERIFYING;
-        await this.smartContractRepository.save(contract);
+        await this.smartContractCodeRepository.save(contract);
 
         // insert or update verify step status
         await this.verifyCodeStepRepository.save(verifySteps);
