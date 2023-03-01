@@ -499,7 +499,7 @@ export class ContractService {
     )
       .then((rs) => rs.data)
       .catch(() => {
-        return null;
+        return {};
       });
 
     const nft = {
