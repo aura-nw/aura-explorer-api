@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { bufferTime, lastValueFrom } from 'rxjs';
+import { bufferTime, lastValueFrom, retry, timeout } from 'rxjs';
 import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
@@ -86,6 +86,7 @@ export class ContractService {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
     const [contracts, count] =
       await this.smartContractCodeRepository.getContractsCodeId(request);
+
     return { contracts, count };
   }
 
@@ -96,6 +97,7 @@ export class ContractService {
     this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
     const contracts =
       await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+
     return contracts;
   }
 
@@ -490,17 +492,25 @@ export class ContractService {
     }
 
     // Get ipfs info
-    const ipfs = await this.serviceUtil.getDataAPI(
-      this.transform(token?.token_uri),
-      '',
-      ctx,
-    );
+    const ipfs = await lastValueFrom(
+      this.httpService
+        .get(this.transform(token?.token_uri))
+        .pipe(timeout(5000), retry(2)),
+    )
+      .then((rs) => rs.data)
+      .catch(() => {
+        return {};
+      });
+
     const nft = {
       id: token?.id || '',
       contract_address: smartContract.contract_address,
       token_id: token?.token_id || '',
       token_uri: token?.token_uri || '',
       token_name: smartContract?.token_name || '',
+      token_name_ipfs: token?.token_name || '',
+      animation_url: token?.animation_url || '',
+      token_img: token?.token_img || '',
       img_type: token?.img_type || '',
       receiver_address: token?.receiver_address || '',
       status: token?.status || '',
