@@ -217,11 +217,11 @@ export class ContractService {
     }
 
     const verifySteps = [];
+    const verifyCodeSteps = await this.verifyCodeStepRepository.find({
+      where: { code_id: contract.code_id },
+    });
     // update to initial data when re-verify at contract verify fail
-    if (contract.contract_verification === CONTRACT_STATUS.VERIFYFAIL) {
-      const verifyCodeSteps = await this.verifyCodeStepRepository.find({
-        where: { code_id: contract.code_id },
-      });
+    if (verifyCodeSteps.length > 0) {
       for (let index = 1; index < 9; index++) {
         const step = {
           id: verifyCodeSteps[index - 1]?.id,
