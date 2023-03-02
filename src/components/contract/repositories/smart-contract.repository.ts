@@ -32,7 +32,20 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getContracts(request: ContractParamsDto) {
     const builder = this.createQueryBuilder('sc')
       .leftJoin(SmartContractCode, 'scc', 'sc.code_id = scc.code_id')
-      .select(['sc.*', 'scc.type `type`', 'scc.result `result`'])
+      .select([
+        'sc.*',
+        'scc.type `type`',
+        'scc.result `result`',
+        'scc.contract_verification `contract_verification`',
+        'scc.compiler_version `compiler_version`',
+        'scc.url `url`',
+        'scc.verified_at `verified_at`',
+        'scc.instantiate_msg_schema `instantiate_msg_schema`',
+        'scc.query_msg_schema `query_msg_schema`',
+        'scc.execute_msg_schema `execute_msg_schema`',
+        'scc.contract_hash `contract_hash`',
+        'scc.s3_location `s3_location`',
+      ])
       .orderBy('sc.updated_at', 'DESC');
 
     if (request.contractType && request.contractType.length > 0) {
@@ -105,11 +118,35 @@ export class SmartContractRepository extends Repository<SmartContract> {
     return await _finalizeResult(builder);
   }
 
+  async getContractsByContractAddress(contractAddress: string) {
+    return await this.createQueryBuilder('sc')
+      .leftJoin(SmartContractCode, 'scc', 'sc.code_id = scc.code_id')
+      .select([
+        'sc.*',
+        'scc.type `type`',
+        'scc.result `result`',
+        'scc.contract_verification `contract_verification`',
+        'scc.compiler_version `compiler_version`',
+        'scc.url `url`',
+        'scc.verified_at `verified_at`',
+        'scc.instantiate_msg_schema `instantiate_msg_schema`',
+        'scc.query_msg_schema `query_msg_schema`',
+        'scc.execute_msg_schema `execute_msg_schema`',
+        'scc.contract_hash `contract_hash`',
+        'scc.s3_location `s3_location`',
+      ])
+      .orderBy('sc.updated_at', 'DESC')
+      .where('sc.contract_address = :contract_address', {
+        contract_address: contractAddress,
+      })
+      .getRawOne();
+  }
+
   async getTokenByContractAddress(contractAddress: string) {
     return await this.createQueryBuilder('sc')
       .select(
         `sc.token_name AS name, sc.token_symbol AS symbol, sc.num_tokens, sc.decimals,
-            sc.contract_address, sc.contract_verification, sc.tx_hash, scc.type, sc.request_id`,
+            sc.contract_address, scc.contract_verification, sc.tx_hash, scc.type, sc.request_id`,
       )
       .innerJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
       .where('sc.contract_address = :contract_address', {
@@ -119,11 +156,12 @@ export class SmartContractRepository extends Repository<SmartContract> {
   }
 
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
-    return await this.createQueryBuilder()
+    return await this.createQueryBuilder('sc')
       .select(
-        'contract_address, token_name, token_symbol AS symbol, contract_verification',
+        'sc.contract_address, sc.token_name, sc.token_symbol AS symbol, scc.contract_verification',
       )
-      .where('contract_address IN (:...listContractAddress)', {
+      .leftJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
+      .where('sc.contract_address IN (:...listContractAddress)', {
         listContractAddress: listContractAddress,
       })
       .getRawMany();

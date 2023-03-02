@@ -107,9 +107,10 @@ export class ContractService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
     let contract: any = null;
-    const contractData = await this.smartContractRepository.findOne({
-      where: { contract_address: contractAddress },
-    });
+    const contractData =
+      await this.smartContractRepository.getContractsByContractAddress(
+        contractAddress,
+      );
     if (contractData) {
       contract = contractData;
       const codeId = contractData.code_id;
