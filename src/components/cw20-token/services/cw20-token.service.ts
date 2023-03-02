@@ -301,9 +301,9 @@ export class Cw20TokenService {
       '',
       ctx,
     );
-    const accountBalances = accountData.data.account_balances;
-    const ibcBalances = accountBalances.filter((str) => str.minimal_denom);
-    if (ibcBalances.length > 0) {
+    const accountBalances = accountData?.data?.account_balances;
+    const ibcBalances = accountBalances?.filter((str) => str.minimal_denom);
+    if (ibcBalances?.length > 0) {
       //get coin info from config
       const configData = await this.serviceUtil.getDataAPI(
         this.configUrl,
