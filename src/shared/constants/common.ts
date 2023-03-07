@@ -168,7 +168,7 @@ export const ERROR_MAP = {
   },
   CONTRACT_CODE_ID_EXIST: {
     Code: 'E003',
-    Message: `Code ID registered type contract`,
+    Message: `This Code ID has already been registered type`,
   },
   CONTRACT_CODE_ID_NOT_EXIST: {
     Code: 'E004',
@@ -176,7 +176,7 @@ export const ERROR_MAP = {
   },
   NOT_CONTRACT_CREATOR: {
     Code: 'E005',
-    Message: `You are not the contract owner/creator`,
+    Message: `You are not the Code ID's owner`,
   },
   CANNOT_UPDATE_CONTRACT_CODE: {
     Code: 'E006',
