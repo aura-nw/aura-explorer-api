@@ -9,4 +9,5 @@ export class AssetDto {
   price_change_percentage_24h = 0;
   value = '';
   denom = '';
+  decimals = 0;
 }
