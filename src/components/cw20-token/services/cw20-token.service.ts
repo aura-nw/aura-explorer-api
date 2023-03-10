@@ -234,6 +234,7 @@ export class Cw20TokenService {
         asset.image = tokenMarketsInfo?.image || '';
         asset.name = item.asset_info?.data?.name || '';
         asset.symbol = item.asset_info?.data?.symbol || '';
+        asset.decimals = item.asset_info?.data?.decimals || 0;
         asset.balance = item.balance || 0;
         asset.price = tokenMarketsInfo?.current_price || 0;
         asset.price_change_percentage_24h =
