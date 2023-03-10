@@ -135,6 +135,7 @@ export class Cw20TokenService {
     assetDto.symbol = this.denom;
     assetDto.image = AURA_INFO.IMAGE;
     assetDto.denom = this.minimalDenom;
+    assetDto.decimals = this.decimals;
 
     //get balance
     const [totalBalances, tokenData] = await Promise.all([
@@ -303,7 +304,9 @@ export class Cw20TokenService {
       ctx,
     );
     const accountBalances = accountData?.data?.account_balances;
-    const ibcBalances = accountBalances?.filter((str) => str.minimal_denom);
+    const ibcBalances = accountBalances?.filter(
+      (str) => str?.minimal_denom || str?.denom,
+    );
     if (ibcBalances?.length > 0) {
       //get coin info from config
       const configData = await this.serviceUtil.getDataAPI(
@@ -319,12 +322,14 @@ export class Cw20TokenService {
           (item.amount / this.precisionDiv).toFixed(this.decimals),
         );
         //get ibc info
-        const findCoin = coins?.find((f) => f.denom === item.minimal_denom);
+        const denom = item.minimal_denom || item.denom;
+        const findCoin = coins?.find((f) => f.denom === denom);
         if (findCoin) {
           asset.name = findCoin.name;
           asset.symbol = findCoin.display;
           asset.image = findCoin.logo;
           asset.denom = findCoin.denom;
+          asset.decimals = Number(findCoin.decimal) || 0;
         }
         result.push(asset);
       }
