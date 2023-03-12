@@ -46,7 +46,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
         'scc.contract_hash `contract_hash`',
         'scc.s3_location `s3_location`',
       ])
-      .orderBy('sc.updated_at', 'DESC');
+      .orderBy('sc.updated_at', 'DESC')
+      .addOrderBy('sc.id', 'DESC');
 
     if (request.contractType && request.contractType.length > 0) {
       builder.where(
@@ -235,7 +236,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
               upTime: 'DESC',
             }
           : { transfers_24h: 'DESC', upTime: 'DESC' },
-      );
+      )
+      .addOrderBy('sc.id', 'DESC');
 
     const list = await queryBuilder.getRawMany();
     const count = await queryBuilder.getCount();
