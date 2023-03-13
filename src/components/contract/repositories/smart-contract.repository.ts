@@ -21,6 +21,7 @@ import {
   Transaction,
 } from '../../../shared';
 import { Cw721TokenParamsDto } from '../../cw721-token/dtos/cw721-token-params.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 
 @EntityRepository(SmartContract)
 export class SmartContractRepository extends Repository<SmartContract> {
@@ -31,8 +32,39 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getContracts(request: ContractParamsDto) {
     const builder = this.createQueryBuilder('sc')
       .leftJoin(SmartContractCode, 'scc', 'sc.code_id = scc.code_id')
-      .select(['sc.*', 'scc.type `type`', 'scc.result `result`'])
-      .orderBy('sc.updated_at', 'DESC');
+      .select([
+        'sc.*',
+        'scc.type `type`',
+        'scc.result `result`',
+        'scc.contract_verification `contract_verification`',
+        'scc.compiler_version `compiler_version`',
+        'scc.url `url`',
+        'scc.verified_at `verified_at`',
+        'scc.instantiate_msg_schema `instantiate_msg_schema`',
+        'scc.query_msg_schema `query_msg_schema`',
+        'scc.execute_msg_schema `execute_msg_schema`',
+        'scc.contract_hash `contract_hash`',
+        'scc.s3_location `s3_location`',
+      ])
+      .orderBy('sc.updated_at', 'DESC')
+      .addOrderBy('sc.id', 'DESC');
+
+    if (request.contractType && request.contractType.length > 0) {
+      builder.where(
+        new Brackets((qb) => {
+          qb.where('scc.type IN (:contractType)', {
+            contractType: request.contractType,
+          });
+          if (request.contractType.includes('')) {
+            qb.orWhere('scc.type IS NULL');
+            qb.orWhere(`scc.result = '${CONTRACT_CODE_RESULT.TBD}'`);
+            qb.orWhere(`scc.result = '${CONTRACT_CODE_RESULT.INCORRECT}'`);
+          } else {
+            qb.andWhere(`scc.result = '${CONTRACT_CODE_RESULT.CORRECT}'`);
+          }
+        }),
+      );
+    }
 
     const _finalizeResult = async (
       _builder: SelectQueryBuilder<SmartContract>,
@@ -55,7 +87,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
 
     const byCodeId = Number(keyword) && Number(keyword) > 0;
     if (byCodeId) {
-      builder.where({ code_id: keyword });
+      builder.andWhere({ code_id: keyword });
       return await _finalizeResult(builder);
     }
 
@@ -63,7 +95,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       keyword.length === LENGTH.ACCOUNT_ADDRESS;
     if (byCreatorAddress) {
-      builder.where({ creator_address: keyword });
+      builder.andWhere({ creator_address: keyword });
       return await _finalizeResult(builder);
     }
 
@@ -71,23 +103,51 @@ export class SmartContractRepository extends Repository<SmartContract> {
       keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       keyword.length === LENGTH.CONTRACT_ADDRESS;
     if (byCreatorOrContractAddress) {
-      builder
-        .where({ contract_address: keyword })
-        .orWhere({ creator_address: keyword });
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where({ contract_address: keyword }).orWhere({
+            creator_address: keyword,
+          });
+        }),
+      );
       return await _finalizeResult(builder);
     }
 
-    builder.where('LOWER(sc.contract_name) LIKE :keyword', {
+    builder.andWhere('LOWER(sc.contract_name) LIKE :keyword', {
       keyword: `%${keyword}%`,
     });
     return await _finalizeResult(builder);
+  }
+
+  async getContractsByContractAddress(contractAddress: string) {
+    return await this.createQueryBuilder('sc')
+      .leftJoin(SmartContractCode, 'scc', 'sc.code_id = scc.code_id')
+      .select([
+        'sc.*',
+        'scc.type `type`',
+        'scc.result `result`',
+        'scc.contract_verification `contract_verification`',
+        'scc.compiler_version `compiler_version`',
+        'scc.url `url`',
+        'scc.verified_at `verified_at`',
+        'scc.instantiate_msg_schema `instantiate_msg_schema`',
+        'scc.query_msg_schema `query_msg_schema`',
+        'scc.execute_msg_schema `execute_msg_schema`',
+        'scc.contract_hash `contract_hash`',
+        'scc.s3_location `s3_location`',
+      ])
+      .orderBy('sc.updated_at', 'DESC')
+      .where('sc.contract_address = :contract_address', {
+        contract_address: contractAddress,
+      })
+      .getRawOne();
   }
 
   async getTokenByContractAddress(contractAddress: string) {
     return await this.createQueryBuilder('sc')
       .select(
         `sc.token_name AS name, sc.token_symbol AS symbol, sc.num_tokens, sc.decimals,
-            sc.contract_address, sc.contract_verification, sc.tx_hash, scc.type, sc.request_id`,
+            sc.contract_address, scc.contract_verification, sc.tx_hash, scc.type, sc.request_id`,
       )
       .innerJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
       .where('sc.contract_address = :contract_address', {
@@ -97,11 +157,12 @@ export class SmartContractRepository extends Repository<SmartContract> {
   }
 
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
-    return await this.createQueryBuilder()
+    return await this.createQueryBuilder('sc')
       .select(
-        'contract_address, token_name, token_symbol AS symbol, contract_verification',
+        'sc.contract_address, sc.token_name, sc.token_symbol AS symbol, scc.contract_verification, sc.decimals',
       )
-      .where('contract_address IN (:...listContractAddress)', {
+      .leftJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
+      .where('sc.contract_address IN (:...listContractAddress)', {
         listContractAddress: listContractAddress,
       })
       .getRawMany();
@@ -162,7 +223,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .where(
         'LOWER(sc.token_name) LIKE :keyword OR LOWER(sc.contract_address) LIKE :keyword',
         {
-          keyword: `%${request.keyword.toLowerCase()}%`,
+          keyword: `%${(request.keyword || '').toLowerCase()}%`,
         },
       )
       .limit(request.limit)
@@ -175,7 +236,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
               upTime: 'DESC',
             }
           : { transfers_24h: 'DESC', upTime: 'DESC' },
-      );
+      )
+      .addOrderBy('sc.id', 'DESC');
 
     const list = await queryBuilder.getRawMany();
     const count = await queryBuilder.getCount();
@@ -277,5 +339,103 @@ export class SmartContractRepository extends Repository<SmartContract> {
       );
     }
     return await _finalizeResult(builder);
+  }
+
+  async getContractsCodeId(request: ContractCodeIdParamsDto) {
+    const builder = this.createQueryBuilder('sc')
+      .select([
+        'sc.code_id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at, sbt.updated_at, MAX(sc.id) as id',
+      ])
+      .leftJoin(SmartContractCode, 'scc', `sc.code_id = scc.code_id`)
+      .leftJoin(
+        (qb: SelectQueryBuilder<SmartContract>) => {
+          const queryBuilder = qb
+            .from(SmartContract, 'sc')
+            .select(
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at, MAX(sc.updated_at) as updated_at',
+            )
+            .groupBy('sc.code_id');
+          return queryBuilder;
+        },
+        'sbt',
+        'sbt.code_id = sc.code_id',
+      )
+      .orderBy('sbt.updated_at', 'DESC')
+      .groupBy('sc.code_id');
+
+    const _finalizeResult = async (
+      _builder: SelectQueryBuilder<SmartContract>,
+    ) => {
+      const count = (await _builder.getRawMany()).length;
+      if (request.limit > 0) {
+        _builder.limit(request.limit).offset(request.offset);
+      }
+
+      const contracts = await _builder.getRawMany();
+
+      return [contracts, count];
+    };
+
+    if (!request?.keyword) {
+      return await _finalizeResult(builder);
+    }
+
+    const keyword = request.keyword.toLowerCase();
+
+    const byCodeId = Number(keyword) && Number(keyword) > 0;
+    if (byCodeId) {
+      builder.andWhere({ code_id: keyword });
+    }
+
+    const byCreatorAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.ACCOUNT_ADDRESS;
+    if (byCreatorAddress) {
+      builder.andWhere('sbt.creator = :keyword', {
+        keyword: keyword,
+      });
+    }
+
+    const byCreatorOrContractAddress =
+      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.length === LENGTH.CONTRACT_ADDRESS;
+    if (byCreatorOrContractAddress) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('sc.contract_address = :keyword', {
+            keyword: keyword,
+          }).orWhere('sbt.creator = :keyword', {
+            keyword: keyword,
+          });
+        }),
+      );
+    }
+    return await _finalizeResult(builder);
+  }
+
+  async getContractsCodeIdDetail(codeId: number) {
+    return await this.createQueryBuilder('sc')
+      .select([
+        'sc.code_id, MAX(sc.compiler_version) AS compiler_version, MAX(sc.url) AS url, MAX(sc.id) as id, scc.type, scc.result, scc.tx_hash, sbt.instantiates, sbt.verified_at, sbt.creator, sbt.created_at, sbt.updated_at',
+      ])
+      .leftJoin(SmartContractCode, 'scc', `sc.code_id = scc.code_id`)
+      .leftJoin(
+        (qb: SelectQueryBuilder<SmartContract>) => {
+          const queryBuilder = qb
+            .from(SmartContract, 'sc')
+            .select(
+              'sc.code_id, count(sc.code_id) AS instantiates, min(sc.verified_at) AS verified_at, MIN(sc.creator_address) AS creator, MIN(sc.created_at) as created_at, MAX(sc.updated_at) as updated_at',
+            )
+            .groupBy('sc.code_id');
+          return queryBuilder;
+        },
+        'sbt',
+        'sbt.code_id = sc.code_id',
+      )
+      .where('sc.code_id = :code_id', {
+        code_id: codeId,
+      })
+      .groupBy('sc.code_id')
+      .getRawOne();
   }
 }

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Max, Min } from 'class-validator';
 import { PAGE_REQUEST } from '../../../shared';
 
-export class ContractParamsDto {
+export class ContractCodeIdParamsDto {
   @ApiProperty({ default: 20 })
   @Min(0)
   @Max(PAGE_REQUEST.MAX)
@@ -14,7 +14,4 @@ export class ContractParamsDto {
 
   @ApiProperty({ default: '' })
   keyword: string;
-
-  @ApiProperty({ default: [] })
-  contractType: Array<string>;
 }

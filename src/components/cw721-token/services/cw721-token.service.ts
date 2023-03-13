@@ -126,12 +126,14 @@ export class Cw721TokenService {
       tokens.forEach((item) => {
         item.token_name = '';
         item.symbol = '';
+        item.decimals = 0;
         const filter = tokensInfo.filter(
           (f) => String(f.contract_address) === item.contract_address,
         );
         if (filter?.length > 0) {
           item.token_name = filter[0].token_name;
           item.symbol = filter[0].symbol;
+          item.decimals = filter[0].decimals;
         }
       });
     }

@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { bufferTime, lastValueFrom } from 'rxjs';
+import { bufferTime, lastValueFrom, retry, timeout } from 'rxjs';
 import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
@@ -13,6 +13,7 @@ import {
   ERROR_MAP,
   INDEXER_API,
   RequestContext,
+  VERIFY_CODE_RESULT,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ContractByCreatorOutputDto } from '../dtos/contract-by-creator-output.dto';
@@ -27,6 +28,12 @@ import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
+import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity';
+import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
+import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
+import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
+import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
+
 @Injectable()
 export class ContractService {
   private api;
@@ -47,6 +54,8 @@ export class ContractService {
     private httpService: HttpService,
     private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
+    private verifyCodeStepRepository: VerifyCodeStepRepository,
+
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
@@ -72,15 +81,38 @@ export class ContractService {
     return { contracts, count };
   }
 
+  async getContractsCodeId(
+    ctx: RequestContext,
+    request: ContractCodeIdParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
+    const [contracts, count] =
+      await this.smartContractCodeRepository.getContractsCodeId(request);
+
+    return { contracts, count };
+  }
+
+  async getContractsCodeIdDetail(
+    ctx: RequestContext,
+    codeId: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
+    const contracts =
+      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+
+    return contracts;
+  }
+
   async getContractByAddress(
     ctx: RequestContext,
     contractAddress: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
     let contract: any = null;
-    const contractData = await this.smartContractRepository.findOne({
-      where: { contract_address: contractAddress },
-    });
+    const contractData =
+      await this.smartContractRepository.getContractsByContractAddress(
+        contractAddress,
+      );
     if (contractData) {
       contract = contractData;
       const codeId = contractData.code_id;
@@ -160,6 +192,108 @@ export class ContractService {
     return result;
   }
 
+  async verifyCodeId(
+    ctx: RequestContext,
+    request: VerifyCodeIdParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
+    const contract = await this.smartContractCodeRepository.findOne({
+      where: { code_id: request.code_id },
+    });
+    if (!contract) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
+        Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
+      };
+      return error;
+    }
+
+    if (
+      contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
+      contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL
+    ) {
+      const error = {
+        Code: ERROR_MAP.CONTRACT_VERIFIED_VERIFYING.Code,
+        Message: ERROR_MAP.CONTRACT_VERIFIED_VERIFYING.Message,
+      };
+      return error;
+    }
+
+    const verifySteps = [];
+    const verifyCodeSteps = await this.verifyCodeStepRepository.find({
+      where: { code_id: contract.code_id },
+    });
+    // update to initial data when re-verify at contract verify fail
+    if (verifyCodeSteps.length > 0) {
+      for (let index = 1; index < 9; index++) {
+        const step = {
+          id: verifyCodeSteps[index - 1]?.id,
+          code_id: contract.code_id,
+          check_id: index,
+          msg_code: null,
+          result:
+            index === 1
+              ? VERIFY_CODE_RESULT.IN_PROGRESS
+              : VERIFY_CODE_RESULT.PENDING,
+        };
+        verifySteps.push(step);
+      }
+    } else {
+      // Generate code step
+      for (let index = 1; index < 9; index++) {
+        const step = {
+          code_id: contract.code_id,
+          check_id: index,
+          result:
+            index === 1
+              ? VERIFY_CODE_RESULT.IN_PROGRESS
+              : VERIFY_CODE_RESULT.PENDING,
+        };
+        verifySteps.push(step);
+      }
+    }
+
+    if (verifySteps.length > 0) {
+      try {
+        // Update contract verify status to verifying
+        contract.contract_verification = CONTRACT_STATUS.VERIFYING;
+        await this.smartContractCodeRepository.save(contract);
+
+        // insert or update verify step status
+        await this.verifyCodeStepRepository.save(verifySteps);
+      } catch (err) {
+        this.logger.error(
+          ctx,
+          `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
+        );
+      }
+    }
+
+    const properties = {
+      codeId: contract.code_id,
+      commit: request.commit,
+      compilerVersion: request.compiler_version,
+      contractUrl: request.url,
+      wasmFile: request.wasm_file,
+    };
+    const result = await lastValueFrom(
+      this.httpService.post(this.verifyContractUrl, properties),
+    ).then((rs) => rs.data);
+
+    return result;
+  }
+
+  async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
+    this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
+    const verifyCodeSteps =
+      await this.verifyCodeStepRepository.getVerifyCodeStep(codeId);
+
+    const data = plainToClass(VerifyCodeStepOutputDto, verifyCodeSteps, {
+      excludeExtraneousValues: true,
+    });
+    return data;
+  }
+
   async getContractsMatchCreationCode(
     ctx: RequestContext,
     contractAddress: string,
@@ -189,27 +323,23 @@ export class ContractService {
 
   async verifyContractStatus(
     ctx: RequestContext,
-    contractAddress: string,
+    codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: contractAddress },
+    const contract = await this.smartContractCodeRepository.findOne({
+      where: { code_id: codeId },
     });
-    if (contract) {
-      const result = await lastValueFrom(
-        this.httpService.get(
-          this.verifyContractStatusUrl + String(contract.code_id),
-        ),
-      ).then((rs) => rs.data);
-
-      return result;
-    } else {
+    if (!contract) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
         Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
       };
       return error;
     }
+    return {
+      codeId: contract?.code_id,
+      status: contract?.contract_verification || CONTRACT_STATUS.UNVERIFIED,
+    };
   }
 
   /**
@@ -365,17 +495,25 @@ export class ContractService {
     }
 
     // Get ipfs info
-    const ipfs = await this.serviceUtil.getDataAPI(
-      this.transform(token?.token_uri),
-      '',
-      ctx,
-    );
+    const ipfs = await lastValueFrom(
+      this.httpService
+        .get(this.transform(token?.token_uri))
+        .pipe(timeout(5000), retry(2)),
+    )
+      .then((rs) => rs.data)
+      .catch(() => {
+        return {};
+      });
+
     const nft = {
       id: token?.id || '',
       contract_address: smartContract.contract_address,
       token_id: token?.token_id || '',
       token_uri: token?.token_uri || '',
       token_name: smartContract?.token_name || '',
+      token_name_ipfs: token?.token_name || '',
+      animation_url: token?.animation_url || '',
+      token_img: token?.token_img || '',
       img_type: token?.img_type || '',
       receiver_address: token?.receiver_address || '',
       status: token?.status || '',
