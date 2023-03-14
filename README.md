@@ -1,6 +1,19 @@
 # Aura Explorer API
 
-## Prerequisite
+Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume [Horoscope](https://github.com/aura-nw/horoscope) for view the status of a blockchain transaction and analytics smart contract, then provides API for [AuraScan](https://github.com/aura-nw/aurascan) query data.
+
+## Getting start
+
+1. Clone the repository
+ ```git clone https://github.com/aura-nw/aura-explorer-api ```
+ 
+2. Navigate to the project folder
+ ```cd aura-explorer-api ```
+ 
+3. Install dependencies
+ ```npm instal ```
+
+## Install requirements
 
 1. INFLUXDB
 
@@ -106,11 +119,14 @@
 4. NodeJS
 
     #### Download: https://nodejs.org/en/download/
+    
+5. Redis
+   
+   #### Download: https://redis.io/download/
 
-## How to run
+## Configuration
 
-1. Create a `.env` in the root folder with the template below and edit with your config:
-    ```
+  #### Create a `.env` in the root folder with the template below and edit with your config:
         # APP
         API_PREFIX=api/v1
         PORT=3000
@@ -124,23 +140,55 @@
         DB_USER=user
         DB_PASS=pass
 
-        # NODE
-        RPC=https://tendermint-testnet.aura.network/
-        API=https://rpc-testnet.aura.network/
+        # NODE DEV
+        RPC=https://rpc.dev.aura.network/
+        API=https://lcd.dev.aura.network/
 
         # INFLUXDB
         INFLUXDB_TOKEN=token
         INFLUXDB_URL=localhost:8086
         INFLUXDB_BUCKET=aurascan
         INFLUXDB_ORG=aura-dev
-
-    ```
-2. Run   
-
-    ### Native way
+        
+        # REDIS
+        USE_REDIS=0
+        REDIS_HOST=localhost
+        REDIS_PORT=6379
+        REDIS_DB=11
+        REDIS_USERNAME=default
+        REDIS_PASSWORD=
+        TTL=6
+        
+        # INDEXER DEV
+        INDEXER_URL=https://indexer.dev.aurascan.io/
+        INDEXER_CHAIN_ID=aura-testnet-2
+        
+        # CHAIN INFO
+        COIN_DENOM=AURA
+        COIN_MINIMAL_DENOM=utaura
+        COIN_DECIMALS=6
+        
+        # WEBSOCKET
+        WEBSOCKET_URL=wss://rpc.dev.aura.network/websocket
+        COINGECKO_API=https://api.coingecko.com/api/v3/
     
-    Run the command: ```npm run start```
+## NPM scripts
 
-    ### Docker way
+1. ```npm run build```: Creates a build directory.
+2. ```npm run start```: Start production mode.
+3. ```npm run lint```: Run ESLint.
+4. ```npm run test```: Run tests & generate coverage report.
+5. ```npm run migration:generate```: Create generate migration file.
 
-    Use `Dockerfile`
+## How to run  
+
+1. Native way
+    
+   Run the command: ```npm run start```
+
+2. Docker way
+
+   Use `Dockerfile`
+   
+## License
+   This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
