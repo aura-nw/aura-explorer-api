@@ -33,6 +33,7 @@ import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repos
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
+
 @Injectable()
 export class ContractService {
   private api;
