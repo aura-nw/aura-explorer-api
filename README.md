@@ -6,10 +6,10 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 
 1. Clone the repository
  ```git clone https://github.com/aura-nw/aura-explorer-api ```
- 
+
 2. Navigate to the project folder
  ```cd aura-explorer-api ```
- 
+
 3. Install dependencies
  ```npm instal ```
 
@@ -119,59 +119,18 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 4. NodeJS
 
     #### Download: https://nodejs.org/en/download/
-    
+
 5. Redis
-   
+
    #### Download: https://redis.io/download/
 
 ## Configuration
 
-  #### Create a `.env` in the root folder with the template below and edit with your config:
-        # APP
-        API_PREFIX=api/v1
-        PORT=3000
-        START_HEIGHT=1
-        COSMOS_SCAN_API=https://cosmos-scan-api.aura.network/
+  #### Create a `.env` from `.env.example`:
+    ```
+        cp .env.example .env
+    ```
 
-        # DATABASE
-        DB_HOST=localhost
-        DB_PORT=3306
-        DB_NAME=aurascan
-        DB_USER=user
-        DB_PASS=pass
-
-        # NODE DEV
-        RPC=https://rpc.dev.aura.network/
-        API=https://lcd.dev.aura.network/
-
-        # INFLUXDB
-        INFLUXDB_TOKEN=token
-        INFLUXDB_URL=localhost:8086
-        INFLUXDB_BUCKET=aurascan
-        INFLUXDB_ORG=aura-dev
-        
-        # REDIS
-        USE_REDIS=0
-        REDIS_HOST=localhost
-        REDIS_PORT=6379
-        REDIS_DB=11
-        REDIS_USERNAME=default
-        REDIS_PASSWORD=
-        TTL=6
-        
-        # INDEXER DEV
-        INDEXER_URL=https://indexer.dev.aurascan.io/
-        INDEXER_CHAIN_ID=aura-testnet-2
-        
-        # CHAIN INFO
-        COIN_DENOM=AURA
-        COIN_MINIMAL_DENOM=utaura
-        COIN_DECIMALS=6
-        
-        # WEBSOCKET
-        WEBSOCKET_URL=wss://rpc.dev.aura.network/websocket
-        COINGECKO_API=https://api.coingecko.com/api/v3/
-    
 ## NPM scripts
 
 1. ```npm run build```: Creates a build directory.
@@ -180,15 +139,15 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 4. ```npm run test```: Run tests & generate coverage report.
 5. ```npm run migration:generate```: Create generate migration file.
 
-## How to run  
+## How to run
 
 1. Native way
-    
+
    Run the command: ```npm run start```
 
 2. Docker way
 
    Use `Dockerfile`
-   
+
 ## License
    This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
