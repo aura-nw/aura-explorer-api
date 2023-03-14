@@ -127,9 +127,9 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 ## Configuration
 
   #### Create a `.env` from `.env.example`:
-    ```
-        cp .env.example .env
-    ```
+  ```
+      cp .env.example .env
+  ```
 
 ## NPM scripts
 
