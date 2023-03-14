@@ -1,6 +1,6 @@
 # Aura Explorer API
 
-Aura Explorer API is a API Service for Aura Network explorer.
+Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume Horoscope API for view the status of a blockchain transaction and analytics smart contract.
 
 ## Getting start
 
