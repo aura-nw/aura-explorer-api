@@ -55,7 +55,6 @@ export class ContractService {
     private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
     private verifyCodeStepRepository: VerifyCodeStepRepository,
-
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
