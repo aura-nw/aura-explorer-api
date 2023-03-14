@@ -1,6 +1,6 @@
 # Aura Explorer API
 
-Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume Horoscope API for view the status of a blockchain transaction and analytics smart contract.
+Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume Horoscope for view the status of a blockchain transaction and analytics smart contract.
 
 ## Getting start
 
@@ -191,4 +191,4 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
    Use `Dockerfile`
    
 ## License
-   This project is licensed under the MIT License.
+   This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
