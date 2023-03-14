@@ -1,6 +1,19 @@
 # Aura Explorer API
 
-## Prerequisite
+Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume [Horoscope](https://github.com/aura-nw/horoscope) for view the status of a blockchain transaction and analytics smart contract, then provides API for [AuraScan](https://github.com/aura-nw/aurascan) query data.
+
+## Getting start
+
+1. Clone the repository
+ ```git clone https://github.com/aura-nw/aura-explorer-api ```
+
+2. Navigate to the project folder
+ ```cd aura-explorer-api ```
+
+3. Install dependencies
+ ```npm instal ```
+
+## Install requirements
 
 1. INFLUXDB
 
@@ -106,41 +119,39 @@
 4. NodeJS
 
     #### Download: https://nodejs.org/en/download/
+    
+5. Redis
+   
+   #### Download: https://redis.io/download/
+
+5. Redis
+
+   #### Download: https://redis.io/download/
+
+## Configuration
+
+  #### Create a `.env` from `.env.example`:
+  ```
+      cp .env.example .env
+  ```
+
+## NPM scripts
+
+1. ```npm run build```: Creates a build directory.
+2. ```npm run start```: Start production mode.
+3. ```npm run lint```: Run ESLint.
+4. ```npm run test```: Run tests & generate coverage report.
+5. ```npm run migration:generate```: Create generate migration file.
 
 ## How to run
 
-1. Create a `.env` in the root folder with the template below and edit with your config:
-    ```
-        # APP
-        API_PREFIX=api/v1
-        PORT=3000
-        START_HEIGHT=1
-        COSMOS_SCAN_API=https://cosmos-scan-api.aura.network/
+1. Native way
 
-        # DATABASE
-        DB_HOST=localhost
-        DB_PORT=3306
-        DB_NAME=aurascan
-        DB_USER=user
-        DB_PASS=pass
+   Run the command: ```npm run start```
 
-        # NODE
-        RPC=https://tendermint-testnet.aura.network/
-        API=https://rpc-testnet.aura.network/
+2. Docker way
 
-        # INFLUXDB
-        INFLUXDB_TOKEN=token
-        INFLUXDB_URL=localhost:8086
-        INFLUXDB_BUCKET=aurascan
-        INFLUXDB_ORG=aura-dev
+   Use `Dockerfile`
 
-    ```
-2. Run   
-
-    ### Native way
-    
-    Run the command: ```npm run start```
-
-    ### Docker way
-
-    Use `Dockerfile`
+## License
+   This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
