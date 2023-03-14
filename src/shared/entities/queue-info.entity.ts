@@ -6,11 +6,20 @@ export class QueueInfo extends BaseEntity {
   @PrimaryGeneratedColumn('increment', { type: 'bigint' })
   id: number;
 
-  @Column()
+  @Column({
+    name: 'job_id',
+  })
+  job_id: number;
+
+  @Column({
+    nullable: true,
+  })
   height: number;
 
-  @Column()
-  type: string;
+  @Column({
+    name: 'job_name',
+  })
+  job_name: string;
 
   @Column({
     name: 'job_data',
@@ -19,8 +28,8 @@ export class QueueInfo extends BaseEntity {
   job_data: string;
 
   @Column()
-  status: boolean;
+  status: string;
 
   @Column()
-  group: string;
+  processor: string;
 }
