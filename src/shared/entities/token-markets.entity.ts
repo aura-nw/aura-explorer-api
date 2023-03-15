@@ -96,4 +96,7 @@ export class TokenMarkets extends BaseEntityIncrementId {
     default: 0,
   })
   fully_diluted_valuation: number;
+
+  @Column({ name: 'ibc_denom' })
+  ibc_denom: string;
 }
