@@ -330,8 +330,8 @@ export class Cw20TokenService {
           asset.image = findCoin.logo;
           asset.denom = findCoin.denom;
           asset.decimals = Number(findCoin.decimal) || 0;
+          result.push(asset);
         }
-        result.push(asset);
       }
     }
     return result;
