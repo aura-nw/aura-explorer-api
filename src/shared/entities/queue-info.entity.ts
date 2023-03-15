@@ -8,6 +8,7 @@ export class QueueInfo extends BaseEntity {
 
   @Column({
     name: 'job_id',
+    nullable: true,
   })
   job_id: number;
 
