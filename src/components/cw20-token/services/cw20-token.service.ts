@@ -336,8 +336,8 @@ export class Cw20TokenService {
           asset.price = coinFromMarket?.current_price || 0;
           asset.price_change_percentage_24h =
             coinFromMarket?.price_change_percentage_24h || 0;
+          result.push(asset);
         }
-        result.push(asset);
       }
     }
     return result;
