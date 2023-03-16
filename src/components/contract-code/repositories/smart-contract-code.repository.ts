@@ -25,7 +25,7 @@ export class SmartContractCodeRepository extends Repository<SmartContractCode> {
         'sbt',
         'sbt.code_id = scc.code_id',
       )
-      .orderBy('scc.updated_at', 'DESC')
+      // .orderBy('scc.updated_at', 'DESC')
       .addOrderBy('scc.code_id', 'DESC');
 
     const _finalizeResult = async (
