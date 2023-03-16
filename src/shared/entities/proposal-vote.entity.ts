@@ -1,7 +1,8 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { BaseEntityIncrementId } from "./base/base.entity";
 
 @Entity('proposal_votes')
+@Unique(['proposal_id', 'voter'])
 export class ProposalVote extends BaseEntityIncrementId {
     @Column()
     proposal_id: number;

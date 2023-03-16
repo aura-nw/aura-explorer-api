@@ -1,15 +1,10 @@
-import { HttpService } from '@nestjs/axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
+import { Injectable } from '@nestjs/common';
 import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 
-import {
-  AkcLogger,
-  CONST_CHAR,
-  CONST_NAME_ASSETS,
-  RequestContext,
-} from '../../../shared';
+import * as util from 'util';
+import { AkcLogger, INDEXER_API, RequestContext } from '../../../shared';
+import * as appConfig from '../../../shared/configs/configuration';
 import { AccountBalance } from '../dtos/account-balance.dto';
 import { AccountDelegation } from '../dtos/account-delegation.dto';
 import { AccountOutput } from '../dtos/account-output.dto';
@@ -19,103 +14,104 @@ import { AccountVesting } from '../dtos/account-vesting.dto';
 
 @Injectable()
 export class AccountService {
+  private api;
+  private indexerUrl;
+  private indexerChainId;
+  private denom;
+  private minimalDenom;
+  private precisionDiv;
+  private decimals;
+
   constructor(
     private readonly logger: AkcLogger,
-    private httpService: HttpService,
-    private configService: ConfigService,
+    private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository,
   ) {
     this.logger.setContext(AccountService.name);
+    const appParams = appConfig.default();
+    this.api = appParams.node.api;
+    this.indexerUrl = appParams.indexer.url;
+    this.indexerChainId = appParams.indexer.chainId;
+    this.minimalDenom = appParams.chainInfo.coinMinimalDenom;
+    this.denom = appParams.chainInfo.coinDenom;
+    this.precisionDiv = appParams.chainInfo.precisionDiv;
+    this.decimals = appParams.chainInfo.coinDecimals;
   }
 
-  async getDataAPI(api, params, ctx) {
-    this.logger.log(
-      ctx,
-      `${this.getDataAPI.name} was called, to ${api + params}!`,
-    );
-    const data = await lastValueFrom(this.httpService.get(api + params)).then(
-      (rs) => rs.data,
-    );
-
-    return data;
-  }
-
-  async getAccountDetailByAddress(ctx: RequestContext, address): Promise<any> {
+  async getAccountDetailByAddress(
+    ctx: RequestContext,
+    address: string,
+  ): Promise<any> {
     this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
-    const api = this.configService.get<string>('node.api');
 
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
-    const paramsBalance = `/cosmos/bank/v1beta1/balances/${address}`;
-    const paramsDelegated = `/cosmos/staking/v1beta1/delegations/${address}`;
-    const paramsUnbonding = `/cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
-    const paramsRedelegations = `/cosmos/staking/v1beta1/delegators/${address}/redelegations`;
-    const paramsAuthInfo = `auth/accounts/${address}`;
-    const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
-
-    const [
-      balanceData,
-      delegatedData,
-      unbondingData,
-      redelegationsData,
-      authInfoData,
-      validatorData,
-      stakeRewardData
-    ] = await Promise.all([
-      this.getDataAPI(api, paramsBalance, ctx),
-      this.getDataAPI(api, paramsDelegated, ctx),
-      this.getDataAPI(api, paramsUnbonding, ctx),
-      this.getDataAPI(api, paramsRedelegations, ctx),
-      this.getDataAPI(api, paramsAuthInfo, ctx),
+    const [accountData, validatorData] = await Promise.all([
+      this.serviceUtil.getDataAPI(
+        `${this.indexerUrl}${util.format(
+          INDEXER_API.ACCOUNT_INFO,
+          address,
+          this.indexerChainId,
+        )}`,
+        '',
+        ctx,
+      ),
       this.validatorRepository.find({
         order: { power: 'DESC' },
       }),
-      this.getDataAPI(api, paramsStakeReward, ctx)
     ]);
 
-    // get balance
-    let available = 0;
-    if (balanceData.balances) {
-      accountOutput.balances = new Array(balanceData.balances.length);
-      balanceData.balances.forEach((data, idx) => {
-        const balance = new AccountBalance();
-        if (data.denom === CONST_CHAR.UAURA) {
-          balance.name = CONST_NAME_ASSETS.AURA;
-          accountOutput.available = this.changeUauraToAura(data.amount);
-          available = parseInt(data.amount);
-        }
-        balance.denom = data.denom;
-        balance.amount = this.changeUauraToAura(data.amount);
-        balance.price = 0;
-        balance.total_price = balance.price * Number(balance.amount);
+    if (!accountData?.data) {
+      return accountData;
+    }
 
-        accountOutput.balances[idx] = balance;
+    const data = accountData.data;
+    // get balance
+    let balancesAmount = 0;
+    if (data?.account_balances) {
+      const balances = data.account_balances;
+      accountOutput.balances = new Array(balances.length);
+      balances.forEach((item) => {
+        const balance = new AccountBalance();
+        if (item.denom === this.minimalDenom) {
+          balance.name = this.denom;
+          balance.denom = item.denom;
+          balance.amount = this.changeUauraToAura(item.amount);
+          // todo
+          balance.price = 0;
+          balance.total_price = balance.price * Number(balance.amount);
+          balancesAmount = parseFloat(item.amount);
+          accountOutput.balances.push(balance);
+        }
       });
     }
 
-    // get delegated
+    // Get available
+    let available = 0;
+    accountOutput.available = this.changeUauraToAura(available);
+    if (data?.account_spendable_balances) {
+      const uaura = data.account_spendable_balances?.find(
+        (f) => f.denom === this.minimalDenom,
+      );
+      if (uaura) {
+        const amount = uaura.amount;
+        accountOutput.available = this.changeUauraToAura(amount);
+        available = parseFloat(amount);
+      }
+    }
 
-    // const delegatedData = await this.getDataAPI(api, paramsDelegated, ctx);
-    // get all validator
-    // const validatorData = await this.validatorRepository.find({
-    //   order: { power: 'DESC' },
-    // });
-    // get stake_reward
-    // const paramsStakeReward = `/cosmos/distribution/v1beta1/delegators/${address}/rewards`;
-    // const stakeRewardData = await this.getDataAPI(api, paramsStakeReward, ctx);
+    // Get delegate
     let delegatedAmount = 0;
     let stakeReward = 0;
-    if (delegatedData) {
-      accountOutput.delegations = new Array(
-        delegatedData.delegation_responses.length,
-      );
-      delegatedData.delegation_responses.forEach((data, idx) => {
-        const validator_address = data.delegation.validator_address;
+    if (data?.account_delegations) {
+      accountOutput.delegations = [];
+      data.account_delegations.forEach((item, idx) => {
+        const validator_address = item.delegation.validator_address;
         const validator = validatorData.filter(
           (e) => e.operator_address === validator_address,
         );
-        const reward = stakeRewardData.rewards.filter(
+        const reward = data.account_delegate_rewards.rewards.filter(
           (e) => e.validator_address === validator_address,
         );
         const delegation = new AccountDelegation();
@@ -124,43 +120,48 @@ export class AccountService {
         if (validator.length > 0) {
           delegation.validator_name = validator[0].title;
           delegation.validator_address = validator_address;
+          delegation.validator_identity = validator[0].identity;
+          delegation.jailed = Number(validator[0].jailed);
         }
-        delegation.amount = this.changeUauraToAura(data.balance.amount);
+        delegation.amount = this.changeUauraToAura(item.balance.amount);
         if (
           reward.length > 0 &&
           reward[0].reward.length > 0 &&
-          reward[0].reward[0].denom === CONST_CHAR.UAURA
+          reward[0].reward[0].denom === this.minimalDenom
         ) {
           delegation.reward = this.changeUauraToAura(
             reward[0].reward[0].amount,
           );
         }
-        delegatedAmount += parseInt(data.balance.amount);
+        delegatedAmount += parseInt(item.balance.amount);
         if (
-          stakeRewardData &&
-          stakeRewardData.total.length > 0 &&
-          stakeRewardData.total[0].denom === CONST_CHAR.UAURA
+          data?.account_delegate_rewards &&
+          data.account_delegate_rewards?.total &&
+          data.account_delegate_rewards.total.length > 0 &&
+          data.account_delegate_rewards.total[0].denom === this.minimalDenom
         ) {
           accountOutput.stake_reward = this.changeUauraToAura(
-            stakeRewardData.total[0].amount,
+            data.account_delegate_rewards?.total[0].amount,
           );
-          stakeReward = parseInt(stakeRewardData.total[0].amount);
+          stakeReward = parseInt(
+            data.account_delegate_rewards?.total[0].amount,
+          );
         }
         accountOutput.delegations[idx] = delegation;
       });
-      accountOutput.delegations = accountOutput.delegations.filter(item => item.amount != '0.000000');
+      accountOutput.delegations = accountOutput.delegations.filter(
+        (item) => item.amount != '0.000000',
+      );
       accountOutput.delegated = this.changeUauraToAura(delegatedAmount);
     }
 
     // get unbonding
-
-    // const unbondingData = await this.getDataAPI(api, paramsUnbonding, ctx);
     let unbondingAmount = 0;
-    if (unbondingData) {
+    if (data?.account_unbonding) {
       accountOutput.unbonding_delegations = [];
-      unbondingData.unbonding_responses.forEach((data, idx) => {
-        data.entries?.forEach((item) => {
-          const validator_address = data.validator_address;
+      data.account_unbonding?.forEach((item) => {
+        item.entries?.forEach((item1) => {
+          const validator_address = item.validator_address;
           const validator = validatorData.filter(
             (e) => e.operator_address === validator_address,
           );
@@ -169,26 +170,29 @@ export class AccountService {
           if (validator.length > 0) {
             unbonding.validator_name = validator[0].title;
             unbonding.validator_address = validator_address;
+            unbonding.validator_identity = validator[0].identity;
+            unbonding.jailed = Number(validator[0].jailed);
           }
-          unbonding.amount = this.changeUauraToAura(item.balance);
-          unbonding.completion_time = item.completion_time;
-          unbondingAmount += parseInt(item.balance);
+          unbonding.amount = this.changeUauraToAura(item1.balance);
+          unbonding.completion_time = item1.completion_time;
+          unbondingAmount += parseInt(item1.balance);
 
           accountOutput.unbonding_delegations.push(unbonding);
         });
         accountOutput.unbonding = this.changeUauraToAura(unbondingAmount);
       });
+      accountOutput.unbonding_delegations.sort(
+        (a, b) => Date.parse(a.completion_time) - Date.parse(b.completion_time),
+      );
     }
 
     // get redelegations
-
-    // const redelegationsData = await this.getDataAPI(api, paramsRedelegations, ctx);
-    if (redelegationsData) {
+    if (data?.account_redelegations) {
       accountOutput.redelegations = [];
-      redelegationsData.redelegation_responses.forEach((data, idx) => {
-        data.entries?.forEach((item) => {
-          const validator_src_address = data.redelegation.validator_src_address;
-          const validator_dst_address = data.redelegation.validator_dst_address;
+      data.account_redelegations.forEach((item) => {
+        item.entries?.forEach((item1) => {
+          const validator_src_address = item.redelegation.validator_src_address;
+          const validator_dst_address = item.redelegation.validator_dst_address;
           const validatorSrc = validatorData.filter(
             (e) => e.operator_address === validator_src_address,
           );
@@ -200,14 +204,18 @@ export class AccountService {
           if (validatorSrc.length > 0) {
             redelegation.validator_src_name = validatorSrc[0].title;
             redelegation.validator_src_address = validator_src_address;
+            redelegation.validator_src_identity = validatorSrc[0].identity;
+            redelegation.validator_src_jailed = Number(validatorSrc[0].jailed);
           }
           if (validatorDst.length > 0) {
             redelegation.validator_dst_name = validatorDst[0].title;
             redelegation.validator_dst_address = validator_dst_address;
+            redelegation.validator_dst_identity = validatorDst[0].identity;
+            redelegation.validator_dst_jailed = Number(validatorDst[0].jailed);
           }
-          redelegation.amount = this.changeUauraToAura(item.balance);
+          redelegation.amount = this.changeUauraToAura(item1.balance);
           redelegation.completion_time =
-            item.redelegation_entry.completion_time;
+            item1.redelegation_entry.completion_time;
 
           accountOutput.redelegations.push(redelegation);
         });
@@ -221,11 +229,15 @@ export class AccountService {
     // get commission
     let commission = '0';
     if (validator.length > 0) {
-      const paramsCommisstion = `/cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
-      const commissionData = await this.getDataAPI(api, paramsCommisstion, ctx);
+      const paramsCommisstion = `cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
+      const commissionData = await this.serviceUtil.getDataAPI(
+        this.api,
+        paramsCommisstion,
+        ctx,
+      );
       if (
         commissionData &&
-        commissionData.commission.commission[0].denom === CONST_CHAR.UAURA
+        commissionData.commission.commission[0].denom === this.minimalDenom
       ) {
         commission = commissionData.commission.commission[0].amount;
         accountOutput.commission = this.changeUauraToAura(
@@ -235,15 +247,21 @@ export class AccountService {
     }
 
     //get auth_info
-    // const authInfoData = await this.getDataAPI(api, paramsAuthInfo, ctx);
     let delegatedVesting = 0;
-    accountOutput.delegatable_vesting = '0';
+    accountOutput.delegable_vesting = '0';
+    if (balancesAmount > 0) {
+      delegatedVesting = balancesAmount - available;
+      accountOutput.delegable_vesting =
+        this.changeUauraToAura(delegatedVesting);
+    }
 
-    if (authInfoData) {
-      const baseVesting = authInfoData.result.value?.base_vesting_account;
+    // Get vesting
+    if (data?.account_auth) {
+      const account = data.account_auth?.account;
+      const baseVesting = account.base_vesting_account;
       if (baseVesting !== undefined) {
         const vesting = new AccountVesting();
-        vesting.type = authInfoData.result.type;
+        vesting.type = String(account['@type']);
         const originalVesting = baseVesting.original_vesting || [];
         if (originalVesting.length > 0) {
           let originalAmount = 0;
@@ -255,15 +273,6 @@ export class AccountService {
 
         const schedule = baseVesting.end_time || 0;
         vesting.vesting_schedule = schedule;
-        const delegated: Array<any> = baseVesting.delegated_vesting || [];
-        if (delegated.length > 0) {
-          let delegatableVesting = 0;
-          delegated.forEach((item) => {
-            delegatableVesting += Number(item.amount);
-          });
-          accountOutput.delegatable_vesting =
-            this.changeUauraToAura(delegatableVesting);
-        }
         accountOutput.vesting = vesting;
       }
     }
@@ -282,6 +291,6 @@ export class AccountService {
   }
 
   changeUauraToAura(amount) {
-    return (amount / 1000000).toFixed(6);
+    return (amount / this.precisionDiv).toFixed(this.decimals);
   }
 }

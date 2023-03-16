@@ -6,15 +6,17 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { AkcLogger, BaseApiResponse, ReqContext, RequestContext, SwaggerBaseApiResponse } from 'src/shared';
+  AkcLogger,
+  BaseApiResponse,
+  ReqContext,
+  RequestContext,
+  SwaggerBaseApiResponse,
+} from '../../../shared';
+import { Cw20MetricParamsDto } from '../dtos/cw20-metric-params.dto';
 import { MetricOutput } from '../dtos/metric-output.dto';
-import { MetricParamsDto } from '../dtos/metric-params.dto';
-
+import { TokenOutput } from '../dtos/token-output.dto';
 import { MetricService } from '../services/metric.service';
 
 @ApiTags('metrics')
@@ -27,57 +29,45 @@ export class MetricController {
     this.logger.setContext(MetricController.name);
   }
 
-  @Get('blocks')
-  @ApiOperation({ summary: 'Get block metric API' })
+  @Get('token')
+  @ApiOperation({ summary: 'Get token by coin id' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(MetricOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  async getBlockMetric(
+  async getTokenInfoMetric(
     @ReqContext() ctx: RequestContext,
-    @Query() query: MetricParamsDto,
-  ): Promise<BaseApiResponse<MetricOutput[]>> {
-    this.logger.log(ctx, `${this.getBlockMetric.name} was called!`);
+    @Query() query: Cw20MetricParamsDto,
+  ): Promise<BaseApiResponse<TokenOutput[]>> {
+    this.logger.log(ctx, `${this.getTokenInfoMetric.name} was called!`);
 
-    const metrics = await this.metricService.getBlock(ctx, query.range);
+    const metrics = await this.metricService.getTokenInfo(
+      ctx,
+      query.min,
+      query.max,
+      query.rangeType,
+      query.coinId,
+    );
 
     return { data: metrics, meta: null };
   }
 
-  @Get('transactions')
-  @ApiOperation({ summary: 'Get transaction metric API' })
+  @Get('token-market')
+  @ApiOperation({ summary: 'Get market info of token' })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: SwaggerBaseApiResponse(MetricOutput),
+    type: SwaggerBaseApiResponse(TokenOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  async getTransactionMetric(
+  async getTokenMarketInfoMetric(
     @ReqContext() ctx: RequestContext,
-    @Query() query: MetricParamsDto,
-  ): Promise<BaseApiResponse<MetricOutput[]>> {
-    this.logger.log(ctx, `${this.getTransactionMetric.name} was called!`);
+    @Query('coinId') coinId: string,
+  ): Promise<BaseApiResponse<TokenOutput>> {
+    this.logger.log(ctx, `${this.getTokenMarketInfoMetric.name} was called!`);
 
-    const metrics = await this.metricService.getTransaction(ctx, query.range);
+    const metric = await this.metricService.getTokenMarketInfo(ctx, coinId);
 
-    return { data: metrics, meta: null };
-  }
-
-  @Get('validators')
-  @ApiOperation({ summary: 'Get validator metric API' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    type: SwaggerBaseApiResponse(MetricOutput),
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getValidatorMetric(
-    @ReqContext() ctx: RequestContext,
-    @Query() query: MetricParamsDto,
-  ): Promise<BaseApiResponse<MetricOutput[]>> {
-    this.logger.log(ctx, `${this.getValidatorMetric.name} was called!`);
-
-    const metrics = await this.metricService.getValidator(ctx, query.range);
-
-    return { data: metrics, meta: null };
+    return { data: metric, meta: null };
   }
 }

@@ -1,59 +1,32 @@
-import { json } from 'stream/consumers';
-import { Column, Entity, ManyToOne, Unique } from 'typeorm';
-
-import { BaseEntityIncrementId } from './base/base.entity';
-import { Block } from './block.entity';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { BaseEntity } from './base/base.entity';
 
 @Entity('transactions')
-export class Transaction extends BaseEntityIncrementId {
-  @Unique('tx_hash', ['tx_hash'])
-  @Column()
+export class Transaction extends BaseEntity {
+  @PrimaryColumn({ type: 'varchar', name: 'tx_hash' })
   tx_hash: string;
 
-  // contain an application-specific response code
-  @Column({ default: 0 })
-  code: number;
-
-  // namespace for the code
-  @Column({ default: '' })
-  codespace: string;
-
-  @Column({ default: '' })
-  data: string;
-
-  @Column({ default: 0 })
-  gas_used: number;
-
-  @Column({ default: 0 })
-  gas_wanted: number;
-
-  @Column()
+  @Column({ type: 'int', name: 'height' })
   height: number;
 
-  @Column({ default: '' })
-  info: string;
-
-  @Column({ default: '' })
+  @Column({ type: 'varchar', name: 'type' })
   type: string;
 
-  @Column({ type: 'text' })
-  raw_log: string;
+  @Column({ type: 'varchar', name: 'contract_address' })
+  contract_address: string;
 
-  @Column()
-  timestamp: Date;
+  @Column({ type: 'varchar', name: 'from_address' })
+  from_address: string;
 
-  @Column({ type: 'json' })
-  tx: any;
+  @Column({ type: 'varchar', name: 'to_address' })
+  to_address: string;
 
-  @Column({ type: 'text' })
-  blockId: number;
+  @Column({ type: 'decimal', name: 'amount' })
+  amount: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'decimal', name: 'fee' })
   fee: string;
 
-  @Column({ type: 'json' })
-  messages: any;
-
-  @ManyToOne(() => Block, (block) => block.txs, { eager: true })
-  block: Block;
+  @Column({ type: 'datetime', name: 'timestamp' })
+  timestamp: Date;
 }
