@@ -5,19 +5,15 @@ import { SharedModule } from '../shared/shared.module';
 
 import { BlockModule } from './block/block.module';
 import { MetricModule } from './metric/metric.module';
-import { TaskModule } from './schedule/task.module';
-import { TransactionModule } from './transaction/transaction.module';
 import { ValidatorModule } from './validator/validator.module';
 
 @Module({
   imports: [
     SharedModule,
     BlockModule,
-    TransactionModule,
-    TaskModule,
     MetricModule,
     ValidatorModule,
     ScheduleModule.forRoot(),
   ],
 })
-export class ComponentsModule { }
+export class ComponentsModule {}

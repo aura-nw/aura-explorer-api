@@ -1,4 +1,11 @@
-import { CacheInterceptor, CacheModule, CacheModuleAsyncOptions, CacheModuleOptions, Inject, Module } from '@nestjs/common';
+import {
+  CacheInterceptor,
+  CacheModule,
+  CacheModuleAsyncOptions,
+  CacheModuleOptions,
+  Inject,
+  Module,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -9,6 +16,7 @@ import { configModuleOptions } from './configs/module-options';
 import { AllExceptionsFilter } from './filters/all-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AkcLoggerModule } from './logger/logger.module';
+import { RedisUtil } from './utils/redis.util';
 
 @Module({
   imports: [
@@ -27,23 +35,30 @@ import { AkcLoggerModule } from './logger/logger.module';
         synchronize: false,
         migrations: [join(__dirname, '../migrations/**', '*{.ts,.js}')],
         migrationsRun: true,
+        logging: configService.get<boolean>('database.logging'),
       }),
-    }),   
+    }),
     CacheModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      isGlobal: true,      
+      isGlobal: true,
       useFactory: async (configService: ConfigService) => {
-        let cacheConfig: CacheModuleOptions = {ttl: Number(configService.get<number | 1000>('cacheManagement.ttl'))};
-        const useRedis = Number(configService.get<number>('cacheManagement.useRedis')) || 0;
-        if(Number(useRedis) > 0){
+        const cacheConfig: CacheModuleOptions = {
+          ttl: Number(configService.get<number | 1000>('cacheManagement.ttl')),
+        };
+        const useRedis =
+          Number(configService.get<number>('cacheManagement.useRedis')) || 0;
+        if (Number(useRedis) > 0) {
           cacheConfig.store = redisStore;
           cacheConfig.host = configService.get<string>('cacheManagement.host');
-          cacheConfig.port = Number(configService.get<number | 6379>('cacheManagement.port'));
-          cacheConfig.db = Number(configService.get<number>('cacheManagement.db')) || 0;
+          cacheConfig.port = Number(
+            configService.get<number | 6379>('cacheManagement.port'),
+          );
+          cacheConfig.db =
+            Number(configService.get<number>('cacheManagement.db')) || 0;
         }
-        return {...cacheConfig};
-      }
+        return { ...cacheConfig };
+      },
     }),
 
     AkcLoggerModule,
@@ -52,7 +67,8 @@ import { AkcLoggerModule } from './logger/logger.module';
   providers: [
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
-    { provide: 'CACHE_INTERCEPTOR', useClass: CacheInterceptor}
+    { provide: 'CACHE_INTERCEPTOR', useClass: CacheInterceptor },
+    RedisUtil,
   ],
 })
 export class SharedModule {}

@@ -17,7 +17,7 @@ export class AccountOutput {
 
   @Expose()
   @ApiProperty()
-  delegatable_vesting: string;
+  delegable_vesting: string;
 
   @Expose()
   @ApiProperty()
