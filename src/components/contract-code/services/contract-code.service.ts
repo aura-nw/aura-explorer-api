@@ -38,7 +38,7 @@ export class ContractCodeService {
                 type: Not(''),
                 ...(request?.keyword && { code_id: Like(`%${request.keyword}%`) })
             },
-            order: { code_id: 'DESC' },
+            order: { updated_at: 'DESC' },
             take: request.limit,
             skip: request.offset
         });
