@@ -195,8 +195,8 @@ export class ValidatorService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
-    //get available balance
 
+    //get available balance
     const accountData = await this.serviceUtil.getDataAPI(
       `${this.indexerUrl}${util.format(
         INDEXER_API.ACCOUNT_DELEGATIONS,
@@ -206,6 +206,9 @@ export class ValidatorService {
       '',
       ctx,
     );
+
+    // Get reward from validator
+    
 
     if (!accountData?.data) {
       return accountData;
@@ -217,6 +220,9 @@ export class ValidatorService {
       result.available_balance = Number(data.account_balances[0].amount);
     }
     result.claim_reward = 0;
+    /**
+     * @todo call indexer
+     */
     const withdrawReward =
       await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(
         delegatorAddress,

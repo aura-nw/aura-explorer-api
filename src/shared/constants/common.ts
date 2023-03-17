@@ -15,6 +15,7 @@ export enum LINK_API {
   PROPOSAL_DETAIL = 'cosmos/gov/v1beta1/proposals/',
   PROPOSALS = 'cosmos/gov/v1beta1/proposals',
   LATEST_BLOCK = 'blocks/latest',
+  DELEGATOR_REWARD = 'cosmos/distribution/v1beta1/delegators/%s/rewards',
 }
 
 export enum CONST_NUM {
