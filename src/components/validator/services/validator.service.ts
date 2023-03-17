@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { DelegationRepository } from '../repositories/delegation.repository';
 
-import { AkcLogger, INDEXER_API, RequestContext } from '../../../shared';
+import {
+  AkcLogger,
+  INDEXER_API,
+  LINK_API,
+  RequestContext,
+} from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import * as util from 'util';
@@ -196,19 +201,34 @@ export class ValidatorService {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
 
-    //get available balance
-    const accountData = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(
-        INDEXER_API.ACCOUNT_DELEGATIONS,
-        delegatorAddress,
-        this.indexerChainId,
-      )}`,
-      '',
-      ctx,
-    );
+    // //get available balance
+    // const accountData = await this.serviceUtil.getDataAPI(
+    //   `${this.indexerUrl}${util.format(
+    //     INDEXER_API.ACCOUNT_DELEGATIONS,
+    //     delegatorAddress,
+    //     this.indexerChainId,
+    //   )}`,
+    //   '',
+    //   ctx,
+    // );
 
     // Get reward from validator
-    
+    const delegationUrl =
+      this.indexerUrl +
+      util.format(LINK_API.DELEGATOR_REWARD, delegatorAddress);
+
+    const [accountData, delegationsData] = await Promise.all([
+      this.serviceUtil.getDataAPI(
+        `${this.indexerUrl}${util.format(
+          INDEXER_API.ACCOUNT_DELEGATIONS,
+          delegatorAddress,
+          this.indexerChainId,
+        )}`,
+        '',
+        ctx,
+      ),
+      this.serviceUtil.getDataAPI(delegationUrl, '', ctx),
+    ]);
 
     if (!accountData?.data) {
       return accountData;
@@ -223,6 +243,7 @@ export class ValidatorService {
     /**
      * @todo call indexer
      */
+    
     const withdrawReward =
       await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(
         delegatorAddress,
