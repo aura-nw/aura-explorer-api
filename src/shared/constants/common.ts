@@ -4,7 +4,6 @@ export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
 
 export const FORWARDED_FOR_TOKEN_HEADER = 'x-forwarded-for';
 
-
 export enum LINK_API {
   STAKING_POOL = 'cosmos/staking/v1beta1/pool',
   INFLATION = `cosmos/mint/v1beta1/inflation`,
