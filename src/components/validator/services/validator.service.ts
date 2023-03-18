@@ -26,6 +26,7 @@ export class ValidatorService {
   api: string;
   private indexerUrl;
   private indexerChainId;
+  private coinDenom: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -41,6 +42,7 @@ export class ValidatorService {
     this.api = appParams.node.api;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
+    this.coinDenom = appParams.chainInfo.coinDenom;
   }
 
   async getTotalValidator(): Promise<number> {
@@ -215,20 +217,21 @@ export class ValidatorService {
     // Get reward from validator
     const delegationUrl =
       this.indexerUrl +
-      util.format(LINK_API.DELEGATOR_REWARD, delegatorAddress);
+      util.format(
+        LINK_API.GET_DELEGATIONS,
+        delegatorAddress,
+        this.indexerChainId,
+      );
 
-    const [accountData, delegationsData] = await Promise.all([
-      this.serviceUtil.getDataAPI(
-        `${this.indexerUrl}${util.format(
-          INDEXER_API.ACCOUNT_DELEGATIONS,
-          delegatorAddress,
-          this.indexerChainId,
-        )}`,
-        '',
-        ctx,
-      ),
-      this.serviceUtil.getDataAPI(delegationUrl, '', ctx),
-    ]);
+    const accountData = await this.serviceUtil.getDataAPI(
+      `${this.indexerUrl}${util.format(
+        INDEXER_API.ACCOUNT_DELEGATIONS,
+        delegatorAddress,
+        this.indexerChainId,
+      )}`,
+      '',
+      ctx,
+    );
 
     if (!accountData?.data) {
       return accountData;
@@ -240,16 +243,17 @@ export class ValidatorService {
       result.available_balance = Number(data.account_balances[0].amount);
     }
     result.claim_reward = 0;
-    /**
-     * @todo call indexer
-     */
-    
-    const withdrawReward =
-      await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(
-        delegatorAddress,
+
+    // Call indexer get data delegations
+    const rewards = accountData?.account_delegate_rewards?.rewards;
+    const totalReward = accountData?.account_delegate_rewards?.total;
+    if (totalReward) {
+      const total = rewards?.total.find(
+        (item) => item.denom === this.coinDenom,
       );
-    if (withdrawReward) {
-      result.claim_reward = Number(withdrawReward?.amount);
+      if (total) {
+        result.claim_reward = Number(total?.amount);
+      }
     }
 
     const delegations: any = [];
@@ -257,7 +261,7 @@ export class ValidatorService {
     const delegatorAddr: string[] = [];
     if (data?.account_delegations) {
       const delegationsData = data.account_delegations;
-      for (let i = 0; i < delegationsData.length; i++) {
+      for (let i = 0; i < delegationsData?.length; i++) {
         const delegation: any = {};
         const item = delegationsData[i];
         delegation.amount_staked = Number(item.balance.amount);
@@ -286,17 +290,14 @@ export class ValidatorService {
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
-      const delegatorRewards =
-        await this.delegatorRewardRepository.getRewardByAddress(
-          delegatorAddr,
-          validatorAddress,
-        );
-      for (let i = 0; i < delegations.length; i++) {
+      for (let i = 0; i < rewards?.length; i++) {
         const item = delegations[i];
 
         // Set Rank for validators
         const rank = ranks.find(
-          (f) => f.operator_address === item.validator_address,
+          (f) =>
+            f.operator_address === item.validator_address &&
+            item.reward?.denom === this.coinDenom,
         );
         if (rank) {
           item.validator_name = rank.title;
@@ -306,10 +307,8 @@ export class ValidatorService {
         }
 
         // Set reward for validators
-        const reward = delegatorRewards.find(
-          (f) =>
-            f.validator_address === item.validator_address &&
-            f.validator_address === item.validator_address,
+        const reward = rewards.find(
+          (f) => f.validator_address === item.validator_address,
         );
         if (reward) {
           item.reward = Number(reward.amount);
