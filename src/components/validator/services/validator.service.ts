@@ -26,7 +26,7 @@ export class ValidatorService {
   api: string;
   private indexerUrl;
   private indexerChainId;
-  private coinDenom: string;
+  private coinMinimalDenom: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -42,7 +42,7 @@ export class ValidatorService {
     this.api = appParams.node.api;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
-    this.coinDenom = appParams.chainInfo.coinDenom;
+    this.coinMinimalDenom = appParams.chainInfo.coinMinimalDenom;
   }
 
   async getTotalValidator(): Promise<number> {
@@ -224,15 +224,12 @@ export class ValidatorService {
     result.claim_reward = 0;
 
     // Call indexer get data delegations
-    const rewards = accountData?.account_delegate_rewards?.rewards;
-    const totalReward = accountData?.account_delegate_rewards?.total;
+    const rewards = accountData?.data.account_delegate_rewards?.rewards;
+    const totalReward = accountData?.data.account_delegate_rewards?.total?.find(
+      (item) => item.denom === this.coinMinimalDenom,
+    );
     if (totalReward) {
-      const total = rewards?.total?.find(
-        (item) => item.denom === this.coinDenom,
-      );
-      if (total) {
-        result.claim_reward = Number(total?.amount) || 0;
-      }
+      result.claim_reward = Number(totalReward?.amount) || 0;
     }
 
     const delegations: any = [];
@@ -276,7 +273,7 @@ export class ValidatorService {
         const rank = ranks.find(
           (f) =>
             f.operator_address === item.validator_address &&
-            item.reward?.denom === this.coinDenom,
+            item.reward?.denom === this.coinMinimalDenom,
         );
         if (rank) {
           item.validator_name = rank.title;
