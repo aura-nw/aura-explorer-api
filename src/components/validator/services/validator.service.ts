@@ -243,11 +243,9 @@ export class ValidatorService {
         delegation.amount_staked = Number(item.balance.amount);
         delegation.validator_address = item.delegation.validator_address;
         delegation.pending_reward = 0;
-        if (
-          data?.account_delegate_rewards &&
-          data.account_delegate_rewards?.rewards
-        ) {
-          const findReward = data.account_delegate_rewards?.rewards.find(
+
+        if (rewards?.length > 0) {
+          const findReward = rewards.find(
             (i) => i.validator_address === item.delegation.validator_address,
           );
           if (findReward && findReward.reward.length > 0) {
@@ -266,20 +264,19 @@ export class ValidatorService {
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
-      for (let i = 0; i < rewards?.length; i++) {
+      for (let i = 0; i < delegations?.length; i++) {
         const item = delegations[i];
 
         // Set Rank for validators
         const rank = ranks.find(
-          (f) =>
-            f.operator_address === item.validator_address &&
-            item.reward?.denom === this.coinMinimalDenom,
+          (f) => f.operator_address === item.validator_address,
         );
         if (rank) {
           item.validator_name = rank.title;
           item.validator_rank = rank.rank;
           item.validator_identity = rank.identity;
           item.jailed = rank.jailed;
+          item.validator_name = rank.title;
         }
 
         // Set reward for validators
