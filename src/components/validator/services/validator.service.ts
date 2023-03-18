@@ -227,11 +227,11 @@ export class ValidatorService {
     const rewards = accountData?.account_delegate_rewards?.rewards;
     const totalReward = accountData?.account_delegate_rewards?.total;
     if (totalReward) {
-      const total = rewards?.total.find(
+      const total = rewards?.total?.find(
         (item) => item.denom === this.coinDenom,
       );
       if (total) {
-        result.claim_reward = Number(total?.amount);
+        result.claim_reward = Number(total?.amount) || 0;
       }
     }
 
