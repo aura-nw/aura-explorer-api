@@ -202,27 +202,6 @@ export class ValidatorService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
-
-    // //get available balance
-    // const accountData = await this.serviceUtil.getDataAPI(
-    //   `${this.indexerUrl}${util.format(
-    //     INDEXER_API.ACCOUNT_DELEGATIONS,
-    //     delegatorAddress,
-    //     this.indexerChainId,
-    //   )}`,
-    //   '',
-    //   ctx,
-    // );
-
-    // Get reward from validator
-    const delegationUrl =
-      this.indexerUrl +
-      util.format(
-        LINK_API.GET_DELEGATIONS,
-        delegatorAddress,
-        this.indexerChainId,
-      );
-
     const accountData = await this.serviceUtil.getDataAPI(
       `${this.indexerUrl}${util.format(
         INDEXER_API.ACCOUNT_DELEGATIONS,
