@@ -324,18 +324,18 @@ export class Cw20TokenService {
         //get ibc info
         const denom = item.minimal_denom || item.denom;
         const findCoin = coins?.find((f) => f.denom === denom);
-        const coinFromMarket = await this.tokenMarketsRepository.findOne({
-          where: { ibc_denom: denom },
-        });
         if (findCoin) {
+          const coinInfor = await this.tokenMarketsRepository.findOne({
+            where: { ibc_denom: denom },
+          });
           asset.name = findCoin.name;
           asset.symbol = findCoin.display;
           asset.image = findCoin.logo;
           asset.denom = findCoin.denom;
           asset.decimals = Number(findCoin.decimal) || 0;
-          asset.price = coinFromMarket?.current_price || 0;
+          asset.price = coinInfor?.current_price || 0;
           asset.price_change_percentage_24h =
-            coinFromMarket?.price_change_percentage_24h || 0;
+            coinInfor?.price_change_percentage_24h || 0;
           result.push(asset);
         }
       }
