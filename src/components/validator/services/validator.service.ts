@@ -280,9 +280,7 @@ export class ValidatorService {
 
         // Set reward for validators
         const reward = delegatorRewards.find(
-          (f) =>
-            f.validator_address === item.validator_address &&
-            f.validator_address === item.validator_address,
+          (f) => f.validator_address === item.validator_address,
         );
         if (reward) {
           item.reward = Number(reward.amount);
