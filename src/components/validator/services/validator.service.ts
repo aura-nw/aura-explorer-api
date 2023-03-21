@@ -2,12 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { DelegationRepository } from '../repositories/delegation.repository';
 
-import {
-  AkcLogger,
-  INDEXER_API,
-  LINK_API,
-  RequestContext,
-} from '../../../shared';
+import { AkcLogger, INDEXER_API, RequestContext } from '../../../shared';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 
 import * as util from 'util';
@@ -26,7 +21,6 @@ export class ValidatorService {
   api: string;
   private indexerUrl;
   private indexerChainId;
-  private coinMinimalDenom: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -42,7 +36,6 @@ export class ValidatorService {
     this.api = appParams.node.api;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
-    this.coinMinimalDenom = appParams.chainInfo.coinMinimalDenom;
   }
 
   async getTotalValidator(): Promise<number> {
@@ -202,6 +195,8 @@ export class ValidatorService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
+    //get available balance
+
     const accountData = await this.serviceUtil.getDataAPI(
       `${this.indexerUrl}${util.format(
         INDEXER_API.ACCOUNT_DELEGATIONS,
@@ -222,14 +217,12 @@ export class ValidatorService {
       result.available_balance = Number(data.account_balances[0].amount);
     }
     result.claim_reward = 0;
-
-    // Call indexer get data delegations
-    const rewards = accountData?.data.account_delegate_rewards?.rewards;
-    const totalReward = accountData?.data.account_delegate_rewards?.total?.find(
-      (item) => item.denom === this.coinMinimalDenom,
-    );
-    if (totalReward) {
-      result.claim_reward = Number(totalReward?.amount) || 0;
+    const withdrawReward =
+      await this.delegatorRewardRepository.getClaimRewardByDelegatorAddress(
+        delegatorAddress,
+      );
+    if (withdrawReward) {
+      result.claim_reward = Number(withdrawReward?.amount);
     }
 
     const delegations: any = [];
@@ -237,7 +230,7 @@ export class ValidatorService {
     const delegatorAddr: string[] = [];
     if (data?.account_delegations) {
       const delegationsData = data.account_delegations;
-      for (let i = 0; i < delegationsData?.length; i++) {
+      for (let i = 0; i < delegationsData.length; i++) {
         const delegation: any = {};
         const item = delegationsData[i];
         delegation.amount_staked = Number(item.balance.amount);
@@ -266,14 +259,17 @@ export class ValidatorService {
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
-      for (let i = 0; i < rewards?.length; i++) {
+      const delegatorRewards =
+        await this.delegatorRewardRepository.getRewardByAddress(
+          delegatorAddr,
+          validatorAddress,
+        );
+      for (let i = 0; i < delegations.length; i++) {
         const item = delegations[i];
 
         // Set Rank for validators
         const rank = ranks.find(
-          (f) =>
-            f.operator_address === item.validator_address &&
-            item.reward?.denom === this.coinMinimalDenom,
+          (f) => f.operator_address === item.validator_address,
         );
         if (rank) {
           item.validator_name = rank.title;
@@ -283,8 +279,10 @@ export class ValidatorService {
         }
 
         // Set reward for validators
-        const reward = rewards.find(
-          (f) => f.validator_address === item.validator_address,
+        const reward = delegatorRewards.find(
+          (f) =>
+            f.validator_address === item.validator_address &&
+            f.validator_address === item.validator_address,
         );
         if (reward) {
           item.reward = Number(reward.amount);
