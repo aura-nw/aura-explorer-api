@@ -264,7 +264,12 @@ export class ValidatorService {
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
-      for (let i = 0; i < delegations?.length; i++) {
+      // const delegatorRewards =
+      //   await this.delegatorRewardRepository.getRewardByAddress(
+      //     delegatorAddr,
+      //     validatorAddress,
+      //   );
+      for (let i = 0; i < delegations.length; i++) {
         const item = delegations[i];
 
         // Set Rank for validators
@@ -276,16 +281,18 @@ export class ValidatorService {
           item.validator_rank = rank.rank;
           item.validator_identity = rank.identity;
           item.jailed = rank.jailed;
-          item.validator_name = rank.title;
         }
 
+        // TODO: Set temp data total reward = 0
+        item.reward = 0;
+
         // Set reward for validators
-        const reward = rewards.find(
-          (f) => f.validator_address === item.validator_address,
-        );
-        if (reward) {
-          item.reward = Number(reward.amount);
-        }
+        // const reward = delegatorRewards.find(
+        //   (f) => f.validator_address === item.validator_address,
+        // );
+        // if (reward) {
+        //   item.reward = Number(reward.amount);
+        // }
       }
     }
 
