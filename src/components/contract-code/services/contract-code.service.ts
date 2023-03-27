@@ -58,13 +58,6 @@ export class ContractCodeService {
                     Message: ERROR_MAP.CONTRACT_CODE_ID_EXIST.Message
                 };
             }
-            //check creator
-            if (contractCodeDb.creator !== request.account_address) {
-                return {
-                    Code: ERROR_MAP.NOT_CONTRACT_CREATOR.Code,
-                    Message: ERROR_MAP.NOT_CONTRACT_CREATOR.Message
-                };
-            }
             //register in indexer
             const properties = {
                 codeId: request.code_id,
