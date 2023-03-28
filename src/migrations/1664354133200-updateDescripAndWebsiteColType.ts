@@ -12,5 +12,4 @@ export class updateDescripAndWebsiteColType1664354133200 implements MigrationInt
         await queryRunner.query(`ALTER TABLE \`deployment_requests\` MODIFY COLUMN \`contract_description\` varchar(255) NULL`);
         await queryRunner.query(`ALTER TABLE \`deployment_requests\` MODIFY COLUMN \`official_project_website\` varchar(255) NULL`);
     }
-
 }

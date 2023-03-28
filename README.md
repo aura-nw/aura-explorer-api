@@ -119,6 +119,10 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 4. NodeJS
 
     #### Download: https://nodejs.org/en/download/
+    
+5. Redis
+   
+   #### Download: https://redis.io/download/
 
 5. Redis
 
