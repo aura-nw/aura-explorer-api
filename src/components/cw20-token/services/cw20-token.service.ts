@@ -148,7 +148,8 @@ export class Cw20TokenService {
       }),
     ]);
 
-    assetDto.balance = totalBalances ? totalBalances.total : 0;
+    assetDto.balance =
+      totalBalances && totalBalances?.total ? totalBalances.total : 0;
     // price of aura
     if (tokenData) {
       assetDto.price = tokenData.current_price || 0;
