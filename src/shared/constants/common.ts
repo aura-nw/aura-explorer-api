@@ -184,7 +184,7 @@ export const ERROR_MAP = {
   },
   MINTER_OR_CONTRACT_ADDRESS_INVALID: {
     Code: 'E007',
-    Message: `Attestor address or contract address invalid`,
+    Message: `Creator address or contract address invalid`,
   },
   YOUR_ADDRESS_INVALID: {
     Code: 'E008',
