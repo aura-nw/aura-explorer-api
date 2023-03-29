@@ -51,5 +51,8 @@ export class ValidatorOutput {
   status: number;
 
   @Expose()
-  identity: number;
+  identity: string;
+
+  @Expose()
+  image_url: string;
 }
