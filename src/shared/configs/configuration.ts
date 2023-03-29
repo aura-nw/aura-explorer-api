@@ -48,4 +48,13 @@ export default () => ({
     precisionDiv: Math.pow(10, Number(process.env.COIN_DECIMALS)),
   },
   configUrl: process.env.CONFIG_URL,
+  googleOAuth: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    redirectUrl: process.env.GOOGLE_REDIRECT_URL,
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  },
 });
