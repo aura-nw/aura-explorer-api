@@ -55,4 +55,7 @@ export class LiteValidatorOutput {
 
   @Expose()
   identity: string;
+
+  @Expose()
+  image_url: string;
 }
