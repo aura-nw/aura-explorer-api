@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  ParseArrayPipe,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
@@ -62,9 +63,10 @@ export class ValidatorController {
   @UseInterceptors(CacheInterceptor)
   async getValidatorInfo(
     @ReqContext() ctx: RequestContext,
-    @Query('address') addresses: string[],
+    @Query('address', new ParseArrayPipe({ items: String, separator: ',' }))
+    address: string[],
   ) {
-    const data = await this.validatorService.getValidatorInfo(ctx, addresses);
+    const data = await this.validatorService.getValidatorInfo(ctx, address);
     return { data, meta: {} };
   }
 
