@@ -19,6 +19,8 @@ import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorRepository } from '../repositories/validator.repository';
+import { In } from 'typeorm';
+import { ValidatorInfoOutput } from '../dtos/validator-info-output.dto';
 
 @Injectable()
 export class ValidatorService {
@@ -322,5 +324,33 @@ export class ValidatorService {
     }
 
     return { result: result };
+  }
+
+  /**
+   * Get validator info by address
+   * @param address
+   */
+  async getValidatorInfo(
+    ctx: RequestContext,
+    address: string[],
+  ): Promise<ValidatorInfoOutput[]> {
+    let validatorOuput = [];
+    try {
+      const isArray = Array.isArray(address);
+
+      const result = await this.validatorRepository.find({
+        where: {
+          operator_address: isArray ? In(address) : address,
+        },
+      });
+      if (result) {
+        validatorOuput = plainToClass(ValidatorInfoOutput, result, {
+          excludeExtraneousValues: true,
+        });
+      }
+    } catch (err) {
+      this.logger.error(ctx, err.stack);
+    }
+    return validatorOuput;
   }
 }
