@@ -337,7 +337,6 @@ export class ValidatorService {
     let validatorOuput = [];
     try {
       const isArray = Array.isArray(address);
-
       const result = await this.validatorRepository.find({
         where: {
           operator_address: isArray ? In(address) : address,

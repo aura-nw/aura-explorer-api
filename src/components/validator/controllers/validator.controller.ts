@@ -64,7 +64,8 @@ export class ValidatorController {
     @ReqContext() ctx: RequestContext,
     @Query('address') addresses: string[],
   ) {
-    return await this.validatorService.getValidatorInfo(ctx, addresses);
+    const data = await this.validatorService.getValidatorInfo(ctx, addresses);
+    return { data, meta: {} };
   }
 
   @Get(':address')
