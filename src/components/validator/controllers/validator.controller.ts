@@ -57,7 +57,6 @@ export class ValidatorController {
   })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: SwaggerBaseApiResponse(ValidatorOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
   @UseInterceptors(CacheInterceptor)
