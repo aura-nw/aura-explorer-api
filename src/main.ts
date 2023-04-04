@@ -6,7 +6,6 @@ import * as Queue from 'bull';
 import { createBullBoard } from '@bull-board/api';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
-import { RedisUtil } from './shared/utils/redis.util';
 
 import { VALIDATION_PIPE_OPTIONS, RequestIdMiddleware } from './shared';
 
@@ -35,7 +34,7 @@ async function bootstrap() {
 
   //bull-board
   const redisOpts = configService.get('cacheManagement.redis');
-  const queueNames = await new RedisUtil().getAllBullQueueName();
+  const queueNames = ['validator', 'smart-contracts'];
   const queues = [];
   const serverAdapter = new ExpressAdapter();
 

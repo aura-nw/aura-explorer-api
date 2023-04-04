@@ -39,12 +39,4 @@ export class RedisUtil {
   public async getValue(key: string) {
     return this.redisClient.get(key);
   }
-
-  public async getAllBullQueueName(): Promise<string[]> {
-    const BULL_REGEX = 'bull:*:id';
-    await this.connect();
-    const bullRedisKeys: string[] = await this.redisClient.keys(BULL_REGEX);
-
-    return bullRedisKeys.map((redisKey) => redisKey.split(':')[1]);
-  }
 }
