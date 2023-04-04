@@ -57,4 +57,5 @@ export default () => ({
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN,
   },
+  adminInitEmail: process.env.ADMIN_INIT_EMAIL,
 });

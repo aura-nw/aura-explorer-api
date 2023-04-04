@@ -11,6 +11,7 @@ export class addUserTable1679995202621 implements MigrationInterface {
       \`id\` int NOT NULL AUTO_INCREMENT,
       \`email\` varchar(255) NOT NULL,
       \`provider\` varchar(255) NOT NULL,
+      \`username\` varchar(255) NOT NULL,
       PRIMARY KEY (\`id\`)) ENGINE=InnoDB`,
     );
   }

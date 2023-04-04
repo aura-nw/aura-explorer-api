@@ -6,7 +6,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GoogleOauthStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(configService: ConfigService, private UserService: UserService) {
+  constructor(
+    private configService: ConfigService,
+    private userService: UserService,
+  ) {
     super({
       clientID: configService.get<string>('googleOAuth.clientId'),
       clientSecret: configService.get<string>('googleOAuth.clientSecret'),
@@ -20,11 +23,22 @@ export class GoogleOauthStrategy extends PassportStrategy(Strategy, 'google') {
     _refreshToken: string,
     profile: Profile,
   ): Promise<any> {
-    const { emails } = profile;
+    const { emails, name } = profile;
+    const googleEmail = emails[0].value;
+    const adminInitEmail = this.configService.get<string>('adminInitEmail');
+    const googleProvider = 'google';
 
-    const user = await this.UserService.findOne({
-      where: { provider: 'google', email: emails[0].value },
+    let user = await this.userService.findOne({
+      where: { provider: googleProvider, email: googleEmail },
     });
+
+    if (adminInitEmail === googleEmail && !user) {
+      user = await this.userService.create({
+        email: googleEmail,
+        provider: googleProvider,
+        username: name.givenName,
+      });
+    }
 
     if (!user) {
       throw new UnauthorizedException('You have not permission!');
