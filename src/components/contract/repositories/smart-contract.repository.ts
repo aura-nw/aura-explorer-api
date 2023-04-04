@@ -174,6 +174,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       sc.token_symbol AS symbol,
       sc.contract_address,
       sc.num_tokens,
+      sc.total_tx,
       IFNULL(tx_24h.no, 0) AS transfers_24h,
       IFNULL(tx_3d.no, 0) AS transfers_3d,
       uptime.timestamp AS upTime
