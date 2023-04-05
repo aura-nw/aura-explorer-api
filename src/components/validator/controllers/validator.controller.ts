@@ -4,14 +4,18 @@ import {
   Controller,
   Get,
   HttpStatus,
-  Param, Query,
-  UseInterceptors
+  Param,
+  ParseArrayPipe,
+  Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   AkcLogger,
-  BaseApiResponse, ReqContext, RequestContext,
-  SwaggerBaseApiResponse
+  BaseApiResponse,
+  ReqContext,
+  RequestContext,
+  SwaggerBaseApiResponse,
 } from '../../../shared';
 import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { DelegationParamsDto } from '../dtos/delegation-params.dto';
@@ -25,7 +29,7 @@ import { ValidatorService } from '../services/validator.service';
 export class ValidatorController {
   constructor(
     private readonly validatorService: ValidatorService,
-    private readonly logger: AkcLogger
+    private readonly logger: AkcLogger,
   ) {
     this.logger.setContext(ValidatorController.name);
   }
@@ -45,7 +49,25 @@ export class ValidatorController {
 
     const { validators } = await this.validatorService.getValidators(ctx);
 
-    return { data: validators, meta: { } };
+    return { data: validators, meta: {} };
+  }
+
+  @Get('validator-info')
+  @ApiOperation({
+    summary: 'Get validator info by address',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getValidatorInfo(
+    @ReqContext() ctx: RequestContext,
+    @Query('address', new ParseArrayPipe({ items: String, separator: ',' }))
+    address: string[],
+  ) {
+    const data = await this.validatorService.getValidatorInfo(ctx, address);
+    return { data, meta: {} };
   }
 
   @Get(':address')
@@ -61,7 +83,10 @@ export class ValidatorController {
   ): Promise<BaseApiResponse<ValidatorOutput>> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
-    const validator = await this.validatorService.getValidatorByAddress(ctx, address);
+    const validator = await this.validatorService.getValidatorByAddress(
+      ctx,
+      address,
+    );
 
     return { data: validator, meta: {} };
   }
@@ -81,7 +106,12 @@ export class ValidatorController {
   ): Promise<BaseApiResponse<DelegationOutput[]>> {
     this.logger.log(ctx, `${this.getDelegationByAddress.name} was called!`);
 
-    const { delegations, count } = await this.validatorService.getDelegationByAddress(ctx, validatorAddress, query);
+    const { delegations, count } =
+      await this.validatorService.getDelegationByAddress(
+        ctx,
+        validatorAddress,
+        query,
+      );
 
     return { data: delegations, meta: { count } };
   }
@@ -91,15 +121,18 @@ export class ValidatorController {
     summary: 'Get list delegations',
   })
   @ApiResponse({
-    status: HttpStatus.OK
+    status: HttpStatus.OK,
   })
   @UseInterceptors(ClassSerializerInterceptor)
   async getDelegations(
     @ReqContext() ctx: RequestContext,
-    @Param('delegatorAddress') delegatorAddress: string
+    @Param('delegatorAddress') delegatorAddress: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
-    const result = await this.validatorService.getDelegations(ctx, delegatorAddress);
+    const result = await this.validatorService.getDelegations(
+      ctx,
+      delegatorAddress,
+    );
 
     return { data: result, meta: {} };
   }
@@ -119,7 +152,7 @@ export class ValidatorController {
   ): Promise<any> {
     const result = await this.validatorService.getDelegationsByDelegatorAddress(
       ctx,
-      delegatorAddress
+      delegatorAddress,
     );
     return { data: result, meta: {} };
   }

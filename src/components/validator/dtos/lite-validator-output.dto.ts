@@ -37,7 +37,7 @@ export class LiteValidatorOutput {
 
   @Expose()
   jailed: string;
-  
+
   @Expose()
   status_validator: boolean;
 
@@ -55,4 +55,7 @@ export class LiteValidatorOutput {
 
   @Expose()
   identity: string;
+
+  @Expose()
+  image_url: string;
 }
