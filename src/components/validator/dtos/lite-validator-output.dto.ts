@@ -58,4 +58,7 @@ export class LiteValidatorOutput {
 
   @Expose()
   image_url: string;
+
+  @Expose()
+  voting_power_level: string;
 }
