@@ -75,4 +75,7 @@ export class Validator extends BaseEntity {
 
   @Column({ name: 'image_url', nullable: true, type: 'nvarchar' })
   image_url: string;
+
+  @Column({ name: 'voting_power_level', nullable: true })
+  voting_power_level: string;
 }
