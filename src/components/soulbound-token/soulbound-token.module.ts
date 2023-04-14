@@ -9,6 +9,7 @@ import { SmartContractRepository } from '../contract/repositories/smart-contract
 import { SoulboundTokenController } from './controllers/soulbound-token.controller';
 import { SoulboundTokenRepository } from './repositories/soulbound-token.repository';
 import { SoulboundTokenService } from './services/soulbound-token.service';
+import { RedisUtil } from '../../shared/utils/redis.util';
 
 @Module({
   imports: [
@@ -20,7 +21,7 @@ import { SoulboundTokenService } from './services/soulbound-token.service';
     ConfigModule,
     HttpModule,
   ],
-  providers: [SoulboundTokenService, ServiceUtil, ContractUtil],
+  providers: [SoulboundTokenService, ServiceUtil, ContractUtil, RedisUtil],
   controllers: [SoulboundTokenController],
   exports: [SoulboundTokenService],
 })

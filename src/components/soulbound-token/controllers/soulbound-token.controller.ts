@@ -184,4 +184,45 @@ export class SoulboundTokenController {
     );
     return await this.soulboundTokenService.pickedNft(ctx, req);
   }
+
+  @Get('white-list')
+  @ApiOperation({ summary: 'Get white list account of Soulbound' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async getWhiteListAccount(@ReqContext() ctx: RequestContext) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getWhiteListAccount.name} was called! ==============`,
+    );
+    const data = await this.soulboundTokenService.getSoulboundWhiteList(ctx);
+
+    return { data: data };
+  }
+
+  @Put('update-notify')
+  @ApiOperation({ summary: 'Update notify soulbound contract' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async updateNotify(
+    @ReqContext() ctx: RequestContext,
+    @Body() req: PickedNftParasDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.updateNotify.name} was called! ==============`,
+    );
+    return await this.soulboundTokenService.updateNotify(ctx, req);
+  }
+
+  @Get('notify/:receiverAddress')
+  async getNotifyByReceiverAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('receiverAddress') receiverAddress: string,
+  ) {
+    this.logger.log(ctx, `${this.getNotifyByReceiverAddress.name} was called!`);
+    const token = await this.soulboundTokenService.getNotifyByReceiverAddress(
+      ctx,
+      receiverAddress,
+    );
+
+    return { data: token, meta: {} };
+  }
 }

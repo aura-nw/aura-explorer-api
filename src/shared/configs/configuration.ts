@@ -34,6 +34,7 @@ export default () => ({
           ? ''
           : process.env.REDIS_USERNAME,
       password: process.env.REDIS_PASSWORD,
+      channel: process.env.REDIS_ABT_CHANNEL,
     },
   },
   threads: process.env.THREADS,

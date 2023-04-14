@@ -37,23 +37,31 @@ import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-outp
 import { In } from 'typeorm';
 import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
 import { SoulboundTokenOutputDto } from '../dtos/soulbound-token-output.dto';
+import { RedisUtil } from '../../../shared/utils/redis.util';
+import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
   private chainId: string;
   private rpc: string;
+  private ioRedis: any;
+  private channel: string;
 
   constructor(
     private readonly logger: AkcLogger,
     private soulboundTokenRepos: SoulboundTokenRepository,
     private smartContractRepos: SmartContractRepository,
+    private soulboundWhiteListRepository: SoulboundWhiteListRepository,
     private contractUtil: ContractUtil,
     private serviceUtil: ServiceUtil,
     private httpService: HttpService,
+    private redisUtil: RedisUtil,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
     this.rpc = this.appParams.node.rpc;
+    this.ioRedis = this.redisUtil.getIoRedis();
+    this.channel = this.appParams.cacheManagement.redis.channel;
   }
 
   /**
@@ -282,7 +290,7 @@ export class SoulboundTokenService {
         this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-
+    this.ioRedis.publish(this.channel, 'test');
     // Verify signature
     const address = await this.contractUtil.verifySignatue(
       req.signature,
@@ -369,6 +377,7 @@ export class SoulboundTokenService {
       entity.token_img = ipfs.image;
       entity.token_name = ipfs.name;
       entity.img_type = contentType;
+      entity.is_notify = true;
       entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
@@ -378,6 +387,7 @@ export class SoulboundTokenService {
       );
       try {
         const result = await this.soulboundTokenRepos.save(entity);
+        this.ioRedis.publish(this.channel, result);
         return { data: result, meta: {} };
       } catch (err) {
         this.logger.error(
@@ -451,6 +461,69 @@ export class SoulboundTokenService {
         message: ERROR_MAP.TOKEN_NOT_EXIST.Message,
       };
     }
+  }
+
+  /**
+   * count notify of soulbound token
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async getNotifyByReceiverAddress(
+    ctx: RequestContext,
+    receiverAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getNotifyByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+    );
+
+    const result = await this.soulboundTokenRepos.find({
+      where: {
+        receiver_address: receiverAddress,
+        is_notify: true,
+      },
+    });
+
+    return { data: result, meta: {} };
+  }
+
+  /**
+   * Update notify of soulbound token
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async updateNotify(ctx: RequestContext, @Body() req: PickedNftParasDto) {
+    this.logger.log(
+      ctx,
+      `============== ${
+        this.updateNotify.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
+    );
+
+    const result = await this.soulboundTokenRepos.updateNotify(
+      req.id,
+      req.contractAddress,
+    );
+
+    return { data: result, meta: {} };
+  }
+
+  /**
+   * Get white list account soulbound
+   * @param ctx
+   * @returns
+   */
+  async getSoulboundWhiteList(ctx: RequestContext) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getSoulboundWhiteList.name} was called! ==============`,
+    );
+
+    const whitelist = await this.soulboundWhiteListRepository.find();
+
+    return whitelist;
   }
 
   /**

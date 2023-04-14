@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 // import * as redis from "redis";
 import * as appConfig from '../../shared/configs/configuration';
 const redis = require('redis');
+import Redis from 'ioredis';
 
 @Injectable()
 export class RedisUtil {
   private redisClient;
+  private ioRedis;
 
   constructor() {
     const appParams = appConfig.default();
@@ -13,6 +15,13 @@ export class RedisUtil {
       url: `redis://${appParams.cacheManagement.redis.username}:${appParams.cacheManagement.redis.password}@${appParams.cacheManagement.redis.host}:${appParams.cacheManagement.redis.port}`,
     };
     this.redisClient = redis.createClient(redisURL);
+    this.ioRedis = new Redis({
+      port: parseInt(appParams.cacheManagement.redis.port, 10),
+      host: appParams.cacheManagement.redis.host,
+      username: appParams.cacheManagement.redis.username,
+      password: appParams.cacheManagement.redis.password,
+      db: parseInt(appParams.cacheManagement.redis.db, 10),
+    });
   }
 
   public convertDateToString(date: Date) {
@@ -38,5 +47,9 @@ export class RedisUtil {
 
   public async getValue(key: string) {
     return this.redisClient.get(key);
+  }
+
+  public getIoRedis() {
+    return this.ioRedis;
   }
 }

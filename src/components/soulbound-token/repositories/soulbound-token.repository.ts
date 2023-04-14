@@ -207,4 +207,15 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       .groupBy('sbt.contract_address, sbt.`status`')
       .getRawMany();
   }
+
+  async updateNotify(tokenId, contractAddress) {
+    return await this.createQueryBuilder('sbt')
+      .update(SoulboundToken)
+      .set({
+        is_notify: false,
+      })
+      .where('sbt.token_id = :tokenId', { tokenId })
+      .andWhere('sbt.contract_address = :contractAddress', { contractAddress })
+      .execute();
+  }
 }
