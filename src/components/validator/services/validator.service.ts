@@ -59,8 +59,9 @@ export class ValidatorService {
     ctx: RequestContext,
   ): Promise<{ validators: LiteValidatorOutput[] }> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
-    const [validatorsRes, proposal] = await Promise.all([
-      this.validatorRepository.getAllValidators(),
+    const [activeValidator, inActiveValidator, proposal] = await Promise.all([
+      this.validatorRepository.getAllActiveValidators(),
+      this.validatorRepository.getAllInActiveValidators(),
       this.serviceUtil.getDataAPI(
         `${this.indexerUrl}${util.format(
           INDEXER_API.GET_PROPOSAL,
@@ -72,6 +73,8 @@ export class ValidatorService {
         ctx,
       ),
     ]);
+
+    const validatorsRes = [...activeValidator, ...inActiveValidator];
 
     // Get total proposal on indexer
     const proposalCount = proposal?.data?.count || 0;
