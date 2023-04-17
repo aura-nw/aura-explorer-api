@@ -10,5 +10,4 @@ export class updateReasonColType1664331330555 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE \`deployment_requests\` MODIFY COLUMN \`reason\` varchar(255) NULL`);
     }
-
 }
