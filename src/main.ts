@@ -10,6 +10,7 @@ import { ExpressAdapter } from '@bull-board/express';
 import { VALIDATION_PIPE_OPTIONS, RequestIdMiddleware } from './shared';
 
 import { AppModule } from './app.module';
+import { RedisUtil } from './shared/utils/redis.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -34,12 +35,20 @@ async function bootstrap() {
 
   //bull-board
   const redisOpts = configService.get('cacheManagement.redis');
-  const queueNames = ['validator', 'smart-contracts'];
+  const queueNames = await new RedisUtil().getAllBullQueueName();
   const queues = [];
   const serverAdapter = new ExpressAdapter();
 
   queueNames.forEach((queueName) => {
-    queues.push(new BullAdapter(Queue(queueName, { redis: redisOpts })));
+    queues.push(
+      new BullAdapter(
+        Queue(
+          queueName,
+          `redis://${redisOpts.username}:${redisOpts.password}@${redisOpts.host}:${redisOpts.port}/${redisOpts.db}`,
+          { prefix: configService.get<string>('indexer.chainId') },
+        ),
+      ),
+    );
   });
 
   serverAdapter.setBasePath('/admin/queues');
