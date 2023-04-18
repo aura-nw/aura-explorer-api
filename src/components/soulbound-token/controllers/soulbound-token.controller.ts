@@ -19,6 +19,7 @@ import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
 import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
+import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 
 @Controller('soulbound-token')
 @ApiTags('soulbound-token')
@@ -203,7 +204,7 @@ export class SoulboundTokenController {
   @ApiResponse({ status: HttpStatus.OK, schema: {} })
   async updateNotify(
     @ReqContext() ctx: RequestContext,
-    @Body() req: PickedNftParasDto,
+    @Body() req: TokenUpdatedParasDto,
   ) {
     this.logger.log(
       ctx,
@@ -223,6 +224,20 @@ export class SoulboundTokenController {
       receiverAddress,
     );
 
-    return { data: token, meta: {} };
+    return { data: token };
+  }
+
+  @Put('reject-token')
+  @ApiOperation({ summary: 'Reject soulbound token' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async rejectToken(
+    @ReqContext() ctx: RequestContext,
+    @Body() req: TokenUpdatedParasDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.rejectToken.name} was called! ==============`,
+    );
+    return await this.soulboundTokenService.rejectToken(ctx, req);
   }
 }
