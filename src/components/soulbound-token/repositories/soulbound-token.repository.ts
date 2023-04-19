@@ -7,11 +7,7 @@ import {
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import {
-  SoulboundToken,
-  SOULBOUND_PICKED_TOKEN,
-  SOULBOUND_TOKEN_STATUS,
-} from '../../../shared';
+import { SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 
 @EntityRepository(SoulboundToken)
@@ -209,8 +205,8 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       .set({
         is_notify: false,
       })
-      .where('sbt.token_id = :tokenId', { tokenId })
-      .andWhere('sbt.contract_address = :contractAddress', { contractAddress })
+      .where('token_id = :tokenId', { tokenId })
+      .andWhere('contract_address = :contractAddress', { contractAddress })
       .execute();
   }
 
@@ -220,11 +216,11 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       .set({
         status: SOULBOUND_TOKEN_STATUS.REJECT,
       })
-      .where('sbt.contract_address = :contractAddress', { contractAddress })
+      .where({ contract_address: In(contractAddress) })
       .andWhere({ status: Equal(SOULBOUND_TOKEN_STATUS.UNCLAIM) })
-      .andWhere('sbt.receiver_address = :receiverAddress', { receiverAddress });
+      .andWhere('receiver_address = :receiverAddress', { receiverAddress });
     if (!!tokenId) {
-      builder.andWhere('sbt.token_id = :tokenId', { tokenId });
+      builder.andWhere('token_id = :tokenId', { tokenId });
     }
     return builder.execute();
   }

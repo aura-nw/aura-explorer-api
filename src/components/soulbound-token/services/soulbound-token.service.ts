@@ -34,7 +34,6 @@ import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
-import { In } from 'typeorm';
 import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
 import { SoulboundTokenOutputDto } from '../dtos/soulbound-token-output.dto';
 import { RedisUtil } from '../../../shared/utils/redis.util';
@@ -294,9 +293,6 @@ export class SoulboundTokenService {
         this.create.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    
-    const isValid = await this.SoulboundRejectListRepos.count()
-
 
     // Verify signature
     const address = await this.contractUtil.verifySignatue(
@@ -492,7 +488,7 @@ export class SoulboundTokenService {
       },
     });
 
-    return { data: result };
+    return { notify: result };
   }
 
   /**

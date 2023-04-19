@@ -10,7 +10,7 @@ export class createColumnIsNotifyAbtToken1681440466119
       `ALTER TABLE \`soulbound_token\` ADD \`is_notify\` tinyint NOT NULL DEFAULT 0`,
     );
     await queryRunner.query(
-      `ALTER TABLE \`soulbound_token\` CHANGE \`status\` \`status\` enum ('Unclaimed', 'Equipped', 'Unequipped', 'Pending', 'Reject') NOT NULL DEFAULT 'Unclaimed'`,
+      `ALTER TABLE \`soulbound_token\` CHANGE \`status\` \`status\` enum ('Unclaimed', 'Equipped', 'Unequipped', 'Pending', 'Rejected') NOT NULL DEFAULT 'Unclaimed'`,
     );
   }
 

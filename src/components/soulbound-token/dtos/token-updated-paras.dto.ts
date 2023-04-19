@@ -3,7 +3,7 @@ import { IsNotEmpty } from 'class-validator';
 
 export class TokenUpdatedParasDto {
   @ApiProperty()
-  tokenId: number;
+  tokenId: string;
 
   @ApiProperty()
   @IsNotEmpty()
