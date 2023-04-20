@@ -240,4 +240,23 @@ export class SoulboundTokenController {
     );
     return await this.soulboundTokenService.rejectToken(ctx, req);
   }
+
+  @Get('check-reject/:receiverAddress/:minterAddress')
+  @ApiOperation({ summary: 'Check reject soulbound token' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async checkRejectToken(
+    @ReqContext() ctx: RequestContext,
+    @Param('receiverAddress') receiverAddress: string,
+    @Param('minterAddress') minterAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.checkRejectToken.name} was called! ==============`,
+    );
+    return await this.soulboundTokenService.checkRejectToken(
+      ctx,
+      receiverAddress,
+      minterAddress,
+    );
+  }
 }

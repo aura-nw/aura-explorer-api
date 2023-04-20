@@ -20,7 +20,7 @@ export class RedisUtil {
       host: appParams.cacheManagement.redis.host,
       username: appParams.cacheManagement.redis.username,
       password: appParams.cacheManagement.redis.password,
-      db: parseInt(appParams.cacheManagement.redis.db, 10),
+      db: parseInt(appParams.cacheManagement.redis.db_socket, 10),
     });
   }
 

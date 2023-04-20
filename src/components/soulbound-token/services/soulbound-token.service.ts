@@ -390,7 +390,12 @@ export class SoulboundTokenService {
       );
       try {
         const result = await this.soulboundTokenRepos.save(entity);
-        this.ioRedis.publish(this.channel, result);
+        this.ioRedis.publish(
+          this.channel,
+          JSON.stringify({
+            receiver_address: receiver_address,
+          }),
+        );
         return { data: result, meta: {} };
       } catch (err) {
         this.logger.error(
@@ -485,6 +490,7 @@ export class SoulboundTokenService {
       where: {
         receiver_address: receiverAddress,
         is_notify: true,
+        status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
       },
     });
 
@@ -527,33 +533,73 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
-    let smartcontract;
+    let allContract;
     // Case: reject all abt form this minter address
-    if (!!req.minterAddress) {
-      // Find all contract with this minter address
-      smartcontract = await this.smartContractRepos.find({
-        where: { minter_address: req.minterAddress },
+    if (req.rejectAll) {
+      const smartcontract = await this.smartContractRepos.findOne({
+        where: { contract_address: req.contractAddress },
       });
+
+      // Find all contract with this minter address
+      allContract = await this.smartContractRepos.find({
+        where: { minter_address: smartcontract.minter_address },
+      });
+
       const rejectToken = {
         account_address: req.receiverAddress,
-        reject_address: req.minterAddress,
+        reject_address: smartcontract.minter_address,
       };
       // add this minter address to block list.
       await this.SoulboundRejectListRepos.save(rejectToken);
     }
 
     // Filter contract address to update status.
-    const contractAddress = smartcontract?.map(
+    const contractAddress = allContract?.map(
       (item) => item.contract_address,
-    ) || [...req.contractAddress];
+    ) || [req.contractAddress];
 
     const result = await this.soulboundTokenRepos.updateRejectStatus(
       req.tokenId,
       contractAddress,
       req.receiverAddress,
+      req.rejectAll,
     );
 
     return { data: result, meta: {} };
+  }
+
+  /**
+   * Update notify of soulbound token
+   * @param ctx
+   * @param receiverAddress
+   * @param minterAddress
+   * @returns
+   */
+  async checkRejectToken(
+    ctx: RequestContext,
+    receiverAddress: string,
+    minterAddress: string,
+  ) {
+    this.logger.log(ctx, `============== ${this.checkRejectToken.name}`);
+    const receiver_address = receiverAddress.trim();
+    if (receiver_address === minterAddress) {
+      return {
+        code: ERROR_MAP.TAKE_SELF_TOKEN.Code,
+        message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
+      };
+    }
+    const validAddress = await this.SoulboundRejectListRepos.count({
+      where: {
+        account_address: receiver_address,
+        reject_address: minterAddress,
+      },
+    });
+    if (validAddress > 0) {
+      return {
+        code: ERROR_MAP.REJECT_ABT_TOKEN.Code,
+        message: ERROR_MAP.REJECT_ABT_TOKEN.Message,
+      };
+    }
   }
 
   /**

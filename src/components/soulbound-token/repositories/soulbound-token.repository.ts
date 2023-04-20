@@ -210,16 +210,22 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       .execute();
   }
 
-  async updateRejectStatus(tokenId, contractAddress, receiverAddress) {
+  async updateRejectStatus(
+    tokenId,
+    contractAddress,
+    receiverAddress,
+    rejectAll,
+  ) {
     const builder = await this.createQueryBuilder('sbt')
       .update(SoulboundToken)
       .set({
         status: SOULBOUND_TOKEN_STATUS.REJECT,
+        is_notify: false,
       })
       .where({ contract_address: In(contractAddress) })
       .andWhere({ status: Equal(SOULBOUND_TOKEN_STATUS.UNCLAIM) })
       .andWhere('receiver_address = :receiverAddress', { receiverAddress });
-    if (!!tokenId) {
+    if (!rejectAll) {
       builder.andWhere('token_id = :tokenId', { tokenId });
     }
     return builder.execute();

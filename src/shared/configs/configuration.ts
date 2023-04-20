@@ -29,6 +29,7 @@ export default () => ({
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,
       db: process.env.REDIS_DB,
+      db_socket: process.env.REDIS_DB_SOCKET,
       username:
         !process.env.REDIS_USERNAME || process.env.REDIS_USERNAME === 'default'
           ? ''

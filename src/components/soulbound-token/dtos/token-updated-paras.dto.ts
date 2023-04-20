@@ -13,5 +13,5 @@ export class TokenUpdatedParasDto {
   receiverAddress: string;
 
   @ApiProperty()
-  minterAddress: string;
+  rejectAll: boolean;
 }
