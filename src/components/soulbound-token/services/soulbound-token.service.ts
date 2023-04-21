@@ -390,6 +390,7 @@ export class SoulboundTokenService {
       );
       try {
         const result = await this.soulboundTokenRepos.save(entity);
+        // Send notfiy after create abt successfully
         this.ioRedis.publish(
           this.channel,
           JSON.stringify({

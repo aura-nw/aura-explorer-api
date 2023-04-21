@@ -219,7 +219,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     const builder = await this.createQueryBuilder('sbt')
       .update(SoulboundToken)
       .set({
-        status: SOULBOUND_TOKEN_STATUS.REJECT,
+        status: SOULBOUND_TOKEN_STATUS.REJECTED,
         is_notify: false,
       })
       .where({ contract_address: In(contractAddress) })

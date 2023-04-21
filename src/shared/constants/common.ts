@@ -243,7 +243,7 @@ export enum SOULBOUND_TOKEN_STATUS {
   EQUIPPED = 'Equipped',
   UNEQUIPPED = 'Unequipped',
   PENDING = 'Pending',
-  REJECT = 'Rejected',
+  REJECTED = 'Rejected',
 }
 
 export const SOULBOUND_PICKED_TOKEN = {
