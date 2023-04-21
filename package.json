@@ -24,6 +24,8 @@
     "migration:revert": "node_modules/.bin/typeorm migration:revert"
   },
   "dependencies": {
+    "@bull-board/api": "^5.0.0",
+    "@bull-board/express": "^5.0.0",
     "@cosmjs/amino": "^0.29.4",
     "@cosmjs/cosmwasm-stargate": "^0.29.4",
     "@cosmjs/crypto": "^0.29.4",
@@ -38,6 +40,7 @@
     "@nestjs/swagger": "^5.1.0",
     "@nestjs/typeorm": "^8.0.2",
     "bech32": "^2.0.0",
+    "bull": "^4.9.0",
     "cache-manager": "^3.6.0",
     "cache-manager-redis-store": "^2.0.0",
     "class-transformer": "^0.4.0",
