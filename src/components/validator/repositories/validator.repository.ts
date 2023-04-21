@@ -1,4 +1,4 @@
-import { EntityRepository, In, Repository } from 'typeorm';
+import { EntityRepository, In, Not, Repository } from 'typeorm';
 
 import { Validator } from '../../../shared';
 
@@ -37,11 +37,20 @@ export class ValidatorRepository extends Repository<Validator> {
     return await rankBuilder.getRawMany();
   }
 
-  async getAllValidators() {
+  async getAllActiveValidators() {
     return await this.createQueryBuilder('v')
       .select('v.*')
+      .where({ status: 3 })
+      .addOrderBy('power', 'DESC')
+      .addOrderBy('updated_at', 'DESC')
+      .getRawMany();
+  }
+
+  async getAllInActiveValidators() {
+    return await this.createQueryBuilder('v')
+      .select('v.*')
+      .where({ status: Not(3) })
       .orderBy('jailed', 'ASC')
-      .addOrderBy('status', 'DESC')
       .addOrderBy('power', 'DESC')
       .addOrderBy('updated_at', 'DESC')
       .getRawMany();

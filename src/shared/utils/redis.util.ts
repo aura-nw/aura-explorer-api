@@ -8,11 +8,13 @@ import Redis from 'ioredis';
 export class RedisUtil {
   private redisClient;
   private ioRedis;
+  private appConfig;
 
   constructor() {
-    const appParams = appConfig.default();
+    this.appConfig = appConfig.default();
+    const redisConfig = this.appConfig.cacheManagement.redis;
     const redisURL = {
-      url: `redis://${appParams.cacheManagement.redis.username}:${appParams.cacheManagement.redis.password}@${appParams.cacheManagement.redis.host}:${appParams.cacheManagement.redis.port}`,
+      url: `redis://${redisConfig.username}:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}/${redisConfig.db}`,
     };
     this.redisClient = redis.createClient(redisURL);
     this.ioRedis = new Redis({
@@ -51,5 +53,20 @@ export class RedisUtil {
 
   public getIoRedis() {
     return this.ioRedis;
+  }
+
+  public async getAllBullQueueName(): Promise<string[]> {
+    const BULL_REGEX = `${this.appConfig.indexer.chainId}:*:id`;
+
+    try {
+      await this.redisClient.connect();
+      const bullRedisKeys: string[] = await this.redisClient.keys(BULL_REGEX);
+      return bullRedisKeys.map((redisKey) => redisKey.split(':')[1]);
+    } catch (error) {
+      console.log(`Error while connecting to redis. ${error}`);
+      return [];
+    } finally {
+      await this.redisClient.disconnect();
+    }
   }
 }
