@@ -22,7 +22,7 @@ export class RedisUtil {
       host: redisConfig.host,
       username: redisConfig.username,
       password: redisConfig.password,
-      db: parseInt(redisConfig, 10),
+      db: parseInt(redisConfig.db_socket, 10),
     });
   }
 
