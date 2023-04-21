@@ -394,7 +394,7 @@ export class SoulboundTokenService {
         this.ioRedis.publish(
           this.channel,
           JSON.stringify({
-            receiver_address: receiver_address,
+            ReceiverAddress: receiver_address,
           }),
         );
         return { data: result, meta: {} };
