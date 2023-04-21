@@ -18,11 +18,11 @@ export class RedisUtil {
     };
     this.redisClient = redis.createClient(redisURL);
     this.ioRedis = new Redis({
-      port: parseInt(appParams.cacheManagement.redis.port, 10),
-      host: appParams.cacheManagement.redis.host,
-      username: appParams.cacheManagement.redis.username,
-      password: appParams.cacheManagement.redis.password,
-      db: parseInt(appParams.cacheManagement.redis.db_socket, 10),
+      port: parseInt(redisConfig.port, 10),
+      host: redisConfig.host,
+      username: redisConfig.username,
+      password: redisConfig.password,
+      db: parseInt(redisConfig, 10),
     });
   }
 
