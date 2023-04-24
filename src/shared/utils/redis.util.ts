@@ -24,6 +24,7 @@ export class RedisUtil {
       password: redisConfig.password,
       db: parseInt(redisConfig.db_socket, 10),
     });
+
   }
 
   public convertDateToString(date: Date) {
