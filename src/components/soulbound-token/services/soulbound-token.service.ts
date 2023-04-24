@@ -34,26 +34,37 @@ import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
-import { In } from 'typeorm';
 import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
 import { SoulboundTokenOutputDto } from '../dtos/soulbound-token-output.dto';
+import { RedisUtil } from '../../../shared/utils/redis.util';
+import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
+import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
+import { SoulboundRejectListRepository } from '../repositories/soulbound-reject-list.repository';
+
 @Injectable()
 export class SoulboundTokenService {
   private appParams: any;
   private chainId: string;
   private rpc: string;
+  private ioRedis: any;
+  private channel: string;
 
   constructor(
     private readonly logger: AkcLogger,
     private soulboundTokenRepos: SoulboundTokenRepository,
     private smartContractRepos: SmartContractRepository,
+    private soulboundWhiteListRepos: SoulboundWhiteListRepository,
+    private SoulboundRejectListRepos: SoulboundRejectListRepository,
     private contractUtil: ContractUtil,
     private serviceUtil: ServiceUtil,
     private httpService: HttpService,
+    private redisUtil: RedisUtil,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
     this.rpc = this.appParams.node.rpc;
+    this.ioRedis = this.redisUtil.getIoRedis();
+    this.channel = this.appParams.cacheManagement.redis.channel;
   }
 
   /**
@@ -369,6 +380,7 @@ export class SoulboundTokenService {
       entity.token_img = ipfs.image;
       entity.token_name = ipfs.name;
       entity.img_type = contentType;
+      entity.is_notify = true;
       entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
@@ -378,6 +390,13 @@ export class SoulboundTokenService {
       );
       try {
         const result = await this.soulboundTokenRepos.save(entity);
+        // Send notfiy after create abt successfully
+        this.ioRedis.publish(
+          this.channel,
+          JSON.stringify({
+            ReceiverAddress: receiver_address,
+          }),
+        );
         return { data: result, meta: {} };
       } catch (err) {
         this.logger.error(
@@ -454,6 +473,153 @@ export class SoulboundTokenService {
   }
 
   /**
+   * count notify of soulbound token
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async getNotifyByReceiverAddress(
+    ctx: RequestContext,
+    receiverAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getNotifyByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+    );
+
+    const result = await this.soulboundTokenRepos.count({
+      where: {
+        receiver_address: receiverAddress,
+        is_notify: true,
+        status: SOULBOUND_TOKEN_STATUS.UNCLAIM,
+      },
+    });
+
+    return { notify: result };
+  }
+
+  /**
+   * Update notify of soulbound token
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async updateNotify(ctx: RequestContext, @Body() req: TokenUpdatedParasDto) {
+    this.logger.log(
+      ctx,
+      `============== ${
+        this.updateNotify.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
+    );
+
+    const result = await this.soulboundTokenRepos.updateNotify(
+      req.tokenId,
+      req.contractAddress,
+    );
+
+    return { data: result, meta: {} };
+  }
+
+  /**
+   * Update notify of soulbound token
+   * @param ctx
+   * @param req
+   * @returns
+   */
+  async rejectToken(ctx: RequestContext, @Body() req: TokenUpdatedParasDto) {
+    this.logger.log(
+      ctx,
+      `============== ${
+        this.rejectToken.name
+      } was called with paras: ${JSON.stringify(req)}! ==============`,
+    );
+
+    let allContract;
+    // Case: reject all abt form this minter address
+    if (req.rejectAll) {
+      const smartcontract = await this.smartContractRepos.findOne({
+        where: { contract_address: req.contractAddress },
+      });
+
+      // Find all contract with this minter address
+      allContract = await this.smartContractRepos.getContractCW4973(
+        smartcontract.minter_address,
+      );
+
+      const rejectToken = {
+        account_address: req.receiverAddress,
+        reject_address: smartcontract.minter_address,
+      };
+      // add this minter address to block list.
+      await this.SoulboundRejectListRepos.save(rejectToken);
+    }
+
+    // Filter contract address to update status.
+    const contractAddress = allContract?.map(
+      (item) => item.contract_address,
+    ) || [req.contractAddress];
+
+    const result = await this.soulboundTokenRepos.updateRejectStatus(
+      req.tokenId,
+      contractAddress,
+      req.receiverAddress,
+      req.rejectAll,
+    );
+
+    return { data: result, meta: {} };
+  }
+
+  /**
+   * Update notify of soulbound token
+   * @param ctx
+   * @param receiverAddress
+   * @param minterAddress
+   * @returns
+   */
+  async checkRejectToken(
+    ctx: RequestContext,
+    receiverAddress: string,
+    minterAddress: string,
+  ) {
+    this.logger.log(ctx, `============== ${this.checkRejectToken.name}`);
+    const receiver_address = receiverAddress.trim();
+    if (receiver_address === minterAddress) {
+      return {
+        code: ERROR_MAP.TAKE_SELF_TOKEN.Code,
+        message: ERROR_MAP.TAKE_SELF_TOKEN.Message,
+      };
+    }
+    const validAddress = await this.SoulboundRejectListRepos.count({
+      where: {
+        account_address: receiver_address,
+        reject_address: minterAddress,
+      },
+    });
+    if (validAddress > 0) {
+      return {
+        code: ERROR_MAP.REJECT_ABT_TOKEN.Code,
+        message: ERROR_MAP.REJECT_ABT_TOKEN.Message,
+      };
+    }
+  }
+
+  /**
+   * Get white list account soulbound
+   * @param ctx
+   * @returns
+   */
+  async getSoulboundWhiteList(ctx: RequestContext) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getSoulboundWhiteList.name} was called! ==============`,
+    );
+
+    const whitelist = await this.soulboundWhiteListRepos.find();
+
+    return whitelist;
+  }
+
+  /**
    * Pick or Unpick nft of soulbound token
    * @param ctx
    * @param req
@@ -492,25 +658,6 @@ export class SoulboundTokenService {
         return {
           code: ERROR_MAP.PICKED_TOKEN_OVERSIZE.Code,
           message: ERROR_MAP.PICKED_TOKEN_OVERSIZE.Message,
-        };
-      }
-      const numOfToken = await this.soulboundTokenRepos.count({
-        where: {
-          receiver_address: entity.receiver_address,
-          status: In([
-            SOULBOUND_TOKEN_STATUS.UNCLAIM,
-            SOULBOUND_TOKEN_STATUS.UNEQUIPPED,
-          ]),
-        },
-      });
-      if (
-        numOfToken == 0 &&
-        numOfPickedToken == SOULBOUND_PICKED_TOKEN.MIN &&
-        !req.picked
-      ) {
-        return {
-          code: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Code,
-          message: ERROR_MAP.PICKED_TOKEN_UNDERSIZE.Message,
         };
       }
       const result = await SigningCosmWasmClient.connect(this.rpc)

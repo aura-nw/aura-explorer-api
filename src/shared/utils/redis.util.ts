@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 // import * as redis from "redis";
 import * as appConfig from '../../shared/configs/configuration';
 const redis = require('redis');
+import Redis from 'ioredis';
 
 @Injectable()
 export class RedisUtil {
   private redisClient;
+  private ioRedis;
   private appConfig;
 
   constructor() {
@@ -15,6 +17,14 @@ export class RedisUtil {
       url: `redis://${redisConfig.username}:${redisConfig.password}@${redisConfig.host}:${redisConfig.port}/${redisConfig.db}`,
     };
     this.redisClient = redis.createClient(redisURL);
+    this.ioRedis = new Redis({
+      port: parseInt(redisConfig.port, 10),
+      host: redisConfig.host,
+      username: redisConfig.username,
+      password: redisConfig.password,
+      db: parseInt(redisConfig.db_socket, 10),
+    });
+
   }
 
   public convertDateToString(date: Date) {
@@ -40,6 +50,10 @@ export class RedisUtil {
 
   public async getValue(key: string) {
     return this.redisClient.get(key);
+  }
+
+  public getIoRedis() {
+    return this.ioRedis;
   }
 
   public async getAllBullQueueName(): Promise<string[]> {
