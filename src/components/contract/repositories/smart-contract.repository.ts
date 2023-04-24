@@ -156,6 +156,20 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .getRawMany();
   }
 
+  async getContractCW4973(minterAddress: string) {
+    return await this.createQueryBuilder('sc')
+      .select(`sc.contract_address AS contract_address, sc.code_id AS code_id`)
+      .innerJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
+      .where('sc.minter_address = :contract_address', {
+        contract_address: minterAddress,
+      })
+      .andWhere('scc.type = :type', {
+        type: CONTRACT_TYPE.CW4973,
+      })
+      .andWhere(`scc.result = '${CONTRACT_CODE_RESULT.CORRECT}'`)
+      .getRawMany();
+  }
+
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
     return await this.createQueryBuilder('sc')
       .select(

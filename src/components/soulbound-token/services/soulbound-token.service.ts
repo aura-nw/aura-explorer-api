@@ -542,9 +542,9 @@ export class SoulboundTokenService {
       });
 
       // Find all contract with this minter address
-      allContract = await this.smartContractRepos.find({
-        where: { minter_address: smartcontract.minter_address },
-      });
+      allContract = await this.smartContractRepos.getContractCW4973(
+        smartcontract.minter_address,
+      );
 
       const rejectToken = {
         account_address: req.receiverAddress,
