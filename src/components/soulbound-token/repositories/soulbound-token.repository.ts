@@ -7,11 +7,7 @@ import {
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import {
-  SoulboundToken,
-  SOULBOUND_PICKED_TOKEN,
-  SOULBOUND_TOKEN_STATUS,
-} from '../../../shared';
+import { SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 
 @EntityRepository(SoulboundToken)
@@ -117,7 +113,8 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
-        .orderBy('sbt.status', 'ASC')
+        .orderBy('sbt.is_notify', 'DESC')
+        .addOrderBy('sbt.status', 'ASC')
         .addOrderBy('sbt.updated_at', 'DESC')
         .getRawMany();
 
@@ -164,11 +161,6 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         new Brackets((qb) => {
           qb.where({
             picked: true,
-          }).orWhere({
-            status: In([
-              SOULBOUND_TOKEN_STATUS.UNCLAIM,
-              SOULBOUND_TOKEN_STATUS.UNEQUIPPED,
-            ]),
           });
         }),
       );
@@ -179,7 +171,6 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       const tokens = await builder
         .limit(limit)
         .orderBy('sbt.picked', 'DESC')
-        .addOrderBy('sbt.status', 'ASC')
         .addOrderBy('sbt.created_at', 'ASC')
         .getRawMany();
 
@@ -206,5 +197,37 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       })
       .groupBy('sbt.contract_address, sbt.`status`')
       .getRawMany();
+  }
+
+  async updateNotify(tokenId, contractAddress) {
+    return await this.createQueryBuilder('sbt')
+      .update(SoulboundToken)
+      .set({
+        is_notify: false,
+      })
+      .where('token_id = :tokenId', { tokenId })
+      .andWhere('contract_address = :contractAddress', { contractAddress })
+      .execute();
+  }
+
+  async updateRejectStatus(
+    tokenId,
+    contractAddress,
+    receiverAddress,
+    rejectAll,
+  ) {
+    const builder = await this.createQueryBuilder('sbt')
+      .update(SoulboundToken)
+      .set({
+        status: SOULBOUND_TOKEN_STATUS.REJECTED,
+        is_notify: false,
+      })
+      .where({ contract_address: In(contractAddress) })
+      .andWhere({ status: Equal(SOULBOUND_TOKEN_STATUS.UNCLAIM) })
+      .andWhere('receiver_address = :receiverAddress', { receiverAddress });
+    if (!rejectAll) {
+      builder.andWhere('token_id = :tokenId', { tokenId });
+    }
+    return builder.execute();
   }
 }
