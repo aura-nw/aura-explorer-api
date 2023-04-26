@@ -1,3 +1,4 @@
+//FIXME: delete this file because we don't use it anymore
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';

@@ -1,3 +1,4 @@
+//FIXME: delete this file because we don't use it anymore
 import { DelegatorReward } from '../../../shared/entities/delegator-reward.entity';
 import { EntityRepository, Repository } from 'typeorm';
 

@@ -1,21 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { DelegationRepository } from '../repositories/delegation.repository';
-
-import {
-  AkcLogger,
-  INDEXER_API,
-  LINK_API,
-  RequestContext,
-} from '../../../shared';
-import { DelegationParamsDto } from '../dtos/delegation-params.dto';
-
+import { AkcLogger, INDEXER_API, RequestContext } from '../../../shared';
 import * as util from 'util';
 import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
-import { DelegatorRewardRepository } from '../repositories/delegator-reward.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { DelegationOutput } from '../dtos/delegation-output.dto';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 import { ValidatorOutput } from '../dtos/validator-output.dto';
 import { ValidatorRepository } from '../repositories/validator.repository';
@@ -24,7 +13,6 @@ import { ValidatorInfoOutput } from '../dtos/validator-info-output.dto';
 
 @Injectable()
 export class ValidatorService {
-  cosmosScanAPI: string;
   api: string;
   private indexerUrl;
   private indexerChainId;
@@ -34,13 +22,10 @@ export class ValidatorService {
     private readonly logger: AkcLogger,
     private serviceUtil: ServiceUtil,
     private validatorRepository: ValidatorRepository,
-    private delegationRepository: DelegationRepository,
     private proposalVoteRepository: ProposalVoteRepository,
-    private delegatorRewardRepository: DelegatorRewardRepository,
   ) {
     this.logger.setContext(ValidatorService.name);
     const appParams = appConfig.default();
-    this.cosmosScanAPI = appParams.cosmosScanAPI;
     this.api = appParams.node.api;
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
@@ -58,6 +43,7 @@ export class ValidatorService {
   async getValidators(
     ctx: RequestContext,
   ): Promise<{ validators: LiteValidatorOutput[] }> {
+    //FIXME: migrate INDEXER_API.GET_PROPOSAL to horoscope_v2.
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
     const [activeValidator, inActiveValidator, proposal] = await Promise.all([
       this.validatorRepository.getAllActiveValidators(),
@@ -152,59 +138,45 @@ export class ValidatorService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
-    const requestUrl = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_VALIDATOR_BY_ADDRESS,
-      this.indexerChainId,
-      address,
-    )}`;
-
-    const [validator, validatorResponse] = await Promise.all([
-      this.validatorRepository.getRankByAddress(address),
-      this.serviceUtil.getDataAPI(requestUrl, '', ctx),
-    ]);
+    const validator = await this.validatorRepository.getRankByAddress(address);
 
     let validatorOutput = new ValidatorOutput();
     if (validator) {
       validatorOutput = plainToClass(ValidatorOutput, validator, {
         excludeExtraneousValues: true,
       });
-
-      validatorOutput.bonded_height = 1;
-      const validators = validatorResponse?.data?.validators || [];
-      if (validators?.length > 0) {
-        validatorOutput.bonded_height =
-          Number(validators[0].val_signing_info?.start_height) || 1;
-      }
     }
 
     return validatorOutput;
   }
 
-  async getDelegationByAddress(
-    ctx: RequestContext,
-    validatorAddress,
-    query: DelegationParamsDto,
-  ): Promise<{ delegations: DelegationOutput[]; count: number }> {
-    this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
+  // TODO: will be deleted in the future because fe not use this anymore.
+  // async getDelegationByAddress(
+  //   ctx: RequestContext,
+  //   validatorAddress,
+  //   query: DelegationParamsDto,
+  // ): Promise<{ delegations: DelegationOutput[]; count: number }> {
+  //   this.logger.log(ctx, `${this.getValidatorByAddress.name} was called!`);
 
-    const [delegations, count] = await this.delegationRepository.findAndCount({
-      where: { validator_address: validatorAddress },
-      order: { amount: 'DESC' },
-      take: query.limit,
-      skip: query.offset,
-    });
+  //   const [delegations, count] = await this.delegationRepository.findAndCount({
+  //     where: { validator_address: validatorAddress },
+  //     order: { amount: 'DESC' },
+  //     take: query.limit,
+  //     skip: query.offset,
+  //   });
 
-    const delegationsOutput = plainToClass(DelegationOutput, delegations, {
-      excludeExtraneousValues: true,
-    });
+  //   const delegationsOutput = plainToClass(DelegationOutput, delegations, {
+  //     excludeExtraneousValues: true,
+  //   });
 
-    return { delegations: delegationsOutput, count };
-  }
+  //   return { delegations: delegationsOutput, count };
+  // }
 
   async getDelegations(
     ctx: RequestContext,
     delegatorAddress: string,
   ): Promise<any> {
+    //FIXME: migrate INDEXER_API.ACCOUNT_DELEGATIONS to horoscope_v2.
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
     const accountData = await this.serviceUtil.getDataAPI(
@@ -222,10 +194,6 @@ export class ValidatorService {
     }
 
     const data = accountData.data;
-    result.available_balance = 0;
-    if (data?.account_balances && data.account_balances.length > 0) {
-      result.available_balance = Number(data.account_balances[0].amount);
-    }
     result.claim_reward = 0;
 
     // Call indexer get data delegations
@@ -239,7 +207,6 @@ export class ValidatorService {
 
     const delegations: any = [];
     const validatorAddress: string[] = [];
-    const delegatorAddr: string[] = [];
     if (data?.account_delegations) {
       const delegationsData = data.account_delegations;
       for (let i = 0; i < delegationsData?.length; i++) {
@@ -260,15 +227,14 @@ export class ValidatorService {
         }
 
         delegation.delegator_address = delegatorAddress;
-        delegation.validator_address = item.delegation.validator_address;
         delegations.push(delegation);
         validatorAddress.push(item.delegation.validator_address);
-        delegatorAddr.push(delegatorAddress);
       }
     }
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
+      //TODO: will be deleted in the future because we don't this use anymore.
       // const delegatorRewards =
       //   await this.delegatorRewardRepository.getRewardByAddress(
       //     delegatorAddr,
@@ -283,9 +249,6 @@ export class ValidatorService {
         );
         if (rank) {
           item.validator_name = rank.title;
-          item.validator_rank = rank.rank;
-          item.validator_identity = rank.identity;
-          item.jailed = rank.jailed;
         }
 
         // TODO: Set temp data total reward = 0
@@ -305,29 +268,30 @@ export class ValidatorService {
     return result;
   }
 
-  async getDelegationsByDelegatorAddress(
-    ctx: RequestContext,
-    delegatorAddress: string,
-  ): Promise<any> {
-    this.logger.log(
-      ctx,
-      `${this.getDelegationsByDelegatorAddress.name} was called!`,
-    );
-    //get delegation first
-    let result: any = {};
-    result = await this.delegationRepository.findOne({
-      where: { delegator_address: delegatorAddress },
-      order: { created_at: 'ASC' },
-    });
-    const sumAmount = await this.delegationRepository.getSumAmountByAddress(
-      delegatorAddress,
-    );
-    if (sumAmount && Number(sumAmount.sum) <= 0) {
-      result = {};
-    }
+  // TODO: will be deleted in future because fe not use this anymore.
+  // async getDelegationsByDelegatorAddress(
+  //   ctx: RequestContext,
+  //   delegatorAddress: string,
+  // ): Promise<any> {
+  //   this.logger.log(
+  //     ctx,
+  //     `${this.getDelegationsByDelegatorAddress.name} was called!`,
+  //   );
+  //   //get delegation first
+  //   let result: any = {};
+  //   result = await this.delegationRepository.findOne({
+  //     where: { delegator_address: delegatorAddress },
+  //     order: { created_at: 'ASC' },
+  //   });
+  //   const sumAmount = await this.delegationRepository.getSumAmountByAddress(
+  //     delegatorAddress,
+  //   );
+  //   if (sumAmount && Number(sumAmount.sum) <= 0) {
+  //     result = {};
+  //   }
 
-    return { result: result };
-  }
+  //   return { result: result };
+  // }
 
   /**
    * Get validator info by address
@@ -337,7 +301,7 @@ export class ValidatorService {
     ctx: RequestContext,
     address: string[],
   ): Promise<ValidatorInfoOutput[]> {
-    let validatorOuput = [];
+    let validatorOutput = [];
     try {
       const isArray = Array.isArray(address);
       const result = await this.validatorRepository.find({
@@ -346,13 +310,13 @@ export class ValidatorService {
         },
       });
       if (result) {
-        validatorOuput = plainToClass(ValidatorInfoOutput, result, {
+        validatorOutput = plainToClass(ValidatorInfoOutput, result, {
           excludeExtraneousValues: true,
         });
       }
     } catch (err) {
       this.logger.error(ctx, err.stack);
     }
-    return validatorOuput;
+    return validatorOutput;
   }
 }
