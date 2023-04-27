@@ -9,6 +9,10 @@ import { SmartContractRepository } from '../contract/repositories/smart-contract
 import { SoulboundTokenController } from './controllers/soulbound-token.controller';
 import { SoulboundTokenRepository } from './repositories/soulbound-token.repository';
 import { SoulboundTokenService } from './services/soulbound-token.service';
+import { RedisUtil } from '../../shared/utils/redis.util';
+import { SoulboundWhiteListRepository } from './repositories/soulbound-white-list.repository';
+import { SoulboundRejectList } from '../../shared/entities/soulbound-reject-list.entity';
+import { SoulboundRejectListRepository } from './repositories/soulbound-reject-list.repository';
 
 @Module({
   imports: [
@@ -16,11 +20,14 @@ import { SoulboundTokenService } from './services/soulbound-token.service';
     TypeOrmModule.forFeature([
       SmartContractRepository,
       SoulboundTokenRepository,
+      SoulboundWhiteListRepository,
+      SoulboundRejectListRepository,
+      SoulboundRejectList,
     ]),
     ConfigModule,
     HttpModule,
   ],
-  providers: [SoulboundTokenService, ServiceUtil, ContractUtil],
+  providers: [SoulboundTokenService, ServiceUtil, ContractUtil, RedisUtil],
   controllers: [SoulboundTokenController],
   exports: [SoulboundTokenService],
 })

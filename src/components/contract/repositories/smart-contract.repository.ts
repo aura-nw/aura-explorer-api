@@ -156,6 +156,20 @@ export class SmartContractRepository extends Repository<SmartContract> {
       .getRawMany();
   }
 
+  async getContractCW4973(minterAddress: string) {
+    return await this.createQueryBuilder('sc')
+      .select(`sc.contract_address AS contract_address, sc.code_id AS code_id`)
+      .innerJoin(SmartContractCode, 'scc', 'scc.code_id=sc.code_id')
+      .where('sc.minter_address = :contract_address', {
+        contract_address: minterAddress,
+      })
+      .andWhere('scc.type = :type', {
+        type: CONTRACT_TYPE.CW4973,
+      })
+      .andWhere(`scc.result = '${CONTRACT_CODE_RESULT.CORRECT}'`)
+      .getRawMany();
+  }
+
   async getTokensByListContractAddress(listContractAddress: Array<any>) {
     return await this.createQueryBuilder('sc')
       .select(
@@ -175,19 +189,18 @@ export class SmartContractRepository extends Repository<SmartContract> {
       sc.contract_address,
       sc.num_tokens,
       sc.total_tx,
-      IFNULL(tx_24h.no, 0) AS transfers_24h,
-      IFNULL(tx_3d.no, 0) AS transfers_3d,
+      IFNULL(tx_24h_ta.no, 0) + IFNULL(tx_24h_ca.no, 0) AS transfers_24h,
       uptime.timestamp AS upTime
     `;
 
-    const _createSubQuery = (intervalTime: string) => {
+    const _createSubQuery = (intervalTime: string, targetColumn: string) => {
       return (qb: SelectQueryBuilder<Transaction>) => {
         const builder = qb
           .from(Transaction, 'st')
-          .select('st.contract_address, COUNT(*) AS no')
+          .select(`st.${targetColumn}, COUNT(*) AS no`)
           .where({ type: SYNC_CONTRACT_TRANSACTION_TYPE.EXECUTE })
           .andWhere(`st.timestamp > NOW() - INTERVAL ${intervalTime}`)
-          .groupBy('st.contract_address');
+          .groupBy(`st.${targetColumn}`);
         return builder;
       };
     };
@@ -200,14 +213,14 @@ export class SmartContractRepository extends Repository<SmartContract> {
         `sc.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW721}'`,
       )
       .leftJoin(
-        _createSubQuery('24 HOUR'),
-        'tx_24h',
-        'tx_24h.contract_address = sc.contract_address',
+        _createSubQuery('24 HOUR', 'to_address'),
+        'tx_24h_ta',
+        'tx_24h_ta.to_address = sc.contract_address',
       )
       .leftJoin(
-        _createSubQuery('72 HOUR'),
-        'tx_3d',
-        'tx_3d.contract_address = sc.contract_address',
+        _createSubQuery('24 HOUR', 'contract_address'),
+        'tx_24h_ca',
+        'tx_24h_ca.contract_address = sc.contract_address',
       )
       .leftJoin(
         (qb: SelectQueryBuilder<Transaction>) => {

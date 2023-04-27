@@ -226,6 +226,11 @@ export const ERROR_MAP = {
     Code: 'E016',
     Message: `Contract has been verified or verifying`,
   },
+
+  REJECT_ABT_TOKEN: {
+    Code: 'E017',
+    Message: `This receiver has rejected all Account Bound Tokens from you`,
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -238,6 +243,7 @@ export enum SOULBOUND_TOKEN_STATUS {
   EQUIPPED = 'Equipped',
   UNEQUIPPED = 'Unequipped',
   PENDING = 'Pending',
+  REJECTED = 'Rejected',
 }
 
 export const SOULBOUND_PICKED_TOKEN = {
