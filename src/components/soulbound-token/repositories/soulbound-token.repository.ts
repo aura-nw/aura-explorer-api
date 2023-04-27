@@ -170,8 +170,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     ) => {
       const tokens = await builder
         .limit(limit)
-        .orderBy('sbt.picked', 'DESC')
-        .addOrderBy('sbt.created_at', 'ASC')
+        .orderBy('sbt.updated_at', 'ASC')
         .getRawMany();
 
       const count = await builder.getCount();
