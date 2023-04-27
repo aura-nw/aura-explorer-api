@@ -40,4 +40,7 @@ export class TokenByReceiverAddressOutput {
 
   @Expose()
   pub_key: string;
+
+  @Expose()
+  is_notify: boolean;
 }

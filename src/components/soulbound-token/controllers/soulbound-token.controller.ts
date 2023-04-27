@@ -19,6 +19,7 @@ import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
 import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
+import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 
 @Controller('soulbound-token')
 @ApiTags('soulbound-token')
@@ -183,5 +184,79 @@ export class SoulboundTokenController {
       `============== ${this.pickedNft.name} was called! ==============`,
     );
     return await this.soulboundTokenService.pickedNft(ctx, req);
+  }
+
+  @Get('white-list')
+  @ApiOperation({ summary: 'Get white list account of Soulbound' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async getWhiteListAccount(@ReqContext() ctx: RequestContext) {
+    this.logger.log(
+      ctx,
+      `============== ${this.getWhiteListAccount.name} was called! ==============`,
+    );
+    const data = await this.soulboundTokenService.getSoulboundWhiteList(ctx);
+
+    return { data: data };
+  }
+
+  @Put('update-notify')
+  @ApiOperation({ summary: 'Update notify soulbound contract' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async updateNotify(
+    @ReqContext() ctx: RequestContext,
+    @Body() req: TokenUpdatedParasDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.updateNotify.name} was called! ==============`,
+    );
+    return await this.soulboundTokenService.updateNotify(ctx, req);
+  }
+
+  @Get('notify/:receiverAddress')
+  async getNotifyByReceiverAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('receiverAddress') receiverAddress: string,
+  ) {
+    this.logger.log(ctx, `${this.getNotifyByReceiverAddress.name} was called!`);
+    const token = await this.soulboundTokenService.getNotifyByReceiverAddress(
+      ctx,
+      receiverAddress,
+    );
+
+    return { data: token };
+  }
+
+  @Put('reject-token')
+  @ApiOperation({ summary: 'Reject soulbound token' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async rejectToken(
+    @ReqContext() ctx: RequestContext,
+    @Body() req: TokenUpdatedParasDto,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.rejectToken.name} was called! ==============`,
+    );
+    return await this.soulboundTokenService.rejectToken(ctx, req);
+  }
+
+  @Get('check-reject/:receiverAddress/:minterAddress')
+  @ApiOperation({ summary: 'Check reject soulbound token' })
+  @ApiResponse({ status: HttpStatus.OK, schema: {} })
+  async checkRejectToken(
+    @ReqContext() ctx: RequestContext,
+    @Param('receiverAddress') receiverAddress: string,
+    @Param('minterAddress') minterAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.checkRejectToken.name} was called! ==============`,
+    );
+    return await this.soulboundTokenService.checkRejectToken(
+      ctx,
+      receiverAddress,
+      minterAddress,
+    );
   }
 }
