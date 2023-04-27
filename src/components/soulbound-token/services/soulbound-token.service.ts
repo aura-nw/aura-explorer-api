@@ -670,11 +670,9 @@ export class SoulboundTokenService {
         )
         .then(async (config) => {
           if (address === entity.receiver_address) {
-            entity.picked = req.picked;
-            const result = await this.soulboundTokenRepos.update(
-              entity.id,
-              entity,
-            );
+            const result = await this.soulboundTokenRepos.update(entity.id, {
+              picked: req.picked,
+            });
             return { data: result, meta: {} };
           }
         })
