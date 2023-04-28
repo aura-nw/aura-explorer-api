@@ -527,8 +527,8 @@ export class ContractService {
   }
 
   private transform(value: string): string {
-    if (!value.includes('https://ipfs.io/')) {
-      return 'https://ipfs.io/' + value.replace('://', '/');
+    if (!value.includes(this.configService.get('IPFS_URL'))) {
+      return this.configService.get('IPFS_URL') + value.replace('://', '/');
     } else {
       return value;
     }

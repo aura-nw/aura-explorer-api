@@ -21,7 +21,7 @@ import { TokenOutputDto } from '../dtos/token-output.dto';
 import { TokenParasDto } from '../dtos/token-paras.dto';
 import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-params.dto';
 import { SoulboundTokenRepository } from '../repositories/soulbound-token.repository';
-
+import { ConfigService } from '@nestjs/config';
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { HttpService } from '@nestjs/axios';
 import console from 'console';
@@ -59,6 +59,7 @@ export class SoulboundTokenService {
     private serviceUtil: ServiceUtil,
     private httpService: HttpService,
     private redisUtil: RedisUtil,
+    private configService: ConfigService,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
@@ -758,8 +759,8 @@ export class SoulboundTokenService {
   }
 
   private transform(value: string): string {
-    if (!value.includes('https://ipfs.io/')) {
-      return 'https://ipfs.io/' + value.replace('://', '/');
+    if (!value.includes(this.configService.get('IPFS_URL'))) {
+      return this.configService.get('IPFS_URL') + value.replace('://', '/');
     } else {
       return value;
     }
