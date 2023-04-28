@@ -43,6 +43,11 @@ export default () => ({
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID,
   },
+  indexerV2: {
+    graphQL: `${process.env.INDEXER_V2_URL}v1/graphql`,
+    chainDB: process.env.INDEXER_V2_DB,
+    secret: process.env.INDEXER_V2_SECRET,
+  },
   chainInfo: {
     coinDenom: process.env.COIN_DENOM,
     coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,
