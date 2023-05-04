@@ -119,6 +119,29 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 4. NodeJS
 
     #### Download: https://nodejs.org/en/download/
+    
+5. Redis
+   
+   #### Download: https://redis.io/download/
+
+5. Redis
+
+   #### Download: https://redis.io/download/
+
+## Configuration
+
+  #### Create a `.env` from `.env.example`:
+  ```
+      cp .env.example .env
+  ```
+
+## NPM scripts
+
+1. ```npm run build```: Creates a build directory.
+2. ```npm run start```: Start production mode.
+3. ```npm run lint```: Run ESLint.
+4. ```npm run test```: Run tests & generate coverage report.
+5. ```npm run migration:generate```: Create generate migration file.
 
 5. Redis
 
