@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import {
-  AkcLogger,
-  INDEXER_API,
-  INDEXER_API_V2,
-  RequestContext,
-} from '../../../shared';
+import { AkcLogger, INDEXER_API, RequestContext } from '../../../shared';
 import * as util from 'util';
 import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
 import * as appConfig from '../../../shared/configs/configuration';
@@ -22,7 +17,6 @@ export class ValidatorService {
   private indexerUrl;
   private indexerChainId;
   private coinMinimalDenom: string;
-  private indexerChainDB;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -36,7 +30,6 @@ export class ValidatorService {
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
     this.coinMinimalDenom = appParams.chainInfo.coinMinimalDenom;
-    this.indexerChainDB = appParams.indexerV2.chainDB;
   }
 
   async getTotalValidator(): Promise<number> {
@@ -51,24 +44,25 @@ export class ValidatorService {
     ctx: RequestContext,
   ): Promise<{ validators: LiteValidatorOutput[] }> {
     this.logger.log(ctx, `${this.getValidators.name} was called!`);
-    const proposalCountQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.PROPOSAL_COUNT,
-        this.indexerChainDB,
-      ),
-    };
     const [activeValidator, inActiveValidator, proposal] = await Promise.all([
       this.validatorRepository.getAllActiveValidators(),
       this.validatorRepository.getAllInActiveValidators(),
-      this.serviceUtil.fetchDataFromGraphQL(proposalCountQuery),
+      this.serviceUtil.getDataAPI(
+        `${this.indexerUrl}${util.format(
+          INDEXER_API.GET_PROPOSAL,
+          this.indexerChainId,
+          1,
+          0,
+        )}`,
+        '',
+        ctx,
+      ),
     ]);
 
     const validatorsRes = [...activeValidator, ...inActiveValidator];
 
     // Get total proposal on indexer
-    const proposalCount =
-      proposal?.data[this.indexerChainDB]?.proposal_aggregate?.aggregate
-        ?.count || 0;
+    const proposalCount = proposal?.data?.count || 0;
 
     const validatorsOutput = plainToClass(LiteValidatorOutput, validatorsRes, {
       excludeExtraneousValues: true,
