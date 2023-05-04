@@ -1,3 +1,4 @@
+//FIXME: delete this file because we don't use it anymore
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
