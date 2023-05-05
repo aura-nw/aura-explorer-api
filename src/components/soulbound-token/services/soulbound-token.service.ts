@@ -176,59 +176,6 @@ export class SoulboundTokenService {
   }
 
   /**
-   * Get list tokens by minter address and contract address
-   * @param ctx
-   * @param req
-   * @returns
-   */
-  async getTokensDetail(ctx: RequestContext, tokenId: string) {
-    this.logger.log(
-      ctx,
-      `============== ${this.getTokens.name} was called with paras: tokenId=${tokenId}! ==============`,
-    );
-    const token = await this.soulboundTokenRepos.findOne({
-      where: { token_id: tokenId },
-    });
-
-    const addresses = token?.contract_address || '';
-
-    const contract = await this.smartContractRepos.findOne({
-      where: { contract_address: addresses },
-    });
-
-    const ipfs = await this.serviceUtil.getDataAPI(
-      this.transform(token?.token_uri),
-      '',
-      ctx,
-    );
-
-    if (!ipfs) {
-      return {
-        code: ERROR_MAP.TOKEN_URI_INVALID.Code,
-        message: ERROR_MAP.TOKEN_URI_INVALID.Message,
-      };
-    }
-
-    return {
-      id: token?.id || '',
-      contract_address: addresses,
-      token_id: token?.token_id || '',
-      token_uri: token?.token_uri || '',
-      token_name: contract?.token_name || '',
-      img_type: token?.img_type || '',
-      receiver_address: token?.receiver_address || '',
-      status: token?.status || '',
-      picked: token?.picked || '',
-      signature: token?.signature || '',
-      pub_key: token?.pub_key || '',
-      minter_address: contract?.minter_address || '',
-      description: contract?.description || '',
-      type: CONTRACT_TYPE.CW4973,
-      ipfs,
-    };
-  }
-
-  /**
    * Get list tokens by receiver address
    * @param ctx
    * @param receiverAddress
@@ -336,7 +283,7 @@ export class SoulboundTokenService {
 
       const ipfs = await lastValueFrom(
         this.httpService
-          .get(this.transform(req.token_uri))
+          .get(this.contractUtil.transform(req.token_uri))
           .pipe(timeout(8000), retry(5)),
       )
         .then((rs) => rs.data)
@@ -356,7 +303,7 @@ export class SoulboundTokenService {
       if (imgUrl) {
         contentType = await lastValueFrom(
           this.httpService
-            .get(this.transform(imgUrl))
+            .get(this.contractUtil.transform(imgUrl))
             .pipe(timeout(18000), retry(5)),
         )
           .then((rs) => rs?.headers['content-type'])
@@ -380,6 +327,7 @@ export class SoulboundTokenService {
       entity.pub_key = req.pubKey;
       entity.token_img = ipfs.image;
       entity.token_name = ipfs.name;
+      entity.ipfs = JSON.stringify(ipfs);
       entity.img_type = contentType;
       entity.is_notify = true;
       entity.animation_url = ipfs.animation_url;
@@ -756,13 +704,5 @@ export class SoulboundTokenService {
       sequence: '0',
     };
     return JSON.stringify(doc);
-  }
-
-  private transform(value: string): string {
-    if (!value.includes('https://ipfs.io/')) {
-      return this.configService.get('IPFS_URL') + value.replace('://', '/');
-    } else {
-      return value.replace('https://ipfs.io/', this.configService.get('IPFS_URL'));
-    }
   }
 }

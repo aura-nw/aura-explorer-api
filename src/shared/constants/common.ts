@@ -267,3 +267,5 @@ export enum VERIFY_CODE_RESULT {
   SUCCESS = 'Success',
   PENDING = 'Pending',
 }
+
+export const DEFAULT_IPFS = 'https://ipfs.io/';
