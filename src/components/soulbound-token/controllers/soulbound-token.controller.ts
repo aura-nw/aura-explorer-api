@@ -87,24 +87,6 @@ export class SoulboundTokenController {
     return { data, meta: { count } };
   }
 
-  @Get('tokens-detail/:tokenId')
-  @ApiOperation({
-    summary: 'Get tokens details by tokenId',
-  })
-  @ApiResponse({ status: HttpStatus.OK, schema: {} })
-  async getTokensDetail(@ReqContext() ctx, @Param('tokenId') tokenId: string) {
-    this.logger.log(
-      ctx,
-      `============== ${
-        this.getTokens.name
-      } was called with paras: tokenId=${JSON.stringify(
-        tokenId,
-      )}! ==============`,
-    );
-    const data = await this.soulboundTokenService.getTokensDetail(ctx, tokenId);
-    return data;
-  }
-
   @Get('tokens-receiver-address')
   @ApiOperation({
     summary: 'Get list tokens by receiver address',

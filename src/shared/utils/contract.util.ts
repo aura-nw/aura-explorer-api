@@ -6,10 +6,15 @@ import {
 import { Secp256k1, Secp256k1Signature, sha256 } from '@cosmjs/crypto';
 import { fromBase64 } from '@cosmjs/encoding';
 import { Injectable } from '@nestjs/common';
-import { AURA_INFO } from '../constants';
+import { AURA_INFO, DEFAULT_IPFS } from '../constants';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ContractUtil {
+  private ipfs;
+  constructor(private configService: ConfigService) {
+    this.ipfs = this.configService.get('IPFS_URL');
+  }
   /**
    * Verify signatue of contract
    * @param signature
@@ -68,5 +73,13 @@ export class ContractUtil {
       memo: '',
     };
     return signDoc;
+  }
+
+  transform(value: string): string {
+    if (!value.includes(DEFAULT_IPFS)) {
+      return this.ipfs + value.replace('://', '/');
+    } else {
+      return value.replace(DEFAULT_IPFS, this.ipfs);
+    }
   }
 }

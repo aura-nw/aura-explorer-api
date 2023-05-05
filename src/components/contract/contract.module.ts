@@ -12,6 +12,7 @@ import { SmartContractCodeRepository } from '../contract-code/repositories/smart
 import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
 import { SoulboundTokenRepository } from '../soulbound-token/repositories/soulbound-token.repository';
 import { VerifyCodeStepRepository } from './repositories/verify-code-step.repository';
+import { ContractUtil } from '../../shared/utils/contract.util';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { VerifyCodeStepRepository } from './repositories/verify-code-step.reposi
     ConfigModule,
     HttpModule,
   ],
-  providers: [ContractService, ServiceUtil],
+  providers: [ContractService, ServiceUtil, ContractUtil],
   controllers: [ContractController],
   exports: [ContractService],
 })
