@@ -490,7 +490,7 @@ export class ContractService {
       return null;
     }
 
-    if (!token?.ipfs) {
+    if (!token?.ipfs || token?.ipfs === '{}') {
       // Get ipfs info
       const ipfs = await lastValueFrom(
         this.httpService
