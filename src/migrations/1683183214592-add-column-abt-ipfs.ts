@@ -11,7 +11,7 @@ export class addColumnAbtIpfs1683183214592 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `ALTER TABLE \`soulbound_token\` DROP COLUMN \`animation_url_s3\``,
+      `ALTER TABLE \`soulbound_token\` DROP COLUMN \`ipfs\``,
     );
   }
 }
