@@ -111,7 +111,6 @@ export class ValidatorController {
   //       validatorAddress,
   //       query,
   //     );
-
   //   return { data: delegations, meta: { count } };
   // }
 

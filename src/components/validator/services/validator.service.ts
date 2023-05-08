@@ -318,4 +318,31 @@ export class ValidatorService {
     }
     return validatorOutput;
   }
+
+  /**
+   * Get validator info by address
+   * @param address
+   */
+  async getValidatorInfo(
+    ctx: RequestContext,
+    address: string[],
+  ): Promise<ValidatorInfoOutput[]> {
+    let validatorOuput = [];
+    try {
+      const isArray = Array.isArray(address);
+      const result = await this.validatorRepository.find({
+        where: {
+          operator_address: isArray ? In(address) : address,
+        },
+      });
+      if (result) {
+        validatorOuput = plainToClass(ValidatorInfoOutput, result, {
+          excludeExtraneousValues: true,
+        });
+      }
+    } catch (err) {
+      this.logger.error(ctx, err.stack);
+    }
+    return validatorOuput;
+  }
 }
