@@ -17,8 +17,6 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
 } from '../../../shared';
-import { DelegationOutput } from '../dtos/delegation-output.dto';
-import { DelegationParamsDto } from '../dtos/delegation-params.dto';
 import { LiteValidatorOutput } from '../dtos/lite-validator-output.dto';
 
 import { ValidatorOutput } from '../dtos/validator-output.dto';
@@ -91,30 +89,31 @@ export class ValidatorController {
     return { data: validator, meta: {} };
   }
 
-  @Get(':validatorAddress/delegations')
-  @ApiOperation({ summary: 'Get delegation by validator address' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    type: SwaggerBaseApiResponse(DelegationOutput),
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getDelegationByAddress(
-    @ReqContext() ctx: RequestContext,
-    @Param('validatorAddress') validatorAddress: string,
-    @Query() query: DelegationParamsDto,
-  ): Promise<BaseApiResponse<DelegationOutput[]>> {
-    this.logger.log(ctx, `${this.getDelegationByAddress.name} was called!`);
+  // TODO: will be deleted in the future because fe doesn't use this anymore.
+  // @Get(':validatorAddress/delegations')
+  // @ApiOperation({ summary: 'Get delegation by validator address' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   type: SwaggerBaseApiResponse(DelegationOutput),
+  // })
+  // @UseInterceptors(ClassSerializerInterceptor)
+  // @UseInterceptors(CacheInterceptor)
+  // async getDelegationByAddress(
+  //   @ReqContext() ctx: RequestContext,
+  //   @Param('validatorAddress') validatorAddress: string,
+  //   @Query() query: DelegationParamsDto,
+  // ): Promise<BaseApiResponse<DelegationOutput[]>> {
+  //   this.logger.log(ctx, `${this.getDelegationByAddress.name} was called!`);
 
-    const { delegations, count } =
-      await this.validatorService.getDelegationByAddress(
-        ctx,
-        validatorAddress,
-        query,
-      );
+  //   const { delegations, count } =
+  //     await this.validatorService.getDelegationByAddress(
+  //       ctx,
+  //       validatorAddress,
+  //       query,
+  //     );
 
-    return { data: delegations, meta: { count } };
-  }
+  //   return { data: delegations, meta: { count } };
+  // }
 
   @Get('delegations/:delegatorAddress')
   @ApiOperation({
@@ -137,23 +136,24 @@ export class ValidatorController {
     return { data: result, meta: {} };
   }
 
-  @Get('delegations/delegator/:delegatorAddress')
-  @ApiOperation({
-    summary: 'Get delegations by address',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getDelegationsByDelegatorAddress(
-    @ReqContext() ctx: RequestContext,
-    @Param('delegatorAddress') delegatorAddress: string,
-  ): Promise<any> {
-    const result = await this.validatorService.getDelegationsByDelegatorAddress(
-      ctx,
-      delegatorAddress,
-    );
-    return { data: result, meta: {} };
-  }
+  // TODO: will be deleted in the future because the FE doesn't use this anymore.
+  // @Get('delegations/delegator/:delegatorAddress')
+  // @ApiOperation({
+  //   summary: 'Get delegations by address',
+  // })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  // })
+  // @UseInterceptors(ClassSerializerInterceptor)
+  // @UseInterceptors(CacheInterceptor)
+  // async getDelegationsByDelegatorAddress(
+  //   @ReqContext() ctx: RequestContext,
+  //   @Param('delegatorAddress') delegatorAddress: string,
+  // ): Promise<any> {
+  //   const result = await this.validatorService.getDelegationsByDelegatorAddress(
+  //     ctx,
+  //     delegatorAddress,
+  //   );
+  //   return { data: result, meta: {} };
+  // }
 }

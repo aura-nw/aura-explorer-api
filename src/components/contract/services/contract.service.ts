@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { bufferTime, lastValueFrom, retry, timeout } from 'rxjs';
+import { lastValueFrom, retry, timeout } from 'rxjs';
 import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
@@ -16,10 +16,7 @@ import {
   VERIFY_CODE_RESULT,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { ContractByCreatorOutputDto } from '../dtos/contract-by-creator-output.dto';
-import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
-import { ContractStatusOutputDto } from '../dtos/contract-status-output.dto';
 import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { SmartContractRepository } from '../repositories/smart-contract.repository';
 import { TagRepository } from '../repositories/tag.repository';
@@ -28,11 +25,11 @@ import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
-import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity';
 import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
+import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
   private api;
@@ -54,6 +51,7 @@ export class ContractService {
     private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
     private verifyCodeStepRepository: VerifyCodeStepRepository,
+    private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
@@ -492,16 +490,23 @@ export class ContractService {
       return null;
     }
 
-    // Get ipfs info
-    const ipfs = await lastValueFrom(
-      this.httpService
-        .get(this.transform(token?.token_uri))
-        .pipe(timeout(5000), retry(2)),
-    )
-      .then((rs) => rs.data)
-      .catch(() => {
-        return {};
+    if (!token?.ipfs || token?.ipfs === '{}') {
+      // Get ipfs info
+      const ipfs = await lastValueFrom(
+        this.httpService
+          .get(this.contractUtil.transform(token?.token_uri))
+          .pipe(timeout(5000), retry(2)),
+      )
+        .then((rs) => rs.data)
+        .catch(() => {
+          return {};
+        });
+
+      token.ipfs = JSON.stringify(ipfs);
+      await this.soulboundTokenRepository.update(token.id, {
+        ipfs: token.ipfs,
       });
+    }
 
     const nft = {
       id: token?.id || '',
@@ -521,16 +526,8 @@ export class ContractService {
       minter_address: smartContract?.minter_address || '',
       description: smartContract?.description || '',
       type: CONTRACT_TYPE.CW4973,
-      ipfs,
+      ipfs: JSON.parse(token?.ipfs) || '',
     };
     return nft;
-  }
-
-  private transform(value: string): string {
-    if (!value.includes('https://ipfs.io/')) {
-      return this.configService.get('IPFS_URL') + value.replace('://', '/');
-    } else {
-      return value.replace('https://ipfs.io/', this.configService.get('IPFS_URL'));
-    }
   }
 }

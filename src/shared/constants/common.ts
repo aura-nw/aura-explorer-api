@@ -139,6 +139,12 @@ export enum INDEXER_API {
   GET_VALIDATOR_BY_ADDRESS = 'api/v1/validator?chainid=%s&operatorAddress=%s&pageLimit=1&pageOffset=0',
 }
 
+export const INDEXER_API_V2 = {
+  GRAPH_QL: {
+    PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
+  },
+};
+
 export enum AURA_INFO {
   CONTRACT_ADDRESS = 'aura',
   COIN_ID = 'aura-network',
@@ -261,3 +267,5 @@ export enum VERIFY_CODE_RESULT {
   SUCCESS = 'Success',
   PENDING = 'Pending',
 }
+
+export const DEFAULT_IPFS = 'https://ipfs.io/';
