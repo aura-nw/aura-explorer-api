@@ -248,6 +248,7 @@ export class ValidatorService {
         );
         if (rank) {
           item.validator_name = rank.title;
+          item.jailed = rank.jailed;
         }
 
         // TODO: Set temp data total reward = 0
