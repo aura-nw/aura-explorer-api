@@ -178,26 +178,31 @@ export class ValidatorService {
     //FIXME: migrate INDEXER_API.ACCOUNT_DELEGATIONS to horoscope_v2.
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
-    const accountData = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(
-        INDEXER_API.ACCOUNT_DELEGATIONS,
-        delegatorAddress,
-        this.indexerChainId,
-      )}`,
-      '',
-      ctx,
-    );
 
-    if (!accountData?.data) {
-      return accountData;
+    const delegationsParam = `cosmos/staking/v1beta1/delegations/${delegatorAddress}`;
+    const delegateRewardParam = `cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`;
+
+    const [delegationsResponse, delegateRewardResponse] = await Promise.all([
+      this.serviceUtil.getDataAPI(this.api, delegationsParam, ctx),
+      this.serviceUtil.getDataAPI(this.api, delegateRewardParam, ctx),
+    ]);
+
+    const accountDelegations = [...delegationsResponse.delegation_responses];
+    let nextKey = delegationsResponse?.pagination?.next_key;
+    while (!!nextKey) {
+      const delegationsParam = `cosmos/staking/v1beta1/delegations/${delegatorAddress}?pagination.key=${nextKey}`;
+      const delegationsResponse = await this.serviceUtil.getDataAPI(
+        this.api,
+        delegationsParam,
+        ctx,
+      );
+      nextKey = delegationsResponse?.pagination?.next_key;
+      accountDelegations.push(...delegationsResponse.delegation_responses);
     }
-
-    const data = accountData.data;
     result.claim_reward = 0;
 
-    // Call indexer get data delegations
-    const rewards = accountData?.data.account_delegate_rewards?.rewards;
-    const totalReward = accountData?.data.account_delegate_rewards?.total?.find(
+    const rewards = delegateRewardResponse?.rewards;
+    const totalReward = delegateRewardResponse?.total?.find(
       (item) => item.denom === this.coinMinimalDenom,
     );
     if (totalReward) {
@@ -206,8 +211,8 @@ export class ValidatorService {
 
     const delegations: any = [];
     const validatorAddress: string[] = [];
-    if (data?.account_delegations) {
-      const delegationsData = data.account_delegations;
+    if (accountDelegations.length > 0) {
+      const delegationsData = accountDelegations;
       for (let i = 0; i < delegationsData?.length; i++) {
         const delegation: any = {};
         const item = delegationsData[i];
