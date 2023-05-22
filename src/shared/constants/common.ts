@@ -126,7 +126,6 @@ export enum CONTRACT_CODE_RESULT {
 
 export enum INDEXER_API {
   STATUS = 'api/v1/network/status?chainid=%s',
-  ACCOUNT_INFO = 'api/v1/account-info?address=%s&chainId=%s',
   REGISTER_CODE_ID = 'api/v1/asset/index',
   ACCOUNT_DELEGATIONS = 'api/v1/account-info/delegations?address=%s&chainId=%s',
   GET_TOKENS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&countTotal=false',
