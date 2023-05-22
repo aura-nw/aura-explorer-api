@@ -45,7 +45,7 @@ export class AccountService {
     const accountOutput = new AccountOutput();
     accountOutput.acc_address = address;
 
-    //get list validator
+    // get account detail
     const accountAttributes = `type
     sequence
     spendable_balances
@@ -133,6 +133,7 @@ export class AccountService {
     let stakeReward = 0;
     const accountDelegations = [...delegationsResponse.delegation_responses];
     let nextKey = delegationsResponse?.pagination?.next_key;
+    // Get additional data if have nextKey
     while (!!nextKey) {
       const delegationsParam = `cosmos/staking/v1beta1/delegations/${address}?pagination.key=${nextKey}`;
       const delegationsResponse = await this.serviceUtil.getDataAPI(
@@ -203,7 +204,7 @@ export class AccountService {
     let unbondingAmount = 0;
     const unbondingDelegations = [...unbondingResponse.unbonding_responses];
     nextKey = unbondingResponse?.pagination?.next_key;
-
+    // Get additional data if have nextKey
     while (!!nextKey) {
       const unbondingParam = `cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations?pagination.key=${nextKey}`;
       const unbondingResponse = await this.serviceUtil.getDataAPI(
@@ -247,7 +248,7 @@ export class AccountService {
     // get redelegations
     const redelegations = [...redelegationsResponse.redelegation_responses];
     nextKey = redelegationsResponse?.pagination?.next_key;
-
+    // Get additional data if have nextKey
     while (!!nextKey) {
       const redelegationsParam = `cosmos/staking/v1beta1/delegators/${address}/redelegations?pagination.key=${nextKey}`;
       const redelegationsResponse = await this.serviceUtil.getDataAPI(

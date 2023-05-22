@@ -298,7 +298,7 @@ export class Cw20TokenService {
   async getIBCTokens(ctx: RequestContext, accountAddress: string) {
     this.logger.log(ctx, `${this.getIBCTokens.name} was called!`);
     const result = [];
-    //get list validator
+    // get account detail
     const accountAttributes = `type
       sequence
       spendable_balances
