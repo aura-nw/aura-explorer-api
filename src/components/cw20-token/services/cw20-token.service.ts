@@ -321,7 +321,8 @@ export class Cw20TokenService {
     const accountData = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
     ).data[this.chainDB]['account'];
-    const accountBalances = accountData[0]?.balances;
+    const accountBalances =
+      accountData?.length > 0 ? accountData[0]?.balances : [];
     const ibcBalances = accountBalances?.filter(
       (str) => str?.minimal_denom || str?.denom,
     );

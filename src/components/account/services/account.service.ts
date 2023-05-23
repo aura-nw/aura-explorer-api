@@ -47,13 +47,13 @@ export class AccountService {
 
     // get account detail
     const accountAttributes = `type
-    sequence
-    spendable_balances
-    pubkey
-    id
-    balances
-    account_number
-    address`;
+      sequence
+      spendable_balances
+      pubkey
+      id
+      balances
+      account_number
+      address`;
 
     const graphqlQuery = {
       query: util.format(

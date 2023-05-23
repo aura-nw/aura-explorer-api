@@ -175,7 +175,6 @@ export class ValidatorService {
     ctx: RequestContext,
     delegatorAddress: string,
   ): Promise<any> {
-    //FIXME: migrate INDEXER_API.ACCOUNT_DELEGATIONS to horoscope_v2.
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
 
@@ -211,30 +210,25 @@ export class ValidatorService {
 
     const delegations: any = [];
     const validatorAddress: string[] = [];
-    if (accountDelegations.length > 0) {
-      const delegationsData = accountDelegations;
-      for (let i = 0; i < delegationsData?.length; i++) {
-        const delegation: any = {};
-        const item = delegationsData[i];
-        delegation.amount_staked = Number(item.balance.amount);
-        delegation.validator_address = item.delegation.validator_address;
-        delegation.pending_reward = 0;
-
-        if (rewards?.length > 0) {
-          const findReward = rewards.find(
-            (i) => i.validator_address === item.delegation.validator_address,
-          );
-          if (findReward && findReward.reward.length > 0) {
-            //set reward for item
-            delegation.pending_reward = findReward.reward[0].amount;
-          }
+    accountDelegations?.forEach((item) => {
+      const delegation: any = {};
+      delegation.amount_staked = Number(item.balance.amount);
+      delegation.validator_address = item.delegation.validator_address;
+      delegation.pending_reward = 0;
+      if (rewards?.length > 0) {
+        const findReward = rewards.find(
+          (i) => i.validator_address === item.delegation.validator_address,
+        );
+        if (findReward && findReward.reward.length > 0) {
+          //set reward for item
+          delegation.pending_reward = findReward.reward[0].amount;
         }
-
-        delegation.delegator_address = delegatorAddress;
-        delegations.push(delegation);
-        validatorAddress.push(item.delegation.validator_address);
       }
-    }
+
+      delegation.delegator_address = delegatorAddress;
+      delegations.push(delegation);
+      validatorAddress.push(item.delegation.validator_address);
+    });
 
     if (delegations.length > 0) {
       const ranks = await this.validatorRepository.getRanks(validatorAddress);
