@@ -1,6 +1,18 @@
-import { ClassSerializerInterceptor, Controller, Get, HttpStatus, Param, UseInterceptors } from "@nestjs/common";
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AkcLogger, ReqContext, RequestContext, SwaggerBaseApiResponse } from "../../../shared";
+import {
+  AkcLogger,
+  ReqContext,
+  RequestContext,
+  SwaggerBaseApiResponse,
+} from '../../../shared';
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountService } from '../services/account.service';
 
@@ -17,18 +29,21 @@ export class AccountController {
   @Get(':address')
   @ApiOperation({ summary: 'Get account detail by address' })
   @ApiResponse({
-      status: HttpStatus.OK,
-      type: SwaggerBaseApiResponse(AccountOutput),
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(AccountOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
   async getAccountDetailByAddress(
-      @ReqContext() ctx: RequestContext,
-      @Param('address') address: string,
+    @ReqContext() ctx: RequestContext,
+    @Param('address') address: string,
   ): Promise<any> {
-      this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
+    this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
 
-      const account = await this.accountService.getAccountDetailByAddress(ctx, address);
+    const account = await this.accountService.getAccountDetailByAddress(
+      ctx,
+      address,
+    );
 
-      return { data: account, meta: {} };
+    return { data: account, meta: {} };
   }
 }
