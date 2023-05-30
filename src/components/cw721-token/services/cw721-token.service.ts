@@ -6,6 +6,7 @@ import {
   AURA_INFO,
   CONTRACT_TYPE,
   INDEXER_API,
+  INDEXER_API_V2,
   LENGTH,
   RequestContext,
   SEARCH_KEYWORD,
@@ -20,6 +21,7 @@ export class Cw721TokenService {
   private appParams;
   private indexerUrl;
   private indexerChainId;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -30,6 +32,7 @@ export class Cw721TokenService {
     this.appParams = appConfig.default();
     this.indexerUrl = this.appParams.indexer.url;
     this.indexerChainId = this.appParams.indexer.chainId;
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getCw721Tokens(
@@ -84,35 +87,65 @@ export class Cw721TokenService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
     let url: string = INDEXER_API.GET_NFTS_BY_OWNER;
-    const params = [
-      request.account_address,
-      this.indexerChainId,
-      CONTRACT_TYPE.CW721,
-      request.limit,
-    ];
+    // get account detail
+    const accountAttributes = `id
+      token_id
+      owner
+      media_info
+      cw721_contract {
+        smart_contract {
+          address
+        }
+      }
+      `;
+
+    let whereClause: any = {
+      owner: { _eq: request?.account_address },
+      burned: { _eq: false },
+    };
+
     if (request?.keyword) {
-      url += '&%s=%s';
       if (
         request.keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
         request.keyword.length === LENGTH.CONTRACT_ADDRESS
       ) {
-        params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS);
+        whereClause = {
+          ...whereClause,
+          cw721_contract: {
+            smart_contract: { address: { _eq: request.keyword } },
+          },
+        };
       } else {
-        params.push(SEARCH_KEYWORD.TOKEN_ID);
+        whereClause = {
+          ...whereClause,
+          token_id: { _eq: request.keyword },
+        };
       }
-      params.push(encodeURIComponent(request.keyword));
     }
+
     if (request?.next_key) {
-      url += '&%s=%s';
-      params.push(SEARCH_KEYWORD.NEXT_KEY);
-      params.push(request.next_key);
+      whereClause = {
+        ...whereClause,
+        id: { _gt: request.next_key },
+      };
     }
-    const result = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(url, ...params)}`,
-      '',
-      ctx,
-    );
-    const tokens = result.data.assets.CW721.asset;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        this.chainDB,
+        accountAttributes,
+      ),
+      variables: {
+        whereClause: whereClause,
+        limit: request?.limit,
+      },
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw721_token'];
+    
+    const tokens = response.data.assets.CW721.asset;
     const count = result.data.assets.CW721.count;
     const nextKey = result.data.nextKey;
     if (tokens.length > 0) {
