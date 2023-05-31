@@ -14,6 +14,7 @@ import { AkcLogger, ReqContext, RequestContext } from '../../../shared';
 import { Cw721TokenParamsDto } from '../dtos/cw721-token-params.dto';
 import { NftByOwnerParamsDto } from '../dtos/nft-by-owner-params.dto';
 import { Cw721TokenService } from '../services/cw721-token.service';
+import { NftByContractParamsDto } from '../dtos/nft-by-contract-params.dto';
 
 @ApiTags('cw721-tokens')
 @Controller('cw721-tokens')
@@ -77,6 +78,22 @@ export class Cw721TokenController {
     this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
     const { tokens, count, next_key } =
       await this.cw721TokenService.getNftsByOwner(ctx, request);
+
+    return { data: tokens, meta: { count, next_key } };
+  }
+
+  @Post('get-by-contract')
+  @ApiOperation({ summary: 'Get list nfts by contract' })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  async getNftsByContract(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: NftByContractParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getNftsByContract.name} was called!`);
+    const { tokens, count, next_key } =
+      await this.cw721TokenService.getNftsByContract(ctx, request);
 
     return { data: tokens, meta: { count, next_key } };
   }
