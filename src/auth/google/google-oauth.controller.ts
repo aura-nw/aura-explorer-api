@@ -1,15 +1,8 @@
-import {
-  Controller,
-  Get,
-  HttpStatus,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { Response } from 'express';
+import { Controller, Get, HttpStatus, Req, UseGuards } from '@nestjs/common';
 import { GoogleOauthGuard } from './google-oauth.guard';
 import { JwtAuthService } from '../jwt/jwt-auth.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Tokens } from '../jwt/jwt-auth.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,11 +18,9 @@ export class GoogleOauthController {
 
   @Get('google/redirect')
   @UseGuards(GoogleOauthGuard)
-  async googleAuthRedirect(@Req() req, @Res() res: Response): Promise<any> {
-    const { accessToken, refreshToken } = await this.jwtAuthService.login(
-      req.user,
-    );
+  async googleAuthRedirect(@Req() req): Promise<Tokens> {
+    const tokens = await this.jwtAuthService.login(req.user);
 
-    res.send({ accessToken, refreshToken });
+    return tokens;
   }
 }
