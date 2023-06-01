@@ -1,16 +1,17 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
+import { DeepPartial, FindOneOptions } from 'typeorm';
 
 import { User } from '../../shared/entities/user.entity';
 import { MESSAGES, USER_ROLE } from 'src/shared';
 import { CreateUserDto } from './dtos/create-user.dto';
+import { UserRepository } from './repositories/user.repository';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private usersRepository: UserRepository,
   ) {}
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
