@@ -4,7 +4,9 @@ import { User } from '../../shared/entities/user.entity';
 import { JwtPayload } from './jwt-auth.strategy';
 import * as appConfig from '../../shared/configs/configuration';
 import { UserService } from 'src/components/user/user.service';
-type Tokens = { accessToken: string; refreshToken: string };
+
+export type Tokens = { accessToken: string; refreshToken: string };
+
 @Injectable()
 export class JwtAuthService {
   private appParams;
