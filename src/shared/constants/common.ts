@@ -269,3 +269,19 @@ export enum VERIFY_CODE_RESULT {
 }
 
 export const DEFAULT_IPFS = 'https://ipfs.io/';
+
+export enum USER_ROLE {
+  USER = 'user',
+  ADMIN = 'admin',
+  BANNED = 'banned',
+}
+
+export enum PROVIDER {
+  FACEBOOK = 'facebook',
+  GOOGLE = 'google',
+}
+
+export enum NAME_TAG_TYPE {
+  ACCOUNT = 'account',
+  CONTRACT = 'contract',
+}
