@@ -1,6 +1,6 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/components/user/user.service';
 import { ConfigService } from '@nestjs/config';
 
@@ -22,9 +22,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy) {
   async validate(payload: JwtPayload) {
     const user = await this.userService.findOne({ where: { id: payload.sub } });
 
-    if (!user) {
-      throw new UnauthorizedException('You have not permission!');
-    }
+    this.userService.checkRole(user);
 
     return { id: payload.sub, email: payload.email };
   }

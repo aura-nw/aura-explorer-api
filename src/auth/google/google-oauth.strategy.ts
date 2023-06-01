@@ -1,9 +1,9 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-google-oauth20';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/components/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { PROVIDER, MESSAGES, USER_ROLE } from 'src/shared/constants/common';
+import { PROVIDER, USER_ROLE } from 'src/shared/constants/common';
 
 @Injectable()
 export class GoogleOauthStrategy extends PassportStrategy(
@@ -29,7 +29,7 @@ export class GoogleOauthStrategy extends PassportStrategy(
   ): Promise<any> {
     const { emails, name } = profile;
     const googleEmail = emails[0].value;
-    const adminInitEmail = this.configService.get<string>('adminInitEmail');
+    const adminInitEmail = this.configService.get('adminInitEmail');
 
     let user = await this.userService.findOne({
       where: { provider: PROVIDER.GOOGLE, email: googleEmail },
@@ -40,14 +40,12 @@ export class GoogleOauthStrategy extends PassportStrategy(
       user = await this.userService.create({
         email: googleEmail,
         provider: PROVIDER.GOOGLE,
-        username: name.givenName,
+        name: name.givenName,
         role: USER_ROLE.ADMIN,
       });
     }
 
-    if (!user) {
-      throw new UnauthorizedException(MESSAGES.ERROR.NOT_PERMISSION);
-    }
+    this.userService.checkRole(user);
 
     return user;
   }

@@ -289,5 +289,6 @@ export enum NAME_TAG_TYPE {
 export const MESSAGES = {
   ERROR: {
     NOT_PERMISSION: 'You have not permission!',
+    BANNED: 'You have been banned',
   },
 };
