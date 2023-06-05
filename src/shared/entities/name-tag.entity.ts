@@ -15,7 +15,7 @@ export class NameTag extends BaseEntityIncrementId {
   @Column()
   address: string;
 
-  @Column({ nullable: true })
+  @Column()
   updated_by: number;
 
   @Column({ type: 'timestamp', nullable: true })
