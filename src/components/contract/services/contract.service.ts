@@ -13,6 +13,7 @@ import {
   ERROR_MAP,
   INDEXER_API,
   INDEXER_API_V2,
+  LENGTH,
   RequestContext,
   VERIFY_CODE_RESULT,
 } from '../../../shared';
@@ -75,8 +76,6 @@ export class ContractService {
     request: ContractCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
-    const [contracts, count] =
-      await this.smartContractCodeRepository.getContractsCodeId(request);
 
     // get account detail
     const codeAttributes = `code_id
@@ -95,18 +94,39 @@ export class ContractService {
         address
       }`;
 
+    let where = {};
+    if (request?.keyword) {
+      const keyword = request.keyword.toLowerCase();
+      const byCodeId = Number(keyword) && Number(keyword) > 0;
+      if (byCodeId) {
+        where = { code_id: { _eq: keyword } };
+      } else if (keyword.length === LENGTH.CONTRACT_ADDRESS) {
+        where = { smart_contracts: { address: { _eq: keyword } } };
+      } else {
+        where = { creator: { _eq: keyword } };
+      }
+    }
+
     const graphqlQuery = {
       query: util.format(
-        INDEXER_API_V2.GRAPH_QL.ACCOUNT,
+        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE,
         this.chainDB,
         codeAttributes,
       ),
       variables: {
-        address: address,
+        where: where,
+        limit: request.limit,
+        offset: request.offset,
       },
     };
 
-    return { contracts, count };
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+
+    return {
+      contracts: response?.code,
+      count: response?.code_aggregate.aggregate.count,
+    };
   }
 
   async getContractsCodeIdDetail(
