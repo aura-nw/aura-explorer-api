@@ -9,6 +9,7 @@ import {
   AkcLogger,
   AURA_INFO,
   INDEXER_API,
+  INDEXER_API_V2,
   LENGTH,
   RequestContext,
   TokenMarkets,
@@ -30,6 +31,7 @@ export class Cw20TokenService {
   private decimals;
   private precisionDiv;
   private configUrl;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -48,6 +50,7 @@ export class Cw20TokenService {
     this.decimals = this.appParams.chainInfo.coinDecimals;
     this.precisionDiv = this.appParams.chainInfo.precisionDiv;
     this.configUrl = this.appParams.configUrl;
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getCw20Tokens(
@@ -295,16 +298,31 @@ export class Cw20TokenService {
   async getIBCTokens(ctx: RequestContext, accountAddress: string) {
     this.logger.log(ctx, `${this.getIBCTokens.name} was called!`);
     const result = [];
-    const accountData = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(
-        INDEXER_API.ACCOUNT_INFO,
-        accountAddress,
-        this.indexerChainId,
-      )}`,
-      '',
-      ctx,
-    );
-    const accountBalances = accountData?.data?.account_balances;
+    // get account detail
+    const accountAttributes = `type
+      sequence
+      spendable_balances
+      pubkey
+      id
+      balances
+      account_number
+      address`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.ACCOUNT,
+        this.chainDB,
+        accountAttributes,
+      ),
+      variables: {
+        address: accountAddress,
+      },
+    };
+    const accountData = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['account'];
+    const accountBalances =
+      accountData?.length > 0 ? accountData[0]?.balances : [];
     const ibcBalances = accountBalances?.filter(
       (str) => str?.minimal_denom || str?.denom,
     );

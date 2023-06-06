@@ -126,7 +126,6 @@ export enum CONTRACT_CODE_RESULT {
 
 export enum INDEXER_API {
   STATUS = 'api/v1/network/status?chainid=%s',
-  ACCOUNT_INFO = 'api/v1/account-info?address=%s&chainId=%s',
   REGISTER_CODE_ID = 'api/v1/asset/index',
   ACCOUNT_DELEGATIONS = 'api/v1/account-info/delegations?address=%s&chainId=%s',
   GET_TOKENS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&countTotal=false',
@@ -142,6 +141,7 @@ export enum INDEXER_API {
 export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
+    ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
   },
 };
 
@@ -269,3 +269,19 @@ export enum VERIFY_CODE_RESULT {
 }
 
 export const DEFAULT_IPFS = 'https://ipfs.io/';
+
+export enum USER_ROLE {
+  USER = 'user',
+  ADMIN = 'admin',
+  BANNED = 'banned',
+}
+
+export enum PROVIDER {
+  FACEBOOK = 'facebook',
+  GOOGLE = 'google',
+}
+
+export enum NAME_TAG_TYPE {
+  ACCOUNT = 'account',
+  CONTRACT = 'contract',
+}

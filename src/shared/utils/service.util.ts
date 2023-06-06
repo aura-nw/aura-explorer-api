@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AkcLogger } from '../logger/logger.service';
 import { lastValueFrom } from 'rxjs';
-import { ConfigService } from '@nestjs/config';
+import * as appConfig from '../../shared/configs/configuration';
 import axios from 'axios';
 @Injectable()
 export class ServiceUtil {
@@ -11,9 +11,9 @@ export class ServiceUtil {
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
-    private readonly configService: ConfigService,
   ) {
-    this.indexerV2 = this.configService.get<string>('indexerV2');
+    const appParams = appConfig.default();
+    this.indexerV2 = appParams.indexerV2;
   }
 
   /**
