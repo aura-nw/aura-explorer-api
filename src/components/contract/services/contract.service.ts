@@ -12,6 +12,7 @@ import {
   CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API,
+  INDEXER_API_V2,
   RequestContext,
   VERIFY_CODE_RESULT,
 } from '../../../shared';
@@ -33,12 +34,10 @@ import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
   private api;
-  private rpc;
   private verifyContractUrl;
-  private verifyContractStatusUrl;
-  private appParams;
   private indexerUrl: string;
   private indexerChainId: string;
+  private chainDB: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -55,14 +54,8 @@ export class ContractService {
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
-    this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
-    this.verifyContractStatusUrl = this.configService.get(
-      'VERIFY_CONTRACT_STATUS_URL',
-    );
-    this.appParams = appConfig.default();
-    this.indexerUrl = this.appParams.indexer.url;
-    this.indexerChainId = this.appParams.indexer.chainId;
+    this.chainDB = appConfig.default().indexerV2.chainDB;
   }
 
   async getContracts(
@@ -84,6 +77,34 @@ export class ContractService {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
     const [contracts, count] =
       await this.smartContractCodeRepository.getContractsCodeId(request);
+
+    // get account detail
+    const codeAttributes = `code_id
+      creator
+      store_hash
+      type
+      status
+      created_at
+      code_id_verifications {
+        verified_at
+        compiler_version
+        github_url
+        verification_status
+      }
+      smart_contracts {
+        address
+      }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.ACCOUNT,
+        this.chainDB,
+        codeAttributes,
+      ),
+      variables: {
+        address: address,
+      },
+    };
 
     return { contracts, count };
   }
