@@ -285,3 +285,10 @@ export enum NAME_TAG_TYPE {
   ACCOUNT = 'account',
   CONTRACT = 'contract',
 }
+
+export const MESSAGES = {
+  ERROR: {
+    NOT_PERMISSION: 'You have not permission!',
+    BANNED: 'You have been banned',
+  },
+};
