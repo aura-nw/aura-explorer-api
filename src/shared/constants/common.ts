@@ -292,3 +292,5 @@ export const MESSAGES = {
     BANNED: 'You have been banned',
   },
 };
+
+export const ROLES_KEY = 'roles';
