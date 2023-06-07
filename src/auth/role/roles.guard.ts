@@ -7,7 +7,7 @@ import { UserService } from '../../components/user/user.service';
 export class RoleGuard implements CanActivate {
   constructor(private reflector: Reflector, private userService: UserService) {}
 
-  async canActivate(context: ExecutionContext): Promise<any> {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<USER_ROLE[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
