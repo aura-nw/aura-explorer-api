@@ -8,9 +8,9 @@ import {
   Delete,
   UseGuards,
   HttpStatus,
-  UnprocessableEntityException,
   HttpCode,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -23,15 +23,15 @@ import {
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
-  ApiUnprocessableEntityResponse,
 } from '@nestjs/swagger';
 import { UserService } from '../user.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
-import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
-import { MESSAGES, ReqContext, RequestContext, USER_ROLE } from 'src/shared';
-import { RoleGuard } from 'src/auth/role/roles.guard';
-import { Roles } from 'src/auth/role/roles.decorator';
+import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
+import { MESSAGES, USER_ROLE } from '../../../shared';
+import { RoleGuard } from '../../../auth/role/roles.guard';
+import { Roles } from '../../../auth/role/roles.decorator';
+import { User } from '../../../../src/shared/entities/user.entity';
 
 @ApiTags('users')
 @Controller('users')
@@ -44,6 +44,9 @@ import { Roles } from 'src/auth/role/roles.decorator';
 @ApiForbiddenResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
 })
+@ApiBadRequestResponse({
+  description: MESSAGES.ERROR.BAD_REQUEST,
+})
 export class UsersController {
   constructor(private readonly userService: UserService) {}
 
@@ -55,7 +58,7 @@ export class UsersController {
     isArray: true,
   })
   @HttpCode(HttpStatus.OK)
-  async findAll() {
+  async findAll(): Promise<{ data: User[]; meta: unknown }> {
     const allUsers = await this.userService.findAll();
 
     return { data: allUsers, meta: {} };
@@ -71,8 +74,10 @@ export class UsersController {
     description: 'User not found.',
   })
   @HttpCode(HttpStatus.OK)
-  async findOne(@Param('id') id: string) {
-    const user = await this.userService.findOne({ where: { id: +id || 0 } });
+  async findOne(
+    @Param('id') id: string,
+  ): Promise<{ data: User; meta: unknown }> {
+    const user = await this.userService.findOneById(+id || 0);
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -90,27 +95,28 @@ export class UsersController {
     description: 'Can not create user.',
   })
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createUserDto: CreateUserDto) {
+  async create(@Body() createUserDto: CreateUserDto): Promise<void> {
     try {
       await this.userService.create(createUserDto);
     } catch (error) {
-      throw new UnprocessableEntityException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update user.' })
   @ApiOkResponse({ description: 'User updated.' })
-  @ApiNotFoundResponse({ description: 'User not found.' })
-  @ApiUnprocessableEntityResponse({ description: 'Can not update user.' })
   @HttpCode(HttpStatus.OK)
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<void> {
     updateUserDto.id = +id || 0;
 
     try {
       await this.userService.update(updateUserDto);
     } catch (error) {
-      throw new UnprocessableEntityException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -118,11 +124,11 @@ export class UsersController {
   @ApiOperation({ summary: 'Delete user.' })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse({ description: 'User deleted.' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<void> {
     try {
       await this.userService.delete(+id || 0);
     } catch (error) {
-      throw new UnprocessableEntityException(error.message);
+      throw new BadRequestException(error.message);
     }
   }
 }

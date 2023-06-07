@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, FindOneOptions } from 'typeorm';
 
 import { User } from '../../shared/entities/user.entity';
-import { MESSAGES, USER_ROLE } from 'src/shared';
+import { MESSAGES, USER_ROLE } from '../../shared';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -23,6 +23,14 @@ export class UserService {
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
     return await this.usersRepository.findOne(params);
+  }
+
+  async findOneById(id: number): Promise<User> {
+    return await this.usersRepository.findOne({ id });
+  }
+
+  async findOneByEmail(email: string): Promise<User> {
+    return await this.usersRepository.findOne({ email });
   }
 
   async findAll(): Promise<User[]> {

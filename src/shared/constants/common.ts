@@ -290,6 +290,7 @@ export const MESSAGES = {
   ERROR: {
     NOT_PERMISSION: 'You have not permission!',
     BANNED: 'You have been banned',
+    BAD_REQUEST: 'Bad request',
   },
 };
 

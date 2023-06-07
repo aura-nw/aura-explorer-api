@@ -1,6 +1,6 @@
 import { IsEmail, IsIn, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PROVIDER, USER_ROLE } from 'src/shared';
+import { PROVIDER, USER_ROLE } from '../../../shared';
 const providers = Object.values(PROVIDER);
 const roles = Object.values(USER_ROLE);
 export class CreateUserDto {

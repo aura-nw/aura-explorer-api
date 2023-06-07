@@ -1,6 +1,6 @@
 import { Body, Controller, HttpStatus, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RefreshTokenDto } from 'src/components/refresh-token/dtos/create-refresh-token.dto';
+import { RefreshTokenDto } from '../components/refresh-token/dtos/create-refresh-token.dto';
 import { JwtAuthService } from './jwt/jwt-auth.service';
 
 @ApiTags('auth')
