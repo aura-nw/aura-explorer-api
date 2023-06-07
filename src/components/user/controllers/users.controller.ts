@@ -59,7 +59,7 @@ export class UsersController {
     isArray: true,
   })
   @HttpCode(HttpStatus.OK)
-  async findAll(): Promise<Promise<BaseApiResponse<User[]>>> {
+  async findAll(): Promise<BaseApiResponse<User[]>> {
     const allUsers = await this.userService.findAll();
 
     return { data: allUsers, meta: {} };
