@@ -54,7 +54,9 @@ export class Cw721TokenService {
       media_info
       burned
       cw721_contract {
+        name
         smart_contract {
+          name
           address
         }
       }`;
@@ -100,7 +102,7 @@ export class Cw721TokenService {
       owner
       media_info
       burned
-       cw721_contract {
+      cw721_contract {
         name
         smart_contract {
           name
