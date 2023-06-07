@@ -28,10 +28,11 @@ import { UserService } from '../user.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
-import { MESSAGES, USER_ROLE } from '../../../shared';
+import { BaseApiResponse, MESSAGES, USER_ROLE } from '../../../shared';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { User } from '../../../../src/shared/entities/user.entity';
+import { UserDto } from '../dtos/user.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -54,11 +55,11 @@ export class UsersController {
   @ApiOperation({ summary: 'Return all users.' })
   @ApiOkResponse({
     description: 'Return all users.',
-    type: UpdateUserDto,
+    type: UserDto,
     isArray: true,
   })
   @HttpCode(HttpStatus.OK)
-  async findAll(): Promise<{ data: User[]; meta: unknown }> {
+  async findAll(): Promise<Promise<BaseApiResponse<User[]>>> {
     const allUsers = await this.userService.findAll();
 
     return { data: allUsers, meta: {} };
@@ -74,9 +75,7 @@ export class UsersController {
     description: 'User not found.',
   })
   @HttpCode(HttpStatus.OK)
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<{ data: User; meta: unknown }> {
+  async findOne(@Param('id') id: string): Promise<BaseApiResponse<User>> {
     const user = await this.userService.findOneById(+id || 0);
 
     if (!user) {
