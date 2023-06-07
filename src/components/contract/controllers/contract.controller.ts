@@ -7,7 +7,6 @@ import {
   HttpStatus,
   Param,
   Post,
-  Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -17,12 +16,10 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
 } from '../../../shared';
-import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
-import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { ContractService } from '../services/contract.service';
 
 @ApiTags('contracts')
@@ -68,40 +65,6 @@ export class ContractController {
     );
 
     return { data: contract, meta: {} };
-  }
-
-  @Get('tag/:accountAddress/:contractAddress')
-  @ApiOperation({ summary: 'Get tag by account address and contract address' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getTagByAddress(
-    @ReqContext() ctx: RequestContext,
-    @Param('accountAddress') accountAddress: string,
-    @Param('contractAddress') contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getTagByAddress.name} was called!`);
-    const tag = await this.contractService.getTagByAddress(
-      ctx,
-      accountAddress,
-      contractAddress,
-    );
-
-    return { data: tag, meta: {} };
-  }
-
-  @Post('verify-contract')
-  @ApiOperation({ summary: 'Verify contract' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async verifyContract(
-    @ReqContext() ctx: RequestContext,
-    @Body() request: VerifyContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.verifyContract.name} was called!`);
-    const result = await this.contractService.verifyContract(ctx, request);
-
-    return { data: result, meta: {} };
   }
 
   @Post('contract-code/list')
@@ -174,27 +137,6 @@ export class ContractController {
     return { data: result, meta: {} };
   }
 
-  @Get('match-creation-code/:contractAddress')
-  @ApiOperation({ summary: 'Get list contracts match creation code' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getContractsMatchCreationCode(
-    @ReqContext() ctx: RequestContext,
-    @Param('contractAddress') contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(
-      ctx,
-      `${this.getContractsMatchCreationCode.name} was called!`,
-    );
-    const { contracts, count } =
-      await this.contractService.getContractsMatchCreationCode(
-        ctx,
-        contractAddress,
-      );
-
-    return { data: contracts, meta: { count } };
-  }
-
   @Get('verify/status/:codeId')
   @ApiOperation({ summary: 'Verify contract status' })
   @ApiResponse({ status: HttpStatus.OK })
@@ -222,23 +164,6 @@ export class ContractController {
     );
 
     return { data: token, meta: {} };
-  }
-
-  @Get('get-contract-by-code-id/:codeId')
-  @ApiOperation({ summary: 'Get contract detail by code id' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getContractByCodeId(
-    @ReqContext() ctx: RequestContext,
-    @Param('codeId') codeId: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractByCodeId.name} was called!`);
-    const contract = await this.contractService.getContractByCodeId(
-      ctx,
-      codeId,
-    );
-
-    return { data: contract, meta: {} };
   }
 
   @Get(':contractAddress/nft/:tokenId')
