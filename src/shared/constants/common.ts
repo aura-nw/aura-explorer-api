@@ -144,6 +144,7 @@ export const INDEXER_API_V2 = {
     ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
     CONTRACT_CODE_LIST: `query ContractCode($where: auratestnet_code_bool_exp, $limit: Int, $offset: Int) { %s { code(where: $where, order_by: {code_id: desc}, limit: $limit, offset: $offset) { %s } code_aggregate(where: $where) { aggregate { count } } } }`,
     CONTRACT_CODE_DETAIL: `query ContractCodeDetail($where: auratestnet_code_bool_exp) { %s { code(where: $where) { %s } } }`,
+    CW721_OWNER: `query CW721Owner($whereClause: auratestnet_cw721_token_bool_exp, $limit: Int) {%s { cw721_token(where: $whereClause, limit: $limit, order_by: {created_at: desc}) { %s } }}`,
   },
 };
 
@@ -287,3 +288,10 @@ export enum NAME_TAG_TYPE {
   ACCOUNT = 'account',
   CONTRACT = 'contract',
 }
+
+export const MESSAGES = {
+  ERROR: {
+    NOT_PERMISSION: 'You have not permission!',
+    BANNED: 'You have been banned',
+  },
+};
