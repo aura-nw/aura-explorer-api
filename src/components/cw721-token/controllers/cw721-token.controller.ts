@@ -81,20 +81,4 @@ export class Cw721TokenController {
 
     return { data: tokens, meta: { count, next_key } };
   }
-
-  @Post('get-by-contract')
-  @ApiOperation({ summary: 'Get list nfts by contract' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getNftsByContract(
-    @ReqContext() ctx: RequestContext,
-    @Body() request: NftByContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getNftsByContract.name} was called!`);
-    const { tokens, count, next_key } =
-      await this.cw721TokenService.getNftsByContract(ctx, request);
-
-    return { data: tokens, meta: { count, next_key } };
-  }
 }

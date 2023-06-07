@@ -100,8 +100,10 @@ export class Cw721TokenService {
       owner
       media_info
       burned
-      cw721_contract {
+       cw721_contract {
+        name
         smart_contract {
+          name
           address
         }
       }`;
@@ -121,72 +123,6 @@ export class Cw721TokenService {
           cw721_contract: {
             smart_contract: { address: { _eq: request.keyword } },
           },
-        };
-      } else {
-        whereClause = {
-          ...whereClause,
-          token_id: { _eq: request.keyword },
-        };
-      }
-    }
-
-    if (request?.next_key) {
-      whereClause = {
-        ...whereClause,
-        id: { _gt: request.next_key },
-      };
-    }
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
-        this.chainDB,
-        cw721Attributes,
-      ),
-      variables: {
-        whereClause: whereClause,
-        limit: request?.limit,
-      },
-    };
-
-    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB]['cw721_token'];
-    const count = tokens?.length;
-
-    return { tokens: tokens, count: count };
-  }
-
-  async getNftsByContract(
-    ctx: RequestContext,
-    request: NftByContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
-    const cw721Attributes = `id
-      token_id
-      owner
-      media_info
-      burned
-      cw721_contract {
-        smart_contract {
-          address
-        }
-      }`;
-
-    let whereClause: any = {
-      cw721_contract: {
-        smart_contract: { address: { _eq: request.contract_address } },
-      },
-      burned: { _eq: false },
-    };
-
-    if (request?.keyword) {
-      if (
-        request.keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-        request.keyword.length === LENGTH.ACCOUNT_ADDRESS
-      ) {
-        whereClause = {
-          ...whereClause,
-          owner: { _eq: request.keyword },
         };
       } else {
         whereClause = {
