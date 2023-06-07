@@ -109,7 +109,7 @@ export class ContractService {
 
     const graphqlQuery = {
       query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE,
+        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_LIST,
         this.chainDB,
         codeAttributes,
       ),
@@ -134,8 +134,40 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
-    const contracts =
-      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+
+    // get account detail
+    const codeAttributes = `code_id
+      creator
+      store_hash
+      type
+      status
+      created_at
+      code_id_verifications {
+        verified_at
+        compiler_version
+        github_url
+        verification_status
+      }
+      smart_contracts {
+        address
+      }`;
+
+    const where = { code_id: { _eq: codeId } };
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_DETAIL,
+        this.chainDB,
+        codeAttributes,
+      ),
+      variables: {
+        where: where,
+      },
+    };
+
+    const contracts = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['code'];
 
     return contracts;
   }
