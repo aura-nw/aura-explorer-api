@@ -255,15 +255,6 @@ export class ContractService {
     return result;
   }
 
-  async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
-    this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
-    const code = this.getCodeDetail(codeId);
-    
-
-
-    return data;
-  }
-
   async verifyContractStatus(
     ctx: RequestContext,
     codeId: number,

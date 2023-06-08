@@ -121,22 +121,6 @@ export class ContractController {
     return { data: result, meta: {} };
   }
 
-  @Get('verify-code-id/:codeId')
-  @ApiOperation({ summary: 'Get verify code steps' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieve data',
-    type: SwaggerBaseApiResponse(VerifyCodeStepOutputDto),
-  })
-  async getVerifyCodeStep(
-    @ReqContext() ctx: RequestContext,
-    @Param('codeId') codeId: number,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
-    const result = await this.contractService.getVerifyCodeStep(ctx, codeId);
-    return { data: result, meta: {} };
-  }
-
   @Get('verify/status/:codeId')
   @ApiOperation({ summary: 'Verify contract status' })
   @ApiResponse({ status: HttpStatus.OK })
