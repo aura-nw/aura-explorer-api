@@ -1,10 +1,13 @@
 import {
-  Body, 
+  Body,
   Controller,
+  Delete,
+  Get,
   HttpStatus,
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { NameTagService } from '../services/name-tag.service';
@@ -22,12 +25,12 @@ export class NameTagController {
     this.logger.setContext(NameTagController.name);
   }
 
-  @Post()
+  @Get()
   @ApiOperation({ summary: 'Get list name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async getNameTags(
     @ReqContext() ctx: RequestContext,
-    @Body() request: NameTagParamsDto,
+    @Query() request: NameTagParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { result, count } = await this.nameTagService.getNameTags(
@@ -38,7 +41,7 @@ export class NameTagController {
     return { data: result, meta: { count } };
   }
 
-  @Post('create')
+  @Post()
   @ApiOperation({ summary: 'create name tag' })
   @ApiResponse({ status: HttpStatus.CREATED })
   async createNameTag(
@@ -49,7 +52,7 @@ export class NameTagController {
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put('update')
+  @Put()
   @ApiOperation({ summary: 'update name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async updateNameTag(
@@ -60,8 +63,8 @@ export class NameTagController {
     return await this.nameTagService.updateNameTag(ctx, request);
   }
 
-  @Put('delete/:id')
-  @ApiOperation({ summary: 'update name tag' })
+  @Delete(':id')
+  @ApiOperation({ summary: 'delete name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async deleteNameTag(
     @ReqContext() ctx: RequestContext,

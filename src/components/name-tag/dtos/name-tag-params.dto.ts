@@ -1,16 +1,22 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Min, Max } from 'class-validator';
+import { PAGE_REQUEST } from '../../../shared';
+import { Transform } from 'class-transformer';
 
 export class NameTagParamsDto {
-  @ApiProperty({ default: 20 })
-  @Min(0)
-  @Max(100)
+  @ApiPropertyOptional({
+    description: `Optional, defaults to 20`,
+    default: 20,
+    type: Number,
+  })
+  @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
+  @Min(PAGE_REQUEST.MIN)
+  @Max(PAGE_REQUEST.MAX)
   limit: number;
 
   @ApiProperty({ default: 0 })
-  @Min(0)
   offset: number;
 
-  @ApiProperty({ default: '' })
+  @ApiPropertyOptional({ default: '' })
   keyword: string;
 }

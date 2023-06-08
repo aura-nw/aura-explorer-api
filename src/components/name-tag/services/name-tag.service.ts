@@ -54,7 +54,7 @@ export class NameTagService {
 
   async updateNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    const errorMsg = this.validate(req, false);
+    const errorMsg = await this.validate(req, false);
     if (errorMsg) {
       return errorMsg;
     }
@@ -77,10 +77,7 @@ export class NameTagService {
   async deleteNameTag(ctx: RequestContext, id: number) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     try {
-      const result = await this.nameTagRepository.update(id, {
-        deleted_at: new Date(),
-      });
-      return { data: result, meta: {} };
+      return await this.nameTagRepository.softDelete(id);
     } catch (err) {
       this.logger.error(
         ctx,
