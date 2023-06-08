@@ -143,7 +143,8 @@ export const INDEXER_API_V2 = {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
     ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
     CW721_OWNER: `query CW721Owner($whereClause: auratestnet_cw721_token_bool_exp, $limit: Int) {%s { cw721_token(where: $whereClause, limit: $limit, order_by: {created_at: desc}) { %s } }}`,
-    ABT_TOKEN_LIST: `query ABTListToken($name: String, $address: String, $creator: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}, creator: {_eq: $creator}}, name: {_like: $name}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}, creator: {_eq: $creator}}, name: {_like: $name}}) { aggregate { count } } } }`,
+    CW4973_TOKEN_LIST: `query CW4973ListToken($name: String, $address: String, $creator: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}, creator: {_eq: $creator}}, name: {_like: $name}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}, creator: {_eq: $creator}}, name: {_like: $name}}) { aggregate { count } } } }`,
+    CW4973_TOKEN_BY_MINTER: `query CW4973ByMinter($address: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}}) { aggregate { count } } } }`,
   },
 };
 

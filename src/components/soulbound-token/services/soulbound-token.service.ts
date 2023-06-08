@@ -12,7 +12,6 @@ import {
   SOULBOUND_TOKEN_STATUS,
   INDEXER_API_V2,
 } from '../../../shared';
-import { SmartContractRepository } from '../../contract/repositories/smart-contract.repository';
 import { CreateSoulboundTokenParamsDto } from '../dtos/create-soulbound-token-params.dto';
 import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
 import { SoulboundContractOutputDto } from '../dtos/soulbound-contract-output.dto';
@@ -21,7 +20,6 @@ import { TokenOutputDto } from '../dtos/token-output.dto';
 import { TokenParasDto } from '../dtos/token-paras.dto';
 import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-params.dto';
 import { SoulboundTokenRepository } from '../repositories/soulbound-token.repository';
-import { ConfigService } from '@nestjs/config';
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { HttpService } from '@nestjs/axios';
 import console from 'console';
@@ -40,6 +38,7 @@ import { RedisUtil } from '../../../shared/utils/redis.util';
 import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 import { SoulboundRejectListRepository } from '../repositories/soulbound-reject-list.repository';
+import { SmartContractRepository } from '../../contract/repositories/smart-contract.repository';
 
 @Injectable()
 export class SoulboundTokenService {
@@ -121,12 +120,12 @@ export class SoulboundTokenService {
 
     const graphqlQuery = {
       query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_LIST,
         this.chainDB,
         abtAttributes,
       ),
       variables: variables,
-      operationName: 'ABTListToken',
+      operationName: 'CW4973ListToken',
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
@@ -150,25 +149,45 @@ export class SoulboundTokenService {
         this.getContracts.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    const { contracts, count } =
-      await this.smartContractRepos.getContractByMinter(
-        req.minterAddress,
-        req.keyword,
-        req.limit,
-        req.offset,
-      );
-    const addresses = contracts?.map((item) => item.contract_address);
+
+    const abtAttributes = `minter
+      smart_contract {
+        address
+      }`;
+
+    const variables: any = {
+      limit: req.limit,
+      offset: req.offset,
+      address: req?.keyword ? req?.keyword : null,
+    };
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: variables,
+      operationName: 'CW4973ByMinter',
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+
+    const addresses = response?.cw721_contract?.map(
+      (item) => item.smart_contract.address,
+    );
     const results: SoulboundContractOutputDto[] = [];
     if (addresses.length > 0) {
       const status = await this.soulboundTokenRepos.countStatus(addresses);
-      contracts.forEach((item: any) => {
+      response?.cw721_contract?.forEach((item: any) => {
         let soulboundContract = new SoulboundContractOutputDto();
         let claimedQty = 0,
           unclaimedQty = 0;
         soulboundContract = { ...item };
 
         status
-          ?.filter((f) => f.contract_address === item.contract_address)
+          ?.filter((f) => f.contract_address === item.smart_contract.address)
           ?.forEach((m) => {
             if (m.status === SOULBOUND_TOKEN_STATUS.EQUIPPED) {
               claimedQty = Number(m.quantity) || 0;
@@ -183,7 +202,10 @@ export class SoulboundTokenService {
         results.push(soulboundContract);
       });
     }
-    return { contracts: results, count };
+    return {
+      contracts: results,
+      count: response?.cw721_contract_aggregate.aggregate.count,
+    };
   }
 
   /**
@@ -200,7 +222,6 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const { tokens, count } = await this.soulboundTokenRepos.getTokens(
-      req.minterAddress,
       req.contractAddress,
       req.keyword,
       req.status,
@@ -301,6 +322,8 @@ export class SoulboundTokenService {
     }
 
     const entity = new SoulboundToken();
+
+    
     const contract = await this.smartContractRepos.findOne({
       where: {
         contract_address: req.contract_address,
