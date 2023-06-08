@@ -18,9 +18,11 @@ import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
 import { Cw721TokenModule } from './components/cw721-token/cw721-token.module';
 import { MetricService } from './components/metric/services/metric.service';
 import { SoulboundTokenModule } from './components/soulbound-token/soulbound-token.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     SharedModule,
     ComponentsModule,
     ConfigModule,
