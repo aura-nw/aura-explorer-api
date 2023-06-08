@@ -142,6 +142,7 @@ export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
     ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
+    CW721_OWNER: `query CW721Owner($whereClause: auratestnet_cw721_token_bool_exp, $limit: Int) {%s { cw721_token(where: $whereClause, limit: $limit, order_by: {created_at: desc}) { %s } }}`,
   },
 };
 
@@ -300,3 +301,10 @@ export enum NAME_TAG_TYPE {
   ACCOUNT = 'account',
   CONTRACT = 'contract',
 }
+
+export const MESSAGES = {
+  ERROR: {
+    NOT_PERMISSION: 'You have not permission!',
+    BANNED: 'You have been banned',
+  },
+};

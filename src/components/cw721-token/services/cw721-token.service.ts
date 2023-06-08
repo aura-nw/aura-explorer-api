@@ -4,22 +4,20 @@ import { SmartContractRepository } from '../../../components/contract/repositori
 import {
   AkcLogger,
   AURA_INFO,
-  CONTRACT_TYPE,
-  INDEXER_API,
+  INDEXER_API_V2,
   LENGTH,
   RequestContext,
-  SEARCH_KEYWORD,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { Cw721TokenParamsDto } from '../dtos/cw721-token-params.dto';
 import { NftByOwnerParamsDto } from '../dtos/nft-by-owner-params.dto';
+import { NftByContractParamsDto } from '../dtos/nft-by-contract-params.dto';
 
 @Injectable()
 export class Cw721TokenService {
   private appParams;
-  private indexerUrl;
-  private indexerChainId;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -28,8 +26,7 @@ export class Cw721TokenService {
   ) {
     this.logger.setContext(Cw721TokenService.name);
     this.appParams = appConfig.default();
-    this.indexerUrl = this.appParams.indexer.url;
-    this.indexerChainId = this.appParams.indexer.chainId;
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getCw721Tokens(
@@ -51,29 +48,46 @@ export class Cw721TokenService {
       ctx,
       `${this.getNftByContractAddressAndTokenId.name} was called!`,
     );
-    const url = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID,
-      this.indexerChainId,
-      CONTRACT_TYPE.CW721,
-      encodeURIComponent(tokenId),
-      contractAddress,
-    )}`;
-    const result = await this.serviceUtil.getDataAPI(url, '', ctx);
+    const cw721Attributes = `id
+      token_id
+      owner
+      media_info
+      burned
+      cw721_contract {
+        name
+        smart_contract {
+          name
+          address
+        }
+      }`;
+
+    const whereClause: any = {
+      cw721_contract: {
+        smart_contract: { address: { _eq: contractAddress } },
+      },
+      token_id: { _eq: tokenId },
+    };
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        this.chainDB,
+        cw721Attributes,
+      ),
+      variables: {
+        whereClause: whereClause,
+        limit: 1,
+      },
+    };
+
+    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw721_token'];
+
     let nft = null;
-    if (result && result.data.assets.CW721.asset.length > 0) {
-      nft = result.data.assets.CW721.asset[0];
-      const contract = await this.smartContractRepository.findOne({
-        where: { contract_address: contractAddress },
-      });
-      nft.name = '';
-      nft.creator = '';
-      nft.symbol = '';
-      if (contract) {
-        nft.name = contract.token_name;
-        nft.creator = contract.creator_address;
-        nft.symbol = contract.token_symbol;
-      }
-      nft.owner = nft.is_burned ? '' : nft.owner;
+
+    if (tokens?.length > 0) {
+      nft = tokens[0];
+      nft.owner = nft.burned ? '' : nft.owner;
     }
     return nft;
   }
@@ -83,61 +97,66 @@ export class Cw721TokenService {
     request: NftByOwnerParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getNftsByOwner.name} was called!`);
-    let url: string = INDEXER_API.GET_NFTS_BY_OWNER;
-    const params = [
-      request.account_address,
-      this.indexerChainId,
-      CONTRACT_TYPE.CW721,
-      request.limit,
-    ];
+    const cw721Attributes = `id
+      token_id
+      owner
+      media_info
+      burned
+      cw721_contract {
+        name
+        smart_contract {
+          name
+          address
+        }
+      }`;
+
+    let whereClause: any = {
+      owner: { _eq: request?.account_address },
+      burned: { _eq: false },
+    };
+
     if (request?.keyword) {
-      url += '&%s=%s';
       if (
         request.keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
         request.keyword.length === LENGTH.CONTRACT_ADDRESS
       ) {
-        params.push(SEARCH_KEYWORD.CONTRACT_ADDRESS);
+        whereClause = {
+          ...whereClause,
+          cw721_contract: {
+            smart_contract: { address: { _eq: request.keyword } },
+          },
+        };
       } else {
-        params.push(SEARCH_KEYWORD.TOKEN_ID);
+        whereClause = {
+          ...whereClause,
+          token_id: { _eq: request.keyword },
+        };
       }
-      params.push(encodeURIComponent(request.keyword));
-    }
-    if (request?.next_key) {
-      url += '&%s=%s';
-      params.push(SEARCH_KEYWORD.NEXT_KEY);
-      params.push(request.next_key);
-    }
-    const result = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(url, ...params)}`,
-      '',
-      ctx,
-    );
-    const tokens = result.data.assets.CW721.asset;
-    const count = result.data.assets.CW721.count;
-    const nextKey = result.data.nextKey;
-    if (tokens.length > 0) {
-      const listContractAddress = [
-        ...new Set(tokens.map((i) => i.contract_address)),
-      ];
-      const tokensInfo =
-        await this.smartContractRepository.getTokensByListContractAddress(
-          listContractAddress,
-        );
-      tokens.forEach((item) => {
-        item.token_name = '';
-        item.symbol = '';
-        item.decimals = 0;
-        const filter = tokensInfo.filter(
-          (f) => String(f.contract_address) === item.contract_address,
-        );
-        if (filter?.length > 0) {
-          item.token_name = filter[0].token_name;
-          item.symbol = filter[0].symbol;
-          item.decimals = filter[0].decimals;
-        }
-      });
     }
 
-    return { tokens: tokens, count: count, next_key: nextKey };
+    if (request?.next_key) {
+      whereClause = {
+        ...whereClause,
+        id: { _gt: request.next_key },
+      };
+    }
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        this.chainDB,
+        cw721Attributes,
+      ),
+      variables: {
+        whereClause: whereClause,
+        limit: request?.limit,
+      },
+    };
+
+    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw721_token'];
+    const count = tokens?.length;
+
+    return { tokens: tokens, count: count };
   }
 }

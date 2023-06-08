@@ -6,6 +6,7 @@ import * as Queue from 'bull';
 import { createBullBoard } from '@bull-board/api';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
+import * as cookieParser from 'cookie-parser';
 
 import { VALIDATION_PIPE_OPTIONS, RequestIdMiddleware } from './shared';
 
@@ -14,6 +15,7 @@ import { RedisUtil } from './shared/utils/redis.util';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
 
   // settings
   const configService = app.get(ConfigService);
