@@ -150,6 +150,7 @@ export class ContractService {
         compiler_version
         github_url
         verification_status
+        verify_step
       }
       smart_contracts {
         address
@@ -256,12 +257,10 @@ export class ContractService {
 
   async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
     this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
-    const verifyCodeSteps =
-      await this.verifyCodeStepRepository.getVerifyCodeStep(codeId);
+    const code = this.getCodeDetail(codeId);
+    
 
-    const data = plainToClass(VerifyCodeStepOutputDto, verifyCodeSteps, {
-      excludeExtraneousValues: true,
-    });
+
     return data;
   }
 

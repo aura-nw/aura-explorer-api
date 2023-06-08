@@ -113,6 +113,9 @@ export class Cw721TokenService {
     let whereClause: any = {
       owner: { _eq: request?.account_address },
       burned: { _eq: false },
+      cw721_contract: {
+        smart_contract: { name: { _neq: 'crates.io:cw4973' } },
+      },
     };
 
     if (request?.keyword) {
