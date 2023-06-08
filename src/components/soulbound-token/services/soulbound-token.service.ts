@@ -3,7 +3,6 @@ import { plainToClass } from 'class-transformer';
 import {
   AkcLogger,
   AURA_INFO,
-  CONTRACT_TYPE,
   CW4973_CONTRACT,
   ERROR_MAP,
   LENGTH,
@@ -11,6 +10,7 @@ import {
   SoulboundToken,
   SOULBOUND_PICKED_TOKEN,
   SOULBOUND_TOKEN_STATUS,
+  INDEXER_API_V2,
 } from '../../../shared';
 import { SmartContractRepository } from '../../contract/repositories/smart-contract.repository';
 import { CreateSoulboundTokenParamsDto } from '../dtos/create-soulbound-token-params.dto';
@@ -35,7 +35,7 @@ import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
 import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
-import { SoulboundTokenOutputDto } from '../dtos/soulbound-token-output.dto';
+import * as util from 'util';
 import { RedisUtil } from '../../../shared/utils/redis.util';
 import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
@@ -48,6 +48,7 @@ export class SoulboundTokenService {
   private rpc: string;
   private ioRedis: any;
   private channel: string;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -59,13 +60,13 @@ export class SoulboundTokenService {
     private serviceUtil: ServiceUtil,
     private httpService: HttpService,
     private redisUtil: RedisUtil,
-    private configService: ConfigService,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
     this.rpc = this.appParams.node.rpc;
     this.ioRedis = this.redisUtil.getIoRedis();
     this.channel = this.appParams.cacheManagement.redis.channel;
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   /**
@@ -85,18 +86,55 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
 
-    const { tokens, count } =
-      await this.smartContractRepos.getSoulboundTokensList(
-        req.keyword,
-        req.limit,
-        req.offset,
-      );
+    const abtAttributes = `name
+      symbol
+      smart_contract {
+          address
+          name
+          creator
+        }
+      `;
 
-    const data = plainToClass(SoulboundTokenOutputDto, tokens, {
-      excludeExtraneousValues: true,
-    });
+    let variables: any = {
+      limit: req.limit,
+      offset: req.offset,
+    };
 
-    return { data: data, count };
+    if (req?.keyword) {
+      const keyword = req.keyword;
+
+      const byCreatorAddress =
+        keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+        keyword.length === LENGTH.ACCOUNT_ADDRESS;
+
+      const byContractAddress =
+        keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+        keyword.length === LENGTH.CONTRACT_ADDRESS;
+
+      variables = {
+        ...variables,
+        name: !byContractAddress && !byCreatorAddress ? `%${keyword}%` : null,
+        address: byContractAddress ? keyword : null,
+        creator: byCreatorAddress ? keyword : null,
+      };
+    }
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: variables,
+      operationName: 'ABTListToken',
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+    return {
+      data: response?.cw721_contract,
+      count: response?.cw721_contract_aggregate.aggregate.count,
+    };
   }
 
   /**

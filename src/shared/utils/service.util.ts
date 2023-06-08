@@ -38,21 +38,15 @@ export class ServiceUtil {
     }
   }
 
-  async fetchDataFromGraphQL(query, endpoint?, headers?, method?) {
+  async fetchDataFromGraphQL(query, endpoint?, method?) {
     this.logger.log(query, `${this.fetchDataFromGraphQL.name} was called`);
-    const defaultHeaders = {
-      'content-type': 'application/json',
-      'x-hasura-admin-secret': this.indexerV2.secret,
-    };
     endpoint = endpoint ? endpoint : this.indexerV2.graphQL;
-    headers = headers ? headers : defaultHeaders;
     method = method ? method : 'POST';
 
     try {
       const response = await axios({
         url: endpoint,
         method: method,
-        headers: headers,
         data: query,
         timeout: 30000,
       });
