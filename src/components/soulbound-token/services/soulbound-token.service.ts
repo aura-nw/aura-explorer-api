@@ -158,6 +158,7 @@ export class SoulboundTokenService {
     const variables: any = {
       limit: req.limit,
       offset: req.offset,
+      minter: req.minterAddress,
       address: req?.keyword ? req?.keyword : null,
     };
 
@@ -323,24 +324,29 @@ export class SoulboundTokenService {
 
     const entity = new SoulboundToken();
 
-    
-    const contract = await this.smartContractRepos.findOne({
-      where: {
-        contract_address: req.contract_address,
-        minter_address: address,
-      },
-    });
-    if (contract) {
-      const isReceiverAddress =
-        contract.contract_address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-        contract.contract_address.length === LENGTH.CONTRACT_ADDRESS;
+    const abtAttributes = `minter
+      smart_contract {
+        address
+      }`;
 
-      if (!isReceiverAddress) {
-        return {
-          code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
-          message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
-        };
-      }
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: {
+        minter: address,
+        address: req.contract_address,
+      },
+      operationName: 'CW4973Contract',
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw721_contract'];
+
+    if (response?.length > 0) {
+      const contract = response[0].smart_contract.address;
 
       const ipfs = await lastValueFrom(
         this.httpService
@@ -547,26 +553,56 @@ export class SoulboundTokenService {
     let allContract;
     // Case: reject all abt form this minter address
     if (req.rejectAll) {
-      const smartcontract = await this.smartContractRepos.findOne({
-        where: { contract_address: req.contractAddress },
-      });
+      const abtAttributes = `minter
+      smart_contract {
+        address
+      }`;
 
-      // Find all contract with this minter address
-      allContract = await this.smartContractRepos.getContractCW4973(
-        smartcontract.minter_address,
-      );
-
-      const rejectToken = {
-        account_address: req.receiverAddress,
-        reject_address: smartcontract.minter_address,
+      const graphqlQuery = {
+        query: util.format(
+          INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+          this.chainDB,
+          abtAttributes,
+        ),
+        variables: {
+          address: req.contractAddress,
+        },
+        operationName: 'CW4973Contract',
       };
-      // add this minter address to block list.
-      await this.SoulboundRejectListRepos.save(rejectToken);
+
+      const smartcontract = (
+        await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+      ).data[this.chainDB]['cw721_contract'];
+
+      if (smartcontract.length > 0) {
+        // Find all contract with this minter address
+        const graphqlQuery = {
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+            this.chainDB,
+            abtAttributes,
+          ),
+          variables: {
+            minter: smartcontract[0].minter_address,
+          },
+          operationName: 'CW4973Contract',
+        };
+        allContract = (
+          await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+        ).data[this.chainDB]['cw721_contract'];
+
+        const rejectToken = {
+          account_address: req.receiverAddress,
+          reject_address: smartcontract.minter_address,
+        };
+        // add this minter address to block list.
+        await this.SoulboundRejectListRepos.save(rejectToken);
+      }
     }
 
     // Filter contract address to update status.
     const contractAddress = allContract?.map(
-      (item) => item.contract_address,
+      (item) => item.smart_contract.address,
     ) || [req.contractAddress];
 
     const result = await this.soulboundTokenRepos.updateRejectStatus(
