@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom, retry, timeout } from 'rxjs';
-import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
   AkcLogger,
@@ -16,10 +15,10 @@ import {
   LENGTH,
   RequestContext,
   VERIFY_CODE_RESULT,
+  VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
-import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { SmartContractRepository } from '../repositories/smart-contract.repository';
 import { TagRepository } from '../repositories/tag.repository';
 import * as appConfig from '../../../shared/configs/configuration';
@@ -111,6 +110,7 @@ export class ContractService {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_LIST,
         this.chainDB,
+        this.chainDB,
         codeAttributes,
       ),
       variables: {
@@ -118,6 +118,7 @@ export class ContractService {
         limit: request.limit,
         offset: request.offset,
       },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_LIST,
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
@@ -162,11 +163,13 @@ export class ContractService {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_DETAIL,
         this.chainDB,
+        this.chainDB,
         codeAttributes,
       ),
       variables: {
         where: where,
       },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_DETAIL,
     };
 
     const contracts = (
@@ -253,6 +256,60 @@ export class ContractService {
     ).then((rs) => rs.data);
 
     return result;
+  }
+
+  async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
+    this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
+        this.chainDB,
+        'verify_step',
+      ),
+      variables: {
+        codeId: codeId,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.VERIFY_STEP,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['code_id_verification'];
+
+    const verifySteps = [];
+
+    if (response.length > 0) {
+      for (let index = 1; index < 9; index++) {
+        const defaultStep = {
+          code_id: codeId,
+          check_id: index,
+          check_name: VERIFY_STEP[index - 1].name,
+        };
+        if (index === response[0].verify_step.step) {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: response[0].verify_step.msg_code,
+            result: response[0].verify_step.result,
+          });
+        } else if (index < response[0].verify_step.step) {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: VERIFY_STEP[index - 1].msgCode,
+            result: VERIFY_CODE_RESULT.SUCCESS,
+          });
+        } else {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: null,
+            result: VERIFY_CODE_RESULT.PENDING,
+          });
+        }
+      }
+    }
+    const data = plainToClass(VerifyCodeStepOutputDto, verifySteps, {
+      excludeExtraneousValues: true,
+    });
+    return data;
   }
 
   async verifyContractStatus(
