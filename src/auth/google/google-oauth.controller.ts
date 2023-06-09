@@ -1,26 +1,34 @@
-import { Controller, Get, HttpStatus, Req, UseGuards } from '@nestjs/common';
-import { GoogleOauthGuard } from './google-oauth.guard';
-import { JwtAuthService } from '../jwt/jwt-auth.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Tokens } from '../jwt/jwt-auth.service';
+import { Body, Controller, HttpStatus, Post, HttpCode } from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { GoogleOAuthService } from './google-oauth.service';
+import { GoogleOAuthLoginParamsDto } from 'src/components/google/dtos/google-oauth-login.params.dto';
+import { GoogleOAuthLoginResponseDto } from 'src/components/google/dtos/google-oauth-login.response.dto';
+import { MESSAGES } from 'src/shared';
 
 @ApiTags('auth')
 @Controller('auth')
+@ApiBadRequestResponse({
+  description: MESSAGES.ERROR.BAD_REQUEST,
+})
 export class GoogleOauthController {
-  constructor(private jwtAuthService: JwtAuthService) {}
+  constructor(private googleOAuthService: GoogleOAuthService) {}
 
-  @Get('google')
-  @ApiOperation({ summary: 'Login with Google' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseGuards(GoogleOauthGuard)
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  async googleAuth() {}
-
-  @Get('google/redirect')
-  @UseGuards(GoogleOauthGuard)
-  async googleAuthRedirect(@Req() req): Promise<Tokens> {
-    const tokens = await this.jwtAuthService.login(req.user);
-
+  @Post('google')
+  @ApiOperation({ summary: 'Verify google access token' })
+  @ApiOkResponse({
+    description: 'Return user access tokens.',
+    type: GoogleOAuthLoginResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  async login(
+    @Body() request: GoogleOAuthLoginParamsDto,
+  ): Promise<GoogleOAuthLoginResponseDto> {
+    const tokens = await this.googleOAuthService.login(request.token);
     return tokens;
   }
 }
