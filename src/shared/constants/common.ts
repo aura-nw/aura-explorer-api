@@ -298,3 +298,5 @@ export const MESSAGES = {
     BAD_REQUEST: 'Bad request.',
   },
 };
+
+export const ROLES_KEY = 'roles';

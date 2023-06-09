@@ -1,7 +1,7 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
-import { UserService } from 'src/components/user/user.service';
+import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
 
 export type JwtPayload = { sub: number; email: string };
@@ -20,7 +20,7 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.userService.findOne({ where: { id: payload.sub } });
+    const user = await this.userService.findOneById(payload.sub);
 
     this.userService.checkRole(user);
 
