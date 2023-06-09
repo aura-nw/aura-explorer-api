@@ -61,13 +61,6 @@ export class Cw721TokenService {
         }
       }`;
 
-    const whereClause: any = {
-      cw721_contract: {
-        smart_contract: { address: { _eq: contractAddress } },
-      },
-      token_id: { _eq: tokenId },
-    };
-
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
@@ -75,9 +68,10 @@ export class Cw721TokenService {
         cw721Attributes,
       ),
       variables: {
-        whereClause: whereClause,
-        limit: 1,
+        address: contractAddress,
+        tokenId: tokenId,
       },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW721_OWNER,
     };
 
     const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
@@ -110,34 +104,24 @@ export class Cw721TokenService {
         }
       }`;
 
-    let whereClause: any = {
-      owner: { _eq: request?.account_address },
-      burned: { _eq: false },
+    let variables: any = {
+      burned: false,
+      limit: request?.limit,
+      owner: request?.account_address,
+      nextKey: request?.next_key ? request?.next_key : null,
     };
 
     if (request?.keyword) {
-      if (
-        request.keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-        request.keyword.length === LENGTH.CONTRACT_ADDRESS
-      ) {
-        whereClause = {
-          ...whereClause,
-          cw721_contract: {
-            smart_contract: { address: { _eq: request.keyword } },
-          },
-        };
-      } else {
-        whereClause = {
-          ...whereClause,
-          token_id: { _eq: request.keyword },
-        };
-      }
-    }
+      const keyword = request.keyword;
 
-    if (request?.next_key) {
-      whereClause = {
-        ...whereClause,
-        id: { _gt: request.next_key },
+      const byContractAddress =
+        keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+        keyword.length === LENGTH.CONTRACT_ADDRESS;
+
+      variables = {
+        ...variables,
+        address: byContractAddress ? keyword : null,
+        tokenId: !byContractAddress ? keyword : null,
       };
     }
 
@@ -147,10 +131,8 @@ export class Cw721TokenService {
         this.chainDB,
         cw721Attributes,
       ),
-      variables: {
-        whereClause: whereClause,
-        limit: request?.limit,
-      },
+      variables: variables,
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW721_OWNER,
     };
 
     const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
