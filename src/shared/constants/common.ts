@@ -142,6 +142,11 @@ export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
     ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
+    CW721_OWNER: `query CW721Owner($limit: Int, $burned: Boolean, $owner: String, $address: String, $tokenId: String, $nextKey: Int) { %s { cw721_token(limit: $limit, order_by: {created_at: desc}, where: {burned: {_eq: $burned}, cw721_contract: {smart_contract: {address: {_eq: $address}, name: {_neq: "crates.io:cw4973"}}}, owner: {_eq: $owner}, token_id: {_eq: $tokenId}, id: {_gt: $nextKey}}) { %s } } } `,
+  },
+  OPERATION_NAME: {
+    ACCOUNT: 'Account',
+    CW721_OWNER: 'CW721Owner',
   },
 };
 
@@ -290,7 +295,7 @@ export const MESSAGES = {
   ERROR: {
     NOT_PERMISSION: 'You have not permission!',
     BANNED: 'You have been banned',
-    BAD_REQUEST: 'Bad request',
+    BAD_REQUEST: 'Bad request.',
   },
 };
 

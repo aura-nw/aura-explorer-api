@@ -317,6 +317,7 @@ export class Cw20TokenService {
       variables: {
         address: accountAddress,
       },
+      operationName: INDEXER_API_V2.OPERATION_NAME.ACCOUNT,
     };
     const accountData = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
