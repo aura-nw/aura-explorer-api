@@ -142,10 +142,17 @@ export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
     ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
-    CW721_OWNER: `query CW721Owner($whereClause: auratestnet_cw721_token_bool_exp, $limit: Int) {%s { cw721_token(where: $whereClause, limit: $limit, order_by: {created_at: desc}) { %s } }}`,
+    CW721_OWNER: `query CW721Owner($limit: Int, $burned: Boolean, $owner: String, $address: String, $tokenId: String, $nextKey: Int) { %s { cw721_token(limit: $limit, order_by: {created_at: desc}, where: {burned: {_eq: $burned}, cw721_contract: {smart_contract: {address: {_eq: $address}, name: {_neq: "crates.io:cw4973"}}}, owner: {_eq: $owner}, token_id: {_eq: $tokenId}, id: {_gt: $nextKey}}) { %s } } } `,
     CW4973_TOKEN_LIST: `query CW4973ListToken($name: String, $address: String, $creator: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}, creator: {_eq: $creator}}, name: {_like: $name}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}, creator: {_eq: $creator}}, name: {_like: $name}}) { aggregate { count } } } }`,
     CW4973_TOKEN_BY_MINTER: `query CW4973ByMinter($address: String, $minter: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}}) { aggregate { count } } } }`,
     CW4973_CONTRACT: `query CW4973Contract($address: String, $minter: String) { %s { cw721_contract(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}) { %s } } }`,
+  },
+  OPERATION_NAME: {
+    ACCOUNT: 'Account',
+    CW721_OWNER: 'CW721Owner',
+    CW4973_TOKEN_LIST: 'CW4973ListToken',
+    CW4973_TOKEN_BY_MINTER: 'CW4973ByMinter',
+    CW4973_CONTRACT: 'CW4973Contract',
   },
 };
 

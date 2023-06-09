@@ -125,7 +125,7 @@ export class SoulboundTokenService {
         abtAttributes,
       ),
       variables: variables,
-      operationName: 'CW4973ListToken',
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_TOKEN_LIST,
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
@@ -169,7 +169,7 @@ export class SoulboundTokenService {
         abtAttributes,
       ),
       variables: variables,
-      operationName: 'CW4973ByMinter',
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_TOKEN_BY_MINTER,
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
@@ -331,7 +331,7 @@ export class SoulboundTokenService {
 
     const graphqlQuery = {
       query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
         this.chainDB,
         abtAttributes,
       ),
@@ -339,7 +339,7 @@ export class SoulboundTokenService {
         minter: address,
         address: req.contract_address,
       },
-      operationName: 'CW4973Contract',
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
@@ -560,14 +560,14 @@ export class SoulboundTokenService {
 
       const graphqlQuery = {
         query: util.format(
-          INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+          INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
           this.chainDB,
           abtAttributes,
         ),
         variables: {
           address: req.contractAddress,
         },
-        operationName: 'CW4973Contract',
+        operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
       };
 
       const smartcontract = (
@@ -578,14 +578,14 @@ export class SoulboundTokenService {
         // Find all contract with this minter address
         const graphqlQuery = {
           query: util.format(
-            INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+            INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
             this.chainDB,
             abtAttributes,
           ),
           variables: {
             minter: smartcontract[0].minter_address,
           },
-          operationName: 'CW4973Contract',
+          operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
         };
         allContract = (
           await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
