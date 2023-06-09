@@ -8,15 +8,45 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiForbiddenResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { NameTagService } from '../services/name-tag.service';
-import { AkcLogger, ReqContext, RequestContext } from '../../../shared';
+import {
+  AkcLogger,
+  MESSAGES,
+  ReqContext,
+  RequestContext,
+  USER_ROLE,
+} from '../../../shared';
 import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
 import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
+import { RoleGuard } from '../../../auth/role/roles.guard';
+import { Roles } from '../../../auth/role/roles.decorator';
+import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 
 @Controller('name-tag')
 @ApiTags('name-tag')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RoleGuard)
+@Roles(USER_ROLE.ADMIN)
+@ApiUnauthorizedResponse({
+  description: MESSAGES.ERROR.NOT_PERMISSION,
+})
+@ApiForbiddenResponse({
+  description: MESSAGES.ERROR.NOT_PERMISSION,
+})
+@ApiBadRequestResponse({
+  description: MESSAGES.ERROR.BAD_REQUEST,
+})
 export class NameTagController {
   constructor(
     private readonly nameTagService: NameTagService,

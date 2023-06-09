@@ -6,6 +6,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { NameTagController } from './controllers/name-tag.controller';
 import { NameTagRepository } from './repositories/name-tag.repository';
 import { NameTagService } from './services/name-tag.service';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { NameTagService } from './services/name-tag.service';
     TypeOrmModule.forFeature([NameTagRepository]),
     HttpModule,
     ConfigModule,
+    UserModule,
   ],
   providers: [NameTagService],
   controllers: [NameTagController],
