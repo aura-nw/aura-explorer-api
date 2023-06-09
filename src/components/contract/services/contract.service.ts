@@ -12,6 +12,7 @@ import {
   CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API,
+  INDEXER_API_V2,
   RequestContext,
   VERIFY_CODE_RESULT,
 } from '../../../shared';
@@ -39,6 +40,7 @@ export class ContractService {
   private appParams;
   private indexerUrl: string;
   private indexerChainId: string;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -63,6 +65,7 @@ export class ContractService {
     this.appParams = appConfig.default();
     this.indexerUrl = this.appParams.indexer.url;
     this.indexerChainId = this.appParams.indexer.chainId;
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getContracts(
@@ -416,73 +419,88 @@ export class ContractService {
     tokenId: string,
   ) {
     // Get contract info
-    const smartContract = await this.smartContractRepository.findOne({
-      where: {
-        contract_address: contractAddress,
-      },
-    });
-    if (smartContract) {
-      // Get smartContratctCode info
-      const smartContratctCode = await this.smartContractCodeRepository.findOne(
-        {
-          where: {
-            code_id: smartContract.code_id,
-          },
-        },
-      );
+    const abtAttributes = `name
+    minter
+    smart_contract {
+      address
+    }`;
 
-      if (smartContratctCode) {
-        switch (smartContratctCode.type) {
-          case CONTRACT_TYPE.CW4973:
-            return this.getCW4973Token(ctx, smartContract, tokenId);
-          case CONTRACT_TYPE.CW721:
-            return this.getCW721Token(ctx, smartContract, tokenId);
-        }
-      }
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: {
+        address: contractAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
+    };
+
+    // Get CW4973 contract
+    const cw4973Contract = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['cw721_contract'];
+
+    if (cw4973Contract.length > 0) {
+      return this.getCW4973Token(ctx, cw4973Contract[0], tokenId);
+    } else {
+      return this.getCW721Token(ctx, contractAddress, tokenId);
     }
   }
 
   async getCW721Token(
     ctx: RequestContext,
-    smartContract: SmartContract,
+    contractAddress: string,
     tokenId: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getCW721Token.name} was called!`);
-    const contractAddress = smartContract.contract_address;
 
-    const url = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID,
-      this.indexerChainId,
-      CONTRACT_TYPE.CW721,
-      encodeURIComponent(tokenId),
-      contractAddress,
-    )}`;
-    const result = await this.serviceUtil.getDataAPI(url, '', ctx);
+    const cw721Attributes = `id
+      token_id
+      owner
+      media_info
+      burned
+      cw721_contract {
+        name
+        smart_contract {
+          name
+          address
+        }
+        symbol
+      }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        this.chainDB,
+        cw721Attributes,
+      ),
+      variables: {
+        address: contractAddress,
+        tokenId: tokenId,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW721_OWNER,
+    };
+
+    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw721_token'];
+
     let nft = null;
-    if (result && result.data.assets.CW721.asset.length > 0) {
-      nft = result.data.assets.CW721.asset[0];
-      nft.name = '';
-      nft.creator = '';
-      nft.symbol = '';
-      nft.type = CONTRACT_TYPE.CW721;
-      nft.name = smartContract.token_name;
-      nft.creator = smartContract.creator_address;
-      nft.symbol = smartContract.token_symbol;
-      nft.owner = nft.is_burned ? '' : nft.owner;
+
+    if (tokens?.length > 0) {
+      nft = tokens[0];
+      nft.owner = nft.burned ? '' : nft.owner;
     }
     return nft;
   }
 
-  async getCW4973Token(
-    ctx: RequestContext,
-    smartContract: SmartContract,
-    tokenId: string,
-  ) {
+  async getCW4973Token(ctx: RequestContext, contract: any, tokenId: string) {
     this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
     const token = await this.soulboundTokenRepository.findOne({
       where: {
         token_id: tokenId,
-        contract_address: smartContract.contract_address,
+        contract_address: contract.smart_contract.address,
       },
     });
 
@@ -510,10 +528,10 @@ export class ContractService {
 
     const nft = {
       id: token?.id || '',
-      contract_address: smartContract.contract_address,
+      contract_address: contract.smart_contract.address,
       token_id: token?.token_id || '',
       token_uri: token?.token_uri || '',
-      token_name: smartContract?.token_name || '',
+      token_name: contract.name || '',
       token_name_ipfs: token?.token_name || '',
       animation_url: token?.animation_url || '',
       token_img: token?.token_img || '',
@@ -523,8 +541,7 @@ export class ContractService {
       picked: token?.picked || '',
       signature: token?.signature || '',
       pub_key: token?.pub_key || '',
-      minter_address: smartContract?.minter_address || '',
-      description: smartContract?.description || '',
+      minter_address: contract.minter || '',
       type: CONTRACT_TYPE.CW4973,
       ipfs: JSON.parse(token?.ipfs) || '',
     };

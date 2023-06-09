@@ -38,7 +38,6 @@ import { RedisUtil } from '../../../shared/utils/redis.util';
 import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 import { SoulboundRejectListRepository } from '../repositories/soulbound-reject-list.repository';
-import { SmartContractRepository } from '../../contract/repositories/smart-contract.repository';
 
 @Injectable()
 export class SoulboundTokenService {
@@ -52,7 +51,6 @@ export class SoulboundTokenService {
   constructor(
     private readonly logger: AkcLogger,
     private soulboundTokenRepos: SoulboundTokenRepository,
-    private smartContractRepos: SmartContractRepository,
     private soulboundWhiteListRepos: SoulboundWhiteListRepository,
     private SoulboundRejectListRepos: SoulboundRejectListRepository,
     private contractUtil: ContractUtil,

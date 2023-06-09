@@ -17,7 +17,6 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
 } from '../../../shared';
-import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
