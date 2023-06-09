@@ -44,7 +44,7 @@ export default () => ({
     chainId: process.env.INDEXER_CHAIN_ID,
   },
   indexerV2: {
-    graphQL: `${process.env.INDEXER_V2_URL}v1/graphql`,
+    graphQL: `${process.env.INDEXER_V2_URL}${process.env.INDEXER_V2_PATH}`,
     chainDB: process.env.INDEXER_V2_DB,
     secret: process.env.INDEXER_V2_SECRET,
   },

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, Max, Min } from 'class-validator';
-import { PAGE_REQUEST } from 'src/shared';
+import { PAGE_REQUEST } from '../../../shared';
 
 export class ReceiverTokenParasDto {
   @ApiProperty()

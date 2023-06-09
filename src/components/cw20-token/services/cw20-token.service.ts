@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { SmartContractRepository } from 'src/components/contract/repositories/smart-contract.repository';
+import { SmartContractRepository } from '../../../components/contract/repositories/smart-contract.repository';
 import { In } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
@@ -317,6 +317,7 @@ export class Cw20TokenService {
       variables: {
         address: accountAddress,
       },
+      operationName: INDEXER_API_V2.OPERATION_NAME.ACCOUNT,
     };
     const accountData = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
