@@ -6,9 +6,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { GoogleOAuthService } from './google-oauth.service';
-import { GoogleOAuthLoginParamsDto } from 'src/components/google/dtos/google-oauth-login.params.dto';
-import { GoogleOAuthLoginResponseDto } from 'src/components/google/dtos/google-oauth-login.response.dto';
-import { MESSAGES } from 'src/shared';
+import { GoogleOAuthLoginParamsDto } from '../../components/google/dtos/google-oauth-login.params.dto';
+import { GoogleOAuthLoginResponseDto } from '../../components/google/dtos/google-oauth-login.response.dto';
+import { MESSAGES } from '../../shared';
 
 @ApiTags('auth')
 @Controller('auth')

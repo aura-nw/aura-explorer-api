@@ -15,7 +15,7 @@ import {
 import { RefreshTokenDto } from '../components/refresh-token/dtos/create-refresh-token.dto';
 import { JwtAuthService } from './jwt/jwt-auth.service';
 import { RefreshTokenResponseDto } from '../components/refresh-token/dtos/refresh-token.response.dto';
-import { MESSAGES } from 'src/shared';
+import { MESSAGES } from '../shared';
 
 @ApiTags('auth')
 @Controller('auth')

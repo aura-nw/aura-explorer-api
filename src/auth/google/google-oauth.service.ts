@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtAuthService } from '../jwt/jwt-auth.service';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/components/user/user.service';
+import { UserService } from '../../components/user/user.service';
 import { OAuth2Client } from 'google-auth-library';
-import { PROVIDER, USER_ROLE } from 'src/shared';
-import { User } from 'src/shared/entities/user.entity';
-import { GoogleOAuthLoginResponseDto } from 'src/components/google/dtos/google-oauth-login.response.dto';
+import { PROVIDER, USER_ROLE } from '../../shared';
+import { User } from '../../shared/entities/user.entity';
+import { GoogleOAuthLoginResponseDto } from '../../components/google/dtos/google-oauth-login.response.dto';
 
 @Injectable()
 export class GoogleOAuthService {
@@ -31,8 +31,7 @@ export class GoogleOAuthService {
         idToken: token,
         audience: this.googleClientID,
       });
-      const userPayload = tokenVerified.getPayload();
-      const { email: googleEmail, name, picture } = userPayload;
+      const { email: googleEmail, name, picture } = tokenVerified.getPayload();
       const adminInitEmail = this.configService.get('adminInitEmail');
 
       let user = await this.userService.findOne({
