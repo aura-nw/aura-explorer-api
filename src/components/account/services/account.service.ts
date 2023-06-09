@@ -64,6 +64,7 @@ export class AccountService {
       variables: {
         address: address,
       },
+      operationName: INDEXER_API_V2.OPERATION_NAME.ACCOUNT,
     };
 
     const delegationsParam = `cosmos/staking/v1beta1/delegations/${address}`;
