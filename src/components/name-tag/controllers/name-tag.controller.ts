@@ -22,6 +22,7 @@ import {
 import { NameTagService } from '../services/name-tag.service';
 import {
   AkcLogger,
+  BaseApiResponse,
   MESSAGES,
   ReqContext,
   RequestContext,
@@ -32,6 +33,7 @@ import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
+import { NameTag } from '../../../shared/entities/name-tag.entity';
 
 @Controller('name-tag')
 @ApiTags('name-tag')
@@ -61,7 +63,7 @@ export class NameTagController {
   async getNameTags(
     @ReqContext() ctx: RequestContext,
     @Query() request: NameTagParamsDto,
-  ): Promise<any> {
+  ): Promise<BaseApiResponse<NameTag[]>> {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { result, count } = await this.nameTagService.getNameTags(
       ctx,
@@ -69,6 +71,18 @@ export class NameTagController {
     );
 
     return { data: result, meta: { count } };
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get list name tag' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async getNameTagsDetail(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: number,
+  ): Promise<NameTag> {
+    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
+    const result = await this.nameTagService.getNameTagsDetail(ctx, id);
+    return result;
   }
 
   @Post()

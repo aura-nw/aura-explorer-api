@@ -10,7 +10,7 @@ import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
 import { NameTagRepository } from '../repositories/name-tag.repository';
 import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
-import { Timestamp } from 'typeorm';
+import { Not, Timestamp } from 'typeorm';
 
 @Injectable()
 export class NameTagService {
@@ -28,6 +28,11 @@ export class NameTagService {
     );
 
     return { result, count };
+  }
+
+  async getNameTagsDetail(ctx: RequestContext, id: number) {
+    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
+    return await this.nameTagRepository.findOne(id);
   }
 
   async createNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
@@ -102,7 +107,7 @@ export class NameTagService {
     if (isCreate) {
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
-        where: { address: req.address },
+        where: { address: req.address, deleted_at: null },
       });
       if (address) {
         return {
@@ -113,7 +118,7 @@ export class NameTagService {
     }
 
     const tag = await this.nameTagRepository.findOne({
-      where: { name_tag: req.nameTag },
+      where: { name_tag: req.nameTag, deleted_at: null },
     });
 
     if (tag) {
