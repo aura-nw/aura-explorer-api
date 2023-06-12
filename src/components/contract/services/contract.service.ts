@@ -281,22 +281,23 @@ export class ContractService {
     const verifySteps = [];
 
     if (response.length > 0) {
-      for (let index = 1; index < 9; index++) {
+      for (let index = 0; index < VERIFY_STEP.length; index++) {
+        const stepId = index + 1;
         const defaultStep = {
           code_id: codeId,
-          check_id: index,
-          check_name: VERIFY_STEP[index - 1].name,
+          check_id: stepId,
+          check_name: VERIFY_STEP[index].name,
         };
-        if (index === response[0].verify_step.step) {
+        if (stepId === response[0].verify_step.step) {
           verifySteps.push({
             ...defaultStep,
             msg_code: response[0].verify_step.msg_code,
             result: response[0].verify_step.result,
           });
-        } else if (index < response[0].verify_step.step) {
+        } else if (stepId < response[0].verify_step.step) {
           verifySteps.push({
             ...defaultStep,
-            msg_code: VERIFY_STEP[index - 1].msgCode,
+            msg_code: VERIFY_STEP[index].msgCode,
             result: VERIFY_CODE_RESULT.SUCCESS,
           });
         } else {
