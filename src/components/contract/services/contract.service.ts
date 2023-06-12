@@ -76,7 +76,7 @@ export class ContractService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
 
-    // get account detail
+    // Attributes for contract code list
     const codeAttributes = `code_id
       creator
       store_hash
@@ -140,7 +140,7 @@ export class ContractService {
   }
 
   private async getCodeDetail(codeId: number) {
-    // get account detail
+    // Attributes for contract code detail
     const codeAttributes = `code_id
       creator
       store_hash
