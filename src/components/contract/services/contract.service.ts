@@ -55,7 +55,10 @@ export class ContractService {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
-    this.chainDB = appConfig.default().indexerV2.chainDB;
+    const appParams = appConfig.default();
+    this.indexerUrl = appParams.indexer.url;
+    this.indexerChainId = appParams.indexer.chainId;
+    this.chainDB = appParams.indexerV2.chainDB;
   }
 
   async getContracts(
