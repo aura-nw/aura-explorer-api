@@ -244,6 +244,21 @@ export const ERROR_MAP = {
   },
 };
 
+export const ADMIN_ERROR_MAP = {
+  DUPLICATE_ADDRESS: {
+    Code: 'E001',
+    Message: 'This address has already been set name tag',
+  },
+  DUPLICATE_TAG: {
+    Code: 'E002',
+    Message: 'Duplicate name tag',
+  },
+  INVALID_FORMAT: {
+    Code: 'E003',
+    Message: 'Invalid aura address format',
+  },
+};
+
 export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
