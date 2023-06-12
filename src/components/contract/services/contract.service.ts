@@ -91,6 +91,7 @@ export class ContractService {
       }
       smart_contracts {
         address
+        name
       }`;
 
     let where = {};
@@ -155,6 +156,7 @@ export class ContractService {
       }
       smart_contracts {
         address
+        name
       }`;
 
     const where = { code_id: { _eq: codeId } };

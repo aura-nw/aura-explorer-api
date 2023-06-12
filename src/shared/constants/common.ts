@@ -148,6 +148,7 @@ export const INDEXER_API_V2 = {
     VERIFY_STEP: `query VerifyStep($codeId: Int) { %s { code_id_verification(where: {code_id: {_eq: $codeId}}) { %s } } }`,
   },
   OPERATION_NAME: {
+    PROPOSAL_COUNT: 'CountProposal',
     ACCOUNT: 'Account',
     CW721_OWNER: 'CW721Owner',
     CONTRACT_CODE_LIST: 'ContractCode',
