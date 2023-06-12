@@ -79,7 +79,7 @@ export enum CONTRACT_STATUS {
   EXACT_MATCH = 'EXACT MATCH',
   SIMILAR_MATCH = 'SIMILAR MATCH',
   UNVERIFIED = 'UNVERIFIED',
-  VERIFYFAIL = 'VERIFYFAIL',
+  VERIFYFAIL = 'FAIL',
   VERIFYING = 'VERIFYING',
   NOT_REGISTERED = 'Not registered',
   TBD = 'TBD',
@@ -142,11 +142,18 @@ export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
     ACCOUNT: `query Account($address: String) { %s { account(where: {address: {_eq: $address}}) { %s } } }`,
+    CONTRACT_CODE_LIST: `query ContractCode($where: %s_code_bool_exp, $limit: Int, $offset: Int) { %s { code(where: $where, order_by: {code_id: desc}, limit: $limit, offset: $offset) { %s } code_aggregate(where: $where) { aggregate { count } } } }`,
+    CONTRACT_CODE_DETAIL: `query ContractCodeDetail($where: %s_code_bool_exp) { %s { code(where: $where) { %s } } }`,
     CW721_OWNER: `query CW721Owner($limit: Int, $burned: Boolean, $owner: String, $address: String, $tokenId: String, $nextKey: Int) { %s { cw721_token(limit: $limit, order_by: {created_at: desc}, where: {burned: {_eq: $burned}, cw721_contract: {smart_contract: {address: {_eq: $address}, name: {_neq: "crates.io:cw4973"}}}, owner: {_eq: $owner}, token_id: {_eq: $tokenId}, id: {_gt: $nextKey}}) { %s } } } `,
+    VERIFY_STEP: `query VerifyStep($codeId: Int) { %s { code_id_verification(where: {code_id: {_eq: $codeId}}) { %s } } }`,
   },
   OPERATION_NAME: {
+    PROPOSAL_COUNT: 'CountProposal',
     ACCOUNT: 'Account',
     CW721_OWNER: 'CW721Owner',
+    CONTRACT_CODE_LIST: 'ContractCode',
+    CONTRACT_CODE_DETAIL: 'ContractCodeDetail',
+    VERIFY_STEP: 'VerifyStep',
   },
 };
 
@@ -313,5 +320,16 @@ export const MESSAGES = {
     BAD_REQUEST: 'Bad request.',
   },
 };
+
+export const VERIFY_STEP = [
+  { name: 'Code ID valid', msgCode: 'S001' },
+  { name: 'Compiler image format', msgCode: 'S002' },
+  { name: 'Code ID verification session valid', msgCode: 'S003' },
+  { name: 'Get Code ID data hash', msgCode: 'S004' },
+  { name: 'Get source code', msgCode: 'S005' },
+  { name: 'Compile source code', msgCode: 'S006' },
+  { name: 'Compare data hash', msgCode: 'S007' },
+  { name: 'Internal process', msgCode: 'S008' },
+];
 
 export const ROLES_KEY = 'roles';
