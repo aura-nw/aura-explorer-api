@@ -250,7 +250,7 @@ export class ContractService {
     }
 
     const properties = {
-      codeId: contract.code_id,
+      codeId: contract[0].code_id,
       commit: request.commit,
       compilerVersion: request.compiler_version,
       contractUrl: request.url,
