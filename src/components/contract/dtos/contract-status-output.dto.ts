@@ -1,10 +1,10 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { Expose } from "class-transformer";
+import { ApiProperty } from '@nestjs/swagger';
+import { Expose } from 'class-transformer';
 
-export class ContractStatusOutputDto{
-    @Expose()
-    key: String;
+export class ContractStatusOutputDto {
+  @Expose()
+  key: string;
 
-    @Expose()
-    label: String;
+  @Expose()
+  label: string;
 }

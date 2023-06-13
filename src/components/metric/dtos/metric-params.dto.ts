@@ -18,5 +18,5 @@ export class MetricParamsDto {
     description: 'Optional, defaults to 0s',
     default: 0,
   })
-  timezone: number = 0;
+  timezone = 0;
 }
