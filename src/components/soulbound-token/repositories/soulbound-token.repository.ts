@@ -50,6 +50,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         },
       );
     const _finalizeResult = async (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _builder: SelectQueryBuilder<SoulboundToken>,
     ) => {
       const tokens = await builder
@@ -108,6 +109,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       receiver_address: receiverAddress,
     });
     const _finalizeResult = async (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _builder: SelectQueryBuilder<SoulboundToken>,
     ) => {
       const tokens = await builder
@@ -166,6 +168,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       );
 
     const _finalizeResult = async (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _builder: SelectQueryBuilder<SoulboundToken>,
     ) => {
       const tokens = await builder

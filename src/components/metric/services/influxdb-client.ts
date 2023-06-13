@@ -25,6 +25,7 @@ export class InfluxDBClient {
       timestamp: string;
     }[] = [];
     const query = `from(bucket: "${this.bucket}") |> range(start: ${statTime}) |> filter(fn: (r) => r._measurement == "${measurement}") |> window(every: ${step}) |> count()`;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const output = new Promise((resolve, reject) => {
       this.queryApi.queryRows(query, {
         next(row, tableMeta) {
@@ -236,7 +237,7 @@ export class InfluxDBClient {
         |> range(start:${start}, stop:${stop})
         |> filter(fn: (r) => r._measurement == "${measurement}")
         |> filter(fn: (r) => r["token_id"]== "${coinId}")
-        |> filter(fn: (r) => r["_field"]== "coinId" 
+        |> filter(fn: (r) => r["_field"]== "coinId"
             or r["_field"]== "current_price"
             or r["_field"]== "price_change_percentage_24h"
             or r["_field"]== "total_volume"

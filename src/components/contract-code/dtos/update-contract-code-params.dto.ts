@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { CONTRACT_TYPE } from '../../../shared';
 
 export class UpdateContractCodeParamsDto {

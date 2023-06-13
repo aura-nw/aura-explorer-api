@@ -9,5 +9,6 @@ export class blockSyncError1649324862799 implements MigrationInterface {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

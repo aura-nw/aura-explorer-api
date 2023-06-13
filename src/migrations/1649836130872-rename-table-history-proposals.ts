@@ -11,5 +11,6 @@ export class renameTableHistoryProposals1649836130872
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

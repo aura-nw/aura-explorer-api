@@ -14,5 +14,6 @@ export class updateColumnTypeTableSmartContractCodes1664330919160
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

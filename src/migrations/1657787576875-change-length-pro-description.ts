@@ -11,5 +11,6 @@ export class changeLengthProDescription1657787576875
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

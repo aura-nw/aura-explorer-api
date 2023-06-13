@@ -9,5 +9,6 @@ export class blockAddColumnJsonData1652262962801 implements MigrationInterface {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

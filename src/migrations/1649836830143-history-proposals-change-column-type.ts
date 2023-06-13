@@ -14,5 +14,6 @@ export class historyProposalsChangeColumnType1649836830143
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

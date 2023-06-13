@@ -18,5 +18,6 @@ export class changeDataTypeColumns1659430248062 implements MigrationInterface {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

@@ -12,5 +12,6 @@ export class changeIndexTableNfts1662347715013 implements MigrationInterface {
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

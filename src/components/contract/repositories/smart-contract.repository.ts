@@ -1,8 +1,6 @@
 import {
   Brackets,
   EntityRepository,
-  In,
-  Not,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -13,10 +11,8 @@ import { ContractParamsDto } from '../dtos/contract-params.dto';
 import {
   AURA_INFO,
   CONTRACT_CODE_RESULT,
-  CONTRACT_STATUS,
   CONTRACT_TYPE,
   LENGTH,
-  SoulboundToken,
   SYNC_CONTRACT_TRANSACTION_TYPE,
   Transaction,
 } from '../../../shared';
@@ -284,6 +280,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
       });
 
     const _finalizeResult = async (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _builder: SelectQueryBuilder<SmartContract>,
     ) => {
       const data = await builder
@@ -324,6 +321,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
         `sm.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW4973}'`,
       );
     const _finalizeResult = async (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _builder: SelectQueryBuilder<SmartContract>,
     ) => {
       const tokens = await builder

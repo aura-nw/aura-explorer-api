@@ -1,10 +1,5 @@
-import {
-  Brackets,
-  EntityRepository,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
-import { AURA_INFO, LENGTH } from '../../../shared';
+import { EntityRepository, Repository, SelectQueryBuilder } from 'typeorm';
+import { LENGTH } from '../../../shared';
 import { SmartContractCode } from '../../../shared/entities/smart-contract-code.entity';
 import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { ContractCodeIdParamsDto } from '../../contract/dtos/contract-code-id-params.dto';

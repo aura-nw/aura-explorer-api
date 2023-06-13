@@ -3,7 +3,6 @@ import { plainToClass } from 'class-transformer';
 import {
   AkcLogger,
   AURA_INFO,
-  CONTRACT_TYPE,
   CW4973_CONTRACT,
   ERROR_MAP,
   LENGTH,
@@ -617,7 +616,7 @@ export class SoulboundTokenService {
             },
           }),
         )
-        .then(async (config) => {
+        .then(async () => {
           if (address === entity.receiver_address) {
             const result = await this.soulboundTokenRepos.update(entity.id, {
               picked: req.picked,

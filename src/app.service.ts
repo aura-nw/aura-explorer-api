@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 
 import * as util from 'util';
@@ -75,7 +74,6 @@ export class AppService {
     const inflation =
       (data.inflation.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
     const communityPool = data?.communityPool;
-    const supplyData = data?.supply?.supply;
 
     if (communityPool && communityPool?.pool && communityPool.pool.length > 0) {
       const filterCommunityPool = communityPool.pool.filter(

@@ -30,6 +30,7 @@ export class NameTagRepository extends Repository<NameTag> {
       .leftJoin(User, 'user', 'user.id = tag.updated_by')
       .where('tag.deleted_at IS NULL');
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _finalizeResult = async (_builder: SelectQueryBuilder<NameTag>) => {
       const result = await builder
         .limit(limit)

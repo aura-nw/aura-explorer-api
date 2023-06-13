@@ -7,5 +7,6 @@ export class dropTableNfts1662630196506 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE \`nfts\``);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

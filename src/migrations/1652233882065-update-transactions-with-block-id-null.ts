@@ -11,5 +11,6 @@ export class updateTransactionsWithBlockIdNull1652233882065
             WHERE t.blockId IS NULL`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

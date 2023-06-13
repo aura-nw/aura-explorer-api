@@ -9,5 +9,6 @@ export class removeProposals1666059707830 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE \`history_proposals\``);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

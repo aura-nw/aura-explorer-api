@@ -29,5 +29,6 @@ export class changeDataTypeProposals1657764405880
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(_queryRunner: QueryRunner): Promise<void> {}
 }
