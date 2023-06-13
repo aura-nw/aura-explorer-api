@@ -12,6 +12,7 @@ import {
   ERROR_MAP,
   INDEXER_API,
   INDEXER_API_V2,
+  LENGTH,
   RequestContext,
   VERIFY_CODE_RESULT,
   VERIFY_STEP,
