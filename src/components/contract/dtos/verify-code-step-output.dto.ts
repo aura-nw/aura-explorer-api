@@ -3,10 +3,6 @@ import { Expose } from 'class-transformer';
 
 export class VerifyCodeStepOutputDto {
   @Expose()
-  @ApiResponseProperty({ example: '1' })
-  id: string;
-
-  @Expose()
   @ApiResponseProperty({ example: '420' })
   code_id: number;
 

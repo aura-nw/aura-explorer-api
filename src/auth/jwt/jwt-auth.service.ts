@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '../../shared/entities/user.entity';
 import { JwtPayload } from './jwt-auth.strategy';
 import * as appConfig from '../../shared/configs/configuration';
-import { UserService } from 'src/components/user/user.service';
+import { UserService } from '../../components/user/user.service';
 
 export type Tokens = { accessToken: string; refreshToken: string };
 
@@ -37,9 +37,9 @@ export class JwtAuthService {
     );
 
     // Generate token from refresh token
-    const user = await this.userService.findOne({
-      where: { email: refreshTokenDecoded.email },
-    });
+    const user = await this.userService.findOneByEmail(
+      refreshTokenDecoded.email,
+    );
 
     if (!user) {
       throw new UnauthorizedException('User not found in DB.');
