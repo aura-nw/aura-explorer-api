@@ -286,18 +286,20 @@ export class ContractService {
     if (response.length > 0) {
       for (let index = 0; index < VERIFY_STEP.length; index++) {
         const stepId = index + 1;
+        // Get last success element
+        const result = response[response.length - 1];
         const defaultStep = {
           code_id: codeId,
           check_id: stepId,
           check_name: VERIFY_STEP[index].name,
         };
-        if (stepId === response[0].verify_step.step) {
+        if (stepId === result?.verify_step.step) {
           verifySteps.push({
             ...defaultStep,
-            msg_code: response[0].verify_step.msg_code,
-            result: response[0].verify_step.result,
+            msg_code: result?.verify_step.msg_code,
+            result: result?.verify_step.result,
           });
-        } else if (stepId < response[0].verify_step.step) {
+        } else if (stepId < result?.verify_step.step) {
           verifySteps.push({
             ...defaultStep,
             msg_code: VERIFY_STEP[index].msgCode,
