@@ -17,7 +17,6 @@ import {
   SwaggerBaseApiResponse,
 } from '../../../shared';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
-import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractService } from '../services/contract.service';
@@ -30,41 +29,6 @@ export class ContractController {
     private readonly logger: AkcLogger,
   ) {
     this.logger.setContext(ContractController.name);
-  }
-
-  @Post()
-  @ApiOperation({ summary: 'Get list contracts' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getContracts(
-    @ReqContext() ctx: RequestContext,
-    @Body() request: ContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const { contracts, count } = await this.contractService.getContracts(
-      ctx,
-      request,
-    );
-
-    return { data: contracts, meta: { count } };
-  }
-
-  @Get(':contractAddress')
-  @ApiOperation({ summary: 'Get contract detail by contract address' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getContractByAddress(
-    @ReqContext() ctx: RequestContext,
-    @Param('contractAddress') contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
-    const contract = await this.contractService.getContractByAddress(
-      ctx,
-      contractAddress,
-    );
-
-    return { data: contract, meta: {} };
   }
 
   @Post('contract-code/list')

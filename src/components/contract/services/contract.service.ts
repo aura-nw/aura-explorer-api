@@ -3,10 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom, retry, timeout } from 'rxjs';
-import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
   AkcLogger,
-  CONTRACT_CODE_RESULT,
   CONTRACT_STATUS,
   CONTRACT_TYPE,
   ERROR_MAP,
@@ -18,15 +16,11 @@ import {
   VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { SmartContractRepository } from '../repositories/smart-contract.repository';
-import { TagRepository } from '../repositories/tag.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
-import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
-import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
@@ -42,14 +36,11 @@ export class ContractService {
   constructor(
     private readonly logger: AkcLogger,
     private smartContractRepository: SmartContractRepository,
-    private tagRepository: TagRepository,
-    private smartContractCodeRepository: SmartContractCodeRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
     private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
-    private verifyCodeStepRepository: VerifyCodeStepRepository,
     private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
@@ -59,18 +50,6 @@ export class ContractService {
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
     this.chainDB = appParams.indexerV2.chainDB;
-  }
-
-  async getContracts(
-    ctx: RequestContext,
-    request: ContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const [contracts, count] = await this.smartContractRepository.getContracts(
-      request,
-    );
-
-    return { contracts, count };
   }
 
   async getContractsCodeId(
@@ -182,46 +161,6 @@ export class ContractService {
     ).data[this.chainDB]['code'];
 
     return contracts;
-  }
-
-  async getContractByAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
-    let contract: any = null;
-    const contractData =
-      await this.smartContractRepository.getContractsByContractAddress(
-        contractAddress,
-      );
-    if (contractData) {
-      contract = contractData;
-      const codeId = contractData.code_id;
-      const balanceParams = `cosmos/bank/v1beta1/balances/${contractAddress}`;
-      const [balanceData] = await Promise.all([
-        this.serviceUtil.getDataAPI(this.api, balanceParams, ctx),
-      ]);
-      contract.balance = 0;
-      if (
-        balanceData &&
-        balanceData?.balances &&
-        balanceData?.balances?.length > 0
-      ) {
-        contract.balance = Number(balanceData.balances[0].amount);
-      }
-      const contractCode = await this.smartContractCodeRepository.findOne({
-        where: {
-          code_id: codeId,
-        },
-      });
-      contract.type = contractCode ? contractCode.type : '';
-      const result = contractCode ? contractCode.result : '';
-      if (result !== CONTRACT_CODE_RESULT.CORRECT) {
-        contract.token_name = '';
-        contract.token_symbol = '';
-      }
-    }
-    return contract;
   }
 
   async verifyCodeId(
