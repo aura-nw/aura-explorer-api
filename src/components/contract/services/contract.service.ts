@@ -343,10 +343,10 @@ export class ContractService {
   ) {
     // Get contract info
     const abtAttributes = `name
-    minter
-    smart_contract {
-      address
-    }`;
+      minter
+      smart_contract {
+       address
+      }`;
 
     const graphqlQuery = {
       query: util.format(
@@ -389,8 +389,10 @@ export class ContractService {
         smart_contract {
           name
           address
+          creator
         }
         symbol
+        minter
       }`;
 
     const graphqlQuery = {
