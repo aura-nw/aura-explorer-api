@@ -38,7 +38,7 @@ export class ServiceUtil {
     }
   }
 
-  async fetchDataFromGraphQL(query, endpoint?, headers?, method?) {
+  async fetchDataFromGraphQL(query, endpoint?, method?) {
     this.logger.log(query, `${this.fetchDataFromGraphQL.name} was called`);
     endpoint = endpoint ? endpoint : this.indexerV2.graphQL;
     method = method ? method : 'POST';
