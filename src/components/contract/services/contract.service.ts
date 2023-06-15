@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom, retry, timeout } from 'rxjs';
-import { Not } from 'typeorm';
 import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
   AkcLogger,
@@ -12,12 +11,14 @@ import {
   CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API,
+  INDEXER_API_V2,
+  LENGTH,
   RequestContext,
   VERIFY_CODE_RESULT,
+  VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ContractParamsDto } from '../dtos/contract-params.dto';
-import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
 import { SmartContractRepository } from '../repositories/smart-contract.repository';
 import { TagRepository } from '../repositories/tag.repository';
 import * as appConfig from '../../../shared/configs/configuration';
@@ -33,12 +34,10 @@ import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
   private api;
-  private rpc;
   private verifyContractUrl;
-  private verifyContractStatusUrl;
-  private appParams;
   private indexerUrl: string;
   private indexerChainId: string;
+  private chainDB: string;
 
   constructor(
     private readonly logger: AkcLogger,
@@ -55,14 +54,11 @@ export class ContractService {
   ) {
     this.logger.setContext(ContractService.name);
     this.api = this.configService.get('API');
-    this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
-    this.verifyContractStatusUrl = this.configService.get(
-      'VERIFY_CONTRACT_STATUS_URL',
-    );
-    this.appParams = appConfig.default();
-    this.indexerUrl = this.appParams.indexer.url;
-    this.indexerChainId = this.appParams.indexer.chainId;
+    const appParams = appConfig.default();
+    this.indexerUrl = appParams.indexer.url;
+    this.indexerChainId = appParams.indexer.chainId;
+    this.chainDB = appParams.indexerV2.chainDB;
   }
 
   async getContracts(
@@ -82,10 +78,60 @@ export class ContractService {
     request: ContractCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
-    const [contracts, count] =
-      await this.smartContractCodeRepository.getContractsCodeId(request);
 
-    return { contracts, count };
+    // Attributes for contract code list
+    const codeAttributes = `code_id
+      creator
+      store_hash
+      type
+      status
+      created_at
+      code_id_verifications {
+        verified_at
+        compiler_version
+        github_url
+        verification_status
+      }
+      smart_contracts {
+        address
+        name
+      }`;
+
+    let where = {};
+    if (request?.keyword) {
+      const keyword = request.keyword.toLowerCase();
+      const byCodeId = Number(keyword) && Number(keyword) > 0;
+      if (byCodeId) {
+        where = { code_id: { _eq: keyword } };
+      } else if (keyword.length === LENGTH.CONTRACT_ADDRESS) {
+        where = { smart_contracts: { address: { _eq: keyword } } };
+      } else {
+        where = { creator: { _eq: keyword } };
+      }
+    }
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_LIST,
+        this.chainDB,
+        this.chainDB,
+        codeAttributes,
+      ),
+      variables: {
+        where: where,
+        limit: request.limit,
+        offset: request.offset,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_LIST,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+
+    return {
+      contracts: response?.code,
+      count: response?.code_aggregate.aggregate.count,
+    };
   }
 
   async getContractsCodeIdDetail(
@@ -93,8 +139,47 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
-    const contracts =
-      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+    return this.getCodeDetail(codeId);
+  }
+
+  private async getCodeDetail(codeId: number) {
+    // Attributes for contract code detail
+    const codeAttributes = `code_id
+      creator
+      store_hash
+      type
+      status
+      created_at
+      code_id_verifications {
+        verified_at
+        compiler_version
+        github_url
+        verification_status
+        verify_step
+      }
+      smart_contracts {
+        address
+        name
+      }`;
+
+    const where = { code_id: { _eq: codeId } };
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_DETAIL,
+        this.chainDB,
+        this.chainDB,
+        codeAttributes,
+      ),
+      variables: {
+        where: where,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_DETAIL,
+    };
+
+    const contracts = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['code'];
 
     return contracts;
   }
@@ -139,74 +224,23 @@ export class ContractService {
     return contract;
   }
 
-  async getTagByAddress(
-    ctx: RequestContext,
-    accountAddress: string,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getTagByAddress.name} was called!`);
-    const tag = this.tagRepository.findOne({
-      where: {
-        account_address: accountAddress,
-        contract_address: contractAddress,
-      },
-    });
-
-    return tag;
-  }
-
-  async verifyContract(
-    ctx: RequestContext,
-    request: VerifyContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.verifyContract.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: request.contract_address },
-    });
-    if (
-      !contract ||
-      (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
-    ) {
-      const error = {
-        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
-        Message: ERROR_MAP.CONTRACT_VERIFIED.Message,
-      };
-      return error;
-    }
-    const properties = {
-      commit: request.commit,
-      compilerVersion: request.compiler_version,
-      contractAddress: request.contract_address,
-      contractUrl: request.url,
-      wasmFile: request.wasm_file,
-    };
-    const result = await lastValueFrom(
-      this.httpService.post(this.verifyContractUrl, properties),
-    ).then((rs) => rs.data);
-
-    return result;
-  }
-
   async verifyCodeId(
     ctx: RequestContext,
     request: VerifyCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
-    const contract = await this.smartContractCodeRepository.findOne({
-      where: { code_id: request.code_id },
-    });
-    if (!contract) {
+    const contract = await this.getCodeDetail(request.code_id);
+    if (contract?.length === 0) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
         Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
       };
       return error;
     }
-
+    const codeVerification = contract[0].code_id_verifications;
     if (
-      contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
-      contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL
+      codeVerification.length > 0 &&
+      codeVerification[0].verification_status !== CONTRACT_STATUS.VERIFYFAIL
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED_VERIFYING.Code,
@@ -215,58 +249,8 @@ export class ContractService {
       return error;
     }
 
-    const verifySteps = [];
-    const verifyCodeSteps = await this.verifyCodeStepRepository.find({
-      where: { code_id: contract.code_id },
-    });
-    // update to initial data when re-verify at contract verify fail
-    if (verifyCodeSteps.length > 0) {
-      for (let index = 1; index < 9; index++) {
-        const step = {
-          id: verifyCodeSteps[index - 1]?.id,
-          code_id: contract.code_id,
-          check_id: index,
-          msg_code: null,
-          result:
-            index === 1
-              ? VERIFY_CODE_RESULT.IN_PROGRESS
-              : VERIFY_CODE_RESULT.PENDING,
-        };
-        verifySteps.push(step);
-      }
-    } else {
-      // Generate code step
-      for (let index = 1; index < 9; index++) {
-        const step = {
-          code_id: contract.code_id,
-          check_id: index,
-          result:
-            index === 1
-              ? VERIFY_CODE_RESULT.IN_PROGRESS
-              : VERIFY_CODE_RESULT.PENDING,
-        };
-        verifySteps.push(step);
-      }
-    }
-
-    if (verifySteps.length > 0) {
-      try {
-        // Update contract verify status to verifying
-        contract.contract_verification = CONTRACT_STATUS.VERIFYING;
-        await this.smartContractCodeRepository.save(contract);
-
-        // insert or update verify step status
-        await this.verifyCodeStepRepository.save(verifySteps);
-      } catch (err) {
-        this.logger.error(
-          ctx,
-          `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
-        );
-      }
-    }
-
     const properties = {
-      codeId: contract.code_id,
+      codeId: contract[0].code_id,
       commit: request.commit,
       compilerVersion: request.compiler_version,
       contractUrl: request.url,
@@ -281,40 +265,59 @@ export class ContractService {
 
   async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
     this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
-    const verifyCodeSteps =
-      await this.verifyCodeStepRepository.getVerifyCodeStep(codeId);
 
-    const data = plainToClass(VerifyCodeStepOutputDto, verifyCodeSteps, {
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
+        this.chainDB,
+        'verify_step',
+      ),
+      variables: {
+        codeId: codeId,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.VERIFY_STEP,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['code_id_verification'];
+
+    const verifySteps = [];
+
+    if (response.length > 0) {
+      for (let index = 0; index < VERIFY_STEP.length; index++) {
+        const stepId = index + 1;
+        // Get last success element
+        const result = response[response.length - 1];
+        const defaultStep = {
+          code_id: codeId,
+          check_id: stepId,
+          check_name: VERIFY_STEP[index].name,
+        };
+        if (stepId === result?.verify_step.step) {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: result?.verify_step.msg_code,
+            result: result?.verify_step.result,
+          });
+        } else if (stepId < result?.verify_step.step) {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: VERIFY_STEP[index].msgCode,
+            result: VERIFY_CODE_RESULT.SUCCESS,
+          });
+        } else {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: null,
+            result: VERIFY_CODE_RESULT.PENDING,
+          });
+        }
+      }
+    }
+    const data = plainToClass(VerifyCodeStepOutputDto, verifySteps, {
       excludeExtraneousValues: true,
     });
     return data;
-  }
-
-  async getContractsMatchCreationCode(
-    ctx: RequestContext,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(
-      ctx,
-      `${this.getContractsMatchCreationCode.name} was called!`,
-    );
-    const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: contractAddress },
-    });
-    let contracts = [];
-    let count = 0;
-    if (contract) {
-      const contractHash = contract.contract_hash;
-      [contracts, count] = await this.smartContractRepository.findAndCount({
-        where: {
-          contract_address: Not(contractAddress),
-          contract_hash: contractHash,
-        },
-        order: { updated_at: 'DESC' },
-      });
-    }
-
-    return { contracts: contracts, count };
   }
 
   async verifyContractStatus(
@@ -322,10 +325,8 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.smartContractCodeRepository.findOne({
-      where: { code_id: codeId },
-    });
-    if (!contract) {
+    const contract = await this.getCodeDetail(codeId);
+    if (contract?.length === 0) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
         Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
@@ -333,8 +334,11 @@ export class ContractService {
       return error;
     }
     return {
-      codeId: contract?.code_id,
-      status: contract?.contract_verification || CONTRACT_STATUS.UNVERIFIED,
+      codeId: contract[0].code_id,
+      status:
+        contract[0].code_id_verifications.length > 0
+          ? contract[0].code_id_verifications[0].verification_status
+          : CONTRACT_STATUS.UNVERIFIED,
     };
   }
 
@@ -393,21 +397,6 @@ export class ContractService {
     }
 
     return token;
-  }
-
-  /**
-   * Get contract by code id
-   * @param ctx
-   * @param codeId
-   * @returns
-   */
-  async getContractByCodeId(ctx: RequestContext, codeId: string) {
-    this.logger.log(ctx, `${this.getContractByCodeId.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
-      where: { code_id: codeId },
-    });
-
-    return contract;
   }
 
   async getNftDetail(
