@@ -3,10 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom, retry, timeout } from 'rxjs';
-import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
 import {
   AkcLogger,
-  CONTRACT_CODE_RESULT,
   CONTRACT_STATUS,
   CONTRACT_TYPE,
   ERROR_MAP,
@@ -18,15 +16,11 @@ import {
   VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { ContractParamsDto } from '../dtos/contract-params.dto';
 import { SmartContractRepository } from '../repositories/smart-contract.repository';
-import { TagRepository } from '../repositories/tag.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
-import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
-import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
@@ -42,14 +36,11 @@ export class ContractService {
   constructor(
     private readonly logger: AkcLogger,
     private smartContractRepository: SmartContractRepository,
-    private tagRepository: TagRepository,
-    private smartContractCodeRepository: SmartContractCodeRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
     private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
-    private verifyCodeStepRepository: VerifyCodeStepRepository,
     private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
@@ -59,18 +50,6 @@ export class ContractService {
     this.indexerUrl = appParams.indexer.url;
     this.indexerChainId = appParams.indexer.chainId;
     this.chainDB = appParams.indexerV2.chainDB;
-  }
-
-  async getContracts(
-    ctx: RequestContext,
-    request: ContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const [contracts, count] = await this.smartContractRepository.getContracts(
-      request,
-    );
-
-    return { contracts, count };
   }
 
   async getContractsCodeId(
@@ -182,46 +161,6 @@ export class ContractService {
     ).data[this.chainDB]['code'];
 
     return contracts;
-  }
-
-  async getContractByAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
-    let contract: any = null;
-    const contractData =
-      await this.smartContractRepository.getContractsByContractAddress(
-        contractAddress,
-      );
-    if (contractData) {
-      contract = contractData;
-      const codeId = contractData.code_id;
-      const balanceParams = `cosmos/bank/v1beta1/balances/${contractAddress}`;
-      const [balanceData] = await Promise.all([
-        this.serviceUtil.getDataAPI(this.api, balanceParams, ctx),
-      ]);
-      contract.balance = 0;
-      if (
-        balanceData &&
-        balanceData?.balances &&
-        balanceData?.balances?.length > 0
-      ) {
-        contract.balance = Number(balanceData.balances[0].amount);
-      }
-      const contractCode = await this.smartContractCodeRepository.findOne({
-        where: {
-          code_id: codeId,
-        },
-      });
-      contract.type = contractCode ? contractCode.type : '';
-      const result = contractCode ? contractCode.result : '';
-      if (result !== CONTRACT_CODE_RESULT.CORRECT) {
-        contract.token_name = '';
-        contract.token_symbol = '';
-      }
-    }
-    return contract;
   }
 
   async verifyCodeId(
@@ -405,73 +344,90 @@ export class ContractService {
     tokenId: string,
   ) {
     // Get contract info
-    const smartContract = await this.smartContractRepository.findOne({
-      where: {
-        contract_address: contractAddress,
-      },
-    });
-    if (smartContract) {
-      // Get smartContratctCode info
-      const smartContratctCode = await this.smartContractCodeRepository.findOne(
-        {
-          where: {
-            code_id: smartContract.code_id,
-          },
-        },
-      );
+    const abtAttributes = `name
+      minter
+      smart_contract {
+       address
+      }`;
 
-      if (smartContratctCode) {
-        switch (smartContratctCode.type) {
-          case CONTRACT_TYPE.CW4973:
-            return this.getCW4973Token(ctx, smartContract, tokenId);
-          case CONTRACT_TYPE.CW721:
-            return this.getCW721Token(ctx, smartContract, tokenId);
-        }
-      }
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: {
+        address: contractAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
+    };
+
+    // Get CW4973 contract
+    const cw4973Contract = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['cw721_contract'];
+
+    if (cw4973Contract.length > 0) {
+      return this.getCW4973Token(ctx, cw4973Contract[0], tokenId);
+    } else {
+      return this.getCW721Token(ctx, contractAddress, tokenId);
     }
   }
 
   async getCW721Token(
     ctx: RequestContext,
-    smartContract: SmartContract,
+    contractAddress: string,
     tokenId: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getCW721Token.name} was called!`);
-    const contractAddress = smartContract.contract_address;
 
-    const url = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID,
-      this.indexerChainId,
-      CONTRACT_TYPE.CW721,
-      encodeURIComponent(tokenId),
-      contractAddress,
-    )}`;
-    const result = await this.serviceUtil.getDataAPI(url, '', ctx);
+    const cw721Attributes = `id
+      token_id
+      owner
+      media_info
+      burned
+      cw721_contract {
+        name
+        smart_contract {
+          name
+          address
+          creator
+        }
+        symbol
+        minter
+      }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
+        this.chainDB,
+        cw721Attributes,
+      ),
+      variables: {
+        address: contractAddress,
+        tokenId: tokenId,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW721_OWNER,
+    };
+
+    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw721_token'];
+
     let nft = null;
-    if (result && result.data.assets.CW721.asset.length > 0) {
-      nft = result.data.assets.CW721.asset[0];
-      nft.name = '';
-      nft.creator = '';
-      nft.symbol = '';
-      nft.type = CONTRACT_TYPE.CW721;
-      nft.name = smartContract.token_name;
-      nft.creator = smartContract.creator_address;
-      nft.symbol = smartContract.token_symbol;
-      nft.owner = nft.is_burned ? '' : nft.owner;
+
+    if (tokens?.length > 0) {
+      nft = tokens[0];
+      nft.owner = nft.burned ? '' : nft.owner;
     }
     return nft;
   }
 
-  async getCW4973Token(
-    ctx: RequestContext,
-    smartContract: SmartContract,
-    tokenId: string,
-  ) {
+  async getCW4973Token(ctx: RequestContext, contract: any, tokenId: string) {
     this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
     const token = await this.soulboundTokenRepository.findOne({
       where: {
         token_id: tokenId,
-        contract_address: smartContract.contract_address,
+        contract_address: contract.smart_contract.address,
       },
     });
 
@@ -499,10 +455,10 @@ export class ContractService {
 
     const nft = {
       id: token?.id || '',
-      contract_address: smartContract.contract_address,
+      contract_address: contract.smart_contract.address,
       token_id: token?.token_id || '',
       token_uri: token?.token_uri || '',
-      token_name: smartContract?.token_name || '',
+      token_name: contract.name || '',
       token_name_ipfs: token?.token_name || '',
       animation_url: token?.animation_url || '',
       token_img: token?.token_img || '',
@@ -512,8 +468,7 @@ export class ContractService {
       picked: token?.picked || '',
       signature: token?.signature || '',
       pub_key: token?.pub_key || '',
-      minter_address: smartContract?.minter_address || '',
-      description: smartContract?.description || '',
+      minter_address: contract.minter || '',
       type: CONTRACT_TYPE.CW4973,
       ipfs: JSON.parse(token?.ipfs) || '',
     };

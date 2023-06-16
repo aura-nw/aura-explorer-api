@@ -59,6 +59,7 @@ export class Cw721TokenService {
           name
           address
         }
+        symbol
       }`;
 
     const graphqlQuery = {

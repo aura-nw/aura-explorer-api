@@ -14,7 +14,6 @@ import { AkcLogger, ReqContext, RequestContext } from '../../../shared';
 import { Cw721TokenParamsDto } from '../dtos/cw721-token-params.dto';
 import { NftByOwnerParamsDto } from '../dtos/nft-by-owner-params.dto';
 import { Cw721TokenService } from '../services/cw721-token.service';
-import { NftByContractParamsDto } from '../dtos/nft-by-contract-params.dto';
 
 @ApiTags('cw721-tokens')
 @Controller('cw721-tokens')
