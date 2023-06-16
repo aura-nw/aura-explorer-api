@@ -9,5 +9,6 @@ export class addColumnMarketCapIntoTokenMarkets1668583661192
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 
 import * as util from 'util';
@@ -47,13 +46,20 @@ export class AppService {
       blocks,
       totalValidatorNum,
       totalValidatorActiveNum,
-      totalTxsNum
+      totalTxsNum,
     ] = await Promise.all([
-      this.serviceUtil.getDataAPI(`${this.indexerUrl}${util.format(INDEXER_API.STATUS, this.indexerChainId)}`, '', ctx),
+      this.serviceUtil.getDataAPI(
+        `${this.indexerUrl}${util.format(
+          INDEXER_API.STATUS,
+          this.indexerChainId,
+        )}`,
+        '',
+        ctx,
+      ),
       this.syncStatusRepos.findOne(),
       this.validatorService.getTotalValidator(),
       this.validatorService.getTotalValidatorActive(),
-      this.metricService.getNumberTransactions()
+      this.metricService.getNumberTransactions(),
     ]);
 
     let height;
@@ -65,18 +71,22 @@ export class AppService {
 
     const data = statusData.data;
     const bonded_tokens = Number(data.pool.bonded_tokens);
-    const inflation = (data.inflation.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
+    const inflation =
+      (data.inflation.inflation * 100).toFixed(2) + CONST_CHAR.PERCENT;
     const communityPool = data?.communityPool;
-    const supplyData = data?.supply?.supply;
 
     if (communityPool && communityPool?.pool && communityPool.pool.length > 0) {
-      const filterCommunityPool = communityPool.pool.filter( f => String(f.denom) === this.appParams.chainInfo.coinMinimalDenom);
-      if(filterCommunityPool){
+      const filterCommunityPool = communityPool.pool.filter(
+        (f) => String(f.denom) === this.appParams.chainInfo.coinMinimalDenom,
+      );
+      if (filterCommunityPool) {
         comPool = Number(filterCommunityPool[0].amount);
       }
     }
     if (data?.supply && data.supply?.supply && data.supply.supply.length > 0) {
-      const supplyDenom = data.supply.supply.find(f => f.denom === this.minimalDenom);
+      const supplyDenom = data.supply.supply.find(
+        (f) => f.denom === this.minimalDenom,
+      );
       if (supplyDenom) {
         supply = parseInt(supplyDenom.amount);
       }
@@ -84,14 +94,14 @@ export class AppService {
 
     return {
       block_height: height,
-      total_txs_num: (totalTxsNum)? Number(totalTxsNum[0].total): 0,
+      total_txs_num: totalTxsNum ? Number(totalTxsNum[0].total) : 0,
       total_validator_num: totalValidatorNum,
       total_validator_active_num: totalValidatorActiveNum,
       block_time: '',
       bonded_tokens: bonded_tokens,
       inflation: inflation,
       community_pool: comPool,
-      supply: supply
+      supply: supply,
     };
   }
 }

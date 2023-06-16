@@ -1,4 +1,3 @@
-import * as moment from 'moment';
 import { MetricConditionDto } from '../dtos/metric-condition.dto';
 import { MetricOutput } from '../dtos/metric-output.dto';
 import { Range, TypeDate } from './enum';

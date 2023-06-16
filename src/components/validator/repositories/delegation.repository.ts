@@ -5,10 +5,10 @@ import { Delegation } from '../../../shared';
 
 @EntityRepository(Delegation)
 export class DelegationRepository extends Repository<Delegation> {
-    async getSumAmountByAddress(delegatorAddress: string) {
-        return await this.createQueryBuilder("del")
-            .select("SUM(del.amount)", "sum")
-            .where({ delegator_address: delegatorAddress })
-            .getRawOne();
-    }
+  async getSumAmountByAddress(delegatorAddress: string) {
+    return await this.createQueryBuilder('del')
+      .select('SUM(del.amount)', 'sum')
+      .where({ delegator_address: delegatorAddress })
+      .getRawOne();
+  }
 }
