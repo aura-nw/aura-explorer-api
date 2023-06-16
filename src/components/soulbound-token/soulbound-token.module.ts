@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SharedModule } from '../../shared';
 import { ContractUtil } from '../../shared/utils/contract.util';
 import { ServiceUtil } from '../../shared/utils/service.util';
-import { SmartContractRepository } from '../contract/repositories/smart-contract.repository';
 import { SoulboundTokenController } from './controllers/soulbound-token.controller';
 import { SoulboundTokenRepository } from './repositories/soulbound-token.repository';
 import { SoulboundTokenService } from './services/soulbound-token.service';
@@ -18,7 +17,6 @@ import { SoulboundRejectListRepository } from './repositories/soulbound-reject-l
   imports: [
     SharedModule,
     TypeOrmModule.forFeature([
-      SmartContractRepository,
       SoulboundTokenRepository,
       SoulboundWhiteListRepository,
       SoulboundRejectListRepository,

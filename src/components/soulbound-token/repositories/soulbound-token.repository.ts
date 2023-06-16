@@ -8,7 +8,6 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
-import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 
 @EntityRepository(SoulboundToken)
 export class SoulboundTokenRepository extends Repository<SoulboundToken> {
@@ -25,7 +24,6 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
    * @returns
    */
   async getTokens(
-    minterAddress: string,
     contractAddress: string,
     keyword: string,
     status: string,
@@ -37,18 +35,9 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     );
     const builder = this.createQueryBuilder('sbt')
       .select('sbt.*')
-      .innerJoin(
-        SmartContract,
-        'sm',
-        'sm.contract_address = sbt.contract_address',
-      )
-      .where(
-        `sm.minter_address=:minterAddress AND sm.contract_address=:contractAddress`,
-        {
-          minterAddress,
-          contractAddress,
-        },
-      );
+      .where(`sbt.contract_address=:contractAddress`, {
+        contractAddress,
+      });
     const _finalizeResult = async () => {
       const tokens = await builder
         .limit(limit)
