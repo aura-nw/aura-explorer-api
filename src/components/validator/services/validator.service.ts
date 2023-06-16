@@ -181,6 +181,7 @@ export class ValidatorService {
     ctx: RequestContext,
     delegatorAddress: string,
   ): Promise<any> {
+    //FIXME: migrate INDEXER_API.ACCOUNT_DELEGATIONS to horoscope_v2.
     this.logger.log(ctx, `${this.getDelegations.name} was called!`);
     const result: any = {};
 
