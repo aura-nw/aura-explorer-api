@@ -1,9 +1,4 @@
-import {
-  Brackets,
-  EntityRepository,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
 import { Logger } from '@nestjs/common';
 import { User } from '../../../shared/entities/user.entity';
@@ -30,8 +25,7 @@ export class NameTagRepository extends Repository<NameTag> {
       .leftJoin(User, 'user', 'user.id = tag.updated_by')
       .where('tag.deleted_at IS NULL');
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _finalizeResult = async (_builder: SelectQueryBuilder<NameTag>) => {
+    const _finalizeResult = async () => {
       const result = await builder
         .limit(limit)
         .offset(offset)
@@ -54,6 +48,6 @@ export class NameTagRepository extends Repository<NameTag> {
       );
     }
 
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 }

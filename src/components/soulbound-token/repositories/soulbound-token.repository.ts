@@ -49,10 +49,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
           contractAddress,
         },
       );
-    const _finalizeResult = async (
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      _builder: SelectQueryBuilder<SoulboundToken>,
-    ) => {
+    const _finalizeResult = async () => {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
@@ -84,7 +81,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         status,
       });
     }
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 
   /**
@@ -108,10 +105,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     const builder = this.createQueryBuilder('sbt').select('sbt.*').where({
       receiver_address: receiverAddress,
     });
-    const _finalizeResult = async (
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      _builder: SelectQueryBuilder<SoulboundToken>,
-    ) => {
+    const _finalizeResult = async () => {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
@@ -146,7 +140,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         ]),
       });
     }
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 
   async getPickedToken(receiverAddress: string, limit: number) {
