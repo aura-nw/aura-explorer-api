@@ -2,6 +2,7 @@ import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
 import { Logger } from '@nestjs/common';
 import { User } from '../../../shared/entities/user.entity';
+import { PAGE_REQUEST } from '../../../shared';
 
 @EntityRepository(NameTag)
 export class NameTagRepository extends Repository<NameTag> {
@@ -49,5 +50,33 @@ export class NameTagRepository extends Repository<NameTag> {
     }
 
     return await _finalizeResult();
+  }
+
+  async searchNameTag(
+    keyword: string[],
+    limit: number,
+    nextKey: number,
+  ): Promise<NameTag[]> {
+    limit = Number(limit) || PAGE_REQUEST.MAX_200;
+
+    if (limit > PAGE_REQUEST.MAX_200) {
+      limit = PAGE_REQUEST.MAX_200;
+    }
+
+    let qb = this.createQueryBuilder()
+      .select(['id', 'address', 'name_tag'])
+      .limit(Number(limit) || PAGE_REQUEST.MAX_200);
+
+    if (keyword?.length > 0) {
+      qb = qb
+        .where('address IN(:...addresses)', { addresses: keyword })
+        .orWhere('name_tag IN(:...name_tags)', { name_tags: keyword });
+    }
+
+    if (nextKey) {
+      qb = qb.andWhere('id > :nextKey', { nextKey });
+    }
+
+    return qb.getRawMany();
   }
 }

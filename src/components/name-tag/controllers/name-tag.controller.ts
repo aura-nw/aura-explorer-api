@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpStatus,
   Param,
   Post,
@@ -14,6 +15,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiForbiddenResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -34,12 +36,12 @@ import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
+import { SearchNameTagDto } from '../dtos/search-name-tag.dto';
+import { SearchNameTagResult } from '../dtos/searh-name-tag-result.dto';
 
 @Controller('name-tag')
 @ApiTags('name-tag')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RoleGuard)
-@Roles(USER_ROLE.ADMIN)
 @ApiUnauthorizedResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
 })
@@ -58,6 +60,8 @@ export class NameTagController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'Get list name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async getNameTags(
@@ -74,6 +78,8 @@ export class NameTagController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'Get list name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async getNameTagsDetail(
@@ -86,6 +92,8 @@ export class NameTagController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'create name tag' })
   @ApiResponse({ status: HttpStatus.CREATED })
   async createNameTag(
@@ -97,6 +105,8 @@ export class NameTagController {
   }
 
   @Put()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'update name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async updateNameTag(
@@ -108,6 +118,8 @@ export class NameTagController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @ApiOperation({ summary: 'delete name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async deleteNameTag(
@@ -116,5 +128,18 @@ export class NameTagController {
   ): Promise<any> {
     this.logger.log(ctx, `${this.deleteNameTag.name} was called!`);
     return await this.nameTagService.deleteNameTag(ctx, id);
+  }
+
+  @Post('search')
+  @ApiOperation({ summary: 'search name tag by address or name' })
+  @ApiOkResponse({
+    description: 'return name tag by address or name.',
+    type: SearchNameTagResult,
+  })
+  @HttpCode(HttpStatus.OK)
+  async searchNameTag(
+    @Body() request: SearchNameTagDto,
+  ): Promise<SearchNameTagResult> {
+    return await this.nameTagService.searchNameTag(request);
   }
 }
