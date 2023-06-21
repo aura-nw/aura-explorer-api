@@ -59,71 +59,77 @@ export class Cw20TokenService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
 
-    const { list, count } =
-      await this.tokenMarketsRepository.getCw20TokenMarkets(request);
+    // Attributes for cw20
+    const cw20Attributes = `marketing_info
+      name
+      symbol
+      smart_contract {
+        address
+      }
+      cw20_holders {
+        amount
+        address
+      }`;
 
-    if (count == 0) {
-      return { tokens: list, count: count };
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_LIST_TOKEN,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        keyword: request?.keyword ? request?.keyword : null,
+        limit: request?.limit,
+        offset: request?.offset,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_LIST_TOKEN,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw20_contract'];
+
+    if (response?.length == 0) {
+      return { tokens: response, count: 0 };
     }
 
-    const lstAddress = list?.map((i) => i.contract_address);
+    const listAddress = response.map((item) => item.smart_contract.address);
 
-    const tokensInfo =
-      await this.smartContractRepository.getTokensByListContractAddress(
-        lstAddress,
+    const tokenMarket = await this.tokenMarketsRepository.find({
+      where: { contract_address: In(listAddress) },
+    });
+
+    const tokens = response.map((item) => {
+      const holders = item.cw20_holders?.length;
+      const holders_change_percentage_24h = 0;
+
+      const tokenFind = tokenMarket?.find(
+        (f) => String(f.contract_address) === item.smart_contract.address,
       );
-
-    const holderResponse = await lastValueFrom(
-      this.httpService.get(
-        `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
-        {
-          params: { chainId: this.indexerChainId, addresses: lstAddress },
-        },
-      ),
-    ).then((rs) => rs.data);
-
-    const listHolder = holderResponse?.data || [];
-
-    const tokens = list.map((item: TokenMarkets) => {
-      const current_price = item.current_price || 0;
-      const circulating_market_cap = item.circulating_market_cap || 0;
-      let holders_change_percentage_24h = 0;
-      let holders = 0;
-
-      const holderInfo = listHolder.find(
-        (f) => f.contract_address === item.contract_address,
-      );
-      if (holderInfo) {
-        holders = holderInfo.holders || 0;
-        holders_change_percentage_24h = holderInfo.percentage || 0;
-      }
-
-      const tokenFind = tokensInfo.find(
-        (f) => String(f.contract_address) === item.contract_address,
-      );
-
-      const contract_verification = tokenFind?.contract_verification || '';
-
       return {
-        coin_id: item.coin_id || '',
-        contract_address: item.contract_address || '',
+        coin_id: tokenFind?.coin_id || '',
+        contract_address: item.smart_contract.address || '',
         name: item.name || '',
         symbol: item.symbol || '',
-        image: item.image || '',
-        description: item.description || '',
-        circulating_market_cap: circulating_market_cap,
-        volume_24h: item.total_volume || 0,
-        price: current_price,
-        price_change_percentage_24h: item.price_change_percentage_24h || 0,
+        image: item.marketing_info?.logo?.url
+          ? item.marketing_info?.logo?.url
+          : tokenFind?.image || '',
+        description: tokenFind?.description || '',
+        circulating_market_cap: tokenFind?.circulating_market_cap || 0,
+        volume_24h: tokenFind?.total_volume || 0,
+        price: tokenFind?.current_price || 0,
+        price_change_percentage_24h:
+          tokenFind?.price_change_percentage_24h || 0,
         holders_change_percentage_24h,
         holders,
-        max_total_supply: item.max_supply || 0,
-        fully_diluted_market_cap: item.fully_diluted_valuation || 0,
-        contract_verification,
+        max_total_supply: tokenFind?.max_supply || 0,
+        fully_diluted_market_cap: tokenFind?.fully_diluted_valuation || 0,
       };
     });
 
-    return { tokens, count: count };
+    return {
+      tokens,
+      count: response?.cw20_contract_aggregate?.aggregate?.count,
+    };
   }
 
   async getCw20TokensByOwner(

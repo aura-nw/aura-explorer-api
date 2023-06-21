@@ -292,17 +292,46 @@ export class ContractService {
     contractAddress: string,
   ) {
     this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-    let token: any = null;
-    const tokenData =
-      await this.smartContractRepository.getTokenByContractAddress(
-        contractAddress,
-      );
-    if (tokenData.length > 0) {
-      token = tokenData[0];
 
-      const tokenMarketData = await this.tokenMarketsRepository.findOne({
+    // Attributes for cw20
+    const cw20Attributes = `address
+       cw20_contract {
+         name
+         marketing_info
+         cw20_holders {
+           address
+           amount
+         }
+       }      
+       code {
+         code_id_verifications {
+           verification_status
+         }
+       }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_DETAIL,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        address: contractAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_DETAIL,
+    };
+
+    const [response, tokenMarketData] = await Promise.all([
+      this.serviceUtil.fetchDataFromGraphQL(graphqlQuery),
+      this.tokenMarketsRepository.findOne({
         where: { contract_address: contractAddress },
-      });
+      }),
+    ]);
+    let token;
+
+    const list = response?.data[this.chainDB].cw20_contract;
+    if (list.length > 0) {
+      token = list[0];
       token.max_total_supply = tokenMarketData?.max_supply || 0;
       token.circulating_market_cap =
         tokenMarketData?.circulating_market_cap || 0;
@@ -312,27 +341,7 @@ export class ContractService {
         token.max_total_supply * token.price;
       token.price_change_percentage_24h =
         tokenMarketData?.price_change_percentage_24h || 0;
-      token.num_holder = 0;
       token.holders_change_percentage_24h = 0;
-
-      const holderResponse = await lastValueFrom(
-        this.httpService.get(
-          `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
-          {
-            params: {
-              chainId: this.indexerChainId,
-              addresses: [contractAddress],
-            },
-          },
-        ),
-      ).then((rs) => rs.data);
-
-      const listHolder = holderResponse?.data || [];
-
-      if (listHolder.length > 0) {
-        token.num_holder = listHolder[0].holders || 0;
-        token.holders_change_percentage_24h = listHolder[0].percentage || 0;
-      }
     }
 
     return token;

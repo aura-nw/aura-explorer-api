@@ -148,6 +148,8 @@ export const INDEXER_API_V2 = {
     CW4973_TOKEN_BY_MINTER: `query CW4973ByMinter($address: String, $minter: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}}) { aggregate { count } } } }`,
     CW4973_CONTRACT: `query CW4973Contract($address: String, $minter: String) { %s { cw721_contract(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}) { %s } } }`,
     VERIFY_STEP: `query VerifyStep($codeId: Int) { %s { code_id_verification(where: {code_id: {_eq: $codeId}}) { %s } } }`,
+    CW20_LIST_TOKEN: `query CW20ListToken($keyword: String, $limit: Int, $offset: Int) { %s { cw20_contract(where: {_or: [{name: {_eq: $keyword}}, {smart_contract: {address: {_eq: $keyword}}}]}, limit: $limit, offset: $offset) { %s } cw20_contract_aggregate(where: {_or: [{name: {_eq: $keyword}}, {smart_contract: {address: {_eq: $keyword}}}]}) { aggregate { count } } } }`,
+    CW20_DETAIL: `query CW20Detail($address: String) { %s { smart_contract(where: {address: {_eq: $address}}) { %s } } }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -158,6 +160,8 @@ export const INDEXER_API_V2 = {
     CONTRACT_CODE_LIST: 'ContractCode',
     CONTRACT_CODE_DETAIL: 'ContractCodeDetail',
     VERIFY_STEP: 'VerifyStep',
+    CW20_LIST_TOKEN: 'CW20ListToken',
+    CW20_DETAIL: 'CW20Detail',
   },
 };
 
