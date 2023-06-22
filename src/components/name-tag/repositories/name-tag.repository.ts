@@ -67,7 +67,11 @@ export class NameTagRepository extends Repository<NameTag> {
       .select(['id', 'address', 'name_tag'])
       .limit(Number(limit) || PAGE_REQUEST.MAX_200);
 
-    if (keyword?.length > 0) {
+    if (keyword?.length == 1) {
+      qb = qb.orWhere('name_tag LIKE :name_tag ', {
+        name_tag: `%${keyword[0]}%`,
+      });
+    } else if (keyword?.length > 1) {
       qb = qb
         .where('address IN(:...addresses)', { addresses: keyword })
         .orWhere('name_tag IN(:...name_tags)', { name_tags: keyword });
