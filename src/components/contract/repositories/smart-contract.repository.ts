@@ -18,6 +18,7 @@ import {
   LENGTH,
   SoulboundToken,
   SYNC_CONTRACT_TRANSACTION_TYPE,
+  TokenMarkets,
   Transaction,
 } from '../../../shared';
 import { Cw721TokenParamsDto } from '../../cw721-token/dtos/cw721-token-params.dto';
@@ -122,6 +123,11 @@ export class SmartContractRepository extends Repository<SmartContract> {
   async getContractsByContractAddress(contractAddress: string) {
     return await this.createQueryBuilder('sc')
       .leftJoin(SmartContractCode, 'scc', 'sc.code_id = scc.code_id')
+      .leftJoin(
+        TokenMarkets,
+        'tkm',
+        'sc.contract_address = tkm.contract_address',
+      )
       .select([
         'sc.*',
         'scc.type `type`',
@@ -135,6 +141,8 @@ export class SmartContractRepository extends Repository<SmartContract> {
         'scc.execute_msg_schema `execute_msg_schema`',
         'scc.contract_hash `contract_hash`',
         'scc.s3_location `s3_location`',
+        'tkm.verify_status `verify_status`',
+        'tkm.verify_text `verify_text`',
       ])
       .orderBy('sc.updated_at', 'DESC')
       .where('sc.contract_address = :contract_address', {
