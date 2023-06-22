@@ -302,7 +302,8 @@ export class ContractService {
            address
            amount
          }
-       }      
+       }
+       decimal
        code {
          code_id_verifications {
            verification_status

@@ -197,56 +197,73 @@ export class Cw20TokenService {
       offset -= result.length;
     }
 
-    const params = [
-      request.account_address,
-      this.indexerChainId,
-      limit,
-      offset,
-    ];
-
-    let getByOwnerUrl = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_CW20_TOKENS_BY_OWNER,
-      ...params,
-    )}`;
+    // Attributes for cw20
+    const cw20Attributes = `marketing_info
+      name
+      symbol
+      decimal
+      smart_contract {
+        address
+      }
+      cw20_holders {
+        amount
+        address
+      }`;
 
     const isSearchByContractAddress =
       keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       keyword.length === LENGTH.CONTRACT_ADDRESS;
-
+    let contractAddress;
+    let tokenName;
     if (keyword) {
       if (isSearchByContractAddress) {
-        getByOwnerUrl = `${getByOwnerUrl}&contractAddress=${keyword}`;
+        contractAddress = keyword;
       } else {
-        getByOwnerUrl = `${getByOwnerUrl}&tokenName=${keyword}`;
+        tokenName = `%${keyword}%`;
       }
     }
 
-    const resultGetCw20Tokens = await this.serviceUtil.getDataAPI(
-      getByOwnerUrl,
-      '',
-      ctx,
-    );
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_OWNER,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        limit: limit,
+        offset: offset,
+        owner: request?.account_address,
+        address: contractAddress,
+        name: tokenName,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_OWNER,
+    };
 
-    const asset = resultGetCw20Tokens?.data?.assets?.CW20?.asset;
-    const count = resultGetCw20Tokens?.data?.assets?.CW20?.count;
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+
+    const asset = response?.cw20_contract;
+    const count = response?.cw20_contract_aggregate?.aggregate?.count;
 
     let tokens = [];
-    if (asset.length > 0) {
-      const listContract_address = asset?.map((i) => i.contract_address);
+    if (asset?.length > 0) {
+      const listContract_address = asset?.map((i) => i.smart_contract.address);
       const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
         where: { contract_address: In(listContract_address) },
       });
       tokens = asset.map((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo.find(
-          (f) => f.contract_address === item.contract_address,
+          (f) => f.contract_address === item.smart_contract.address,
         );
         const asset = new AssetDto();
-        asset.contract_address = item.contract_address || '-';
+        asset.contract_address = item.smart_contract.address || '-';
         asset.image = tokenMarketsInfo?.image || '';
-        asset.name = item.asset_info?.data?.name || '';
-        asset.symbol = item.asset_info?.data?.symbol || '';
-        asset.decimals = item.asset_info?.data?.decimals || 0;
-        asset.balance = item.balance || 0;
+        asset.name = item.name || '';
+        asset.symbol = item.symbol || '';
+        asset.decimals = item.decimals || 0;
+        asset.balance =
+          item.cw20_holders?.find((f) => f.address === request?.account_address)
+            .amount || 0;
         asset.price = tokenMarketsInfo?.current_price || 0;
         asset.price_change_percentage_24h =
           tokenMarketsInfo?.price_change_percentage_24h || 0;

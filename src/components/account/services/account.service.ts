@@ -99,7 +99,7 @@ export class AccountService {
 
     // get balance
     let balancesAmount = 0;
-    const balances = data.balances;
+    const balances = data.balances?.length ? data.balances : [];
     accountOutput.balances = new Array(balances.length);
     balances.forEach((item) => {
       const balance = new AccountBalance();

@@ -150,6 +150,7 @@ export const INDEXER_API_V2 = {
     VERIFY_STEP: `query VerifyStep($codeId: Int) { %s { code_id_verification(where: {code_id: {_eq: $codeId}}) { %s } } }`,
     CW20_LIST_TOKEN: `query CW20ListToken($keyword: String, $limit: Int, $offset: Int) { %s { cw20_contract(where: {_or: [{name: {_eq: $keyword}}, {smart_contract: {address: {_eq: $keyword}}}]}, limit: $limit, offset: $offset) { %s } cw20_contract_aggregate(where: {_or: [{name: {_eq: $keyword}}, {smart_contract: {address: {_eq: $keyword}}}]}) { aggregate { count } } } }`,
     CW20_DETAIL: `query CW20Detail($address: String) { %s { smart_contract(where: {address: {_eq: $address}}) { %s } } }`,
+    CW20_OWNER: `query CW20Owner($limit: Int, $offset: Int, $owner: String, $name: String, $address: String) { %s { cw20_contract(limit: $limit, offset: $offset, where: {cw20_holders: {address: {_eq: $owner}}, name: {_ilike: $name}, smart_contract: {address: {_eq: $address}}}) { %s } cw20_contract_aggregate(where: {cw20_holders: {address: {_eq: $owner}}, name: {_ilike: $name}, smart_contract: {address: {_eq: $address}}}) { aggregate { count } } } }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -162,6 +163,7 @@ export const INDEXER_API_V2 = {
     VERIFY_STEP: 'VerifyStep',
     CW20_LIST_TOKEN: 'CW20ListToken',
     CW20_DETAIL: 'CW20Detail',
+    CW20_OWNER: 'CW20Owner',
   },
 };
 
