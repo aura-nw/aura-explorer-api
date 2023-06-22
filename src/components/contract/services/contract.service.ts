@@ -371,6 +371,8 @@ export class ContractService {
         token.max_total_supply * token.price;
       token.price_change_percentage_24h =
         tokenMarketData?.price_change_percentage_24h || 0;
+      token.verify_status = tokenMarketData?.verify_status || '';
+      token.verify_text = tokenMarketData?.verify_text || '';
       token.num_holder = 0;
       token.holders_change_percentage_24h = 0;
 
