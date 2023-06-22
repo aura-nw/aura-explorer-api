@@ -129,7 +129,7 @@ export class ContractService {
       type
       status
       created_at
-      code_id_verifications {
+      code_id_verifications(order_by: {updated_at: desc}) {
         verified_at
         compiler_version
         github_url
@@ -209,7 +209,7 @@ export class ContractService {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
         this.chainDB,
-        'verify_step',
+        'verify_step,',
       ),
       variables: {
         codeId: codeId,
@@ -226,7 +226,7 @@ export class ContractService {
       for (let index = 0; index < VERIFY_STEP.length; index++) {
         const stepId = index + 1;
         // Get last success element
-        const result = response[response.length - 1];
+        const result = response[0];
         const defaultStep = {
           code_id: codeId,
           check_id: stepId,
@@ -337,6 +337,8 @@ export class ContractService {
       token.circulating_market_cap =
         tokenMarketData?.circulating_market_cap || 0;
       token.price = tokenMarketData?.current_price || 0;
+      token.verify_status = tokenMarketData?.verify_status || '';
+      token.verify_text = tokenMarketData?.verify_text || '';
       token.fully_diluted_market_cap =
         tokenMarketData?.fully_diluted_valuation ||
         token.max_total_supply * token.price;

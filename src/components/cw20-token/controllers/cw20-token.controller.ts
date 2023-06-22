@@ -94,4 +94,23 @@ export class Cw20TokenController {
 
     return { data: price, meta: {} };
   }
+
+  @Get('/:contractAddress')
+  @ApiOperation({
+    summary: 'Get token market of cw20 token by contract address',
+  })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getTokenMarket(
+    @ReqContext() ctx: RequestContext,
+    @Param('contractAddress') contractAddress: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+    const contract = await this.cw20TokenService.getTokenMarket(
+      ctx,
+      contractAddress,
+    );
+
+    return { data: contract, meta: {} };
+  }
 }

@@ -114,6 +114,8 @@ export class Cw20TokenService {
           ? item.marketing_info?.logo?.url
           : tokenFind?.image || '',
         description: tokenFind?.description || '',
+        verify_status: tokenFind?.verify_status || '',
+        verify_text: tokenFind?.verify_text || '',
         circulating_market_cap: tokenFind?.circulating_market_cap || 0,
         volume_24h: tokenFind?.total_volume || 0,
         price: tokenFind?.current_price || 0,
@@ -258,6 +260,8 @@ export class Cw20TokenService {
         const asset = new AssetDto();
         asset.contract_address = item.smart_contract.address || '-';
         asset.image = tokenMarketsInfo?.image || '';
+        asset.verify_status = tokenMarketsInfo?.verify_status || '';
+        asset.verify_text = tokenMarketsInfo?.verify_text || '';
         asset.name = item.name || '';
         asset.symbol = item.symbol || '';
         asset.decimals = item.decimals || 0;
@@ -286,6 +290,18 @@ export class Cw20TokenService {
     });
 
     return tokenData?.current_price || 0;
+  }
+
+  async getTokenMarket(
+    ctx: RequestContext,
+    contractAddress: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+    const tokenData = await this.tokenMarketsRepository.findOne({
+      where: { contract_address: contractAddress },
+    });
+
+    return tokenData;
   }
 
   async getTotalAssetByAccountAddress(
