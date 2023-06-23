@@ -20,6 +20,6 @@ export class NameTagParamsDto {
   @ApiPropertyOptional({ default: '' })
   keyword: string;
 
-  @ApiProperty({ default: VIEW_TYPE.PUBLIC })
-  viewType: VIEW_TYPE;
+  @ApiPropertyOptional({ default: VIEW_TYPE.PUBLIC })
+  view_type: VIEW_TYPE;
 }

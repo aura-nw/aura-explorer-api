@@ -73,7 +73,7 @@ export class NameTagController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get list name tag' })
+  @ApiOperation({ summary: 'Get detail name tag by id' })
   @ApiResponse({ status: HttpStatus.OK })
   async getNameTagsDetail(
     @ReqContext() ctx: RequestContext,
@@ -85,7 +85,7 @@ export class NameTagController {
   }
 
   @Get('account/:address')
-  @ApiOperation({ summary: 'Get name tag by account' })
+  @ApiOperation({ summary: 'Get name tag by account address' })
   @ApiResponse({ status: HttpStatus.OK })
   async getNameTagDetailByAddress(
     @ReqContext() ctx: RequestContext,
@@ -101,7 +101,7 @@ export class NameTagController {
   }
 
   @Get('contract/:address')
-  @ApiOperation({ summary: 'Get name tag by account' })
+  @ApiOperation({ summary: 'Get name tag by contract address' })
   @ApiResponse({ status: HttpStatus.OK })
   async getNameTagDetailByContractAddress(
     @ReqContext() ctx: RequestContext,
@@ -132,23 +132,24 @@ export class NameTagController {
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put()
+  @Put(':id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
-  @ApiOperation({ summary: 'update name tag' })
+  @ApiOperation({ summary: 'Update name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async updateNameTag(
     @ReqContext() ctx: RequestContext,
     @Body() request: StoreNameTagParamsDto,
+    @Param('id') id: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    return await this.nameTagService.updateNameTag(ctx, request);
+    return await this.nameTagService.updateNameTag(ctx, request, id);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
-  @ApiOperation({ summary: 'delete name tag' })
+  @ApiOperation({ summary: 'Delete name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async deleteNameTag(
     @ReqContext() ctx: RequestContext,

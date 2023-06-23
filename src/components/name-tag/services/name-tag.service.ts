@@ -34,7 +34,7 @@ export class NameTagService {
       req.keyword,
       req.limit,
       req.offset,
-      req.viewType,
+      req.view_type,
     );
 
     return { result, count };
@@ -86,7 +86,11 @@ export class NameTagService {
     }
   }
 
-  async updateNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
+  async updateNameTag(
+    ctx: RequestContext,
+    req: StoreNameTagParamsDto,
+    id: number,
+  ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     const user = await this.userService.findOneById(ctx.user?.id || 0);
     const errorMsg = await this.validate(req, user);
@@ -95,11 +99,9 @@ export class NameTagService {
     }
 
     try {
-      const entity = StoreNameTagParamsDto.toModel(req);
-      entity.updated_by = user.id;
       const nameTag = await this.nameTagRepository.findOne({
         where: {
-          id: entity.id,
+          id,
         },
       });
       if (!nameTag) {
@@ -107,6 +109,9 @@ export class NameTagService {
           util.format(MESSAGES.ERROR.NOT_FOUND, 'Tag name'),
         );
       }
+
+      const entity = StoreNameTagParamsDto.toModel(req);
+      entity.updated_by = user.id;
 
       const nameTagUpdate = { ...nameTag, ...entity };
 

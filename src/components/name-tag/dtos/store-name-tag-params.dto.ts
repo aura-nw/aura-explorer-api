@@ -1,11 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NAME_TAG_TYPE, VIEW_TYPE } from '../../../shared';
 import { Expose, classToPlain, plainToClass } from 'class-transformer';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
 
 export class StoreNameTagParamsDto {
   @Expose()
-  @ApiProperty({ default: '' })
   id: number;
 
   @Expose()
@@ -24,7 +23,7 @@ export class StoreNameTagParamsDto {
   name_tag: string;
 
   @Expose()
-  @ApiProperty({ default: '', required: false })
+  @ApiPropertyOptional({ default: '' })
   note: string;
 
   static toModel(companyDto: StoreNameTagParamsDto): NameTag {

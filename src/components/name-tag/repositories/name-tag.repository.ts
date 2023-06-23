@@ -27,7 +27,7 @@ export class NameTagRepository extends Repository<NameTag> {
     keyword: string,
     limit: number,
     offset: number,
-    viewType: VIEW_TYPE,
+    view_type: VIEW_TYPE,
   ) {
     this._logger.log(
       `============== ${this.getNameTags.name} was called! ==============`,
@@ -61,7 +61,7 @@ export class NameTagRepository extends Repository<NameTag> {
       );
     }
 
-    const where = await this.getWhereByUser(user, viewType);
+    const where = await this.getWhereByUser(user, view_type);
     builder.where(where);
 
     return await _finalizeResult();
@@ -84,10 +84,10 @@ export class NameTagRepository extends Repository<NameTag> {
     }
 
     if (
-      (user.role === USER_ROLE.USER && nameTag.created_by === user.id) ||
-      (user.role === USER_ROLE.ADMIN &&
+      (user?.role === USER_ROLE.USER && nameTag.created_by === user?.id) ||
+      (user?.role === USER_ROLE.ADMIN &&
         nameTag.view_type === VIEW_TYPE.PRIVATE &&
-        nameTag.created_by === user.id) ||
+        nameTag.created_by === user?.id) ||
       nameTag.view_type === VIEW_TYPE.PUBLIC
     ) {
       return nameTag;
@@ -149,15 +149,15 @@ export class NameTagRepository extends Repository<NameTag> {
 
   private async getWhereByUser(
     user: User,
-    viewType: VIEW_TYPE,
+    view_type: VIEW_TYPE,
   ): Promise<string> {
     if (!user) {
       return `tag.view_type = 'public'`;
     } else if (user.role === USER_ROLE.ADMIN) {
-      if (viewType === VIEW_TYPE.PUBLIC) {
+      if (view_type === VIEW_TYPE.PUBLIC) {
         return `tag.view_type = 'public'`;
       } else {
-        return `tag.created_by = ${user.id} AND tag.view_type = '${viewType}'`;
+        return `tag.created_by = ${user.id} AND tag.view_type = '${view_type}'`;
       }
     } else if (user.role === USER_ROLE.USER) {
       return `tag.created_by = ${user.id} AND tag.view_type = 'private'`;
