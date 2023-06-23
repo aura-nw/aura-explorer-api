@@ -1,14 +1,10 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
-import { SmartContractRepository } from '../../../components/contract/repositories/smart-contract.repository';
 import { In } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
   AkcLogger,
   AURA_INFO,
-  INDEXER_API,
   INDEXER_API_V2,
   LENGTH,
   RequestContext,
@@ -18,7 +14,6 @@ import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { AssetDto } from '../dtos/asset.dto';
 import { Cw20TokenByOwnerParamsDto } from '../dtos/cw20-token-by-owner-params.dto';
-import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
 import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 

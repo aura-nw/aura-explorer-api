@@ -10,7 +10,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AkcLogger, ReqContext, RequestContext, TokenMarkets } from '../../../shared';
+import {
+  AkcLogger,
+  ReqContext,
+  RequestContext,
+  TokenMarkets,
+} from '../../../shared';
 import { Cw20TokenByOwnerParamsDto } from '../dtos/cw20-token-by-owner-params.dto';
 import { Cw20TokenService } from '../services/cw20-token.service';
 import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
