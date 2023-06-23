@@ -200,7 +200,7 @@ export class ContractService {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
         this.chainDB,
-        'verify_step,',
+        'verify_step',
       ),
       variables: {
         codeId: codeId,
