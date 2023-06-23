@@ -1,50 +1,78 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   AURA_INFO,
   AkcLogger,
   LENGTH,
+  NAME_TAG_TYPE,
   RequestContext,
+  USER_ROLE,
+  VIEW_TYPE,
 } from '../../../shared';
 import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
 import { NameTagRepository } from '../repositories/name-tag.repository';
 import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
-import { NameTag } from '../../../shared/entities/name-tag.entity';
+import { UserService } from '../../../components/user/user.service';
+import { User } from '../../../shared/entities/user.entity';
 
 @Injectable()
 export class NameTagService {
   constructor(
     private readonly logger: AkcLogger,
     private nameTagRepository: NameTagRepository,
+    private userService: UserService,
   ) {}
 
   async getNameTags(ctx: RequestContext, req: NameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
+    const user = await this.userService.findOneById(ctx.user?.id || 0);
+
     const { result, count } = await this.nameTagRepository.getNameTags(
+      user,
       req.keyword,
       req.limit,
       req.offset,
+      req.viewType,
     );
 
     return { result, count };
   }
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
-    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    return await this.nameTagRepository.findOne(id);
+    this.logger.log(ctx, `${this.getNameTagsDetail.name} was called!`);
+    const user = await this.userService.findOneById(ctx.user?.id || 0);
+
+    return await this.nameTagRepository.getNameTag(user, id);
+  }
+
+  async getNameTagDetailByAddress(
+    ctx: RequestContext,
+    address: string,
+    type: NAME_TAG_TYPE,
+  ): Promise<StoreNameTagParamsDto> {
+    this.logger.log(ctx, `${this.getNameTagDetailByAddress.name} was called!`);
+    const user = await this.userService.findOneById(ctx.user?.id || 0);
+
+    const nameTag = await this.nameTagRepository.getNameTagDetailByAddress(
+      user,
+      address,
+      type,
+    );
+
+    return StoreNameTagParamsDto.toDto(nameTag);
   }
 
   async createNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
     this.logger.log(ctx, `${this.createNameTag.name} was called!`);
-    const errorMsg = await this.validate(req);
+    const user = await this.userService.findOneById(ctx.user?.id || 0);
+    const errorMsg = await this.validate(req, user);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new NameTag();
-    entity.address = req.address;
-    entity.type = req.type;
-    entity.name_tag = req.nameTag;
-    entity.updated_by = req.userId;
+    const entity = StoreNameTagParamsDto.toModel(req);
+    entity.created_by = user.id;
+    entity.updated_by = user.id;
+
     try {
       const result = await this.nameTagRepository.save(entity);
       return { data: result, meta: {} };
@@ -58,43 +86,61 @@ export class NameTagService {
 
   async updateNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    const errorMsg = await this.validate(req, false);
+    const user = await this.userService.findOneById(ctx.user?.id || 0);
+    const errorMsg = await this.validate(req, user);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new NameTag();
-    entity.address = req.address;
-    entity.type = req.type;
-    entity.name_tag = req.nameTag;
-    entity.updated_by = req.userId;
+
     try {
-      const result = await this.nameTagRepository.update(req.id, entity);
+      const entity = StoreNameTagParamsDto.toModel(req);
+      entity.updated_by = user.id;
+      const nameTag = await this.nameTagRepository.findOne({
+        where: {
+          id: entity.id,
+        },
+      });
+      if (!nameTag) {
+        throw new NotFoundException('Name tag not found');
+      }
+
+      const nameTagUpdate = { ...nameTag, ...entity };
+
+      const result = await this.nameTagRepository.update(
+        entity.id,
+        nameTagUpdate,
+      );
       return { data: result, meta: {} };
     } catch (err) {
       this.logger.error(
         ctx,
         `Class ${NameTagService.name} call ${this.updateNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
+      throw err;
     }
   }
 
   async deleteNameTag(ctx: RequestContext, id: number) {
-    this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
+    this.logger.log(ctx, `${this.deleteNameTag.name} was called!`);
     try {
-      return await this.nameTagRepository.softDelete(id);
+      const user = await this.userService.findOneById(ctx.user?.id || 0);
+      return await this.nameTagRepository.deleteNameTag(user, id);
     } catch (err) {
       this.logger.error(
         ctx,
-        `Class ${NameTagService.name} call ${this.updateNameTag.name} error ${err?.code} method error: ${err?.stack}`,
+        `Class ${NameTagService.name} call ${this.deleteNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
+      throw err;
     }
   }
 
-  private async validate(req: StoreNameTagParamsDto, isCreate = true) {
+  private async validate(req: StoreNameTagParamsDto, user: User) {
     const validFormat =
-      req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-      (req.address.length === LENGTH.CONTRACT_ADDRESS ||
-        req.address.length === LENGTH.ACCOUNT_ADDRESS);
+      (req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+        req.address.length === LENGTH.CONTRACT_ADDRESS &&
+        req.type === NAME_TAG_TYPE.CONTRACT) ||
+      (req.address.length === LENGTH.ACCOUNT_ADDRESS &&
+        req.type === NAME_TAG_TYPE.ACCOUNT);
 
     if (!validFormat) {
       return {
@@ -103,28 +149,41 @@ export class NameTagService {
       };
     }
 
-    if (isCreate) {
-      // check duplicate address
-      const address = await this.nameTagRepository.findOne({
-        where: { address: req.address, deleted_at: null },
-      });
-      if (address) {
-        return {
-          code: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Code,
-          message: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
-        };
+    const tag = await this.nameTagRepository.findOne({
+      where: {
+        address: req.address,
+        created_by: user.id,
+        view_type: req.view_type,
+      },
+    });
+
+    if (user) {
+      // Only Admin can create/update public name tag
+      if (user.role != USER_ROLE.ADMIN) {
+        if (req.view_type === VIEW_TYPE.PUBLIC) {
+          return {
+            code: ADMIN_ERROR_MAP.UNAUTHORIZED.Code,
+            message: ADMIN_ERROR_MAP.UNAUTHORIZED.Message,
+          };
+        }
       }
     }
 
-    const tag = await this.nameTagRepository.findOne({
-      where: { name_tag: req.nameTag, deleted_at: null },
-    });
-
     if (tag) {
-      return {
-        code: ADMIN_ERROR_MAP.DUPLICATE_TAG.Code,
-        message: ADMIN_ERROR_MAP.DUPLICATE_TAG.Message,
-      };
+      // Check owner private Name Tag can be update
+      if (user.role === USER_ROLE.USER && user.id !== tag?.created_by) {
+        return {
+          code: ADMIN_ERROR_MAP.UNAUTHORIZED.Code,
+          message: ADMIN_ERROR_MAP.UNAUTHORIZED.Message,
+        };
+      }
+
+      if (tag.name_tag === req.name_tag) {
+        return {
+          code: ADMIN_ERROR_MAP.DUPLICATE_TAG.Code,
+          message: ADMIN_ERROR_MAP.DUPLICATE_TAG.Message,
+        };
+      }
     }
 
     return false;

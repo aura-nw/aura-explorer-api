@@ -268,6 +268,10 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E003',
     Message: 'Invalid aura address format',
   },
+  UNAUTHORIZED: {
+    Code: 'E004',
+    Message: 'User can not Create/Update/Delete Public Name Tag',
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -315,6 +319,11 @@ export enum PROVIDER {
 export enum NAME_TAG_TYPE {
   ACCOUNT = 'account',
   CONTRACT = 'contract',
+}
+
+export enum VIEW_TYPE {
+  PUBLIC = 'public',
+  PRIVATE = 'private',
 }
 
 export const MESSAGES = {

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-// import * as redis from "redis";
+import * as redis from 'redis';
 import * as appConfig from '../../shared/configs/configuration';
-const redis = require('redis');
 import Redis from 'ioredis';
 
 @Injectable()

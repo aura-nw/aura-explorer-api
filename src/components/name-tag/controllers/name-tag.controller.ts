@@ -24,6 +24,7 @@ import {
   AkcLogger,
   BaseApiResponse,
   MESSAGES,
+  NAME_TAG_TYPE,
   ReqContext,
   RequestContext,
   USER_ROLE,
@@ -38,8 +39,6 @@ import { NameTag } from '../../../shared/entities/name-tag.entity';
 @Controller('name-tag')
 @ApiTags('name-tag')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RoleGuard)
-@Roles(USER_ROLE.ADMIN)
 @ApiUnauthorizedResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
 })
@@ -80,12 +79,49 @@ export class NameTagController {
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,
   ): Promise<NameTag> {
-    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
+    this.logger.log(ctx, `${this.getNameTagsDetail.name} was called!`);
     const result = await this.nameTagService.getNameTagsDetail(ctx, id);
     return result;
   }
 
+  @Get('account/:address')
+  @ApiOperation({ summary: 'Get name tag by account' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async getNameTagDetailByAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('address') address: string,
+  ): Promise<StoreNameTagParamsDto> {
+    this.logger.log(ctx, `${this.getNameTagDetailByAddress.name} was called!`);
+    const result = await this.nameTagService.getNameTagDetailByAddress(
+      ctx,
+      address,
+      NAME_TAG_TYPE.ACCOUNT,
+    );
+    return result;
+  }
+
+  @Get('contract/:address')
+  @ApiOperation({ summary: 'Get name tag by account' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async getNameTagDetailByContractAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('address') address: string,
+  ): Promise<StoreNameTagParamsDto> {
+    this.logger.log(
+      ctx,
+      `${this.getNameTagDetailByContractAddress.name} was called!`,
+    );
+    const result = await this.nameTagService.getNameTagDetailByAddress(
+      ctx,
+      address,
+      NAME_TAG_TYPE.CONTRACT,
+    );
+    return result;
+  }
+
   @Post()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiOperation({ summary: 'create name tag' })
   @ApiResponse({ status: HttpStatus.CREATED })
   async createNameTag(
@@ -97,6 +133,8 @@ export class NameTagController {
   }
 
   @Put()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiOperation({ summary: 'update name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async updateNameTag(
@@ -108,6 +146,8 @@ export class NameTagController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiOperation({ summary: 'delete name tag' })
   @ApiResponse({ status: HttpStatus.OK })
   async deleteNameTag(

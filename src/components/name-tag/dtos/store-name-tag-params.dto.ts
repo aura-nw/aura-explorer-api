@@ -1,19 +1,40 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NAME_TAG_TYPE } from '../../../shared';
+import { NAME_TAG_TYPE, VIEW_TYPE } from '../../../shared';
+import { Expose, classToPlain, plainToClass } from 'class-transformer';
+import { NameTag } from '../../../shared/entities/name-tag.entity';
 
 export class StoreNameTagParamsDto {
+  @Expose()
   @ApiProperty({ default: '' })
   id: number;
 
+  @Expose()
   @ApiProperty({ default: '' })
   type: NAME_TAG_TYPE;
 
+  @Expose()
   @ApiProperty({ default: '' })
   address: string;
 
   @ApiProperty({ default: '' })
-  nameTag: string;
+  view_type: VIEW_TYPE;
 
+  @Expose()
   @ApiProperty({ default: '' })
-  userId: number;
+  name_tag: string;
+
+  @Expose()
+  @ApiProperty({ default: '', required: false })
+  note: string;
+
+  static toModel(companyDto: StoreNameTagParamsDto): NameTag {
+    const data = classToPlain(companyDto);
+    return plainToClass(NameTag, data);
+  }
+
+  static toDto(entity: NameTag): StoreNameTagParamsDto {
+    return plainToClass(StoreNameTagParamsDto, entity, {
+      excludeExtraneousValues: true,
+    });
+  }
 }

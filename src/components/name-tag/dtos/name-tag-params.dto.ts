@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Min, Max } from 'class-validator';
-import { PAGE_REQUEST } from '../../../shared';
+import { PAGE_REQUEST, VIEW_TYPE } from '../../../shared';
 import { Transform } from 'class-transformer';
 
 export class NameTagParamsDto {
@@ -19,4 +19,7 @@ export class NameTagParamsDto {
 
   @ApiPropertyOptional({ default: '' })
   keyword: string;
+
+  @ApiProperty({ default: VIEW_TYPE.PUBLIC })
+  viewType: VIEW_TYPE;
 }

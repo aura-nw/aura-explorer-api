@@ -1,23 +1,33 @@
-import { Column, DeleteDateColumn, Entity, Unique } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
-import { NAME_TAG_TYPE } from '../constants/common';
+import { VIEW_TYPE, NAME_TAG_TYPE } from '../constants/common';
+import { User } from './user.entity';
 
 @Entity('name_tag')
-@Unique(['name_tag'])
-@Unique(['address'])
+@Index(['address', 'created_by', 'view_type'], { unique: true })
 export class NameTag extends BaseEntityIncrementId {
   @Column()
   type: NAME_TAG_TYPE;
 
-  @Column()
+  @Column({ length: 35, default: null, nullable: true, name: 'name_tag' })
   name_tag: string;
 
   @Column()
   address: string;
 
-  @Column()
+  @Column({ name: 'view_type' })
+  view_type: VIEW_TYPE;
+
+  @Column({ length: 500, default: null, nullable: true })
+  note: string;
+
+  @Column({ name: 'created_by' })
+  created_by: number;
+
+  @Column({ name: 'updated_by' })
   updated_by: number;
 
-  @DeleteDateColumn({ type: 'timestamp', nullable: true })
-  deleted_at: Date;
+  @ManyToOne(() => User, (user) => user.name_tags)
+  @JoinColumn({ name: 'created_by' })
+  user: User;
 }
