@@ -147,6 +147,8 @@ export class Cw20TokenService {
     assetDto.image = AURA_INFO.IMAGE;
     assetDto.denom = this.minimalDenom;
     assetDto.decimals = this.decimals;
+    assetDto.verify_text = 'Verified by Aura Network';
+    assetDto.verify_status = 'VERIFIED';
 
     //get balance
     const [totalBalances, tokenData] = await Promise.all([
