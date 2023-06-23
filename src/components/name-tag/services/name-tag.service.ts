@@ -4,6 +4,7 @@ import {
   AURA_INFO,
   AkcLogger,
   LENGTH,
+  MESSAGES,
   NAME_TAG_TYPE,
   RequestContext,
   USER_ROLE,
@@ -14,6 +15,7 @@ import { NameTagRepository } from '../repositories/name-tag.repository';
 import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { UserService } from '../../../components/user/user.service';
 import { User } from '../../../shared/entities/user.entity';
+import * as util from 'util';
 
 @Injectable()
 export class NameTagService {
@@ -101,7 +103,9 @@ export class NameTagService {
         },
       });
       if (!nameTag) {
-        throw new NotFoundException('Name tag not found');
+        throw new NotFoundException(
+          util.format(MESSAGES.ERROR.NOT_FOUND, 'Tag name'),
+        );
       }
 
       const nameTagUpdate = { ...nameTag, ...entity };

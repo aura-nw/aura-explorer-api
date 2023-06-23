@@ -4,10 +4,13 @@ import { Logger, NotFoundException } from '@nestjs/common';
 import { User } from '../../../shared/entities/user.entity';
 import {
   ADMIN_ERROR_MAP,
+  MESSAGES,
   NAME_TAG_TYPE,
   USER_ROLE,
   VIEW_TYPE,
 } from '../../../shared';
+import * as util from 'util';
+
 @EntityRepository(NameTag)
 export class NameTagRepository extends Repository<NameTag> {
   private readonly _logger = new Logger(NameTagRepository.name);
@@ -75,7 +78,9 @@ export class NameTagRepository extends Repository<NameTag> {
     });
 
     if (!nameTag) {
-      throw new NotFoundException('Name tag not found');
+      throw new NotFoundException(
+        util.format(MESSAGES.ERROR.NOT_FOUND, 'Tag name'),
+      );
     }
 
     if (
@@ -127,7 +132,9 @@ export class NameTagRepository extends Repository<NameTag> {
     });
 
     if (!nameTag) {
-      throw new NotFoundException('Name tag not found');
+      throw new NotFoundException(
+        util.format(MESSAGES.ERROR.NOT_FOUND, 'Tag name'),
+      );
     }
 
     if (user?.role === USER_ROLE.USER && nameTag?.created_by != user?.id) {
