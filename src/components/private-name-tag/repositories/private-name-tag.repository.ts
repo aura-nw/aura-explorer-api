@@ -26,11 +26,9 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
         tag.type,
         tag.name_tag,
         tag.created_at,
-        user.email,
-        enterprise_url as enterpriseUrl`,
+        user.email`,
       )
-      .leftJoin(User, 'user', 'user.id = tag.updated_by')
-      .where('tag.deleted_at IS NULL');
+      .leftJoin(User, 'user', 'user.id = tag.created_by');
 
     const _finalizeResult = async () => {
       const result = await builder
@@ -70,7 +68,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     }
 
     let qb = this.createQueryBuilder()
-      .select(['id', 'address', 'name_tag', 'enterprise_url as enterpriseUrl'])
+      .select(['id', 'address', 'name_tag'])
       .limit(Number(limit) || PAGE_REQUEST.MAX_200);
 
     if (keyword?.length == 1) {

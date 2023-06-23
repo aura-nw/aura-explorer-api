@@ -31,13 +31,14 @@ import {
   USER_ROLE,
 } from '../../../shared';
 import { PrivateNameTagParamsDto } from '../dtos/private-name-tag-params.dto';
-import { StorePrivateNameTagParamsDto } from '../dtos/store-private-name-tag-params.dto';
+import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-params.dto';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { GetPrivateNameTagDto } from '../dtos/get-private-name-tag.dto';
 import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
+import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 
 @Controller('private-name-tag')
 @ApiTags('private-name-tag')
@@ -69,12 +70,9 @@ export class PrivateNameTagController {
     @Query() request: PrivateNameTagParamsDto,
   ): Promise<BaseApiResponse<PrivateNameTag[]>> {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { result, count } = await this.nameTagService.getNameTags(
-      ctx,
-      request,
-    );
+    const { data, count } = await this.nameTagService.getNameTags(ctx, request);
 
-    return { data: result, meta: { count } };
+    return { data, meta: { count } };
   }
 
   @Get(':id')
@@ -100,13 +98,13 @@ export class PrivateNameTagController {
   @ApiResponse({ status: HttpStatus.CREATED })
   async createNameTag(
     @ReqContext() ctx: RequestContext,
-    @Body() request: StorePrivateNameTagParamsDto,
+    @Body() request: CreatePrivateNameTagParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.createNameTag.name} was called!`);
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put()
+  @Put(':id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -114,10 +112,11 @@ export class PrivateNameTagController {
   @ApiResponse({ status: HttpStatus.OK })
   async updateNameTag(
     @ReqContext() ctx: RequestContext,
-    @Body() request: StorePrivateNameTagParamsDto,
+    @Param('id') id: number,
+    @Body() request: UpdatePrivateNameTagParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    return await this.nameTagService.updateNameTag(ctx, request);
+    return await this.nameTagService.updateNameTag(ctx, id, request);
   }
 
   @Delete(':id')

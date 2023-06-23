@@ -81,5 +81,6 @@ export default () => ({
     secretAccessKey: process.env.KMS_SECRET_ACCESS_KEY,
     region: process.env.KMS_REGION,
     apiVersion: process.env.KMS_API_VERSION,
+    alias: process.env.KMS_ALIAS,
   },
 });

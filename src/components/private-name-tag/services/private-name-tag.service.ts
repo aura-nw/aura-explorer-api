@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   AURA_INFO,
@@ -9,13 +9,14 @@ import {
 } from '../../../shared';
 import { PrivateNameTagParamsDto } from '../dtos/private-name-tag-params.dto';
 import { PrivateNameTagRepository } from '../repositories/private-name-tag.repository';
-import { StorePrivateNameTagParamsDto } from '../dtos/store-private-name-tag-params.dto';
-import { NameTag } from '../../../shared/entities/name-tag.entity';
+import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-params.dto';
 import { GetPrivateNameTagDto } from '../dtos/get-private-name-tag.dto';
 import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { Not } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { KMS } from 'aws-sdk';
+import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
+import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -23,44 +24,55 @@ export class PrivateNameTagService {
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
-    private nameTagRepository: PrivateNameTagRepository,
+    private privateNameTagRepository: PrivateNameTagRepository,
   ) {
     this.kms = new KMS({
       accessKeyId: this.configService.get<string>('kms.accessKeyId'),
       secretAccessKey: this.configService.get<string>('kms.secretAccessKey'),
       region: this.configService.get<string>('kms.region'),
+      apiVersion: this.configService.get<string>('kms.apiVersion'),
     });
   }
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { result, count } = await this.nameTagRepository.getNameTags(
+    const { result, count } = await this.privateNameTagRepository.getNameTags(
       req.keyword,
       req.limit,
       req.offset,
     );
+    const data = await Promise.all(
+      result.map(async (item) => {
+        item.name_tag = await this.decrypt(item.name_tag);
+        return item;
+      }),
+    );
 
-    return { result, count };
+    return { data, count };
   }
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    return await this.nameTagRepository.findOne(id);
+    const entity = await this.privateNameTagRepository.findOne(id);
+    entity.name_tag = await this.decrypt(entity.name_tag);
+
+    return entity;
   }
 
-  async createNameTag(ctx: RequestContext, req: StorePrivateNameTagParamsDto) {
+  async createNameTag(ctx: RequestContext, req: CreatePrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.createNameTag.name} was called!`);
     const errorMsg = await this.validate(req);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new NameTag();
+    const entity = new PrivateNameTag();
     entity.address = req.address;
     entity.type = req.type;
-    entity.name_tag = req.nameTag;
-    entity.updated_by = req.userId;
+    entity.name_tag = await this.encrypt(req.nameTag);
+    entity.created_by = ctx.user.id;
+
     try {
-      const result = await this.nameTagRepository.save(entity);
+      const result = await this.privateNameTagRepository.save(entity);
       return { data: result, meta: {} };
     } catch (err) {
       this.logger.error(
@@ -70,19 +82,31 @@ export class PrivateNameTagService {
     }
   }
 
-  async updateNameTag(ctx: RequestContext, req: StorePrivateNameTagParamsDto) {
+  async updateNameTag(
+    ctx: RequestContext,
+    id: number,
+    req: UpdatePrivateNameTagParamsDto,
+  ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    const errorMsg = await this.validate(req, false);
+    const entity = await this.privateNameTagRepository.findOne(id);
+    if (!entity) {
+      throw new NotFoundException('Private Name Tag not found');
+    }
+
+    const storeNameTagDto = new CreatePrivateNameTagParamsDto();
+    storeNameTagDto.address = entity.address;
+    storeNameTagDto.nameTag = req.nameTag;
+    storeNameTagDto.type = entity.type;
+
+    const errorMsg = await this.validate(storeNameTagDto, false);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new NameTag();
-    entity.address = req.address;
     entity.type = req.type;
-    entity.name_tag = req.nameTag;
-    entity.updated_by = req.userId;
+    entity.name_tag = await this.encrypt(req.nameTag);
+    entity.created_by = ctx.user.id;
     try {
-      const result = await this.nameTagRepository.update(req.id, entity);
+      const result = await this.privateNameTagRepository.update(id, entity);
       return { data: result, meta: {} };
     } catch (err) {
       this.logger.error(
@@ -95,7 +119,7 @@ export class PrivateNameTagService {
   async deleteNameTag(ctx: RequestContext, id: number) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     try {
-      return await this.nameTagRepository.delete(id);
+      return await this.privateNameTagRepository.delete(id);
     } catch (err) {
       this.logger.error(
         ctx,
@@ -104,7 +128,7 @@ export class PrivateNameTagService {
     }
   }
 
-  private async validate(req: StorePrivateNameTagParamsDto, isCreate = true) {
+  private async validate(req: CreatePrivateNameTagParamsDto, isCreate = true) {
     const validFormat =
       req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       (req.address.length === LENGTH.CONTRACT_ADDRESS ||
@@ -125,8 +149,8 @@ export class PrivateNameTagService {
 
     if (isCreate) {
       // check duplicate address
-      const address = await this.nameTagRepository.findOne({
-        where: { address: req.address, deleted_at: null },
+      const address = await this.privateNameTagRepository.findOne({
+        where: { address: req.address },
       });
       if (address) {
         return {
@@ -136,10 +160,9 @@ export class PrivateNameTagService {
       }
     }
 
-    const tag = await this.nameTagRepository.findOne({
+    const tag = await this.privateNameTagRepository.findOne({
       where: {
-        name_tag: req.nameTag,
-        deleted_at: null,
+        name_tag: await this.encrypt(req.nameTag),
         address: Not(req.address),
       },
     });
@@ -157,7 +180,7 @@ export class PrivateNameTagService {
   async getNameTag(
     req: GetPrivateNameTagDto,
   ): Promise<GetPrivateNameTagResult> {
-    const nameTags = await this.nameTagRepository.getNameTag(
+    const nameTags = await this.privateNameTagRepository.getNameTag(
       req.keyword,
       Number(req.limit),
       Number(req.nextKey),
@@ -182,7 +205,7 @@ export class PrivateNameTagService {
   // source is plain text
   async encrypt(source: string) {
     const params = {
-      KeyId: this.configService.get<string>('accessKeyId'),
+      KeyId: this.configService.get<string>('kms.alias'),
       Plaintext: source,
     };
     const { CiphertextBlob } = await this.kms.encrypt(params).promise();
