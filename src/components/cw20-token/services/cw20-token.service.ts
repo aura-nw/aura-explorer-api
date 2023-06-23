@@ -20,6 +20,7 @@ import { AssetDto } from '../dtos/asset.dto';
 import { Cw20TokenByOwnerParamsDto } from '../dtos/cw20-token-by-owner-params.dto';
 import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
+import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 
 @Injectable()
 export class Cw20TokenService {
@@ -45,88 +46,6 @@ export class Cw20TokenService {
     this.precisionDiv = this.appParams.chainInfo.precisionDiv;
     this.configUrl = this.appParams.configUrl;
     this.chainDB = this.appParams.indexerV2.chainDB;
-  }
-
-  async getCw20Tokens(
-    ctx: RequestContext,
-    request: Cw20TokenParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
-
-    // Attributes for cw20
-    const cw20Attributes = `marketing_info
-      name
-      symbol
-      smart_contract {
-        address
-      }
-      cw20_holders {
-        amount
-        address
-      }`;
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW20_LIST_TOKEN,
-        this.chainDB,
-        cw20Attributes,
-      ),
-      variables: {
-        name: request?.keyword ? `%${request?.keyword}%` : null,
-        address: request?.keyword ? request?.keyword : null,
-        limit: request?.limit,
-        offset: request?.offset,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_LIST_TOKEN,
-    };
-
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB]['cw20_contract'];
-
-    if (response?.length == 0) {
-      return { tokens: response, count: 0 };
-    }
-
-    const listAddress = response.map((item) => item.smart_contract.address);
-
-    const tokenMarket = await this.tokenMarketsRepository.find({
-      where: { contract_address: In(listAddress) },
-    });
-
-    const tokens = response.map((item) => {
-      const holders = item.cw20_holders?.length;
-      const holders_change_percentage_24h = 0;
-
-      const tokenFind = tokenMarket?.find(
-        (f) => String(f.contract_address) === item.smart_contract.address,
-      );
-      return {
-        coin_id: tokenFind?.coin_id || '',
-        contract_address: item.smart_contract.address || '',
-        name: item.name || '',
-        symbol: item.symbol || '',
-        image: item.marketing_info?.logo?.url
-          ? item.marketing_info?.logo?.url
-          : tokenFind?.image || '',
-        description: tokenFind?.description || '',
-        verify_status: tokenFind?.verify_status || '',
-        verify_text: tokenFind?.verify_text || '',
-        circulating_market_cap: tokenFind?.circulating_market_cap || 0,
-        volume_24h: tokenFind?.total_volume || 0,
-        price: tokenFind?.current_price || 0,
-        price_change_percentage_24h:
-          tokenFind?.price_change_percentage_24h || 0,
-        holders_change_percentage_24h,
-        holders,
-        max_total_supply: tokenFind?.max_supply || 0,
-        fully_diluted_market_cap: tokenFind?.fully_diluted_valuation || 0,
-      };
-    });
-
-    return {
-      tokens,
-      count: response?.cw20_contract_aggregate?.aggregate?.count,
-    };
   }
 
   async getCw20TokensByOwner(
@@ -291,11 +210,11 @@ export class Cw20TokenService {
 
   async getTokenMarket(
     ctx: RequestContext,
-    contractAddress: string,
+    request: Cw20TokenMarketParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getPriceById.name} was called!`);
-    const tokenData = await this.tokenMarketsRepository.findOne({
-      where: { contract_address: contractAddress },
+    const tokenData = await this.tokenMarketsRepository.find({
+      where: { contract_address: In(request.contractAddress) },
     });
 
     return tokenData;
