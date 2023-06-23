@@ -15,7 +15,6 @@ import {
   VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { SmartContractRepository } from '../repositories/smart-contract.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
@@ -271,75 +270,6 @@ export class ContractService {
           ? contract[0].code_id_verifications[0].verification_status
           : CONTRACT_STATUS.UNVERIFIED,
     };
-  }
-
-  /**
-   * Get token by contract address
-   * @param ctx
-   * @param contractAddress
-   * @returns
-   */
-  async getTokenByContractAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ) {
-    this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-
-    // Attributes for cw20
-    const cw20Attributes = `address
-       cw20_contract {
-         name
-         marketing_info
-         cw20_holders {
-           address
-           amount
-         }
-         decimal
-       }
-       code {
-         code_id_verifications {
-           verification_status
-         }
-       }`;
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW20_DETAIL,
-        this.chainDB,
-        cw20Attributes,
-      ),
-      variables: {
-        address: contractAddress,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_DETAIL,
-    };
-
-    const [response, tokenMarketData] = await Promise.all([
-      this.serviceUtil.fetchDataFromGraphQL(graphqlQuery),
-      this.tokenMarketsRepository.findOne({
-        where: { contract_address: contractAddress },
-      }),
-    ]);
-    let token;
-
-    const list = response?.data[this.chainDB].smart_contract;
-    if (list?.length > 0) {
-      token = list[0];
-      token.max_total_supply = tokenMarketData?.max_supply || 0;
-      token.circulating_market_cap =
-        tokenMarketData?.circulating_market_cap || 0;
-      token.price = tokenMarketData?.current_price || 0;
-      token.verify_status = tokenMarketData?.verify_status || '';
-      token.verify_text = tokenMarketData?.verify_text || '';
-      token.fully_diluted_market_cap =
-        tokenMarketData?.fully_diluted_valuation ||
-        token.max_total_supply * token.price;
-      token.price_change_percentage_24h =
-        tokenMarketData?.price_change_percentage_24h || 0;
-      token.holders_change_percentage_24h = 0;
-    }
-
-    return token;
   }
 
   async getNftDetail(
