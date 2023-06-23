@@ -211,13 +211,12 @@ export class Cw20TokenService {
   async getTokenMarket(
     ctx: RequestContext,
     request: Cw20TokenMarketParamsDto,
-  ): Promise<any> {
+  ): Promise<TokenMarkets[]> {
     this.logger.log(ctx, `${this.getPriceById.name} was called!`);
-    const tokenData = await this.tokenMarketsRepository.find({
-      where: { contract_address: In(request.contractAddress) },
+    const listAddress = request?.contractAddress ? request.contractAddress : [];
+    return await this.tokenMarketsRepository.find({
+      where: { contract_address: In(listAddress) },
     });
-
-    return tokenData;
   }
 
   async getTotalAssetByAccountAddress(
