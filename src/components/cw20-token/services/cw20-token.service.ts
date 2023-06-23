@@ -24,8 +24,6 @@ import { TokenMarketsRepository } from '../repositories/token-markets.repository
 @Injectable()
 export class Cw20TokenService {
   private appParams;
-  private indexerUrl;
-  private indexerChainId;
   private denom;
   private minimalDenom;
   private decimals;
@@ -36,15 +34,11 @@ export class Cw20TokenService {
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
-    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private accountService: AccountService,
-    private httpService: HttpService,
   ) {
     this.logger.setContext(Cw20TokenService.name);
     this.appParams = appConfig.default();
-    this.indexerUrl = this.appParams.indexer.url;
-    this.indexerChainId = this.appParams.indexer.chainId;
     this.denom = this.appParams.chainInfo.coinDenom;
     this.minimalDenom = this.appParams.chainInfo.coinMinimalDenom;
     this.decimals = this.appParams.chainInfo.coinDecimals;
@@ -78,7 +72,8 @@ export class Cw20TokenService {
         cw20Attributes,
       ),
       variables: {
-        keyword: request?.keyword ? request?.keyword : null,
+        name: request?.keyword ? `%${request?.keyword}%` : null,
+        address: request?.keyword ? request?.keyword : null,
         limit: request?.limit,
         offset: request?.offset,
       },

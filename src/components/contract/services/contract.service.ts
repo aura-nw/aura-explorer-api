@@ -8,7 +8,6 @@ import {
   CONTRACT_STATUS,
   CONTRACT_TYPE,
   ERROR_MAP,
-  INDEXER_API,
   INDEXER_API_V2,
   LENGTH,
   RequestContext,
@@ -27,15 +26,11 @@ import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
-  private api;
   private verifyContractUrl;
-  private indexerUrl: string;
-  private indexerChainId: string;
   private chainDB: string;
 
   constructor(
     private readonly logger: AkcLogger,
-    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
@@ -44,11 +39,8 @@ export class ContractService {
     private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
-    this.api = this.configService.get('API');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
     const appParams = appConfig.default();
-    this.indexerUrl = appParams.indexer.url;
-    this.indexerChainId = appParams.indexer.chainId;
     this.chainDB = appParams.indexerV2.chainDB;
   }
 
@@ -302,8 +294,8 @@ export class ContractService {
            address
            amount
          }
+         decimal
        }
-       decimal
        code {
          code_id_verifications {
            verification_status
@@ -330,8 +322,8 @@ export class ContractService {
     ]);
     let token;
 
-    const list = response?.data[this.chainDB].cw20_contract;
-    if (list.length > 0) {
+    const list = response?.data[this.chainDB].smart_contract;
+    if (list?.length > 0) {
       token = list[0];
       token.max_total_supply = tokenMarketData?.max_supply || 0;
       token.circulating_market_cap =
