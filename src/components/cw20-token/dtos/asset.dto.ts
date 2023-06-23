@@ -10,4 +10,6 @@ export class AssetDto {
   value = '';
   denom = '';
   decimals = 0;
+  verify_status = '';
+  verify_text = '';
 }

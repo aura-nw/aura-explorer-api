@@ -96,4 +96,10 @@ export class TokenMarkets extends BaseEntityIncrementId {
     default: 0,
   })
   fully_diluted_valuation: number;
+
+  @Column({ name: 'verify_status', nullable: true })
+  verify_status: string;
+
+  @Column({ name: 'verify_text', nullable: true })
+  verify_text: string;
 }

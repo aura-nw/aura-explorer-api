@@ -107,6 +107,8 @@ export class Cw20TokenService {
         name: item.name || '',
         symbol: item.symbol || '',
         image: item.image || '',
+        verify_status: item.verify_status || '',
+        verify_text: item.verify_text || '',
         description: item.description || '',
         circulating_market_cap: circulating_market_cap,
         volume_24h: item.total_volume || 0,
@@ -136,6 +138,8 @@ export class Cw20TokenService {
     assetDto.image = AURA_INFO.IMAGE;
     assetDto.denom = this.minimalDenom;
     assetDto.decimals = this.decimals;
+    assetDto.verify_text = 'Verified by Aura Network';
+    assetDto.verify_status = 'VERIFIED';
 
     //get balance
     const [totalBalances, tokenData] = await Promise.all([
@@ -234,6 +238,8 @@ export class Cw20TokenService {
         const asset = new AssetDto();
         asset.contract_address = item.contract_address || '-';
         asset.image = tokenMarketsInfo?.image || '';
+        asset.verify_status = tokenMarketsInfo?.verify_status || '';
+        asset.verify_text = tokenMarketsInfo?.verify_text || '';
         asset.name = item.asset_info?.data?.name || '';
         asset.symbol = item.asset_info?.data?.symbol || '';
         asset.decimals = item.asset_info?.data?.decimals || 0;
