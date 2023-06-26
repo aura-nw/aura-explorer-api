@@ -10,7 +10,6 @@ import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
 import { NameTagRepository } from '../repositories/name-tag.repository';
 import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
-import { Not, Timestamp } from 'typeorm';
 
 @Injectable()
 export class NameTagService {

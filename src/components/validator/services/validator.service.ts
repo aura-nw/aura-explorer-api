@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import {
-  AkcLogger,
-  INDEXER_API,
-  INDEXER_API_V2,
-  RequestContext,
-} from '../../../shared';
+import { AkcLogger, INDEXER_API_V2, RequestContext } from '../../../shared';
 import * as util from 'util';
 import { ProposalVoteRepository } from '../repositories/proposal-vote.repository';
 import * as appConfig from '../../../shared/configs/configuration';

@@ -8,7 +8,6 @@ import {
   CONTRACT_STATUS,
   CONTRACT_TYPE,
   ERROR_MAP,
-  INDEXER_API,
   INDEXER_API_V2,
   LENGTH,
   RequestContext,
@@ -16,10 +15,8 @@ import {
   VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { SmartContractRepository } from '../repositories/smart-contract.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
@@ -27,28 +24,20 @@ import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
-  private api;
   private verifyContractUrl;
-  private indexerUrl: string;
-  private indexerChainId: string;
   private chainDB: string;
 
   constructor(
     private readonly logger: AkcLogger,
-    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
-    private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
     private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
-    this.api = this.configService.get('API');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
     const appParams = appConfig.default();
-    this.indexerUrl = appParams.indexer.url;
-    this.indexerChainId = appParams.indexer.chainId;
     this.chainDB = appParams.indexerV2.chainDB;
   }
 
@@ -129,7 +118,7 @@ export class ContractService {
       type
       status
       created_at
-      code_id_verifications {
+      code_id_verifications(order_by: {updated_at: desc}) {
         verified_at
         compiler_version
         github_url
@@ -226,7 +215,7 @@ export class ContractService {
       for (let index = 0; index < VERIFY_STEP.length; index++) {
         const stepId = index + 1;
         // Get last success element
-        const result = response[response.length - 1];
+        const result = response[0];
         const defaultStep = {
           code_id: codeId,
           check_id: stepId,
@@ -279,63 +268,6 @@ export class ContractService {
           ? contract[0].code_id_verifications[0].verification_status
           : CONTRACT_STATUS.UNVERIFIED,
     };
-  }
-
-  /**
-   * Get token by contract address
-   * @param ctx
-   * @param contractAddress
-   * @returns
-   */
-  async getTokenByContractAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ) {
-    this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-    let token: any = null;
-    const tokenData =
-      await this.smartContractRepository.getTokenByContractAddress(
-        contractAddress,
-      );
-    if (tokenData.length > 0) {
-      token = tokenData[0];
-
-      const tokenMarketData = await this.tokenMarketsRepository.findOne({
-        where: { contract_address: contractAddress },
-      });
-      token.max_total_supply = tokenMarketData?.max_supply || 0;
-      token.circulating_market_cap =
-        tokenMarketData?.circulating_market_cap || 0;
-      token.price = tokenMarketData?.current_price || 0;
-      token.fully_diluted_market_cap =
-        tokenMarketData?.fully_diluted_valuation ||
-        token.max_total_supply * token.price;
-      token.price_change_percentage_24h =
-        tokenMarketData?.price_change_percentage_24h || 0;
-      token.num_holder = 0;
-      token.holders_change_percentage_24h = 0;
-
-      const holderResponse = await lastValueFrom(
-        this.httpService.get(
-          `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
-          {
-            params: {
-              chainId: this.indexerChainId,
-              addresses: [contractAddress],
-            },
-          },
-        ),
-      ).then((rs) => rs.data);
-
-      const listHolder = holderResponse?.data || [];
-
-      if (listHolder.length > 0) {
-        token.num_holder = listHolder[0].holders || 0;
-        token.holders_change_percentage_24h = listHolder[0].percentage || 0;
-      }
-    }
-
-    return token;
   }
 
   async getNftDetail(

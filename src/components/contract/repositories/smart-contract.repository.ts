@@ -1,8 +1,6 @@
 import {
   Brackets,
   EntityRepository,
-  In,
-  Not,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -13,10 +11,8 @@ import { ContractParamsDto } from '../dtos/contract-params.dto';
 import {
   AURA_INFO,
   CONTRACT_CODE_RESULT,
-  CONTRACT_STATUS,
   CONTRACT_TYPE,
   LENGTH,
-  SoulboundToken,
   SYNC_CONTRACT_TRANSACTION_TYPE,
   Transaction,
 } from '../../../shared';
@@ -283,9 +279,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
         minter_address: minterAddress,
       });
 
-    const _finalizeResult = async (
-      _builder: SelectQueryBuilder<SmartContract>,
-    ) => {
+    const _finalizeResult = async () => {
       const data = await builder
         .limit(limit)
         .offset(offset)
@@ -297,13 +291,13 @@ export class SmartContractRepository extends Repository<SmartContract> {
     };
 
     if (!keyword) {
-      return await _finalizeResult(builder);
+      return await _finalizeResult();
     }
 
     builder.andWhere('LOWER(sm.contract_address) LIKE :keyword', {
       keyword: `%${keyword}%`,
     });
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 
   /**
@@ -323,9 +317,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
         'scc',
         `sm.code_id = scc.code_id AND scc.result = '${CONTRACT_CODE_RESULT.CORRECT}' AND scc.type = '${CONTRACT_TYPE.CW4973}'`,
       );
-    const _finalizeResult = async (
-      _builder: SelectQueryBuilder<SmartContract>,
-    ) => {
+    const _finalizeResult = async () => {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
@@ -352,7 +344,7 @@ export class SmartContractRepository extends Repository<SmartContract> {
         }),
       );
     }
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 
   async getContractsCodeId(request: ContractCodeIdParamsDto) {
