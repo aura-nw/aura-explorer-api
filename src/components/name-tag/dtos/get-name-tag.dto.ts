@@ -9,7 +9,7 @@ export class GetNameTagDto {
   limit: number;
 
   @ApiPropertyOptional({
-    description: `Optional keyword to search exactly name tag`,
+    description: `If only one value is provided get name tag approximately. If many then get by exactly address.`,
     type: String,
     isArray: true,
     default: [],
