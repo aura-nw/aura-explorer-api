@@ -68,7 +68,7 @@ export class NameTagRepository extends Repository<NameTag> {
       .limit(Number(limit) || PAGE_REQUEST.MAX_200);
 
     if (keyword?.length == 1) {
-      qb = qb.where('name_tag LIKE :name_tag ', {
+      qb = qb.where('LOWER(name_tag) LIKE LOWER(:name_tag) ', {
         name_tag: `%${keyword[0]}%`,
       });
     } else if (keyword?.length > 1) {
