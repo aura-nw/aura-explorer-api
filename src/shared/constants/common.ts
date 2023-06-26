@@ -275,6 +275,7 @@ export const ADMIN_ERROR_MAP = {
 export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
+  MAX_200: 200,
 };
 
 export enum SOULBOUND_TOKEN_STATUS {
