@@ -52,7 +52,7 @@ export class NameTagRepository extends Repository<NameTag> {
     return await _finalizeResult();
   }
 
-  async searchNameTag(
+  async getNameTag(
     keyword: string[],
     limit: number,
     nextKey: number,

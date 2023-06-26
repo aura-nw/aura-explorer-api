@@ -10,8 +10,8 @@ import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
 import { NameTagRepository } from '../repositories/name-tag.repository';
 import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
-import { SearchNameTagDto } from '../dtos/search-name-tag.dto';
-import { SearchNameTagResult } from '../dtos/searh-name-tag-result.dto';
+import { GetNameTagDto } from '../dtos/get-name-tag.dto';
+import { GethNameTagResult } from '../dtos/get-name-tag-result.dto';
 
 @Injectable()
 export class NameTagService {
@@ -132,8 +132,8 @@ export class NameTagService {
     return false;
   }
 
-  async searchNameTag(req: SearchNameTagDto): Promise<SearchNameTagResult> {
-    const nameTags = await this.nameTagRepository.searchNameTag(
+  async getNameTag(req: GetNameTagDto): Promise<GethNameTagResult> {
+    const nameTags = await this.nameTagRepository.getNameTag(
       req.keyword,
       Number(req.limit),
       Number(req.nextKey),

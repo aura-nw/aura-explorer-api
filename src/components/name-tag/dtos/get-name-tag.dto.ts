@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class SearchNameTagDto {
+export class GetNameTagDto {
   @ApiPropertyOptional({
     description: `Optional, defaults to 200`,
     default: 200,
