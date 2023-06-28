@@ -259,6 +259,15 @@ export const ERROR_MAP = {
     Code: 'E017',
     Message: `This receiver has rejected all Account Bound Tokens from you`,
   },
+  INFRASTRUCTURE_ERROR: {
+    Code: 'E018',
+    Message: `Infrastructure overload, cannot process. Please try again!`,
+  },
+};
+
+export const INFRASTRUCTURE_ERROR = {
+  STEP: 4,
+  FAIL: 'FAIL',
 };
 
 export const ADMIN_ERROR_MAP = {
