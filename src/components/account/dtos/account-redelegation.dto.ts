@@ -41,4 +41,8 @@ export class AccountRedelegation {
   @Expose()
   @ApiProperty()
   validator_dst_jailed: number;
+
+  @Expose()
+  @ApiProperty()
+  image_url: string;
 }

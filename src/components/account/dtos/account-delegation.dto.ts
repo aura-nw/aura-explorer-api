@@ -24,5 +24,9 @@ export class AccountDelegation {
 
   @Expose()
   @ApiProperty()
+  image_url: string;
+
+  @Expose()
+  @ApiProperty()
   jailed: number;
 }
