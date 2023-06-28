@@ -10,10 +10,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AkcLogger, ReqContext, RequestContext } from '../../../shared';
+import {
+  AkcLogger,
+  ReqContext,
+  RequestContext,
+  TokenMarkets,
+} from '../../../shared';
 import { Cw20TokenByOwnerParamsDto } from '../dtos/cw20-token-by-owner-params.dto';
-import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
 import { Cw20TokenService } from '../services/cw20-token.service';
+import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 
 @ApiTags('cw20-tokens')
 @Controller('cw20-tokens')
@@ -23,24 +28,6 @@ export class Cw20TokenController {
     private readonly logger: AkcLogger,
   ) {
     this.logger.setContext(Cw20TokenController.name);
-  }
-
-  @Post()
-  @ApiOperation({ summary: 'Get list cw20 tokens' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getCw20Tokens(
-    @ReqContext() ctx: RequestContext,
-    @Body() request: Cw20TokenParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
-    const { tokens, count } = await this.cw20TokenService.getCw20Tokens(
-      ctx,
-      request,
-    );
-
-    return { data: tokens, meta: { count } };
   }
 
   @Post('get-by-owner')
@@ -93,5 +80,19 @@ export class Cw20TokenController {
     );
 
     return { data: price, meta: {} };
+  }
+
+  @Post('token-market')
+  @ApiOperation({
+    summary: 'Get token market of cw20 token by contract address',
+  })
+  @ApiResponse({ status: HttpStatus.OK })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getTokenMarket(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: Cw20TokenMarketParamsDto,
+  ): Promise<TokenMarkets[]> {
+    this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+    return await this.cw20TokenService.getTokenMarket(ctx, request);
   }
 }

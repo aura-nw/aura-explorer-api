@@ -116,20 +116,6 @@ export class ContractController {
     return { data: result, meta: {} };
   }
 
-  @Get('token/:contractAddress')
-  async getTokenByContractAddress(
-    @ReqContext() ctx: RequestContext,
-    @Param('contractAddress') contractAddress: string,
-  ) {
-    this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-    const token = await this.contractService.getTokenByContractAddress(
-      ctx,
-      contractAddress,
-    );
-
-    return { data: token, meta: {} };
-  }
-
   @Get(':contractAddress/nft/:tokenId')
   @ApiOperation({ summary: 'Get NFT detail' })
   @ApiResponse({ status: HttpStatus.OK })

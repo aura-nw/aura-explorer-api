@@ -16,6 +16,9 @@ import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { UserService } from '../../../components/user/user.service';
 import { User } from '../../../shared/entities/user.entity';
 import * as util from 'util';
+import { NameTag } from '../../../shared/entities/name-tag.entity';
+import { GetNameTagDto } from '../dtos/get-name-tag.dto';
+import { GethNameTagResult } from '../dtos/get-name-tag-result.dto';
 
 @Injectable()
 export class NameTagService {
@@ -44,7 +47,7 @@ export class NameTagService {
     this.logger.log(ctx, `${this.getNameTagsDetail.name} was called!`);
     const user = await this.userService.findOneById(ctx.user?.id || 0);
 
-    return await this.nameTagRepository.getNameTag(user, id);
+    return await this.nameTagRepository.getNameTagById(user, id);
   }
 
   async getNameTagDetailByAddress(
@@ -196,5 +199,28 @@ export class NameTagService {
     }
 
     return false;
+  }
+
+  async getNameTag(req: GetNameTagDto): Promise<GethNameTagResult> {
+    const nameTags = await this.nameTagRepository.getNameTag(
+      req.keyword,
+      Number(req.limit),
+      Number(req.nextKey),
+    );
+
+    let nextKey;
+
+    if (nameTags.length <= 1) {
+      nextKey = null;
+    } else {
+      nextKey = nameTags.slice(-1)[0]?.id;
+    }
+
+    const data = {
+      data: { nameTags },
+      nextKey,
+    };
+
+    return data;
   }
 }

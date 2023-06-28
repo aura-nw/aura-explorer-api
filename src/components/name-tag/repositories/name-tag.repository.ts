@@ -10,6 +10,7 @@ import {
   VIEW_TYPE,
 } from '../../../shared';
 import * as util from 'util';
+import { PAGE_REQUEST } from '../../../shared';
 
 @EntityRepository(NameTag)
 export class NameTagRepository extends Repository<NameTag> {
@@ -67,9 +68,9 @@ export class NameTagRepository extends Repository<NameTag> {
     return await _finalizeResult();
   }
 
-  async getNameTag(user: User, id: number): Promise<NameTag> {
+  async getNameTagById(user: User, id: number): Promise<NameTag> {
     this._logger.log(
-      `============== ${this.getNameTag.name} was called! ==============`,
+      `============== ${this.getNameTagById.name} was called! ==============`,
     );
     const nameTag = await this.findOne({
       where: {
@@ -162,5 +163,35 @@ export class NameTagRepository extends Repository<NameTag> {
     } else if (user.role === USER_ROLE.USER) {
       return `tag.created_by = ${user.id} AND tag.view_type = 'private'`;
     }
+  }
+
+  async getNameTag(
+    keyword: string[],
+    limit: number,
+    nextKey: number,
+  ): Promise<NameTag[]> {
+    limit = Number(limit) || PAGE_REQUEST.MAX_200;
+
+    if (limit > PAGE_REQUEST.MAX_200) {
+      limit = PAGE_REQUEST.MAX_200;
+    }
+
+    let qb = this.createQueryBuilder()
+      .select(['id', 'address', 'name_tag'])
+      .limit(Number(limit) || PAGE_REQUEST.MAX_200);
+
+    if (keyword?.length == 1) {
+      qb = qb.where('LOWER(name_tag) LIKE LOWER(:name_tag) ', {
+        name_tag: `%${keyword[0]}%`,
+      });
+    } else if (keyword?.length > 1) {
+      qb = qb.where('address IN(:...addresses)', { addresses: keyword });
+    }
+
+    if (nextKey) {
+      qb = qb.andWhere('id > :nextKey', { nextKey });
+    }
+
+    return qb.getRawMany();
   }
 }
