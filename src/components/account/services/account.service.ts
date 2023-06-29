@@ -299,7 +299,7 @@ export class AccountService {
             redelegation.validator_src_identity =
               validatorSrc[0].description?.identity;
             redelegation.validator_src_jailed = Number(validatorSrc[0].jailed);
-            redelegation.image_url = validatorSrc[0].image_url;
+            redelegation.image_src_url = validatorSrc[0].image_url;
           }
           if (validatorDst.length > 0) {
             redelegation.validator_dst_name =
@@ -308,7 +308,7 @@ export class AccountService {
             redelegation.validator_dst_identity =
               validatorDst[0].description?.identity;
             redelegation.validator_dst_jailed = Number(validatorDst[0].jailed);
-            redelegation.image_url = validatorDst[0].image_url;
+            redelegation.image_dst_url = validatorDst[0].image_url;
           }
           redelegation.amount = this.changeUauraToAura(item1.balance);
           redelegation.completion_time =

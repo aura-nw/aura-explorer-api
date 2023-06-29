@@ -44,5 +44,9 @@ export class AccountRedelegation {
 
   @Expose()
   @ApiProperty()
-  image_url: string;
+  image_src_url: string;
+
+  @Expose()
+  @ApiProperty()
+  image_dst_url: string;
 }
