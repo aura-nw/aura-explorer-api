@@ -12,6 +12,7 @@ import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { Cw721TokenParamsDto } from '../dtos/cw721-token-params.dto';
 import { NftByOwnerParamsDto } from '../dtos/nft-by-owner-params.dto';
+import { NftByContractParamsDto } from '../dtos/nft-by-contract-params.dto';
 
 @Injectable()
 export class Cw721TokenService {
