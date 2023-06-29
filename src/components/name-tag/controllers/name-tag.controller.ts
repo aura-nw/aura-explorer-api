@@ -61,7 +61,7 @@ export class NameTagController {
 
   @Get()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list name tag' })
   @ApiResponse({ status: HttpStatus.OK })
@@ -171,12 +171,16 @@ export class NameTagController {
 
   @Post('get-name-tag')
   @ApiOperation({ summary: 'get name tag by address or name' })
+  @ApiBearerAuth()
   @ApiOkResponse({
     description: 'return name tag by address or name.',
     type: GethNameTagResult,
   })
   @HttpCode(HttpStatus.OK)
-  async getNameTag(@Body() request: GetNameTagDto): Promise<GethNameTagResult> {
-    return await this.nameTagService.getNameTag(request);
+  async getNameTag(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: GetNameTagDto,
+  ): Promise<GethNameTagResult> {
+    return await this.nameTagService.getNameTag(ctx, request);
   }
 }

@@ -16,9 +16,9 @@ import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { UserService } from '../../../components/user/user.service';
 import { User } from '../../../shared/entities/user.entity';
 import * as util from 'util';
-import { NameTag } from '../../../shared/entities/name-tag.entity';
 import { GetNameTagDto } from '../dtos/get-name-tag.dto';
 import { GethNameTagResult } from '../dtos/get-name-tag-result.dto';
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class NameTagService {
@@ -26,7 +26,11 @@ export class NameTagService {
     private readonly logger: AkcLogger,
     private nameTagRepository: NameTagRepository,
     private userService: UserService,
-  ) {}
+  ) {
+    this.appParams = appConfig.default();
+  }
+
+  private appParams;
 
   async getNameTags(ctx: RequestContext, req: NameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
@@ -41,6 +45,25 @@ export class NameTagService {
     );
 
     return { result, count };
+  }
+
+  async isLimitPrivateNameTag(
+    user: User,
+    req: StoreNameTagParamsDto,
+  ): Promise<boolean> {
+    if (!user || req.view_type !== VIEW_TYPE.PRIVATE) {
+      return false;
+    }
+
+    console.log(`user: ${JSON.stringify(user)}`);
+    const [, count] = await this.nameTagRepository.findAndCount({
+      where: {
+        created_by: user.id,
+        view_type: VIEW_TYPE.PRIVATE,
+      },
+    });
+
+    return count >= Number(this.appParams.privateNameTagLimit);
   }
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
@@ -70,10 +93,17 @@ export class NameTagService {
   async createNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
     this.logger.log(ctx, `${this.createNameTag.name} was called!`);
     const user = await this.userService.findOneById(ctx.user?.id || 0);
-    const errorMsg = await this.validate(req, user);
+    const errorMsg = await this.validate(req, user, true);
     if (errorMsg) {
       return errorMsg;
     }
+    if (await this.isLimitPrivateNameTag(user, req)) {
+      return {
+        code: ADMIN_ERROR_MAP.LIMIT.Code,
+        message: ADMIN_ERROR_MAP.LIMIT.Message,
+      };
+    }
+
     const entity = StoreNameTagParamsDto.toModel(req);
     entity.created_by = user.id;
     entity.updated_by = user.id;
@@ -96,7 +126,7 @@ export class NameTagService {
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     const user = await this.userService.findOneById(ctx.user?.id || 0);
-    const errorMsg = await this.validate(req, user);
+    const errorMsg = await this.validate(req, user, false);
     if (errorMsg) {
       return errorMsg;
     }
@@ -117,9 +147,10 @@ export class NameTagService {
       entity.updated_by = user.id;
 
       const nameTagUpdate = { ...nameTag, ...entity };
+      nameTagUpdate.id = id;
 
       const result = await this.nameTagRepository.update(
-        entity.id,
+        nameTagUpdate.id,
         nameTagUpdate,
       );
       return { data: result, meta: {} };
@@ -146,7 +177,11 @@ export class NameTagService {
     }
   }
 
-  private async validate(req: StoreNameTagParamsDto, user: User) {
+  private async validate(
+    req: StoreNameTagParamsDto,
+    user: User,
+    isCreate: boolean,
+  ) {
     const validFormat =
       (req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
         req.address.length === LENGTH.CONTRACT_ADDRESS &&
@@ -190,7 +225,12 @@ export class NameTagService {
         };
       }
 
-      if (tag.name_tag === req.name_tag) {
+      if (isCreate) {
+        return {
+          code: ADMIN_ERROR_MAP.DUPLICATE_TAG.Code,
+          message: ADMIN_ERROR_MAP.DUPLICATE_TAG.Message,
+        };
+      } else if (tag.name_tag === req.name_tag) {
         return {
           code: ADMIN_ERROR_MAP.DUPLICATE_TAG.Code,
           message: ADMIN_ERROR_MAP.DUPLICATE_TAG.Message,
@@ -201,14 +241,20 @@ export class NameTagService {
     return false;
   }
 
-  async getNameTag(req: GetNameTagDto): Promise<GethNameTagResult> {
+  async getNameTag(
+    ctx: RequestContext,
+    req: GetNameTagDto,
+  ): Promise<GethNameTagResult> {
+    const user = await this.userService.findOneById(ctx.user?.id || 0);
+
     const nameTags = await this.nameTagRepository.getNameTag(
+      user,
       req.keyword,
       Number(req.limit),
       Number(req.nextKey),
     );
 
-    let nextKey;
+    let nextKey: number | null;
 
     if (nameTags.length <= 1) {
       nextKey = null;

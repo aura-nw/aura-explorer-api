@@ -274,6 +274,10 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E004',
     Message: 'User can not Create/Update/Delete Public Name Tag',
   },
+  LIMIT: {
+    Code: 'E005',
+    Message: 'Can not create Private Name Tag, limit has been reached',
+  },
 };
 
 export const PAGE_REQUEST = {

@@ -65,5 +65,6 @@ export default () => ({
     tokenExpiresIn: process.env.JWT_TOKEN_EXPIRES_IN,
     refreshTokenExpiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN,
   },
+  privateNameTagLimit: process.env.PRIVATE_NAME_TAG_LIMIT || 1000,
   adminInitEmail: process.env.ADMIN_INIT_EMAIL,
 });

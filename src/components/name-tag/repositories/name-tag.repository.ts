@@ -166,6 +166,7 @@ export class NameTagRepository extends Repository<NameTag> {
   }
 
   async getNameTag(
+    user: User,
     keyword: string[],
     limit: number,
     nextKey: number,
@@ -177,7 +178,9 @@ export class NameTagRepository extends Repository<NameTag> {
     }
 
     let qb = this.createQueryBuilder()
-      .select(['id', 'address', 'name_tag'])
+      .select(['id', 'address', 'name_tag, note'])
+      .orderBy('address')
+      .addOrderBy('view_type')
       .limit(Number(limit) || PAGE_REQUEST.MAX_200);
 
     if (keyword?.length == 1) {
@@ -188,10 +191,24 @@ export class NameTagRepository extends Repository<NameTag> {
       qb = qb.where('address IN(:...addresses)', { addresses: keyword });
     }
 
+    qb.andWhere('view_type = :view_type_pub', {
+      view_type_pub: VIEW_TYPE.PUBLIC,
+    });
+    if (user) {
+      qb.orWhere('(view_type = :view_type_pri AND created_by = :created_by)', {
+        created_by: user.id,
+        view_type_pri: VIEW_TYPE.PRIVATE,
+      });
+    }
+
     if (nextKey) {
       qb = qb.andWhere('id > :nextKey', { nextKey });
     }
+    const data = await qb.getRawMany();
 
-    return qb.getRawMany();
+    // Remove Duplicate Address, priority Private NameTag
+    return data.filter(
+      (v, i, a) => a.findIndex((t) => t.address === v.address) === i,
+    );
   }
 }
