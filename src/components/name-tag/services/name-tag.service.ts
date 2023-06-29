@@ -4,6 +4,7 @@ import {
   AURA_INFO,
   AkcLogger,
   LENGTH,
+  REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
 import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
@@ -83,7 +84,7 @@ export class NameTagService {
   async deleteNameTag(ctx: RequestContext, id: number) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     try {
-      return await this.nameTagRepository.softDelete(id);
+      return await this.nameTagRepository.delete(id);
     } catch (err) {
       this.logger.error(
         ctx,
@@ -102,6 +103,12 @@ export class NameTagService {
       return {
         code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
         message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
+      };
+    }
+    if (!req.nameTag.match(REGEX_PARTERN.NAME_TAG)) {
+      return {
+        code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
+        message: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Message,
       };
     }
 
