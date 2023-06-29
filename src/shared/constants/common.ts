@@ -285,7 +285,8 @@ export const ADMIN_ERROR_MAP = {
   },
   INVALID_NAME_TAG: {
     Code: 'E004',
-    Message: 'Invalid aura name tag format',
+    Message:
+      'Name tag not accept special character except dot(.), dash(-), underscore(_)',
   },
 };
 
