@@ -9,6 +9,7 @@ import {
   CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API_V2,
+  INFRASTRUCTURE_ERROR,
   LENGTH,
   RequestContext,
   VERIFY_CODE_RESULT,
@@ -194,11 +195,14 @@ export class ContractService {
   async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
     this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
 
+    const codeVerificationAttributes = `verify_step
+      verification_status`;
+
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
         this.chainDB,
-        'verify_step',
+        codeVerificationAttributes,
       ),
       variables: {
         codeId: codeId,
@@ -245,7 +249,16 @@ export class ContractService {
     const data = plainToClass(VerifyCodeStepOutputDto, verifySteps, {
       excludeExtraneousValues: true,
     });
-    return data;
+    let error = {};
+    if (
+      response[0].verify_step.step === INFRASTRUCTURE_ERROR.STEP &&
+      response[0].verify_step.result === VERIFY_CODE_RESULT.SUCCESS &&
+      response[0].verification_status === INFRASTRUCTURE_ERROR.FAIL
+    ) {
+      error = ERROR_MAP.INFRASTRUCTURE_ERROR;
+    }
+
+    return { data, error };
   }
 
   async verifyContractStatus(

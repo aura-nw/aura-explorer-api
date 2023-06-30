@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, Not } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
@@ -209,9 +209,15 @@ export class Cw20TokenService {
   ): Promise<TokenMarkets[]> {
     this.logger.log(ctx, `${this.getPriceById.name} was called!`);
     const listAddress = request?.contractAddress ? request.contractAddress : [];
-    return await this.tokenMarketsRepository.find({
-      where: { contract_address: In(listAddress) },
-    });
+    if (listAddress.length > 0) {
+      return await this.tokenMarketsRepository.find({
+        where: { contract_address: In(listAddress) },
+      });
+    } else {
+      return await this.tokenMarketsRepository.find({
+        where: { coin_id: Not('') },
+      });
+    }
   }
 
   async getTotalAssetByAccountAddress(
@@ -236,7 +242,52 @@ export class Cw20TokenService {
     });
     const price = tokenData?.current_price || 0;
 
-    return balance * price;
+    const auraPrice = balance * price;
+
+    // Attributes for cw20
+    const cw20Attributes = `
+     smart_contract {
+       address
+     }
+     cw20_holders {
+       amount
+       address
+     }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_HOLDER,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        owner: accountAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_HOLDER,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw20_contract'];
+
+    let cw20Price = 0;
+
+    if (response?.length > 0) {
+      const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
+        where: { coin_id: Not('') },
+      });
+      response.forEach((item) => {
+        const tokenMarketsInfo = listTokenMarketsInfo?.find(
+          (f) => f.contract_address === item.smart_contract.address,
+        );
+        const price = Number(tokenMarketsInfo?.current_price) || 0;
+        const holder = item.cw20_holders?.find(
+          (item) => item.address === accountAddress,
+        );
+        cw20Price += price * holder?.amount;
+      });
+    }
+
+    return auraPrice + cw20Price;
   }
 
   /**

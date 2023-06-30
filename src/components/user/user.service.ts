@@ -50,13 +50,13 @@ export class UserService {
     return await this.usersRepository.save(user);
   }
 
-  async update(user: UpdateUserDto): Promise<void> {
+  async update(user: UpdateUserDto): Promise<User> {
     this.logger.log(`Updating user: ${JSON.stringify(user)}`);
     const foundUser = await this.findOne({ where: { id: user.id } });
 
     if (foundUser) {
       await this.usersRepository.merge(foundUser, user);
-      await this.usersRepository.save(foundUser);
+      return await this.usersRepository.save(foundUser);
     } else {
       throw new NotFoundException('User not found');
     }

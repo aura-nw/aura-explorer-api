@@ -11,6 +11,8 @@ import {
   HttpCode,
   NotFoundException,
   BadRequestException,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -37,6 +39,7 @@ import { CreateUserWithPasswordDto } from '../../../auth/password/dtos/create-us
 
 @ApiTags('users')
 @Controller('users')
+@UsePipes(new ValidationPipe({ whitelist: true }))
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RoleGuard)
 @Roles(USER_ROLE.ADMIN)
@@ -70,7 +73,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Return user detail.' })
   @ApiOkResponse({
     description: 'Return user detail.',
-    type: UpdateUserDto,
+    type: UserDto,
   })
   @ApiNotFoundResponse({
     description: 'User not found.',
@@ -110,11 +113,11 @@ export class UsersController {
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-  ): Promise<void> {
+  ): Promise<User> {
     updateUserDto.id = +id || 0;
 
     try {
-      await this.userService.update(updateUserDto);
+      return await this.userService.update(updateUserDto);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
