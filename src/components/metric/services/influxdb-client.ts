@@ -92,7 +92,6 @@ export class InfluxDBClient {
           |> sum()`;
       return this.bindingData(query);
     }
-
     const query = `
       from(bucket: "${this.bucket}")
         |> range(start: ${start})
