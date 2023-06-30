@@ -33,6 +33,7 @@ import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { User } from '../../../../src/shared/entities/user.entity';
 import { UserDto } from '../dtos/user.dto';
+import { CreateUserWithPasswordDto } from '../../../auth/password/dtos/create-user-with-password.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -129,5 +130,10 @@ export class UsersController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  @Post('register-with-password')
+  async registerWithPassword(@Body() request: CreateUserWithPasswordDto) {
+    await this.userService.createUserWithPassword(request);
   }
 }

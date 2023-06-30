@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -8,10 +9,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, FindOneOptions } from 'typeorm';
 
 import { User } from '../../shared/entities/user.entity';
-import { MESSAGES, USER_ROLE } from '../../shared';
+import { MESSAGES, PROVIDER, USER_ROLE } from '../../shared';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { randomBytes } from 'crypto';
+import { MailService } from '../mail/mail.service';
+import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
+import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
 
 @Injectable()
 export class UserService {
@@ -19,6 +25,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: UserRepository,
+    private mailService: MailService,
+    private configService: ConfigService,
   ) {}
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
@@ -72,5 +80,59 @@ export class UserService {
     if (user.role === USER_ROLE.BANNED) {
       throw new UnauthorizedException(MESSAGES.ERROR.BANNED);
     }
+  }
+
+  async createUserWithPassword(
+    userParams: CreateUserWithPasswordDto,
+  ): Promise<void> {
+    const newUser = new User();
+    newUser.encryptedPassword = await bcrypt.hash(
+      userParams.password,
+      Number(this.configService.get('bcryptSalt')),
+    );
+    newUser.email = userParams.email;
+    newUser.userName = userParams.userName;
+    newUser.email = userParams.email;
+    newUser.provider = PROVIDER.PASSWORD;
+    newUser.role = USER_ROLE.USER;
+    newUser.confirmationToken = await this.generateConfirmationToken();
+
+    try {
+      await this.usersRepository.manager.transaction(
+        async (transactionalEntityManager) => {
+          await transactionalEntityManager.save(newUser);
+          await this.mailService.sendMailConfirmation(
+            newUser,
+            newUser.confirmationToken,
+          );
+          await transactionalEntityManager.save(newUser);
+        },
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
+  }
+
+  async activeUser(email: string, token: string): Promise<any> {
+    const userToActive = await this.findOne({
+      where: { email: email, confirmationToken: token },
+    });
+
+    if (!userToActive) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (userToActive.confirmedAt) {
+      throw new BadRequestException('User already active');
+    }
+
+    if (userToActive.confirmationToken === token) {
+      userToActive.confirmedAt = new Date();
+      await this.usersRepository.save(userToActive);
+    }
+  }
+
+  async generateConfirmationToken(): Promise<string> {
+    return randomBytes(20).toString('hex').slice(0, 20).toUpperCase();
   }
 }

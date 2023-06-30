@@ -12,9 +12,11 @@ import { VALIDATION_PIPE_OPTIONS, RequestIdMiddleware } from './shared';
 
 import { AppModule } from './app.module';
 import { RedisUtil } from './shared/utils/redis.util';
+import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.use(cookieParser());
 
   // settings
