@@ -283,6 +283,11 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E003',
     Message: 'Invalid aura address format',
   },
+  INVALID_NAME_TAG: {
+    Code: 'E004',
+    Message:
+      'Name tag not accept special character except dot(.), dash(-), underscore(_)',
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -353,3 +358,5 @@ export const VERIFY_STEP = [
 ];
 
 export const ROLES_KEY = 'roles';
+
+export const REGEX_PARTERN = { NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/) };
