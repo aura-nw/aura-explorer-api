@@ -16,10 +16,8 @@ import {
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
-import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
-import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
   private verifyContractUrl;
@@ -30,8 +28,6 @@ export class ContractService {
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
-    private soulboundTokenRepository: SoulboundTokenRepository,
-    private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
