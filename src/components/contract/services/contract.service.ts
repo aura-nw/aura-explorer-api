@@ -2,15 +2,13 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom, retry, timeout } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import {
   AkcLogger,
   CONTRACT_STATUS,
-  CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API_V2,
   INFRASTRUCTURE_ERROR,
-  LENGTH,
   RequestContext,
   VERIFY_CODE_RESULT,
   VERIFY_STEP,
@@ -20,7 +18,6 @@ import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
-import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
@@ -40,75 +37,6 @@ export class ContractService {
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
     const appParams = appConfig.default();
     this.chainDB = appParams.indexerV2.chainDB;
-  }
-
-  async getContractsCodeId(
-    ctx: RequestContext,
-    request: ContractCodeIdParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
-
-    // Attributes for contract code list
-    const codeAttributes = `code_id
-      creator
-      store_hash
-      type
-      status
-      created_at
-      code_id_verifications {
-        verified_at
-        compiler_version
-        github_url
-        verification_status
-      }
-      smart_contracts {
-        address
-        name
-      }`;
-
-    let where = {};
-    if (request?.keyword) {
-      const keyword = request.keyword.toLowerCase();
-      const byCodeId = Number(keyword) && Number(keyword) > 0;
-      if (byCodeId) {
-        where = { code_id: { _eq: keyword } };
-      } else if (keyword.length === LENGTH.CONTRACT_ADDRESS) {
-        where = { smart_contracts: { address: { _eq: keyword } } };
-      } else {
-        where = { creator: { _eq: keyword } };
-      }
-    }
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_LIST,
-        this.chainDB,
-        this.chainDB,
-        codeAttributes,
-      ),
-      variables: {
-        where: where,
-        limit: request.limit,
-        offset: request.offset,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_LIST,
-    };
-
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB];
-
-    return {
-      contracts: response?.code,
-      count: response?.code_aggregate.aggregate.count,
-    };
-  }
-
-  async getContractsCodeIdDetail(
-    ctx: RequestContext,
-    codeId: number,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
-    return this.getCodeDetail(codeId);
   }
 
   private async getCodeDetail(codeId: number) {
@@ -281,142 +209,5 @@ export class ContractService {
           ? contract[0].code_id_verifications[0].verification_status
           : CONTRACT_STATUS.UNVERIFIED,
     };
-  }
-
-  async getNftDetail(
-    ctx: RequestContext,
-    contractAddress: string,
-    tokenId: string,
-  ) {
-    // Get contract info
-    const abtAttributes = `name
-      minter
-      smart_contract {
-       address
-      }`;
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
-        this.chainDB,
-        abtAttributes,
-      ),
-      variables: {
-        address: contractAddress,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
-    };
-
-    // Get CW4973 contract
-    const cw4973Contract = (
-      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
-    ).data[this.chainDB]['cw721_contract'];
-
-    if (cw4973Contract.length > 0) {
-      return this.getCW4973Token(ctx, cw4973Contract[0], tokenId);
-    } else {
-      return this.getCW721Token(ctx, contractAddress, tokenId);
-    }
-  }
-
-  async getCW721Token(
-    ctx: RequestContext,
-    contractAddress: string,
-    tokenId: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCW721Token.name} was called!`);
-
-    const cw721Attributes = `id
-      token_id
-      owner
-      media_info
-      burned
-      cw721_contract {
-        name
-        smart_contract {
-          name
-          address
-          creator
-        }
-        symbol
-        minter
-      }`;
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
-        this.chainDB,
-        cw721Attributes,
-      ),
-      variables: {
-        address: contractAddress,
-        tokenId: tokenId,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CW721_OWNER,
-    };
-
-    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB]['cw721_token'];
-
-    let nft = null;
-
-    if (tokens?.length > 0) {
-      nft = tokens[0];
-      nft.owner = nft.burned ? '' : nft.owner;
-    }
-    return nft;
-  }
-
-  async getCW4973Token(ctx: RequestContext, contract: any, tokenId: string) {
-    this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
-    const token = await this.soulboundTokenRepository.findOne({
-      where: {
-        token_id: tokenId,
-        contract_address: contract.smart_contract.address,
-      },
-    });
-
-    if (!token) {
-      return null;
-    }
-
-    if (!token?.ipfs || token?.ipfs === '{}') {
-      // Get ipfs info
-      const ipfs = await lastValueFrom(
-        this.httpService
-          .get(this.contractUtil.transform(token?.token_uri))
-          .pipe(timeout(5000), retry(2)),
-      )
-        .then((rs) => rs.data)
-        .catch(() => {
-          return {};
-        });
-
-      token.ipfs = JSON.stringify(ipfs);
-      await this.soulboundTokenRepository.update(token.id, {
-        ipfs: token.ipfs,
-      });
-    }
-
-    const nft = {
-      id: token?.id || '',
-      contract_address: contract.smart_contract.address,
-      token_id: token?.token_id || '',
-      token_uri: token?.token_uri || '',
-      token_name: contract.name || '',
-      token_name_ipfs: token?.token_name || '',
-      animation_url: token?.animation_url || '',
-      token_img: token?.token_img || '',
-      img_type: token?.img_type || '',
-      receiver_address: token?.receiver_address || '',
-      status: token?.status || '',
-      picked: token?.picked || '',
-      signature: token?.signature || '',
-      pub_key: token?.pub_key || '',
-      minter_address: contract.minter || '',
-      type: CONTRACT_TYPE.CW4973,
-      ipfs: JSON.parse(token?.ipfs) || '',
-    };
-    return nft;
   }
 }

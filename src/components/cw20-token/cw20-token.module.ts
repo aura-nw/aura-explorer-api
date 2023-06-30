@@ -6,20 +6,14 @@ import { ServiceUtil } from '../../shared/utils/service.util';
 import { SharedModule } from '../../shared';
 import { Cw20TokenController } from './controllers/cw20-token.controller';
 import { Cw20TokenService } from './services/cw20-token.service';
-import { SmartContractRepository } from '../contract/repositories/smart-contract.repository';
 import { RedisUtil } from '../../shared/utils/redis.util';
 import { AccountService } from '../account/services/account.service';
-import { ValidatorRepository } from '../validator/repositories/validator.repository';
 import { TokenMarketsRepository } from './repositories/token-markets.repository';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([
-      SmartContractRepository,
-      TokenMarketsRepository,
-      ValidatorRepository,
-    ]),
+    TypeOrmModule.forFeature([TokenMarketsRepository]),
     ConfigModule,
     HttpModule,
   ],
