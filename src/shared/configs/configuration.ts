@@ -74,6 +74,6 @@ export default () => ({
     sender: process.env.EMAIL_SENDER_ADDRESS,
   },
   appDomain: process.env.APP_DOMAIN,
-  bcryptSalt: process.env.BCRYPT_PASSWORD || 8,
+  bcryptSalt: process.env.BCRYPT_SALT || 8,
   auraScanUrl: process.env.AURA_SCAN_URL,
 });

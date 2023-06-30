@@ -27,7 +27,7 @@ export class PasswordAuthController {
     @Param('code') code: string,
     @Res() res,
   ) {
-    const auraScanUrl = this.configService.get('aurascanUrl');
+    const auraScanUrl = this.configService.get('auraScanUrl');
 
     try {
       await this.userService.activeUser(email, code);
