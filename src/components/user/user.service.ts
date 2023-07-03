@@ -9,7 +9,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
 
 import { User } from '../../shared/entities/user.entity';
-import { MESSAGES, PROVIDER, USER_ACTIVITIES, USER_ROLE } from '../../shared';
+import {
+  MESSAGES,
+  MSGS_ACTIVE_USER,
+  PROVIDER,
+  USER_ACTIVITIES,
+  USER_ROLE,
+} from '../../shared';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -123,22 +129,29 @@ export class UserService {
     }
   }
 
-  async activeUser(email: string, token: string): Promise<void> {
+  async activeUser(
+    email: string,
+    token: string,
+  ): Promise<{ message: string; code: string }> {
     const userToActive = await this.findOne({
       where: { email: email, confirmationToken: token },
     });
 
     if (!userToActive) {
-      throw new BadRequestException('User not found');
+      return MSGS_ACTIVE_USER.EA001;
     }
 
     if (userToActive.confirmedAt) {
-      throw new BadRequestException('User already active');
+      return MSGS_ACTIVE_USER.EA002;
     }
 
     if (userToActive.confirmationToken === token) {
       userToActive.confirmedAt = new Date();
       await this.usersRepository.save(userToActive);
+
+      return MSGS_ACTIVE_USER.SA001;
+    } else {
+      return MSGS_ACTIVE_USER.EA003;
     }
   }
 

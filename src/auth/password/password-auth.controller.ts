@@ -10,6 +10,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
+import { MSGS_ACTIVE_USER } from 'src/shared';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -29,16 +30,14 @@ export class PasswordAuthController {
   ) {
     const auraScanUrl = this.configService.get('auraScanUrl');
 
-    try {
-      await this.userService.activeUser(email, code);
+    const resultActive = await this.userService.activeUser(email, code);
 
+    if (resultActive.code === MSGS_ACTIVE_USER.SA001.code) {
       res.redirect(`${auraScanUrl}/user/welcome`);
-    } catch (err) {
-      if (err.response.statusCode === HttpStatus.BAD_REQUEST) {
-        res.redirect(`${auraScanUrl}/some-thing-wrong`);
-      }
-
-      this.logger.error(err.message, err.stack);
+    } else if (resultActive.code === MSGS_ACTIVE_USER.EA001.code) {
+      res.redirect(`${auraScanUrl}/user/already-active`);
+    } else {
+      res.redirect(`${auraScanUrl}/something-wrong`);
     }
   }
 
