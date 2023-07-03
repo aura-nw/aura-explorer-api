@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { NameTag } from 'src/shared/entities/name-tag.entity';
+import { NameTag } from '../../../shared/entities/name-tag.entity';
 
 export class GethNameTagResult {
   @ApiProperty()

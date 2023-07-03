@@ -215,6 +215,7 @@ export enum USER_ROLE {
 export enum PROVIDER {
   FACEBOOK = 'facebook',
   GOOGLE = 'google',
+  PASSWORD = 'password',
 }
 
 export enum NAME_TAG_TYPE {
@@ -247,3 +248,8 @@ export const REGEX_PARTERN = {
   NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/),
   URL: new RegExp(/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/),
 };
+
+export enum USER_ACTIVITIES {
+  SEND_MAIL_CONFIRM = 'SEND_MAIL_CONFIRM',
+  SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+}
