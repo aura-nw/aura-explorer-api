@@ -16,7 +16,6 @@ import {
   RequestContext,
   SwaggerBaseApiResponse,
 } from '../../../shared';
-import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { ContractService } from '../services/contract.service';
@@ -29,42 +28,6 @@ export class ContractController {
     private readonly logger: AkcLogger,
   ) {
     this.logger.setContext(ContractController.name);
-  }
-
-  @Post('contract-code/list')
-  @ApiOperation({ summary: 'Get list contracts code' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getContractsCodeId(
-    @ReqContext() ctx: RequestContext,
-    @Body() request: ContractCodeIdParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
-    const { contracts, count } = await this.contractService.getContractsCodeId(
-      ctx,
-      request,
-    );
-
-    return { data: contracts, meta: { count } };
-  }
-
-  @Get('contract-code/:codeId')
-  @ApiOperation({ summary: 'Get contracts code id detail' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getContractsCodeIdDetail(
-    @ReqContext() ctx: RequestContext,
-    @Param('codeId') codeId: number,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
-    const contracts = await this.contractService.getContractsCodeIdDetail(
-      ctx,
-      codeId,
-    );
-
-    return { data: contracts, meta: {} };
   }
 
   @Post('verify-code-id')
@@ -113,23 +76,5 @@ export class ContractController {
     const result = await this.contractService.verifyContractStatus(ctx, codeId);
 
     return { data: result, meta: {} };
-  }
-
-  @Get(':contractAddress/nft/:tokenId')
-  @ApiOperation({ summary: 'Get NFT detail' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getNftDetail(
-    @ReqContext() ctx: RequestContext,
-    @Param('contractAddress') contractAddress: string,
-    @Param('tokenId') tokenId: string,
-  ) {
-    this.logger.log(ctx, `${this.getNftDetail.name} was called!`);
-    const nft = await this.contractService.getNftDetail(
-      ctx,
-      contractAddress,
-      tokenId,
-    );
-    return { data: nft, meta: {} };
   }
 }
