@@ -45,10 +45,6 @@ export class PasswordAuthController {
   async resendConfirmationEmail(@Param('email') email: string) {
     const user = await this.userService.findOneByEmail(email);
 
-    if (!user) {
-      throw new BadRequestException('User have not registered.');
-    }
-
-    await this.mailService.sendMailConfirmation(user, user?.confirmationToken);
+    await this.userService.resendConfirmationEmail(user);
   }
 }

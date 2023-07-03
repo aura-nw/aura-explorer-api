@@ -2,7 +2,8 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { User } from '../../shared/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
-import { PROVIDER } from 'src/shared';
+import { PROVIDER, USER_ACTIVITIES } from 'src/shared';
+import { UserActivity } from 'src/shared/entities/user-activity.entity';
 
 @Injectable()
 export class MailService {

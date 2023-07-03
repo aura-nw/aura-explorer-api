@@ -361,3 +361,8 @@ export const VERIFY_STEP = [
 export const ROLES_KEY = 'roles';
 
 export const REGEX_PARTERN = { NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/) };
+
+export enum USER_ACTIVITIES {
+  SEND_MAIL_CONFIRM = 'SEND_MAIL_CONFIRM',
+  SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+}

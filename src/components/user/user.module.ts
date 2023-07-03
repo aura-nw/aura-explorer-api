@@ -6,9 +6,13 @@ import { UsersController } from './controllers/users.controller';
 import { MailService } from '../mail/mail.service';
 import { IsUniqueConstraint } from './validators/validate-unique';
 import { MatchPasswordConstraint } from './validators/validate-match-password';
+import { UserActivity } from 'src/shared/entities/user-activity.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([UserActivity]),
+  ],
   providers: [
     UserService,
     Logger,
