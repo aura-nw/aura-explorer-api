@@ -3,6 +3,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Res,
 } from '@nestjs/common';
@@ -13,6 +14,8 @@ import { ConfigService } from '@nestjs/config';
 @ApiTags('auth')
 @Controller('auth')
 export class PasswordAuthController {
+  private logger = new Logger(PasswordAuthController.name);
+
   constructor(
     private userService: UserService,
     private configService: ConfigService,
@@ -32,8 +35,10 @@ export class PasswordAuthController {
       res.redirect(`${auraScanUrl}/user/welcome`);
     } catch (err) {
       if (err.response.statusCode === HttpStatus.BAD_REQUEST) {
-        res.redirect(`${auraScanUrl}/user/already-registered`);
+        res.redirect(`${auraScanUrl}/some-thing-wrong`);
       }
+
+      this.logger.error(err.message, err.stack);
     }
   }
 
