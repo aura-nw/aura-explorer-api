@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsEmail, Matches, MaxLength, MinLength } from 'class-validator';
-import { MatchPassword } from 'src/components/user/validators/validate-match-password';
-import { IsUnique } from 'src/components/user/validators/validate-unique';
-import { USER_ROLE } from 'src/shared';
+import { MatchPassword } from '../../../components/user/validators/validate-match-password';
+import { IsUnique } from '../../../components/user/validators/validate-unique';
+import { USER_ROLE } from '../../../shared';
 
 export class CreateUserWithPasswordDto {
   @ApiProperty()

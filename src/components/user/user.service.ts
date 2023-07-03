@@ -18,7 +18,7 @@ import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
-import { UserActivity } from 'src/shared/entities/user-activity.entity';
+import { UserActivity } from '../../shared/entities/user-activity.entity';
 
 @Injectable()
 export class UserService {
@@ -123,13 +123,13 @@ export class UserService {
     }
   }
 
-  async activeUser(email: string, token: string): Promise<any> {
+  async activeUser(email: string, token: string): Promise<void> {
     const userToActive = await this.findOne({
       where: { email: email, confirmationToken: token },
     });
 
     if (!userToActive) {
-      throw new NotFoundException('User not found');
+      throw new BadRequestException('User not found');
     }
 
     if (userToActive.confirmedAt) {

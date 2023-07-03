@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   HttpCode,
@@ -8,9 +7,9 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { UserService } from 'src/components/user/user.service';
+import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from 'src/components/mail/mail.service';
+import { MailService } from '../../components/mail/mail.service';
 
 @ApiTags('auth')
 @Controller('auth')

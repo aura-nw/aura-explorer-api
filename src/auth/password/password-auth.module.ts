@@ -1,8 +1,8 @@
-import { UserModule } from 'src/components/user/user.module';
+import { UserModule } from '../../components/user/user.module';
 import { PasswordAuthController } from './password-auth.controller';
 import { Module } from '@nestjs/common';
 import { PasswordAuthService } from './password-auth.service';
-import { MailService } from 'src/components/mail/mail.service';
+import { MailService } from '../../components/mail/mail.service';
 
 @Module({
   imports: [UserModule],
