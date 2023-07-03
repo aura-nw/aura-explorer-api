@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 
 import * as util from 'util';
@@ -24,7 +23,6 @@ export class AccountService {
   constructor(
     private readonly logger: AkcLogger,
     private serviceUtil: ServiceUtil,
-    private validatorRepository: ValidatorRepository,
   ) {
     this.logger.setContext(AccountService.name);
     const appParams = appConfig.default();

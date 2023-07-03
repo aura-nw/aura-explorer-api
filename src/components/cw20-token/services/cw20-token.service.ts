@@ -273,13 +273,15 @@ export class Cw20TokenService {
 
     if (response?.length > 0) {
       const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
-        where: { coin_id: Not('') },
+        where: { coin_id: Not(''), verify_status: 'VERIFIED' },
       });
       response.forEach((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo?.find(
           (f) => f.contract_address === item.smart_contract.address,
         );
-        const price = Number(tokenMarketsInfo?.current_price) || 0;
+        const price = tokenMarketsInfo?.current_price
+          ? Number(tokenMarketsInfo?.current_price)
+          : 0;
         const holder = item.cw20_holders?.find(
           (item) => item.address === accountAddress,
         );
