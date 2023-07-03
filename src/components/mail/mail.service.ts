@@ -17,16 +17,16 @@ export class MailService {
     if (user?.provider != PROVIDER.PASSWORD) {
       throw new BadRequestException('User have not registered with password.');
     }
-
-    const url = `${this.configService.get(
-      'appDomain',
-    )}/auth/confirm?token=${token}`;
+    const apiPrefix = this.configService.get('apiPrefix');
+    const appDomain = this.configService.get('appDomain');
+    const confirmEmailPath = `/${apiPrefix}/auth/confirm-email/email=${user.email}&code=${token}`;
+    const confirmEmailUrl = appDomain + confirmEmailPath;
 
     await this.sendMail(
       user.email,
       'Welcome to Aura App! Confirm your email.',
       './confirmation',
-      { name: user.userName, url: url },
+      { name: user.userName, url: confirmEmailUrl },
     );
   }
 

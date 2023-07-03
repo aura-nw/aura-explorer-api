@@ -9,7 +9,6 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from '../../components/mail/mail.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -17,7 +16,6 @@ export class PasswordAuthController {
   constructor(
     private userService: UserService,
     private configService: ConfigService,
-    private mailService: MailService,
   ) {}
 
   @Get('/confirm-email/email=:email&code=:code')
