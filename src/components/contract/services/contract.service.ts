@@ -2,7 +2,7 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, retry, timeout } from 'rxjs';
 import {
   AkcLogger,
   CONTRACT_STATUS,
@@ -18,6 +18,8 @@ import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
+import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
+import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
   private verifyContractUrl;
@@ -28,6 +30,8 @@ export class ContractService {
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
+    private soulboundTokenRepository: SoulboundTokenRepository,
+    private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
@@ -205,5 +209,88 @@ export class ContractService {
           ? contract[0].code_id_verifications[0].verification_status
           : CONTRACT_STATUS.UNVERIFIED,
     };
+  }
+
+  async getCW4973Detail(
+    ctx: RequestContext,
+    contractAddress: string,
+    tokenId: string,
+  ) {
+    this.logger.log(ctx, `${this.getCW4973Detail.name} was called!`);
+    // Get contract info
+    const abtAttributes = `name
+      minter
+      smart_contract {
+       address
+      }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: {
+        address: contractAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
+    };
+
+    // Get CW4973 contract
+    const cw4973Contract = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['cw721_contract'];
+
+    if (cw4973Contract.length > 0) {
+      const token = await this.soulboundTokenRepository.findOne({
+        where: {
+          token_id: tokenId,
+          contract_address: cw4973Contract[0].smart_contract.address,
+        },
+      });
+
+      if (!token) {
+        return null;
+      }
+
+      if (!token?.ipfs || token?.ipfs === '{}') {
+        // Get ipfs info
+        const ipfs = await lastValueFrom(
+          this.httpService
+            .get(this.contractUtil.transform(token?.token_uri))
+            .pipe(timeout(5000), retry(2)),
+        )
+          .then((rs) => rs.data)
+          .catch(() => {
+            return {};
+          });
+
+        token.ipfs = JSON.stringify(ipfs);
+        await this.soulboundTokenRepository.update(token.id, {
+          ipfs: token.ipfs,
+        });
+      }
+
+      const nft = {
+        id: token?.id || '',
+        contract_address: cw4973Contract[0].smart_contract.address,
+        token_id: token?.token_id || '',
+        token_uri: token?.token_uri || '',
+        token_name: cw4973Contract[0].name || '',
+        token_name_ipfs: token?.token_name || '',
+        animation_url: token?.animation_url || '',
+        token_img: token?.token_img || '',
+        img_type: token?.img_type || '',
+        receiver_address: token?.receiver_address || '',
+        status: token?.status || '',
+        picked: token?.picked || '',
+        signature: token?.signature || '',
+        pub_key: token?.pub_key || '',
+        minter_address: cw4973Contract[0].minter || '',
+        type: 'CW4973',
+        ipfs: JSON.parse(token?.ipfs) || '',
+      };
+      return nft;
+    }
   }
 }
