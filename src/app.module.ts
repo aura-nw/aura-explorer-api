@@ -14,6 +14,8 @@ import { MetricService } from './components/metric/services/metric.service';
 import { SoulboundTokenModule } from './components/soulbound-token/soulbound-token.module';
 import { NameTagModule } from './components/name-tag/name-tag.module';
 import { AuthModule } from './auth/auth.module';
+import { MailModule } from './components/mail/mail.module';
+import { PasswordAuthModule } from './auth/password/password-auth.module';
 
 @Module({
   imports: [
@@ -27,6 +29,11 @@ import { AuthModule } from './auth/auth.module';
     Cw20TokenModule,
     SoulboundTokenModule,
     NameTagModule,
+    MailModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PasswordAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil, MetricService],
