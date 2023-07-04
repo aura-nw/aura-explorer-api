@@ -21,7 +21,13 @@ export class NameTagRepository extends Repository<NameTag> {
     );
     const builder = this.createQueryBuilder('tag')
       .select(
-        'tag.id, tag.address, tag.type, tag.name_tag, tag.created_at, user.email',
+        `tag.id,
+        tag.address,
+        tag.type,
+        tag.name_tag,
+        tag.created_at,
+        user.email,
+        enterprise_url as enterpriseUrl`,
       )
       .leftJoin(User, 'user', 'user.id = tag.updated_by')
       .where('tag.deleted_at IS NULL');
@@ -64,7 +70,7 @@ export class NameTagRepository extends Repository<NameTag> {
     }
 
     let qb = this.createQueryBuilder()
-      .select(['id', 'address', 'name_tag'])
+      .select(['id', 'address', 'name_tag', 'enterprise_url as enterpriseUrl'])
       .limit(Number(limit) || PAGE_REQUEST.MAX_200);
 
     if (keyword?.length == 1) {
