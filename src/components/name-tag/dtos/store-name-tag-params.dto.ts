@@ -1,5 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NAME_TAG_TYPE } from '../../../shared';
+import { IsUrl } from 'class-validator';
 
 export class StoreNameTagParamsDto {
   @ApiProperty({ default: '' })
@@ -16,4 +17,10 @@ export class StoreNameTagParamsDto {
 
   @ApiProperty({ default: '' })
   userId: number;
+
+  @ApiPropertyOptional({
+    default: '',
+  })
+  @IsUrl(undefined, { message: 'Enterprise url must be a valid url.' })
+  enterpriseUrl: string;
 }
