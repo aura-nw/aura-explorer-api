@@ -1,15 +1,19 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Post,
   Res,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { MailService } from '../../components/mail/mail.service';
+import { LoginUserWithPassword } from './dtos/login-with-password.dto';
+import { PasswordAuthService } from './password-auth.service';
+import { LoginUserWithPasswordResponseDto } from './dtos/login-with-password.response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -17,7 +21,7 @@ export class PasswordAuthController {
   constructor(
     private userService: UserService,
     private configService: ConfigService,
-    private mailService: MailService,
+    private passwordAuthService: PasswordAuthService,
   ) {}
 
   @Get('/confirm-email/email=:email&code=:code')
@@ -45,5 +49,20 @@ export class PasswordAuthController {
     const user = await this.userService.findOneByEmail(email);
 
     await this.userService.resendConfirmationEmail(user);
+  }
+
+  @Post('login-with-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: 'Return user access tokens.',
+    type: LoginUserWithPasswordResponseDto,
+  })
+  async loginWithPassword(
+    @Body() request: LoginUserWithPassword,
+  ): Promise<LoginUserWithPasswordResponseDto> {
+    return await this.passwordAuthService.login(
+      request.userName,
+      request.password,
+    );
   }
 }
