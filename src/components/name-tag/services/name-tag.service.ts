@@ -71,6 +71,7 @@ export class NameTagService {
     entity.type = req.type;
     entity.name_tag = req.nameTag;
     entity.updated_by = req.userId;
+    entity.enterpriseUrl = req.enterpriseUrl;
     try {
       const result = await this.nameTagRepository.update(req.id, entity);
       return { data: result, meta: {} };
