@@ -19,6 +19,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
+import { ResetPasswordDto } from 'src/auth/password/dtos/reset-password.dto';
 
 @Injectable()
 export class UserService {
@@ -98,7 +99,7 @@ export class UserService {
     newUser.email = userParams.email;
     newUser.provider = PROVIDER.PASSWORD;
     newUser.role = USER_ROLE.USER;
-    newUser.confirmationToken = await this.generateConfirmationToken();
+    newUser.confirmationToken = await this.generateTokenWithLength(20);
 
     const newUserActivity = new UserActivity();
     newUserActivity.type = USER_ACTIVITIES.SEND_MAIL_CONFIRM;
@@ -115,10 +116,12 @@ export class UserService {
             newUser,
             newUser.confirmationToken,
           );
-          await transactionalEntityManager.save(newUser);
         },
       );
     } catch (error) {
+      this.logger.error(
+        `Error while create user: ${error.message} ${error.stack}`,
+      );
       throw new BadRequestException(error);
     }
   }
@@ -142,8 +145,8 @@ export class UserService {
     }
   }
 
-  async generateConfirmationToken(): Promise<string> {
-    return randomBytes(20).toString('hex').slice(0, 20).toUpperCase();
+  async generateTokenWithLength(length: number): Promise<string> {
+    return randomBytes(20).toString('hex').slice(0, length).toUpperCase();
   }
 
   async resendConfirmationEmail(user: User): Promise<void> {
@@ -180,6 +183,83 @@ export class UserService {
         `Error while resend confirmation email: ${error.message}`,
       );
     }
+  }
+
+  async sendResetPasswordEmail(user: User): Promise<void> {
+    if (!user) {
+      throw new BadRequestException('User have not registered.');
+    }
+
+    if (!user.confirmedAt) {
+      throw new BadRequestException('User not confirmed with us before.');
+    }
+
+    if (user.provider != PROVIDER.PASSWORD) {
+      throw new BadRequestException('User have not registered with password.');
+    }
+
+    user.resetPasswordToken = await this.generateTokenWithLength(21);
+
+    //Check is first time request send mail or not.
+    const resetPasswordActivity = await this.userActivityRepository.findOne({
+      where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD },
+    });
+    const RESET_PASSWORD_TEXT = 'reset password';
+
+    if (resetPasswordActivity) {
+      this.limitSendMail(resetPasswordActivity, RESET_PASSWORD_TEXT);
+
+      await this.mailService.sendMailResetPassword(user);
+
+      await this.usersRepository.save(user);
+
+      await this.userActivityRepository.save(resetPasswordActivity);
+    } else {
+      const newResetPasswordActivity = new UserActivity();
+      newResetPasswordActivity.type = USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD;
+      newResetPasswordActivity.sendMailAttempt = 0;
+
+      this.limitSendMail(newResetPasswordActivity, RESET_PASSWORD_TEXT);
+
+      user.userActivities.push(newResetPasswordActivity);
+
+      await this.mailService.sendMailResetPassword(user);
+
+      await this.usersRepository.save(user);
+    }
+  }
+
+  async resetPassword(
+    email: string,
+    resetPasswordToken: string,
+    passwordParams: ResetPasswordDto,
+  ) {
+    const user = await this.usersRepository.findOne({
+      where: { email, resetPasswordToken },
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not registered with us before.');
+    }
+
+    this.checkActivatedUser(user);
+
+    if (
+      user.resetPasswordToken !== null &&
+      user.resetPasswordToken !== resetPasswordToken
+    ) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    user.encryptedPassword = await bcrypt.hash(
+      passwordParams.password,
+      Number(this.configService.get('bcryptSalt')),
+    );
+
+    user.resetPasswordToken = null;
+
+    await this.usersRepository.save(user);
+    console.log(user);
   }
 
   limitSendMail(userActivity: UserActivity, type: string): void {
@@ -220,5 +300,11 @@ export class UserService {
     }
 
     userActivity.lastSendMailAttempt = new Date();
+  }
+
+  checkActivatedUser(user: User): void {
+    if (!user.confirmedAt) {
+      throw new BadRequestException('User not confirmed with us before.');
+    }
   }
 }

@@ -27,6 +27,9 @@ export class User extends BaseEntityIncrementId {
   @Column({ nullable: true, name: 'confirmed_at' })
   confirmedAt: Date;
 
+  @Column({ nullable: true, name: 'reset_password_token' })
+  resetPasswordToken: string;
+
   @Column({ nullable: true, name: 'user_name', unique: true })
   userName: string;
 

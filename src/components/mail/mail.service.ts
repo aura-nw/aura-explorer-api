@@ -30,6 +30,22 @@ export class MailService {
     );
   }
 
+  async sendMailResetPassword(user: User) {
+    const auraScanUrl = this.configService.get('auraScanUrl');
+    const resetPasswordPath = `/user/reset-password/email=${user.email}&code=${user.resetPasswordToken}`;
+    const resetPasswordUrl = auraScanUrl + resetPasswordPath;
+
+    await this.sendMail(
+      user.email,
+      'Aurascan account recovery',
+      './reset-password',
+      {
+        name: user.userName,
+        url: resetPasswordUrl,
+      },
+    );
+  }
+
   async sendMail(to: string, subject: string, template: string, context: any) {
     try {
       await this.mailerService.sendMail({
