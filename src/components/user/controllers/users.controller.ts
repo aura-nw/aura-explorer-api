@@ -13,6 +13,7 @@ import {
   BadRequestException,
   UsePipes,
   ValidationPipe,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -36,6 +37,7 @@ import { Roles } from '../../../auth/role/roles.decorator';
 import { User } from '../../../../src/shared/entities/user.entity';
 import { UserDto } from '../dtos/user.dto';
 import { CreateUserWithPasswordDto } from '../../../auth/password/dtos/create-user-with-password.dto';
+import { ChangePasswordDto } from '../dtos/change-password.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -150,5 +152,14 @@ export class UsersController {
   @Post('register-with-password')
   async registerWithPassword(@Body() request: CreateUserWithPasswordDto) {
     await this.userService.createUserWithPassword(request);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  @HttpCode(HttpStatus.OK)
+  @Post('change-password')
+  async changePassword(@Req() req, @Body() body: ChangePasswordDto) {
+    await this.userService.changePassword(req.user.id, body);
   }
 }
