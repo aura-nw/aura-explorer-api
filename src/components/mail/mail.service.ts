@@ -32,7 +32,9 @@ export class MailService {
 
   async sendMailResetPassword(user: User) {
     const auraScanUrl = this.configService.get('auraScanUrl');
-    const resetPasswordPath = `/user/reset-password/email=${user.email}&code=${user.resetPasswordToken}`;
+    const encodeEmail = encodeURIComponent(user.email);
+    const encodeToken = encodeURIComponent(user.resetPasswordToken);
+    const resetPasswordPath = `/user/reset-password/email=${encodeEmail}&code=${encodeToken}`;
     const resetPasswordUrl = auraScanUrl + resetPasswordPath;
 
     await this.sendMail(
