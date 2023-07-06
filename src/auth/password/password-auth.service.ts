@@ -13,18 +13,20 @@ export class PasswordAuthService {
   ) {}
   async validate(userName: string, password: string): Promise<User> {
     const user = await this.userService.findOne({ where: { userName } });
+    const INVALID_USERNAME_OR_PASSWORD = 'Invalid username or password';
 
-    if (user) {
-      if (!user.confirmedAt) {
-        throw new UnauthorizedException('User not confirmed with us before.');
-      }
-      const isValidPassword = await compare(password, user.encryptedPassword);
+    if (!user) {
+      throw new UnauthorizedException(INVALID_USERNAME_OR_PASSWORD);
+    }
 
-      if (!isValidPassword) {
-        throw new UnauthorizedException('Invalid username or password.');
-      }
-    } else {
-      throw new UnauthorizedException('Invalid username or password.');
+    if (!user.confirmedAt) {
+      throw new UnauthorizedException('User not confirmed with us before');
+    }
+
+    const isValidPassword = await compare(password, user.encryptedPassword);
+
+    if (!isValidPassword) {
+      throw new UnauthorizedException(INVALID_USERNAME_OR_PASSWORD);
     }
 
     return user;
