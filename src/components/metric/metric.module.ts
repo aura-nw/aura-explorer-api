@@ -6,12 +6,9 @@ import { MetricController } from './controllers/metric.controller';
 import { MetricService } from './services/metric.service';
 
 @Module({
-  imports: [
-    SharedModule,
-    ConfigModule
-  ],
+  imports: [SharedModule, ConfigModule],
   providers: [MetricService],
   controllers: [MetricController],
   exports: [MetricService],
 })
-export class MetricModule { }
+export class MetricModule {}

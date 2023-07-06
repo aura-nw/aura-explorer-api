@@ -8,7 +8,6 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { SoulboundToken, SOULBOUND_TOKEN_STATUS } from '../../../shared';
-import { SmartContract } from '../../../shared/entities/smart-contract.entity';
 
 @EntityRepository(SoulboundToken)
 export class SoulboundTokenRepository extends Repository<SoulboundToken> {
@@ -25,7 +24,6 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
    * @returns
    */
   async getTokens(
-    minterAddress: string,
     contractAddress: string,
     keyword: string,
     status: string,
@@ -37,21 +35,10 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     );
     const builder = this.createQueryBuilder('sbt')
       .select('sbt.*')
-      .innerJoin(
-        SmartContract,
-        'sm',
-        'sm.contract_address = sbt.contract_address',
-      )
-      .where(
-        `sm.minter_address=:minterAddress AND sm.contract_address=:contractAddress`,
-        {
-          minterAddress,
-          contractAddress,
-        },
-      );
-    const _finalizeResult = async (
-      _builder: SelectQueryBuilder<SoulboundToken>,
-    ) => {
+      .where(`sbt.contract_address=:contractAddress`, {
+        contractAddress,
+      });
+    const _finalizeResult = async () => {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
@@ -83,7 +70,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         status,
       });
     }
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 
   /**
@@ -107,9 +94,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
     const builder = this.createQueryBuilder('sbt').select('sbt.*').where({
       receiver_address: receiverAddress,
     });
-    const _finalizeResult = async (
-      _builder: SelectQueryBuilder<SoulboundToken>,
-    ) => {
+    const _finalizeResult = async () => {
       const tokens = await builder
         .limit(limit)
         .offset(offset)
@@ -144,7 +129,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
         ]),
       });
     }
-    return await _finalizeResult(builder);
+    return await _finalizeResult();
   }
 
   async getPickedToken(receiverAddress: string, limit: number) {
@@ -166,6 +151,7 @@ export class SoulboundTokenRepository extends Repository<SoulboundToken> {
       );
 
     const _finalizeResult = async (
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       _builder: SelectQueryBuilder<SoulboundToken>,
     ) => {
       const tokens = await builder
