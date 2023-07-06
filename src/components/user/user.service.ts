@@ -239,10 +239,33 @@ export class UserService {
     });
 
     if (!user) {
-      throw new BadRequestException('User not registered with us before.');
+      throw new BadRequestException(
+        'User not registered with us before or the link reset password is invalid.',
+      );
     }
 
     this.checkActivatedUser(user);
+
+    // Check expired reset password link (available in 24h).
+    if (user) {
+      const lastSendResetPasswordAttempt =
+        await this.userActivityRepository.findOne({
+          where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD },
+        });
+
+      if (lastSendResetPasswordAttempt) {
+        const lastSend = lastSendResetPasswordAttempt.lastSendMailAttempt;
+        const millisecondOf24h = 24 * 60 * 60 * 1000;
+        const after24hFromLastSend = new Date(
+          lastSend.getTime() + millisecondOf24h,
+        );
+        const currentTime = new Date();
+
+        if (currentTime > after24hFromLastSend) {
+          throw new BadRequestException('Reset password link expired.');
+        }
+      }
+    }
 
     if (
       user.resetPasswordToken !== null &&
@@ -251,15 +274,16 @@ export class UserService {
       throw new BadRequestException('Invalid token');
     }
 
+    // Set new password.
     user.encryptedPassword = await bcrypt.hash(
       passwordParams.password,
       Number(this.configService.get('bcryptSalt')),
     );
 
+    // Reset resetPasswordToken.
     user.resetPasswordToken = null;
 
     await this.usersRepository.save(user);
-    console.log(user);
   }
 
   limitSendMail(userActivity: UserActivity, type: string): void {
