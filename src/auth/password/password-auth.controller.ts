@@ -10,7 +10,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { MSGS_ACTIVE_USER } from 'src/shared';
+import { MSGS_ACTIVE_USER } from '../../shared/constants/common';
 
 @ApiTags('auth')
 @Controller('auth')
