@@ -58,4 +58,7 @@ export class SoulboundToken extends BaseEntityIncrementId {
 
   @Column({ name: 'is_notify', default: false })
   is_notify: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  ipfs: string;
 }

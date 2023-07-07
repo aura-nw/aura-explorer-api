@@ -19,7 +19,7 @@ export enum RangeType {
   minute = 'm',
 }
 
-export enum FormatDate{
+export enum FormatDate {
   month = 'YYYY-MM-01T00:00:00.000',
   day = 'YYYY-MM-DDT00:00:00.000',
   hour = 'YYYY-MM-DDTHH:00:00.000',

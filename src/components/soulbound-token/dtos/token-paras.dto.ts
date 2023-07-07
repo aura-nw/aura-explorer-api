@@ -5,9 +5,6 @@ import { PAGE_REQUEST } from '../../../shared';
 
 export class TokenParasDto {
   @ApiProperty()
-  minterAddress: string;
-
-  @ApiProperty()
   contractAddress: string;
 
   @ApiPropertyOptional({

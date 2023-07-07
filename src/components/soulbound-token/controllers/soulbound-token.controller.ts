@@ -18,7 +18,6 @@ import { SoulboundTokenService } from '../services/soulbound-token.service';
 import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
 import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
-import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 
 @Controller('soulbound-token')
@@ -28,23 +27,6 @@ export class SoulboundTokenController {
     private readonly logger: AkcLogger,
     private soulboundTokenService: SoulboundTokenService,
   ) {}
-
-  @Get('tokens-list')
-  @ApiOperation({ summary: 'Get list token of Soulbound' })
-  @ApiResponse({ status: HttpStatus.OK, schema: {} })
-  async getListSoulboundToken(
-    @ReqContext() ctx: RequestContext,
-    @Query() query: SoulboundTokenParasDto,
-  ) {
-    this.logger.log(
-      ctx,
-      `============== ${this.getListSoulboundToken.name} was called! ==============`,
-    );
-    const { data, count } =
-      await this.soulboundTokenService.getSoulboundTokenList(ctx, query);
-
-    return { data: data, meta: { count } };
-  }
 
   @Get('contracts')
   @ApiOperation({ summary: 'Get list contract of Soulbound contract' })
@@ -85,24 +67,6 @@ export class SoulboundTokenController {
       req,
     );
     return { data, meta: { count } };
-  }
-
-  @Get('tokens-detail/:tokenId')
-  @ApiOperation({
-    summary: 'Get tokens details by tokenId',
-  })
-  @ApiResponse({ status: HttpStatus.OK, schema: {} })
-  async getTokensDetail(@ReqContext() ctx, @Param('tokenId') tokenId: string) {
-    this.logger.log(
-      ctx,
-      `============== ${
-        this.getTokens.name
-      } was called with paras: tokenId=${JSON.stringify(
-        tokenId,
-      )}! ==============`,
-    );
-    const data = await this.soulboundTokenService.getTokensDetail(ctx, tokenId);
-    return data;
   }
 
   @Get('tokens-receiver-address')
