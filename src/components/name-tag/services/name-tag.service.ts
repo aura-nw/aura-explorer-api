@@ -13,6 +13,7 @@ import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
 import { GetNameTagDto } from '../dtos/get-name-tag.dto';
 import { GethNameTagResult } from '../dtos/get-name-tag-result.dto';
+import { Not } from 'typeorm';
 
 @Injectable()
 export class NameTagService {
@@ -48,6 +49,7 @@ export class NameTagService {
     entity.type = req.type;
     entity.name_tag = req.nameTag;
     entity.updated_by = req.userId;
+    entity.enterpriseUrl = req.enterpriseUrl;
     try {
       const result = await this.nameTagRepository.save(entity);
       return { data: result, meta: {} };
@@ -70,6 +72,7 @@ export class NameTagService {
     entity.type = req.type;
     entity.name_tag = req.nameTag;
     entity.updated_by = req.userId;
+    entity.enterpriseUrl = req.enterpriseUrl;
     try {
       const result = await this.nameTagRepository.update(req.id, entity);
       return { data: result, meta: {} };
@@ -126,7 +129,11 @@ export class NameTagService {
     }
 
     const tag = await this.nameTagRepository.findOne({
-      where: { name_tag: req.nameTag, deleted_at: null },
+      where: {
+        name_tag: req.nameTag,
+        deleted_at: null,
+        address: Not(req.address),
+      },
     });
 
     if (tag) {
