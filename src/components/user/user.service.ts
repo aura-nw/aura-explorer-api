@@ -138,11 +138,11 @@ export class UserService {
     });
 
     if (!userToActive) {
-      return MSGS_ACTIVE_USER.EA001;
+      return MSGS_ACTIVE_USER.EA002;
     }
 
     if (userToActive.confirmedAt) {
-      return MSGS_ACTIVE_USER.EA002;
+      return MSGS_ACTIVE_USER.EA001;
     }
 
     if (userToActive.confirmationToken === token) {
@@ -189,8 +189,9 @@ export class UserService {
 
       await this.userActivityRepository.save(sendMailConfirmActivity);
     } catch (error) {
+      this.logger.error(`Error resend email ${error.message} ${error.stack}`);
       throw new BadRequestException(
-        `Error while resend confirmation email: ${error.message}`,
+        `We have some error while resend confirmation email. Please try again later.`,
       );
     }
   }
