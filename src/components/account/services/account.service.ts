@@ -132,7 +132,10 @@ export class AccountService {
     let available = 0;
     accountOutput.available = this.changeUauraToAura(available);
     if (data?.spendable_balances) {
-      const uaura = data.spendable_balances?.find(
+      const spendable_balances = data.spendable_balances?.length
+        ? data.spendable_balances
+        : [];
+      const uaura = spendable_balances?.find(
         (f) => f.denom === this.minimalDenom,
       );
       if (uaura) {
