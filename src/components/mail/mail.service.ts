@@ -28,7 +28,7 @@ export class MailService {
     try {
       await this.mailerService.sendMail({
         to: user.email,
-        subject: 'Welcome to Aura App! Confirm your email.',
+        subject: 'Verify your email with Aurascan.',
         template: './confirmation',
         context: { url: confirmEmailUrl },
         attachments: [
