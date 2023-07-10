@@ -168,6 +168,10 @@ export const ADMIN_ERROR_MAP = {
     Message:
       'Name tag not accept special character except dot(.), dash(-), underscore(_)',
   },
+  INVALID_URL: {
+    Code: 'E005',
+    Message: 'Invalid URL format',
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -239,4 +243,12 @@ export const VERIFY_STEP = [
 
 export const ROLES_KEY = 'roles';
 
-export const REGEX_PARTERN = { NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/) };
+export const REGEX_PARTERN = {
+  NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/),
+  URL: new RegExp(/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/),
+};
+
+export enum USER_ACTIVITIES {
+  SEND_MAIL_CONFIRM = 'SEND_MAIL_CONFIRM',
+  SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+}
