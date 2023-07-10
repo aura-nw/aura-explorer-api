@@ -285,7 +285,8 @@ export class Cw20TokenService {
         const holder = item.cw20_holders?.find(
           (item) => item.address === accountAddress,
         );
-        cw20Price += price * holder?.amount;
+        const amount = holder?.amount || 0;
+        cw20Price += price * amount;
       });
     }
 
