@@ -13,6 +13,7 @@ import {
   MESSAGES,
   MSGS_ACTIVE_USER,
   PROVIDER,
+  SUPPORT_EMAIL,
   USER_ACTIVITIES,
   USER_ROLE,
 } from '../../shared';
@@ -121,11 +122,15 @@ export class UserService {
             newUser,
             newUser.confirmationToken,
           );
-          await transactionalEntityManager.save(newUser);
         },
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      this.logger.error(
+        `Error while create new user with password: ${error.message} ${error.stack}`,
+      );
+      throw new BadRequestException(
+        'We have some errors when register your account. Please try again later.',
+      );
     }
   }
 
@@ -178,9 +183,9 @@ export class UserService {
           where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_CONFIRM },
         },
       );
-      const CONFIRMATION_TEXT = 'confirmation';
+      const VERIFICATION_TEXT = 'verification';
 
-      this.limitSendMail(sendMailConfirmActivity, CONFIRMATION_TEXT);
+      this.limitSendMail(sendMailConfirmActivity, VERIFICATION_TEXT);
 
       await this.mailService.sendMailConfirmation(
         user,
@@ -191,7 +196,7 @@ export class UserService {
     } catch (error) {
       this.logger.error(`Error resend email ${error.message} ${error.stack}`);
       throw new BadRequestException(
-        `We have some error while resend confirmation email. Please try again later.`,
+        `We have some errors while resend confirmation email. Please try again later.`,
       );
     }
   }
@@ -213,7 +218,7 @@ export class UserService {
 
     if (userActivity.sendMailAttempt > FIVE_TIMES) {
       throw new BadRequestException(
-        `You have requested to send too many ${type} emails.`,
+        `You have reached the maximum number of ${type} email sent per day. Kindly come back tomorrow or contact us via mailbox [${SUPPORT_EMAIL}] for special case!.`,
       );
     }
   }

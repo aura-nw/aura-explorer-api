@@ -253,3 +253,5 @@ export const MSGS_ACTIVE_USER = {
   EA002: { message: 'User not found', code: 'EA002' },
   EA003: { message: 'Token not match', code: 'EA003' },
 };
+
+export const SUPPORT_EMAIL = 'support@aura.netwwork';
