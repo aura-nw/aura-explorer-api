@@ -212,7 +212,7 @@ export class UserService {
 
     if (lastSentMail > fiveMinutesAgo) {
       throw new BadRequestException(
-        `Please wait for 5 minutes before sending another ${type} email.`,
+        `Only can do resend email after 5 minute, please wait and click Resend again.`,
       );
     }
 
