@@ -115,6 +115,13 @@ export class NameTagService {
       };
     }
 
+    if (req?.enterpriseUrl && !req.enterpriseUrl.match(REGEX_PARTERN.URL)) {
+      return {
+        code: ADMIN_ERROR_MAP.INVALID_URL.Code,
+        message: ADMIN_ERROR_MAP.INVALID_URL.Message,
+      };
+    }
+
     if (isCreate) {
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
