@@ -101,14 +101,12 @@ export class UserService {
       Number(this.configService.get('bcryptSalt')),
     );
     newUser.email = userParams.email;
-    newUser.userName = userParams.userName;
-    newUser.email = userParams.email;
     newUser.provider = PROVIDER.PASSWORD;
     newUser.role = USER_ROLE.USER;
-    newUser.confirmationToken = await this.generateConfirmationToken();
+    newUser.verificationToken = await this.generateConfirmationToken();
 
     const newUserActivity = new UserActivity();
-    newUserActivity.type = USER_ACTIVITIES.SEND_MAIL_CONFIRM;
+    newUserActivity.type = USER_ACTIVITIES.SEND_MAIL_VERIFY;
     newUserActivity.sendMailAttempt = 1;
     newUserActivity.lastSendMailAttempt = new Date();
 
@@ -120,7 +118,7 @@ export class UserService {
           await transactionalEntityManager.save(newUser);
           await this.mailService.sendMailConfirmation(
             newUser,
-            newUser.confirmationToken,
+            newUser.verificationToken,
           );
         },
       );
@@ -139,19 +137,19 @@ export class UserService {
     token: string,
   ): Promise<{ message: string; code: string }> {
     const userToActive = await this.findOne({
-      where: { email: email, confirmationToken: token },
+      where: { email: email, verificationToken: token },
     });
 
     if (!userToActive) {
       return MSGS_ACTIVE_USER.EA002;
     }
 
-    if (userToActive.confirmedAt) {
+    if (userToActive.verifiedAt) {
       return MSGS_ACTIVE_USER.EA001;
     }
 
-    if (userToActive.confirmationToken === token) {
-      userToActive.confirmedAt = new Date();
+    if (userToActive.verificationToken === token) {
+      userToActive.verifiedAt = new Date();
       await this.usersRepository.save(userToActive);
 
       return MSGS_ACTIVE_USER.SA001;
@@ -169,8 +167,8 @@ export class UserService {
       throw new BadRequestException('User have not registered.');
     }
 
-    if (user.confirmedAt) {
-      throw new BadRequestException('User already confirmed.');
+    if (user.verifiedAt) {
+      throw new BadRequestException('User already verified.');
     }
 
     if (user.provider != PROVIDER.PASSWORD) {
@@ -180,7 +178,7 @@ export class UserService {
     try {
       const sendMailConfirmActivity = await this.userActivityRepository.findOne(
         {
-          where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_CONFIRM },
+          where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_VERIFY },
         },
       );
       const VERIFICATION_TEXT = 'verification';
@@ -189,14 +187,14 @@ export class UserService {
 
       await this.mailService.sendMailConfirmation(
         user,
-        user?.confirmationToken,
+        user?.verificationToken,
       );
 
       await this.userActivityRepository.save(sendMailConfirmActivity);
     } catch (error) {
       this.logger.error(`Error resend email ${error.message} ${error.stack}`);
       throw new BadRequestException(
-        `We have some errors while resend confirmation email. Please try again later.`,
+        `We have some errors while resend verification email. Please try again later.`,
       );
     }
   }
