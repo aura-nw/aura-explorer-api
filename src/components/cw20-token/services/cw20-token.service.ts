@@ -118,7 +118,7 @@ export class Cw20TokenService {
       smart_contract {
         address
       }
-      cw20_holders {
+      cw20_holders(where: {address: {_eq: $owner}}) {
         amount
         address
       }`;
@@ -285,7 +285,8 @@ export class Cw20TokenService {
         const holder = item.cw20_holders?.find(
           (item) => item.address === accountAddress,
         );
-        cw20Price += price * holder?.amount;
+        const amount = holder?.amount || 0;
+        cw20Price += price * amount;
       });
     }
 
