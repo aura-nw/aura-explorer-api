@@ -145,7 +145,7 @@ export class UserService {
     }
 
     if (userToActive.verifiedAt) {
-      throw new BadRequestException('User already active');
+      throw new BadRequestException('User already verified');
     }
 
     if (userToActive.verificationToken === token) {
