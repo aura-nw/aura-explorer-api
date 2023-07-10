@@ -178,7 +178,7 @@ export class Cw20TokenService {
         asset.decimals = item.decimals || 0;
         asset.balance =
           item.cw20_holders?.find((f) => f.address === request?.account_address)
-            .amount || 0;
+            ?.amount || 0;
         asset.price = tokenMarketsInfo?.current_price || 0;
         asset.price_change_percentage_24h =
           tokenMarketsInfo?.price_change_percentage_24h || 0;
@@ -326,7 +326,8 @@ export class Cw20TokenService {
     ).data[this.chainDB]['account'];
     const accountBalances =
       accountData?.length > 0 ? accountData[0]?.balances : [];
-    const ibcBalances = accountBalances?.filter(
+    const balances = accountBalances?.length ? accountBalances : [];
+    const ibcBalances = balances?.filter(
       (str) => str?.minimal_denom || str?.denom,
     );
     if (ibcBalances?.length > 0) {

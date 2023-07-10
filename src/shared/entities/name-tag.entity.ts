@@ -20,4 +20,7 @@ export class NameTag extends BaseEntityIncrementId {
 
   @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at: Date;
+
+  @Column({ nullable: true, name: 'enterprise_url' })
+  enterpriseUrl: string;
 }
