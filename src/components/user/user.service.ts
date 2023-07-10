@@ -9,7 +9,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
 
 import { User } from '../../shared/entities/user.entity';
-import { MESSAGES, PROVIDER, USER_ACTIVITIES, USER_ROLE } from '../../shared';
+import {
+  MESSAGES,
+  MSGS_ACTIVE_USER,
+  PROVIDER,
+  SUPPORT_EMAIL,
+  USER_ACTIVITIES,
+  USER_ROLE,
+} from '../../shared';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dtos/update-user.dto';
@@ -115,30 +122,41 @@ export class UserService {
             newUser,
             newUser.confirmationToken,
           );
-          await transactionalEntityManager.save(newUser);
         },
       );
     } catch (error) {
-      throw new BadRequestException(error);
+      this.logger.error(
+        `Error while create new user with password: ${error.message} ${error.stack}`,
+      );
+      throw new BadRequestException(
+        'We have some errors when register your account. Please try again later.',
+      );
     }
   }
 
-  async activeUser(email: string, token: string): Promise<void> {
+  async activeUser(
+    email: string,
+    token: string,
+  ): Promise<{ message: string; code: string }> {
     const userToActive = await this.findOne({
       where: { email: email, confirmationToken: token },
     });
 
     if (!userToActive) {
-      throw new BadRequestException('User not found');
+      return MSGS_ACTIVE_USER.EA002;
     }
 
     if (userToActive.confirmedAt) {
-      throw new BadRequestException('User already active');
+      return MSGS_ACTIVE_USER.EA001;
     }
 
     if (userToActive.confirmationToken === token) {
       userToActive.confirmedAt = new Date();
       await this.usersRepository.save(userToActive);
+
+      return MSGS_ACTIVE_USER.SA001;
+    } else {
+      return MSGS_ACTIVE_USER.EA003;
     }
   }
 
@@ -165,9 +183,9 @@ export class UserService {
           where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_CONFIRM },
         },
       );
-      const CONFIRMATION_TEXT = 'confirmation';
+      const VERIFICATION_TEXT = 'verification';
 
-      this.limitSendMail(sendMailConfirmActivity, CONFIRMATION_TEXT);
+      this.limitSendMail(sendMailConfirmActivity, VERIFICATION_TEXT);
 
       await this.mailService.sendMailConfirmation(
         user,
@@ -176,8 +194,9 @@ export class UserService {
 
       await this.userActivityRepository.save(sendMailConfirmActivity);
     } catch (error) {
+      this.logger.error(`Error resend email ${error.message} ${error.stack}`);
       throw new BadRequestException(
-        `Error while resend confirmation email: ${error.message}`,
+        `We have some errors while resend confirmation email. Please try again later.`,
       );
     }
   }
@@ -193,13 +212,13 @@ export class UserService {
 
     if (lastSentMail > fiveMinutesAgo) {
       throw new BadRequestException(
-        `Please wait for 5 minutes before sending another ${type} email.`,
+        `Only can do resend email after 5 minute, please wait and click Resend again.`,
       );
     }
 
     if (userActivity.sendMailAttempt > FIVE_TIMES) {
       throw new BadRequestException(
-        `You have requested to send too many ${type} emails.`,
+        `You have reached the maximum number of ${type} email sent per day. Kindly come back tomorrow or contact us via mailbox [${SUPPORT_EMAIL}] for special case!.`,
       );
     }
   }

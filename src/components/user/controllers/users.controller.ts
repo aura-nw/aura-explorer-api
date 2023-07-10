@@ -148,6 +148,7 @@ export class UsersController {
   }
 
   @Post('register-with-password')
+  @HttpCode(HttpStatus.OK)
   async registerWithPassword(@Body() request: CreateUserWithPasswordDto) {
     await this.userService.createUserWithPassword(request);
   }
