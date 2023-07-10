@@ -22,6 +22,5 @@ export class StoreNameTagParamsDto {
   @ApiPropertyOptional({
     default: null,
   })
-  @IsUrl(undefined, { message: 'Enterprise url must be a valid url.' })
   enterpriseUrl: string;
 }
