@@ -6,7 +6,9 @@ import { IsUnique } from '../../../components/user/validators/validate-unique';
 export class CreateUserWithPasswordDto {
   @ApiProperty()
   @IsEmail()
-  @IsUnique('email', { message: 'The email is already in use.' })
+  @IsUnique('email', {
+    message: 'The email you entered has already been used.',
+  })
   email: string;
 
   @ApiProperty()
@@ -21,7 +23,7 @@ export class CreateUserWithPasswordDto {
 
   @ApiProperty()
   @MatchPassword('password', {
-    message: 'Password confirmation must match the password.',
+    message: 'The password confirmation does not match.',
   })
   passwordConfirmation: string;
 }
