@@ -3,7 +3,7 @@ import { JwtAuthService } from '../jwt/jwt-auth.service';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../components/user/user.service';
 import { OAuth2Client } from 'google-auth-library';
-import { PROVIDER, USER_ROLE } from '../../shared';
+import { PROVIDER, SITE, USER_ROLE } from '../../shared';
 import { User } from '../../shared/entities/user.entity';
 import { GoogleOAuthLoginResponseDto } from '../../components/google/dtos/google-oauth-login.response.dto';
 import { GoogleOAuthLoginParamsDto } from '../../components/google/dtos/google-oauth-login.params.dto';
@@ -26,7 +26,10 @@ export class GoogleOAuthService {
       this.googleSecret,
     );
   }
-  async authenticate(token: string): Promise<{ user: User; picture: string }> {
+
+  async adminAuthenticate(
+    token: string,
+  ): Promise<{ user: User; picture: string }> {
     try {
       const tokenVerified = await this.googleOAuthClient.verifyIdToken({
         idToken: token,
@@ -46,6 +49,7 @@ export class GoogleOAuthService {
           provider: PROVIDER.GOOGLE,
           name: name,
           role: USER_ROLE.ADMIN,
+          verifiedAt: null,
         });
       }
 
@@ -57,10 +61,45 @@ export class GoogleOAuthService {
     }
   }
 
+  async mainAuthenticate(
+    token: string,
+  ): Promise<{ user: User; picture: string }> {
+    try {
+      const tokenVerified = await this.googleOAuthClient.verifyIdToken({
+        idToken: token,
+        audience: this.googleClientID,
+      });
+      const { email: googleEmail, name, picture } = tokenVerified.getPayload();
+      let user = await this.userService.findOne({
+        where: { email: googleEmail },
+      });
+
+      // init first admin user by .env
+      if (!user) {
+        user = await this.userService.create({
+          email: googleEmail,
+          provider: PROVIDER.GOOGLE,
+          name: name,
+          role: USER_ROLE.USER,
+          verifiedAt: new Date(),
+        });
+      }
+
+      return { user, picture };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   async login(
     request: GoogleOAuthLoginParamsDto,
   ): Promise<GoogleOAuthLoginResponseDto> {
-    const userInfo = await this.authenticate(request.token);
+    let userInfo;
+    if (request.site === SITE.MAIN) {
+      userInfo = await this.mainAuthenticate(request.token);
+    } else {
+      userInfo = await this.adminAuthenticate(request.token);
+    }
     const {
       user: { name: userName },
       picture,
