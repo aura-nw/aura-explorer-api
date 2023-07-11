@@ -82,9 +82,7 @@ export class Cw20TokenService {
     }
 
     //get value
-    assetDto.value = (
-      Number(assetDto.balance) * Number(assetDto.price)
-    ).toString();
+    assetDto.value = Number(assetDto.balance) * Number(assetDto.price);
     result.push(assetDto);
 
     //Get IBC tokens
@@ -99,15 +97,6 @@ export class Cw20TokenService {
       result = result.filter(
         (f) => f.name?.toLowerCase() === keyword.toLowerCase(),
       );
-    }
-
-    let limit = request.limit;
-    let offset = request.offset;
-
-    if (request.offset === 0) {
-      limit -= result.length;
-    } else {
-      offset -= result.length;
     }
 
     // Attributes for cw20
@@ -143,8 +132,6 @@ export class Cw20TokenService {
         cw20Attributes,
       ),
       variables: {
-        limit: limit,
-        offset: offset,
         owner: request?.account_address,
         address: contractAddress,
         name: tokenName,
@@ -156,13 +143,11 @@ export class Cw20TokenService {
       .data[this.chainDB];
 
     const asset = response?.cw20_contract;
-    const count = response?.cw20_contract_aggregate?.aggregate?.count;
 
     let tokens = [];
     if (asset?.length > 0) {
-      const listContract_address = asset?.map((i) => i.smart_contract.address);
       const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
-        where: { contract_address: In(listContract_address) },
+        where: { coin_id: Not('') },
       });
       tokens = asset.map((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo.find(
@@ -182,16 +167,24 @@ export class Cw20TokenService {
         asset.price = tokenMarketsInfo?.current_price || 0;
         asset.price_change_percentage_24h =
           tokenMarketsInfo?.price_change_percentage_24h || 0;
-        asset.value = (Number(asset.balance) * Number(asset.price)).toString();
+        asset.value = Number(asset.balance) * Number(asset.price);
         return asset;
       });
     }
+
+    tokens.sort((item1, item2) =>
+      item2.verify_status === item1.verify_status
+        ? item2.value - item1.value
+        : item2.verify_status > item1.verify_status
+        ? 1
+        : -1,
+    );
 
     if (request.offset === 0) {
       tokens = result.concat(tokens);
     }
 
-    return { tokens, count: count + result.length };
+    return { tokens, count: tokens.length };
   }
 
   async getPriceById(ctx: RequestContext, id: string): Promise<any> {
