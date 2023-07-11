@@ -6,6 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { PROVIDER, USER_ROLE } from '../../shared';
 import { User } from '../../shared/entities/user.entity';
 import { GoogleOAuthLoginResponseDto } from '../../components/google/dtos/google-oauth-login.response.dto';
+import { GoogleOAuthLoginParamsDto } from '../../components/google/dtos/google-oauth-login.params.dto';
 
 @Injectable()
 export class GoogleOAuthService {
@@ -35,7 +36,7 @@ export class GoogleOAuthService {
       const adminInitEmail = this.configService.get('adminInitEmail');
 
       let user = await this.userService.findOne({
-        where: { provider: PROVIDER.GOOGLE, email: googleEmail },
+        where: { role: USER_ROLE.ADMIN, email: googleEmail },
       });
 
       // init first admin user by .env
@@ -56,8 +57,10 @@ export class GoogleOAuthService {
     }
   }
 
-  async login(token: string): Promise<GoogleOAuthLoginResponseDto> {
-    const userInfo = await this.authenticate(token);
+  async login(
+    request: GoogleOAuthLoginParamsDto,
+  ): Promise<GoogleOAuthLoginResponseDto> {
+    const userInfo = await this.authenticate(request.token);
     const {
       user: { name: userName },
       picture,
