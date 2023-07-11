@@ -1,20 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
-import { IsEmail, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, Matches } from 'class-validator';
 import { MatchPassword } from '../../../components/user/validators/validate-match-password';
 import { IsUnique } from '../../../components/user/validators/validate-unique';
-import { USER_ROLE } from '../../../shared';
 
 export class CreateUserWithPasswordDto {
   @ApiProperty()
-  @MinLength(5, { message: 'User name must be at least 5 characters' })
-  @MaxLength(30, { message: 'User name must be at most 30 characters' })
-  @IsUnique('userName', { message: 'The username is already in use.' })
-  userName: string;
-
-  @ApiProperty()
   @IsEmail()
-  @IsUnique('email', { message: 'The email is already in use.' })
+  @IsUnique('email', {
+    message: 'The email you entered has already been used.',
+  })
   email: string;
 
   @ApiProperty()
@@ -29,10 +23,7 @@ export class CreateUserWithPasswordDto {
 
   @ApiProperty()
   @MatchPassword('password', {
-    message: 'Password confirmation must match the password.',
+    message: 'The password confirmation does not match.',
   })
   passwordConfirmation: string;
-
-  @Exclude()
-  role: USER_ROLE;
 }
