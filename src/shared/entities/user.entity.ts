@@ -21,14 +21,11 @@ export class User extends BaseEntityIncrementId {
   @Column({ nullable: true, name: 'encrypted_password' })
   encryptedPassword: string;
 
-  @Column({ nullable: true, name: 'confirmation_token' })
-  confirmationToken: string;
+  @Column({ nullable: true, name: 'verification_token' })
+  verificationToken: string;
 
-  @Column({ nullable: true, name: 'confirmed_at' })
-  confirmedAt: Date;
-
-  @Column({ nullable: true, name: 'user_name', unique: true })
-  userName: string;
+  @Column({ nullable: true, name: 'verified_at' })
+  verifiedAt: Date;
 
   @OneToMany(() => UserActivity, (userActivity) => userActivity.user, {
     cascade: true,

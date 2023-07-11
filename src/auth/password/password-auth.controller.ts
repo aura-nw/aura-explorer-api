@@ -22,8 +22,8 @@ export class PasswordAuthController {
     private configService: ConfigService,
   ) {}
 
-  @Get('/confirm-email/email=:email&code=:code')
-  async confirmEmail(
+  @Get('/verify-email/email=:email&code=:code')
+  async verifyEmail(
     @Param('email') email: string,
     @Param('code') code: string,
     @Res() res,
@@ -41,7 +41,7 @@ export class PasswordAuthController {
     }
   }
 
-  @Get('resend-confirmation-email/:email')
+  @Get('resend-verification-email/:email')
   @HttpCode(HttpStatus.OK)
   async resendConfirmationEmail(@Param('email') email: string) {
     const user = await this.userService.findOneByEmail(email);

@@ -250,13 +250,13 @@ export const REGEX_PARTERN = {
 };
 
 export enum USER_ACTIVITIES {
-  SEND_MAIL_CONFIRM = 'SEND_MAIL_CONFIRM',
+  SEND_MAIL_VERIFY = 'SEND_MAIL_VERIFY',
   SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
 }
 
 export const MSGS_ACTIVE_USER = {
   SA001: { message: 'Success', code: 'SA001' },
-  EA001: { message: 'User already active', code: 'EA001' },
+  EA001: { message: 'User already verified', code: 'EA001' },
   EA002: { message: 'User not found', code: 'EA002' },
   EA003: { message: 'Token not match', code: 'EA003' },
 };

@@ -21,16 +21,16 @@ export class MailService {
     const apiPrefix = this.configService.get('apiPrefix');
     const appDomain = this.configService.get('appDomain');
     const emailParam = encodeURIComponent(user.email);
-    const confirmEmailPath = `/${apiPrefix}/auth/confirm-email/email=${emailParam}&code=${token}`;
-    const confirmEmailUrl = appDomain + confirmEmailPath;
+    const verifyEmailPath = `/${apiPrefix}/auth/verify-email/email=${emailParam}&code=${token}`;
+    const verifyEmailUrl = appDomain + verifyEmailPath;
     const logoPath = join(__dirname, 'images', 'aura-logo.jpg');
 
     try {
       await this.mailerService.sendMail({
         to: user.email,
         subject: 'Verify your email with Aurascan.',
-        template: './confirmation',
-        context: { url: confirmEmailUrl },
+        template: './verification',
+        context: { url: verifyEmailUrl },
         attachments: [
           {
             filename: 'image.jpg',
