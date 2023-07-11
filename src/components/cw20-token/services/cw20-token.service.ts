@@ -147,7 +147,7 @@ export class Cw20TokenService {
     let tokens = [];
     if (asset?.length > 0) {
       const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
-        where: { coin_id: Not('') },
+        where: [{ coin_id: Not('') }, { verify_status: 'VERIFIED' }],
       });
       tokens = asset.map((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo.find(
@@ -208,7 +208,7 @@ export class Cw20TokenService {
       });
     } else {
       return await this.tokenMarketsRepository.find({
-        where: { coin_id: Not('') },
+        where: [{ coin_id: Not('') }, { verify_status: 'VERIFIED' }],
       });
     }
   }
