@@ -44,4 +44,31 @@ export class MailService {
       throw error;
     }
   }
+
+  async sendMailResetPassword(user: User, token: string) {
+    const auraScanUrl = this.configService.get('auraScanUrl');
+    const emailParam = encodeURIComponent(user.email);
+    const resetPasswordPath = `/user/reset-password/email=${emailParam}&code=${token}`;
+    const resetPasswordUrl = auraScanUrl + resetPasswordPath;
+    const logoPath = join(__dirname, 'images', 'aura-logo.jpg');
+
+    try {
+      await this.mailerService.sendMail({
+        to: user.email,
+        subject: 'Aurascan account recovery.',
+        template: './recovery-password',
+        context: { url: resetPasswordUrl },
+        attachments: [
+          {
+            filename: 'image.jpg',
+            path: logoPath,
+            cid: 'logo',
+          },
+        ],
+      });
+    } catch (error) {
+      this.logger.error(`Error sending email ${error.message} ${error.stack}`);
+      throw error;
+    }
+  }
 }

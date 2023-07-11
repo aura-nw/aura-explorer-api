@@ -1,22 +1,22 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
-  Logger,
   Param,
+  Post,
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { MSGS_ACTIVE_USER } from '../../shared/constants/common';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 
 @ApiTags('auth')
 @Controller('auth')
 export class PasswordAuthController {
-  private logger = new Logger(PasswordAuthController.name);
-
   constructor(
     private userService: UserService,
     private configService: ConfigService,
@@ -47,5 +47,25 @@ export class PasswordAuthController {
     const user = await this.userService.findOneByEmail(email);
 
     await this.userService.resendConfirmationEmail(user);
+  }
+
+  @Get('send-reset-password-email/:email')
+  @HttpCode(HttpStatus.OK)
+  async sendResetPasswordEmail(@Param('email') email: string) {
+    const user = await this.userService.findOne({
+      where: { email: email },
+      relations: ['userActivities'],
+    });
+    await this.userService.sendResetPasswordEmail(user);
+  }
+
+  @Post('reset-password/email=:email&code=:code')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Param('email') email: string,
+    @Param('code') code: string,
+    @Body() request: ResetPasswordDto,
+  ) {
+    await this.userService.resetPassword(email, code, request);
   }
 }

@@ -6,7 +6,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
+import {
+  DeepPartial,
+  EntityNotFoundError,
+  FindOneOptions,
+  Repository,
+} from 'typeorm';
 
 import { User } from '../../shared/entities/user.entity';
 import {
@@ -26,6 +31,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
+import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
 
 @Injectable()
 export class UserService {
@@ -103,7 +109,7 @@ export class UserService {
     newUser.email = userParams.email;
     newUser.provider = PROVIDER.PASSWORD;
     newUser.role = USER_ROLE.USER;
-    newUser.verificationToken = await this.generateConfirmationToken();
+    newUser.verificationToken = await this.generateTokenWithLength(20);
 
     const newUserActivity = new UserActivity();
     newUserActivity.type = USER_ACTIVITIES.SEND_MAIL_VERIFY;
@@ -237,5 +243,110 @@ export class UserService {
     }
 
     userActivity.lastSendMailAttempt = new Date();
+  }
+
+  async sendResetPasswordEmail(user: User): Promise<void> {
+    if (!user) {
+      throw new BadRequestException('User have not registered.');
+    }
+
+    user.resetPasswordToken = await this.generateTokenWithLength(21);
+
+    const resetPasswordActivity = await this.findOrCreateUserActivity(
+      user,
+      USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD,
+    );
+    const RESET_PASSWORD_TEXT = 'password recovery';
+
+    this.limitSendMail(resetPasswordActivity, RESET_PASSWORD_TEXT);
+
+    await this.mailService.sendMailResetPassword(user, user.resetPasswordToken);
+
+    await this.usersRepository.save(user);
+
+    await this.userActivityRepository.save(resetPasswordActivity);
+  }
+
+  async findOrCreateUserActivity(
+    user: User,
+    type: USER_ACTIVITIES,
+  ): Promise<UserActivity> {
+    let userActivity: UserActivity;
+    try {
+      userActivity = await this.userActivityRepository.findOneOrFail({
+        where: { user, type },
+      });
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        userActivity = new UserActivity();
+        userActivity.type = type;
+        userActivity.sendMailAttempt = 0;
+        //Set lastSendMailAttempt to valid time.
+        const currentDate = new Date();
+        const sixMinutesAgo = new Date(currentDate.getTime() - 6 * 60000);
+        userActivity.lastSendMailAttempt = sixMinutesAgo;
+        userActivity.user = user;
+        await this.userActivityRepository.save(userActivity);
+      }
+    }
+    return userActivity;
+  }
+  async resetPassword(
+    email: string,
+    resetPasswordToken: string,
+    passwordParams: ResetPasswordDto,
+  ) {
+    const user = await this.usersRepository.findOne({
+      where: { email, resetPasswordToken },
+    });
+
+    if (!user) {
+      throw new BadRequestException(
+        'User not registered with us before or the link reset password is invalid.',
+      );
+    }
+
+    // Check expired reset password link (available in 24h).
+    if (user) {
+      const lastSendResetPasswordAttempt =
+        await this.userActivityRepository.findOne({
+          where: { user: user, type: USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD },
+        });
+
+      if (lastSendResetPasswordAttempt) {
+        const lastSend = lastSendResetPasswordAttempt.lastSendMailAttempt;
+        const millisecondOf24h = 24 * 60 * 60 * 1000;
+        const after24hFromLastSend = new Date(
+          lastSend.getTime() + millisecondOf24h,
+        );
+        const currentTime = new Date();
+
+        if (currentTime > after24hFromLastSend) {
+          throw new BadRequestException('Reset password link expired.');
+        }
+      }
+    }
+
+    if (
+      user.resetPasswordToken !== null &&
+      user.resetPasswordToken !== resetPasswordToken
+    ) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    // Set new password.
+    user.encryptedPassword = await bcrypt.hash(
+      passwordParams.password,
+      Number(this.configService.get('bcryptSalt')),
+    );
+
+    // Reset resetPasswordToken.
+    user.resetPasswordToken = null;
+
+    await this.usersRepository.save(user);
+  }
+
+  async generateTokenWithLength(length: number): Promise<string> {
+    return randomBytes(20).toString('hex').slice(0, length).toUpperCase();
   }
 }
