@@ -172,13 +172,16 @@ export class Cw20TokenService {
       });
     }
 
-    tokens.sort((item1, item2) =>
-      item2.verify_status === item1.verify_status
-        ? item2.value - item1.value
-        : item2.verify_status > item1.verify_status
-        ? 1
-        : -1,
-    );
+    // Sort cw20's token table.
+    tokens.sort((item1, item2) => {
+      // 1st priority VERIFIED.
+      const compareStatus = item2.verify_status.localeCompare(
+        item1.verify_status,
+      );
+      // 2nd priority token value DESC.
+      const compareValue = item2.value - item1.value;
+      return compareStatus || compareValue;
+    });
 
     if (request.offset === 0) {
       tokens = result.concat(tokens);
