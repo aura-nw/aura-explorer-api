@@ -69,15 +69,15 @@ export class GoogleOAuthService {
         idToken: token,
         audience: this.googleClientID,
       });
-      const { email: googleEmail, name, picture } = tokenVerified.getPayload();
+      const { email, name, picture } = tokenVerified.getPayload();
       let user = await this.userService.findOne({
-        where: { email: googleEmail },
+        where: { email: email },
       });
 
-      // init first admin user by .env
+      // Create new user when user not exist
       if (!user) {
         user = await this.userService.create({
-          email: googleEmail,
+          email: email,
           provider: PROVIDER.GOOGLE,
           name: name,
           role: USER_ROLE.USER,
