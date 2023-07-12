@@ -27,64 +27,41 @@ export class GoogleOAuthService {
     );
   }
 
-  async adminAuthenticate(
-    token: string,
+  async authenticate(
+    request: GoogleOAuthLoginParamsDto,
   ): Promise<{ user: User; picture: string }> {
     try {
       const tokenVerified = await this.googleOAuthClient.verifyIdToken({
-        idToken: token,
+        idToken: request.token,
         audience: this.googleClientID,
       });
       const { email: googleEmail, name, picture } = tokenVerified.getPayload();
       const adminInitEmail = this.configService.get('adminInitEmail');
 
       let user = await this.userService.findOne({
-        where: { role: USER_ROLE.ADMIN, email: googleEmail },
+        where: { email: googleEmail },
       });
 
-      // init first admin user by .env
-      if (adminInitEmail === googleEmail && !user) {
+      const role =
+        adminInitEmail === googleEmail ? USER_ROLE.ADMIN : USER_ROLE.USER;
+
+      // login at main site when user not exist: create new user.
+      // login at admin site only create init admin setting at env.
+      if (
+        (!user && request.site === SITE.MAIN) ||
+        (!user && role === USER_ROLE.ADMIN)
+      ) {
         user = await this.userService.create({
           email: googleEmail,
           provider: PROVIDER.GOOGLE,
           name: name,
-          role: USER_ROLE.ADMIN,
-          verifiedAt: null,
-        });
-      }
-
-      this.userService.checkRole(user);
-
-      return { user, picture };
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
-  }
-
-  async mainAuthenticate(
-    token: string,
-  ): Promise<{ user: User; picture: string }> {
-    try {
-      const tokenVerified = await this.googleOAuthClient.verifyIdToken({
-        idToken: token,
-        audience: this.googleClientID,
-      });
-      const { email, name, picture } = tokenVerified.getPayload();
-      let user = await this.userService.findOne({
-        where: { email: email },
-      });
-
-      // Create new user when user not exist
-      if (!user) {
-        user = await this.userService.create({
-          email: email,
-          provider: PROVIDER.GOOGLE,
-          name: name,
-          role: USER_ROLE.USER,
+          role: role,
           verifiedAt: new Date(),
         });
       }
-
+      if (request.site !== SITE.MAIN) {
+        this.userService.checkRole(user);
+      }
       return { user, picture };
     } catch (error) {
       throw new BadRequestException(error.message);
@@ -94,12 +71,7 @@ export class GoogleOAuthService {
   async login(
     request: GoogleOAuthLoginParamsDto,
   ): Promise<GoogleOAuthLoginResponseDto> {
-    let userInfo;
-    if (request.site === SITE.MAIN) {
-      userInfo = await this.mainAuthenticate(request.token);
-    } else {
-      userInfo = await this.adminAuthenticate(request.token);
-    }
+    const userInfo = await this.authenticate(request);
     const {
       user: { name: userName },
       picture,
