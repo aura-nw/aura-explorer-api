@@ -272,3 +272,5 @@ export const MSGS_USER = {
   EU001: { message: 'User must be verified', code: 'EU001' },
   EU002: { message: 'Wrong email or password', code: 'EU002' },
 };
+
+export const AURA_LOGO = 'aura-logo.jpg';

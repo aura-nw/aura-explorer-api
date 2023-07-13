@@ -27,6 +27,9 @@ export class User extends BaseEntityIncrementId {
   @Column({ nullable: true, name: 'verified_at' })
   verifiedAt: Date;
 
+  @Column({ nullable: true, name: 'reset_password_token' })
+  resetPasswordToken: string;
+
   @OneToMany(() => UserActivity, (userActivity) => userActivity.user, {
     cascade: true,
   })
