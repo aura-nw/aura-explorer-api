@@ -218,6 +218,11 @@ export enum PROVIDER {
   PASSWORD = 'password',
 }
 
+export enum SITE {
+  MAIN = 'main',
+  ADMIN = 'admin',
+}
+
 export enum NAME_TAG_TYPE {
   ACCOUNT = 'account',
   CONTRACT = 'contract',
