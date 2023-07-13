@@ -8,10 +8,11 @@ import {
   Post,
   Res,
 } from '@nestjs/common';
-import {  ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { MSGS_ACTIVE_USER } from '../../shared/constants/common';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginUserWithPassword } from './dtos/login-with-password.dto';
 import { PasswordAuthService } from './password-auth.service';
 import { LoginUserWithPasswordResponseDto } from './dtos/login-with-password.response.dto';
@@ -50,6 +51,26 @@ export class PasswordAuthController {
     const user = await this.userService.findOneByEmail(email);
 
     await this.userService.resendConfirmationEmail(user);
+  }
+
+  @Get('send-reset-password-email/:email')
+  @HttpCode(HttpStatus.OK)
+  async sendResetPasswordEmail(@Param('email') email: string) {
+    const user = await this.userService.findOne({
+      where: { email: email },
+      relations: ['userActivities'],
+    });
+    await this.userService.sendResetPasswordEmail(user);
+  }
+
+  @Post('reset-password/email=:email&code=:code')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Param('email') email: string,
+    @Param('code') code: string,
+    @Body() request: ResetPasswordDto,
+  ) {
+    await this.userService.resetPassword(email, code, request);
   }
 
   @Post('login-with-password')
