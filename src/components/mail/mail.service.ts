@@ -2,7 +2,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { User } from '../../shared/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
-import { PROVIDER } from '../../shared';
+import { AURA_LOGO, PROVIDER } from '../../shared';
 import { join } from 'path';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class MailService {
     const emailParam = encodeURIComponent(user.email);
     const verifyEmailPath = `/${apiPrefix}/auth/verify-email/email=${emailParam}&code=${token}`;
     const verifyEmailUrl = appDomain + verifyEmailPath;
-    const logoPath = join(__dirname, 'images', 'aura-logo.jpg');
+    const logoPath = join(__dirname, 'images', AURA_LOGO);
 
     try {
       await this.mailerService.sendMail({
@@ -33,7 +33,7 @@ export class MailService {
         context: { url: verifyEmailUrl },
         attachments: [
           {
-            filename: 'image.jpg',
+            filename: AURA_LOGO,
             path: logoPath,
             cid: 'logo',
           },
@@ -50,7 +50,7 @@ export class MailService {
     const emailParam = encodeURIComponent(user.email);
     const resetPasswordPath = `/user/reset-password/email=${emailParam}&code=${token}`;
     const resetPasswordUrl = auraScanUrl + resetPasswordPath;
-    const logoPath = join(__dirname, 'images', 'aura-logo.jpg');
+    const logoPath = join(__dirname, 'images', AURA_LOGO);
 
     try {
       await this.mailerService.sendMail({
@@ -60,7 +60,7 @@ export class MailService {
         context: { url: resetPasswordUrl },
         attachments: [
           {
-            filename: 'image.jpg',
+            filename: AURA_LOGO,
             path: logoPath,
             cid: 'logo',
           },

@@ -33,7 +33,9 @@ import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-
 import { UserActivity } from '../../shared/entities/user-activity.entity';
 import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
-
+const VERIFICATION_TOKEN_LENGTH = 20;
+const RESET_PASSWORD_TOKEN_LENGTH = 21;
+const RANDOM_BYTES_LENGTH = 20;
 @Injectable()
 export class UserService {
   private logger: Logger = new Logger(UserService.name);
@@ -107,7 +109,9 @@ export class UserService {
     newUser.email = userParams.email;
     newUser.provider = PROVIDER.PASSWORD;
     newUser.role = USER_ROLE.USER;
-    newUser.verificationToken = await this.generateTokenWithLength(20);
+    newUser.verificationToken = await this.generateTokenWithLength(
+      VERIFICATION_TOKEN_LENGTH,
+    );
 
     const newUserActivity = new UserActivity();
     newUserActivity.type = USER_ACTIVITIES.SEND_MAIL_VERIFY;
@@ -160,10 +164,6 @@ export class UserService {
     } else {
       return MSGS_ACTIVE_USER.EA003;
     }
-  }
-
-  async generateConfirmationToken(): Promise<string> {
-    return randomBytes(20).toString('hex').slice(0, 20).toUpperCase();
   }
 
   async resendConfirmationEmail(user: User): Promise<void> {
@@ -248,7 +248,9 @@ export class UserService {
       throw new BadRequestException('User have not registered.');
     }
 
-    user.resetPasswordToken = await this.generateTokenWithLength(21);
+    user.resetPasswordToken = await this.generateTokenWithLength(
+      RESET_PASSWORD_TOKEN_LENGTH,
+    );
 
     const resetPasswordActivity = await this.findOrCreateUserActivity(
       user,
@@ -333,10 +335,7 @@ export class UserService {
     }
 
     // Set new password.
-    user.encryptedPassword = await bcrypt.hash(
-      passwordParams.password,
-      Number(this.configService.get('bcryptSalt')),
-    );
+    user.encryptedPassword = await this.hashPassword(passwordParams.password);
 
     // Reset resetPasswordToken.
     user.resetPasswordToken = null;
@@ -345,7 +344,10 @@ export class UserService {
   }
 
   async generateTokenWithLength(length: number): Promise<string> {
-    return randomBytes(20).toString('hex').slice(0, length).toUpperCase();
+    return randomBytes(RANDOM_BYTES_LENGTH)
+      .toString('hex')
+      .slice(0, length)
+      .toUpperCase();
   }
 
   async changePassword(
