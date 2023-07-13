@@ -3,9 +3,10 @@ import { JwtAuthService } from '../jwt/jwt-auth.service';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../components/user/user.service';
 import { OAuth2Client } from 'google-auth-library';
-import { PROVIDER, USER_ROLE } from '../../shared';
+import { PROVIDER, SITE, USER_ROLE } from '../../shared';
 import { User } from '../../shared/entities/user.entity';
 import { GoogleOAuthLoginResponseDto } from '../../components/google/dtos/google-oauth-login.response.dto';
+import { GoogleOAuthLoginParamsDto } from '../../components/google/dtos/google-oauth-login.params.dto';
 
 @Injectable()
 export class GoogleOAuthService {
@@ -25,39 +26,52 @@ export class GoogleOAuthService {
       this.googleSecret,
     );
   }
-  async authenticate(token: string): Promise<{ user: User; picture: string }> {
+
+  async authenticate(
+    request: GoogleOAuthLoginParamsDto,
+  ): Promise<{ user: User; picture: string }> {
     try {
       const tokenVerified = await this.googleOAuthClient.verifyIdToken({
-        idToken: token,
+        idToken: request.token,
         audience: this.googleClientID,
       });
       const { email: googleEmail, name, picture } = tokenVerified.getPayload();
       const adminInitEmail = this.configService.get('adminInitEmail');
 
       let user = await this.userService.findOne({
-        where: { provider: PROVIDER.GOOGLE, email: googleEmail },
+        where: { email: googleEmail },
       });
 
-      // init first admin user by .env
-      if (adminInitEmail === googleEmail && !user) {
+      const role =
+        adminInitEmail === googleEmail ? USER_ROLE.ADMIN : USER_ROLE.USER;
+
+      // login at main site when user not exist: create new user.
+      // login at admin site only create init admin setting at env.
+      if (
+        (!user && request.site === SITE.MAIN) ||
+        (!user && role === USER_ROLE.ADMIN)
+      ) {
         user = await this.userService.create({
           email: googleEmail,
           provider: PROVIDER.GOOGLE,
           name: name,
-          role: USER_ROLE.ADMIN,
+          role: role,
+          verifiedAt: new Date(),
         });
       }
-
-      this.userService.checkRole(user);
-
+      if (request.site !== SITE.MAIN) {
+        this.userService.checkRole(user);
+      }
       return { user, picture };
     } catch (error) {
       throw new BadRequestException(error.message);
     }
   }
 
-  async login(token: string): Promise<GoogleOAuthLoginResponseDto> {
-    const userInfo = await this.authenticate(token);
+  async login(
+    request: GoogleOAuthLoginParamsDto,
+  ): Promise<GoogleOAuthLoginResponseDto> {
+    const userInfo = await this.authenticate(request);
     const {
       user: { name: userName },
       picture,
