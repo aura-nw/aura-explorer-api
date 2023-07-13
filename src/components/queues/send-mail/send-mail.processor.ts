@@ -8,14 +8,17 @@ export class SendMailProcessor {
   constructor(private readonly mailService: MailService) {}
 
   @Process(QUEUES.SEND_MAIL.JOB)
-  async handleSendMailVerify(job: Job) {
+  async handleSendMail(job: Job) {
     const mailType = job.data.mailType;
     const user = job.data.user;
 
     if (mailType === USER_ACTIVITIES.SEND_MAIL_VERIFY) {
-      await this.mailService.sendMailConfirmation(user, user.verificationToken);
+      await this.mailService.sendMailVerify(user, user.verificationToken);
     } else if (mailType === USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD) {
-      // Send mail reset password here.
+      await this.mailService.sendMailResetPassword(
+        user,
+        user.resetPasswordToken,
+      );
     }
   }
 }

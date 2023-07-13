@@ -13,7 +13,7 @@ export class MailService {
     private configService: ConfigService,
   ) {}
 
-  async sendMailConfirmation(user: User, token: string) {
+  async sendMailVerify(user: User, token: string) {
     // Check authentic provider.
     if (user?.provider != PROVIDER.PASSWORD) {
       throw new BadRequestException('User have not registered with password.');
