@@ -32,6 +32,7 @@ import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
 import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
+import { ChangePasswordDto } from './dtos/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -102,10 +103,7 @@ export class UserService {
     userParams: CreateUserWithPasswordDto,
   ): Promise<void> {
     const newUser = new User();
-    newUser.encryptedPassword = await bcrypt.hash(
-      userParams.password,
-      Number(this.configService.get('bcryptSalt')),
-    );
+    newUser.encryptedPassword = await this.hashPassword(userParams.password);
     newUser.email = userParams.email;
     newUser.provider = PROVIDER.PASSWORD;
     newUser.role = USER_ROLE.USER;
@@ -348,5 +346,33 @@ export class UserService {
 
   async generateTokenWithLength(length: number): Promise<string> {
     return randomBytes(20).toString('hex').slice(0, length).toUpperCase();
+  }
+
+  async changePassword(
+    userId: number,
+    passwordParams: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.findOneById(userId);
+
+    if (
+      !(await this.verifyPassword(
+        passwordParams.oldPassword,
+        user.encryptedPassword,
+      ))
+    ) {
+      throw new UnauthorizedException('Invalid password.');
+    }
+
+    user.encryptedPassword = await this.hashPassword(passwordParams.password);
+
+    this.userActivityRepository.save(user);
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, Number(this.configService.get('bcryptSalt')));
+  }
+
+  async verifyPassword(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
   }
 }
