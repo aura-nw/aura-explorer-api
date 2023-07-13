@@ -7,11 +7,13 @@ import { MailService } from '../mail/mail.service';
 import { IsUniqueConstraint } from './validators/validate-unique';
 import { MatchPasswordConstraint } from './validators/validate-match-password';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
+import { SendMailModule } from '../queues/send-mail/send-mail.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([UserActivity]),
+    SendMailModule,
   ],
   providers: [
     UserService,

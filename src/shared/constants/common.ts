@@ -262,3 +262,14 @@ export const MSGS_ACTIVE_USER = {
 };
 
 export const SUPPORT_EMAIL = 'support@aura.netwwork';
+
+export const QUEUES = {
+  SEND_MAIL: {
+    QUEUE_NAME: 'send-mail',
+    JOB: 'job-send-mail',
+  },
+};
+
+export const SYNC_SERVICE_QUEUES = {
+  SMART_CONTRACT: 'smart-contracts',
+};

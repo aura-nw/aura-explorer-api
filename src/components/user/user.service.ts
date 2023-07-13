@@ -13,6 +13,7 @@ import {
   MESSAGES,
   MSGS_ACTIVE_USER,
   PROVIDER,
+  QUEUES,
   SUPPORT_EMAIL,
   USER_ACTIVITIES,
   USER_ROLE,
@@ -26,11 +27,15 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class UserService {
   private logger: Logger = new Logger(UserService.name);
   constructor(
+    @InjectQueue(QUEUES.SEND_MAIL.QUEUE_NAME)
+    private readonly sendMailQueue: Queue,
     @InjectRepository(User)
     private usersRepository: UserRepository,
     @InjectRepository(UserActivity)
@@ -116,9 +121,16 @@ export class UserService {
       await this.usersRepository.manager.transaction(
         async (transactionalEntityManager) => {
           await transactionalEntityManager.save(newUser);
-          await this.mailService.sendMailConfirmation(
-            newUser,
-            newUser.verificationToken,
+          await this.sendMailQueue.add(
+            QUEUES.SEND_MAIL.JOB,
+            {
+              user: newUser,
+              mailType: USER_ACTIVITIES.SEND_MAIL_VERIFY,
+            },
+            {
+              removeOnComplete: false,
+              removeOnFail: false,
+            },
           );
         },
       );
