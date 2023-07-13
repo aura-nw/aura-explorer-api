@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,12 +8,16 @@ import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import * as cookieParser from 'cookie-parser';
 
-import { VALIDATION_PIPE_OPTIONS, RequestIdMiddleware } from './shared';
+import {
+  VALIDATION_PIPE_OPTIONS,
+  RequestIdMiddleware,
+  QUEUES,
+  SYNC_SERVICE_QUEUES,
+} from './shared';
 
 import { AppModule } from './app.module';
-import { RedisUtil } from './shared/utils/redis.util';
 import { useContainer } from 'class-validator';
-
+const logger = new Logger('Main');
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
@@ -38,23 +42,12 @@ async function bootstrap() {
   SwaggerModule.setup('doc', app, document);
 
   //bull-board
-  const redisOpts = configService.get('cacheManagement.redis');
-  const queueNames = await new RedisUtil().getAllBullQueueName();
-  const queues = [];
+  const queues = [
+    createQueueAdapter(QUEUES.SEND_MAIL.QUEUE_NAME, configService),
+    createQueueAdapter(SYNC_SERVICE_QUEUES.SMART_CONTRACT, configService),
+  ];
+
   const serverAdapter = new ExpressAdapter();
-
-  queueNames.forEach((queueName) => {
-    queues.push(
-      new BullAdapter(
-        Queue(
-          queueName,
-          `redis://${redisOpts.username}:${redisOpts.password}@${redisOpts.host}:${redisOpts.port}/${redisOpts.db}`,
-          { prefix: configService.get<string>('indexer.chainId') },
-        ),
-      ),
-    );
-  });
-
   serverAdapter.setBasePath('/admin/queues');
 
   createBullBoard({
@@ -73,4 +66,18 @@ async function bootstrap() {
   const port = configService.get<number>('port');
   await app.listen(port);
 }
+
+function createQueueAdapter(
+  name: string,
+  configService: ConfigService,
+): BullAdapter {
+  logger.log(`Track queue ${name}`);
+  return new BullAdapter(
+    new Queue(name, {
+      redis: configService.get('cacheManagement.redis'),
+      prefix: configService.get<string>('indexer.chainId'),
+    }),
+  );
+}
+
 bootstrap();

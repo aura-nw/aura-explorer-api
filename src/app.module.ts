@@ -16,6 +16,7 @@ import { NameTagModule } from './components/name-tag/name-tag.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './components/mail/mail.module';
 import { PasswordAuthModule } from './auth/password/password-auth.module';
+import { QueuesModule } from './components/queues/queues.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PasswordAuthModule } from './auth/password/password-auth.module';
       isGlobal: true,
     }),
     PasswordAuthModule,
+    QueuesModule,
   ],
   controllers: [AppController],
   providers: [AppService, ServiceUtil, MetricService],

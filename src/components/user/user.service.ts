@@ -18,6 +18,7 @@ import {
   MESSAGES,
   MSGS_ACTIVE_USER,
   PROVIDER,
+  QUEUES,
   SUPPORT_EMAIL,
   USER_ACTIVITIES,
   USER_ROLE,
@@ -31,6 +32,8 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 const VERIFICATION_TOKEN_LENGTH = 20;
@@ -40,6 +43,8 @@ const RANDOM_BYTES_LENGTH = 20;
 export class UserService {
   private logger: Logger = new Logger(UserService.name);
   constructor(
+    @InjectQueue(QUEUES.SEND_MAIL.QUEUE_NAME)
+    private readonly sendMailQueue: Queue,
     @InjectRepository(User)
     private usersRepository: UserRepository,
     @InjectRepository(UserActivity)
@@ -124,9 +129,16 @@ export class UserService {
       await this.usersRepository.manager.transaction(
         async (transactionalEntityManager) => {
           await transactionalEntityManager.save(newUser);
-          await this.mailService.sendMailConfirmation(
-            newUser,
-            newUser.verificationToken,
+          await this.sendMailQueue.add(
+            QUEUES.SEND_MAIL.JOB,
+            {
+              user: newUser,
+              mailType: USER_ACTIVITIES.SEND_MAIL_VERIFY,
+            },
+            {
+              removeOnComplete: false,
+              removeOnFail: false,
+            },
           );
         },
       );
@@ -166,7 +178,7 @@ export class UserService {
     }
   }
 
-  async resendConfirmationEmail(user: User): Promise<void> {
+  async resendVerificationEmail(user: User): Promise<void> {
     if (!user) {
       throw new BadRequestException('User have not registered.');
     }
@@ -189,17 +201,22 @@ export class UserService {
 
       this.limitSendMail(sendMailConfirmActivity, VERIFICATION_TEXT);
 
-      await this.mailService.sendMailConfirmation(
-        user,
-        user?.verificationToken,
+      await this.sendMailQueue.add(
+        QUEUES.SEND_MAIL.JOB,
+        {
+          user: user,
+          mailType: USER_ACTIVITIES.SEND_MAIL_VERIFY,
+        },
+        {
+          removeOnComplete: false,
+          removeOnFail: false,
+        },
       );
 
       await this.userActivityRepository.save(sendMailConfirmActivity);
     } catch (error) {
       this.logger.error(`Error resend email ${error.message} ${error.stack}`);
-      throw new BadRequestException(
-        `We have some errors while resend verification email. Please try again later.`,
-      );
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -260,7 +277,17 @@ export class UserService {
 
     this.limitSendMail(resetPasswordActivity, RESET_PASSWORD_TEXT);
 
-    await this.mailService.sendMailResetPassword(user, user.resetPasswordToken);
+    await this.sendMailQueue.add(
+      QUEUES.SEND_MAIL.JOB,
+      {
+        user: user,
+        mailType: USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD,
+      },
+      {
+        removeOnComplete: false,
+        removeOnFail: false,
+      },
+    );
 
     await this.usersRepository.save(user);
 
