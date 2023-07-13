@@ -244,7 +244,7 @@ export class UserService {
     const user = await this.findOneById(userId);
 
     if (
-      !(await bcrypt.compare(
+      !(await this.verifyPassword(
         passwordParams.oldPassword,
         user.encryptedPassword,
       ))
@@ -259,5 +259,9 @@ export class UserService {
 
   async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, Number(this.configService.get('bcryptSalt')));
+  }
+
+  async verifyPassword(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
   }
 }
