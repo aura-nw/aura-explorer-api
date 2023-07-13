@@ -50,7 +50,7 @@ export class PasswordAuthController {
   async resendConfirmationEmail(@Param('email') email: string) {
     const user = await this.userService.findOneByEmail(email);
 
-    await this.userService.resendConfirmationEmail(user);
+    await this.userService.resendVerificationEmail(user);
   }
 
   @Get('send-reset-password-email/:email')
