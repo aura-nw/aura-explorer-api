@@ -13,7 +13,7 @@ export class CreateUserWithPasswordDto {
 
   @ApiProperty()
   @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[`~!@#$%^&*()_+{}|/:;",.?<>`])[A-Za-z\d~!@#$%^&*()_+{}|/:;",.?<>]{8,}$/,
     {
       message:
         'The password need to be more than 8 characters in length with at least one upper case, 1 lower case, 1 number and 1 special character.',
