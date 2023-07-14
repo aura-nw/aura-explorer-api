@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NAME_TAG_TYPE, VIEW_TYPE } from '../../../shared';
 import { Expose, classToPlain, plainToClass } from 'class-transformer';
 import { NameTag } from '../../../shared/entities/name-tag.entity';
+import { IsOptional, IsUrl } from 'class-validator';
 
 export class StoreNameTagParamsDto {
   @Expose()
@@ -36,4 +37,12 @@ export class StoreNameTagParamsDto {
       excludeExtraneousValues: true,
     });
   }
+  userId: number;
+
+  @Expose()
+  @IsOptional()
+  @ApiPropertyOptional({
+    default: null,
+  })
+  enterpriseUrl: string;
 }

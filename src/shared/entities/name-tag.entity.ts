@@ -1,4 +1,11 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { VIEW_TYPE, NAME_TAG_TYPE } from '../constants/common';
 import { User } from './user.entity';
@@ -30,4 +37,10 @@ export class NameTag extends BaseEntityIncrementId {
   @ManyToOne(() => User, (user) => user.name_tags)
   @JoinColumn({ name: 'created_by' })
   user: User;
+
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deleted_at: Date;
+
+  @Column({ nullable: true, name: 'enterprise_url' })
+  enterpriseUrl: string;
 }

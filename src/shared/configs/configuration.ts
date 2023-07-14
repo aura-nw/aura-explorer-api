@@ -67,4 +67,14 @@ export default () => ({
   },
   privateNameTagLimit: process.env.PRIVATE_NAME_TAG_LIMIT || 1000,
   adminInitEmail: process.env.ADMIN_INIT_EMAIL,
+  mail: {
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    user: process.env.EMAIL_USER,
+    password: process.env.EMAIL_PASSWORD,
+    sender: process.env.EMAIL_SENDER_ADDRESS,
+  },
+  appDomain: process.env.APP_DOMAIN,
+  bcryptSalt: process.env.BCRYPT_SALT || 8,
+  auraScanUrl: process.env.AURA_SCAN_URL,
 });

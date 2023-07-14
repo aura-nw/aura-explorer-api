@@ -4,77 +4,6 @@ export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
 
 export const FORWARDED_FOR_TOKEN_HEADER = 'x-forwarded-for';
 
-export enum LINK_API {
-  STAKING_POOL = 'cosmos/staking/v1beta1/pool',
-  INFLATION = `cosmos/mint/v1beta1/inflation`,
-  COMMUNITY_POOL = `cosmos/distribution/v1beta1/community_pool`,
-  VALIDATOR = `cosmos/staking/v1beta1/validators`,
-  SLASHING_PARAM = `cosmos/slashing/v1beta1/params`,
-  SIGNING_INFOS = `cosmos/slashing/v1beta1/signing_infos`,
-  PARAM_TALLYING = 'cosmos/gov/v1beta1/params/tallying',
-  PROPOSAL_DETAIL = 'cosmos/gov/v1beta1/proposals/',
-  PROPOSALS = 'cosmos/gov/v1beta1/proposals',
-  LATEST_BLOCK = 'blocks/latest',
-}
-
-export enum CONST_NUM {
-  LIMIT_2 = 2,
-  LIMIT_100 = 100,
-  LIMIT_50 = 50,
-  OFFSET = 0,
-}
-
-export enum CONST_CHAR {
-  PERCENT = '%',
-  SECOND = 's',
-  DELEGATE = 'delegate',
-  UNBOND = 'unbond',
-  VALIDATOR = 'validator',
-  SOURCE_VALIDATOR = 'source_validator',
-  AMOUNT = 'amount',
-  UNDEFINED = 'undefined',
-  MESSAGE = 'message',
-  ACTION = 'action',
-  REDELEGATE = 'redelegate',
-  CREATE_VALIDATOR = 'create_validator',
-}
-
-export enum CONST_MSG_TYPE {
-  MSG_VOTE = 'MsgVote',
-  MSG_SUBMIT_PROPOSAL = 'MsgSubmitProposal',
-  MSG_DEPOSIT = 'MsgDeposit',
-  MSG_DELEGATE = 'MsgDelegate',
-  MSG_UNDELEGATE = 'MsgUndelegate',
-  MSG_REDELEGATE = 'MsgBeginRedelegate',
-  MSG_WITHDRAW_DELEGATOR_REWARD = 'MsgWithdrawDelegatorReward',
-}
-
-export enum CONST_FULL_MSG_TYPE {
-  MSG_DELEGATE = '/cosmos.staking.v1beta1.MsgDelegate',
-  MSG_REDELEGATE = '/cosmos.staking.v1beta1.MsgBeginRedelegate',
-  MSG_UNDELEGATE = '/cosmos.staking.v1beta1.MsgUndelegate',
-  MSG_CREATE_VALIDATOR = '/cosmos.staking.v1beta1.MsgCreateValidator',
-}
-
-export enum CONST_PROPOSAL_TYPE {
-  SOFTWARE_UPGRADE_PROPOSAL = 'SoftwareUpgradeProposal',
-  COMMUNITY_POOL_SPEND_PROPOSAL = 'CommunityPoolSpendProposal',
-  PARAMETER_CHANGE_PROPOSAL = 'ParameterChangeProposal',
-}
-
-export enum CONST_PROPOSAL_VOTE_OPTION {
-  YES = 'VOTE_OPTION_YES',
-  ABSTAIN = 'VOTE_OPTION_ABSTAIN',
-  NO = 'VOTE_OPTION_NO',
-  NO_WITH_VETO = 'VOTE_OPTION_NO_WITH_VETO',
-}
-
-export enum CONST_DELEGATE_TYPE {
-  DELEGATE = 'Delegate',
-  UNDELEGATE = 'Undelegate',
-  REDELEGATE = 'Redelegate',
-}
-
 export enum CONTRACT_STATUS {
   EXACT_MATCH = 'EXACT MATCH',
   SIMILAR_MATCH = 'SIMILAR MATCH',
@@ -89,53 +18,10 @@ export enum CONTRACT_STATUS {
   PENDING = 'Pending',
 }
 
-export enum CONTRACT_TRANSACTION_LABEL {
-  IN = 'IN',
-  OUT = 'OUT',
-  CREATION = 'CREATION',
-}
-
-export enum CONTRACT_TRANSACTION_TYPE {
-  INSTANTIATE = '/cosmwasm.wasm.v1.MsgInstantiateContract',
-  EXECUTE = '/cosmwasm.wasm.v1.MsgExecuteContract',
-  SEND = '/cosmos.bank.v1beta1.MsgSend',
-}
-
-export enum SYNC_CONTRACT_TRANSACTION_TYPE {
-  INSTANTIATE = 'MsgInstantiateContract',
-  EXECUTE = 'MsgExecuteContract',
-  SEND = 'MsgSend',
-}
-
-export enum CONTRACT_TRANSACTION_EXECUTE_TYPE {
-  MINT = 'mint',
-  BURN = 'burn',
-}
-
-export enum CONTRACT_TYPE {
-  CW20 = 'CW20',
-  CW721 = 'CW721',
-  CW4973 = 'CW4973',
-}
-
 export enum CONTRACT_CODE_RESULT {
   TBD = 'TBD',
   CORRECT = 'Correct',
   INCORRECT = 'Incorrect',
-}
-
-export enum INDEXER_API {
-  STATUS = 'api/v1/network/status?chainid=%s',
-  REGISTER_CODE_ID = 'api/v1/asset/index',
-  ACCOUNT_DELEGATIONS = 'api/v1/account-info/delegations?address=%s&chainId=%s',
-  GET_TOKENS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&countTotal=false',
-  TOKEN_HOLDERS = 'api/v1/asset/holder?chainid=%s&contractType=%s&contractAddress=%s&countTotal=true',
-  GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID = 'api/v1/asset/getByOwner?chainid=%s&contractType=%s&tokenId=%s&contractAddress=%s',
-  GET_NFTS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=%s&isBurned=false&countTotal=true&pageLimit=%s',
-  GET_PROPOSAL = 'api/v1/proposal?chainid=%s&pageLimit=%s&pageOffset=%s&reverse=true',
-  GET_CW20_TOKENS_BY_OWNER = 'api/v1/asset/getByOwner?owner=%s&chainid=%s&contractType=CW20&countTotal=true&pageLimit=%s&pageOffset=%s',
-  GET_HOLDER_INFO_CW20 = 'api/v1/daily-cw20-holder',
-  GET_VALIDATOR_BY_ADDRESS = 'api/v1/validator?chainid=%s&operatorAddress=%s&pageLimit=1&pageOffset=0',
 }
 
 export const INDEXER_API_V2 = {
@@ -145,10 +31,12 @@ export const INDEXER_API_V2 = {
     CONTRACT_CODE_LIST: `query ContractCode($where: %s_code_bool_exp, $limit: Int, $offset: Int) { %s { code(where: $where, order_by: {code_id: desc}, limit: $limit, offset: $offset) { %s } code_aggregate(where: $where) { aggregate { count } } } }`,
     CONTRACT_CODE_DETAIL: `query ContractCodeDetail($where: %s_code_bool_exp) { %s { code(where: $where) { %s } } }`,
     CW721_OWNER: `query CW721Owner($limit: Int, $burned: Boolean, $owner: String, $address: String, $tokenId: String, $nextKey: Int) { %s { cw721_token(limit: $limit, order_by: {created_at: desc}, where: {burned: {_eq: $burned}, cw721_contract: {smart_contract: {address: {_eq: $address}, name: {_neq: "crates.io:cw4973"}}}, owner: {_eq: $owner}, token_id: {_eq: $tokenId}, id: {_gt: $nextKey}}) { %s } } } `,
-    CW4973_TOKEN_BY_MINTER: `query CW4973ByMinter($address: String, $minter: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}, offset: $offset) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}}) { aggregate { count } } } }`,
+    CW4973_TOKEN_BY_MINTER: `query CW4973ByMinter($address: String, $minter: String, $limit: Int, $offset: Int) { %s { cw721_contract(limit: $limit, where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}, offset: $offset, order_by: {updated_at: desc}) { %s } cw721_contract_aggregate(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}) { aggregate { count } } } }`,
     CW4973_CONTRACT: `query CW4973Contract($address: String, $minter: String) { %s { cw721_contract(where: {smart_contract: {name: {_eq: "crates.io:cw4973"}, address: {_eq: $address}}, minter: {_eq: $minter}}) { %s } } }`,
     VERIFY_STEP: `query VerifyStep($codeId: Int) { %s { code_id_verification(where: {code_id: {_eq: $codeId}}, order_by: {updated_at: desc}) { %s } } }`,
     CW20_OWNER: `query CW20Owner($limit: Int, $offset: Int, $owner: String, $name: String, $address: String) { %s { cw20_contract(limit: $limit, offset: $offset, where: {cw20_holders: {address: {_eq: $owner}}, name: {_ilike: $name}, smart_contract: {address: {_eq: $address}}}) { %s } cw20_contract_aggregate(where: {cw20_holders: {address: {_eq: $owner}}, name: {_ilike: $name}, smart_contract: {address: {_eq: $address}}}) { aggregate { count } } } }`,
+    CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
+    VALIDATORS: `query Validators { %s { validator { %s } } }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -160,6 +48,8 @@ export const INDEXER_API_V2 = {
     CONTRACT_CODE_DETAIL: 'ContractCodeDetail',
     VERIFY_STEP: 'VerifyStep',
     CW20_OWNER: 'CW20Owner',
+    CW20_HOLDER: 'CW20Holder',
+    VALIDATORS: 'Validators',
   },
 };
 
@@ -168,12 +58,6 @@ export enum AURA_INFO {
   COIN_ID = 'aura-network',
   IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg',
   NAME = 'Aura',
-}
-
-export enum SEARCH_KEYWORD {
-  CONTRACT_ADDRESS = 'contractAddress',
-  TOKEN_ID = 'tokenId',
-  NEXT_KEY = 'nextKey',
 }
 
 export enum LENGTH {
@@ -255,6 +139,15 @@ export const ERROR_MAP = {
     Code: 'E017',
     Message: `This receiver has rejected all Account Bound Tokens from you`,
   },
+  INFRASTRUCTURE_ERROR: {
+    Code: 'E018',
+    Message: `Infrastructure overload, cannot process. Please try again!`,
+  },
+};
+
+export const INFRASTRUCTURE_ERROR = {
+  STEP: 4,
+  FAIL: 'FAIL',
 };
 
 export const ADMIN_ERROR_MAP = {
@@ -270,12 +163,21 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E003',
     Message: 'Invalid aura address format',
   },
-  UNAUTHORIZED: {
+  INVALID_NAME_TAG: {
     Code: 'E004',
+    Message:
+      'Name tag not accept special character except dot(.), dash(-), underscore(_)',
+  },
+  INVALID_URL: {
+    Code: 'E005',
+    Message: 'Invalid URL format',
+  },
+  UNAUTHORIZED: {
+    Code: 'E006',
     Message: 'User can not Create/Update/Delete Public Name Tag',
   },
   LIMIT: {
-    Code: 'E005',
+    Code: 'E007',
     Message: 'Can not create Private Name Tag, limit has been reached',
   },
 };
@@ -321,6 +223,12 @@ export enum USER_ROLE {
 export enum PROVIDER {
   FACEBOOK = 'facebook',
   GOOGLE = 'google',
+  PASSWORD = 'password',
+}
+
+export enum SITE {
+  MAIN = 'main',
+  ADMIN = 'admin',
 }
 
 export enum NAME_TAG_TYPE {
@@ -354,3 +262,40 @@ export const VERIFY_STEP = [
 ];
 
 export const ROLES_KEY = 'roles';
+
+export const REGEX_PARTERN = {
+  NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/),
+  URL: new RegExp(/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/),
+};
+
+export enum USER_ACTIVITIES {
+  SEND_MAIL_VERIFY = 'SEND_MAIL_VERIFY',
+  SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+}
+
+export const MSGS_ACTIVE_USER = {
+  SA001: { message: 'Success', code: 'SA001' },
+  EA001: { message: 'User already verified', code: 'EA001' },
+  EA002: { message: 'User not found', code: 'EA002' },
+  EA003: { message: 'Token not match', code: 'EA003' },
+};
+
+export const SUPPORT_EMAIL = 'support@aura.netwwork';
+
+export const QUEUES = {
+  SEND_MAIL: {
+    QUEUE_NAME: 'send-mail',
+    JOB: 'job-send-mail',
+  },
+};
+
+export const SYNC_SERVICE_QUEUES = {
+  SMART_CONTRACT: 'smart-contracts',
+};
+
+export const MSGS_USER = {
+  EU001: { message: 'User must be verified', code: 'EU001' },
+  EU002: { message: 'Wrong email or password', code: 'EU002' },
+};
+
+export const AURA_LOGO = 'aura-logo.jpg';

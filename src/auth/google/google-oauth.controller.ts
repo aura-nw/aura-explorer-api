@@ -28,7 +28,7 @@ export class GoogleOauthController {
   async login(
     @Body() request: GoogleOAuthLoginParamsDto,
   ): Promise<GoogleOAuthLoginResponseDto> {
-    const tokens = await this.googleOAuthService.login(request.token);
+    const tokens = await this.googleOAuthService.login(request);
     return tokens;
   }
 }

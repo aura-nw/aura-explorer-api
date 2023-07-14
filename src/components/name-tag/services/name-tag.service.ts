@@ -6,6 +6,7 @@ import {
   LENGTH,
   MESSAGES,
   NAME_TAG_TYPE,
+  REGEX_PARTERN,
   RequestContext,
   USER_ROLE,
   VIEW_TYPE,
@@ -19,6 +20,7 @@ import * as util from 'util';
 import { GetNameTagDto } from '../dtos/get-name-tag.dto';
 import { GethNameTagResult } from '../dtos/get-name-tag-result.dto';
 import * as appConfig from '../../../shared/configs/configuration';
+import { Not } from 'typeorm';
 
 @Injectable()
 export class NameTagService {
@@ -130,7 +132,6 @@ export class NameTagService {
     if (errorMsg) {
       return errorMsg;
     }
-
     try {
       const nameTag = await this.nameTagRepository.findOne({
         where: {
@@ -195,6 +196,19 @@ export class NameTagService {
         message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
       };
     }
+    if (!req.name_tag.match(REGEX_PARTERN.NAME_TAG)) {
+      return {
+        code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
+        message: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Message,
+      };
+    }
+
+    if (req?.enterpriseUrl && !req.enterpriseUrl.match(REGEX_PARTERN.URL)) {
+      return {
+        code: ADMIN_ERROR_MAP.INVALID_URL.Code,
+        message: ADMIN_ERROR_MAP.INVALID_URL.Message,
+      };
+    }
 
     const tag = await this.nameTagRepository.findOne({
       where: {
@@ -215,6 +229,14 @@ export class NameTagService {
         }
       }
     }
+
+    // const tag = await this.nameTagRepository.findOne({
+    //   where: {
+    //     name_tag: req.name_tag,
+    //     deleted_at: null,
+    //     address: Not(req.address),
+    //   },
+    // });
 
     if (tag) {
       // Check owner private Name Tag can be update

@@ -36,8 +36,10 @@ export class NameTagRepository extends Repository<NameTag> {
     const builder = this.createQueryBuilder('tag')
       .leftJoinAndSelect('tag.user', 'user')
       .select(
-        'tag.id, tag.address, tag.type, tag.view_type, tag.name_tag, tag.created_at, user.email',
-      );
+        'tag.id, tag.address, tag.type, tag.view_type, tag.name_tag, tag.created_at, user.email, enterprise_url as enterpriseUrl',
+      )
+      .leftJoin(User, 'user', 'user.id = tag.updated_by')
+      .where('tag.deleted_at IS NULL');
 
     const _finalizeResult = async () => {
       const result = await builder
@@ -178,7 +180,12 @@ export class NameTagRepository extends Repository<NameTag> {
     }
 
     let qb = this.createQueryBuilder()
-      .select(['id', 'address', 'name_tag, note'])
+      .select([
+        'id',
+        'address',
+        'name_tag, note',
+        'enterprise_url as enterpriseUrl',
+      ])
       .orderBy('address')
       .addOrderBy('view_type')
       .limit(Number(limit) || PAGE_REQUEST.MAX_200);

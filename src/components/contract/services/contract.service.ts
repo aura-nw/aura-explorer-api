@@ -6,10 +6,9 @@ import { lastValueFrom, retry, timeout } from 'rxjs';
 import {
   AkcLogger,
   CONTRACT_STATUS,
-  CONTRACT_TYPE,
   ERROR_MAP,
   INDEXER_API_V2,
-  LENGTH,
+  INFRASTRUCTURE_ERROR,
   RequestContext,
   VERIFY_CODE_RESULT,
   VERIFY_STEP,
@@ -17,10 +16,9 @@ import {
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
-import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
-import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
+import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
@@ -39,75 +37,6 @@ export class ContractService {
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
     const appParams = appConfig.default();
     this.chainDB = appParams.indexerV2.chainDB;
-  }
-
-  async getContractsCodeId(
-    ctx: RequestContext,
-    request: ContractCodeIdParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
-
-    // Attributes for contract code list
-    const codeAttributes = `code_id
-      creator
-      store_hash
-      type
-      status
-      created_at
-      code_id_verifications {
-        verified_at
-        compiler_version
-        github_url
-        verification_status
-      }
-      smart_contracts {
-        address
-        name
-      }`;
-
-    let where = {};
-    if (request?.keyword) {
-      const keyword = request.keyword.toLowerCase();
-      const byCodeId = Number(keyword) && Number(keyword) > 0;
-      if (byCodeId) {
-        where = { code_id: { _eq: keyword } };
-      } else if (keyword.length === LENGTH.CONTRACT_ADDRESS) {
-        where = { smart_contracts: { address: { _eq: keyword } } };
-      } else {
-        where = { creator: { _eq: keyword } };
-      }
-    }
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_LIST,
-        this.chainDB,
-        this.chainDB,
-        codeAttributes,
-      ),
-      variables: {
-        where: where,
-        limit: request.limit,
-        offset: request.offset,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_LIST,
-    };
-
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB];
-
-    return {
-      contracts: response?.code,
-      count: response?.code_aggregate.aggregate.count,
-    };
-  }
-
-  async getContractsCodeIdDetail(
-    ctx: RequestContext,
-    codeId: number,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
-    return this.getCodeDetail(codeId);
   }
 
   private async getCodeDetail(codeId: number) {
@@ -194,11 +123,14 @@ export class ContractService {
   async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
     this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
 
+    const codeVerificationAttributes = `verify_step
+      verification_status`;
+
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
         this.chainDB,
-        'verify_step',
+        codeVerificationAttributes,
       ),
       variables: {
         codeId: codeId,
@@ -245,7 +177,16 @@ export class ContractService {
     const data = plainToClass(VerifyCodeStepOutputDto, verifySteps, {
       excludeExtraneousValues: true,
     });
-    return data;
+    let error = {};
+    if (
+      response[0].verify_step.step === INFRASTRUCTURE_ERROR.STEP &&
+      response[0].verify_step.result === VERIFY_CODE_RESULT.SUCCESS &&
+      response[0].verification_status === INFRASTRUCTURE_ERROR.FAIL
+    ) {
+      error = ERROR_MAP.INFRASTRUCTURE_ERROR;
+    }
+
+    return { data, error };
   }
 
   async verifyContractStatus(
@@ -270,11 +211,12 @@ export class ContractService {
     };
   }
 
-  async getNftDetail(
+  async getCW4973Detail(
     ctx: RequestContext,
     contractAddress: string,
     tokenId: string,
   ) {
+    this.logger.log(ctx, `${this.getCW4973Detail.name} was called!`);
     // Get contract info
     const abtAttributes = `name
       minter
@@ -300,110 +242,55 @@ export class ContractService {
     ).data[this.chainDB]['cw721_contract'];
 
     if (cw4973Contract.length > 0) {
-      return this.getCW4973Token(ctx, cw4973Contract[0], tokenId);
-    } else {
-      return this.getCW721Token(ctx, contractAddress, tokenId);
-    }
-  }
-
-  async getCW721Token(
-    ctx: RequestContext,
-    contractAddress: string,
-    tokenId: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCW721Token.name} was called!`);
-
-    const cw721Attributes = `id
-      token_id
-      owner
-      media_info
-      burned
-      cw721_contract {
-        name
-        smart_contract {
-          name
-          address
-          creator
-        }
-        symbol
-        minter
-      }`;
-
-    const graphqlQuery = {
-      query: util.format(
-        INDEXER_API_V2.GRAPH_QL.CW721_OWNER,
-        this.chainDB,
-        cw721Attributes,
-      ),
-      variables: {
-        address: contractAddress,
-        tokenId: tokenId,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CW721_OWNER,
-    };
-
-    const tokens = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB]['cw721_token'];
-
-    let nft = null;
-
-    if (tokens?.length > 0) {
-      nft = tokens[0];
-      nft.owner = nft.burned ? '' : nft.owner;
-    }
-    return nft;
-  }
-
-  async getCW4973Token(ctx: RequestContext, contract: any, tokenId: string) {
-    this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
-    const token = await this.soulboundTokenRepository.findOne({
-      where: {
-        token_id: tokenId,
-        contract_address: contract.smart_contract.address,
-      },
-    });
-
-    if (!token) {
-      return null;
-    }
-
-    if (!token?.ipfs || token?.ipfs === '{}') {
-      // Get ipfs info
-      const ipfs = await lastValueFrom(
-        this.httpService
-          .get(this.contractUtil.transform(token?.token_uri))
-          .pipe(timeout(5000), retry(2)),
-      )
-        .then((rs) => rs.data)
-        .catch(() => {
-          return {};
-        });
-
-      token.ipfs = JSON.stringify(ipfs);
-      await this.soulboundTokenRepository.update(token.id, {
-        ipfs: token.ipfs,
+      const token = await this.soulboundTokenRepository.findOne({
+        where: {
+          token_id: tokenId,
+          contract_address: cw4973Contract[0].smart_contract.address,
+        },
       });
-    }
 
-    const nft = {
-      id: token?.id || '',
-      contract_address: contract.smart_contract.address,
-      token_id: token?.token_id || '',
-      token_uri: token?.token_uri || '',
-      token_name: contract.name || '',
-      token_name_ipfs: token?.token_name || '',
-      animation_url: token?.animation_url || '',
-      token_img: token?.token_img || '',
-      img_type: token?.img_type || '',
-      receiver_address: token?.receiver_address || '',
-      status: token?.status || '',
-      picked: token?.picked || '',
-      signature: token?.signature || '',
-      pub_key: token?.pub_key || '',
-      minter_address: contract.minter || '',
-      type: CONTRACT_TYPE.CW4973,
-      ipfs: JSON.parse(token?.ipfs) || '',
-    };
-    return nft;
+      if (!token) {
+        return null;
+      }
+
+      if (!token?.ipfs || token?.ipfs === '{}') {
+        // Get ipfs info
+        const ipfs = await lastValueFrom(
+          this.httpService
+            .get(this.contractUtil.transform(token?.token_uri))
+            .pipe(timeout(5000), retry(2)),
+        )
+          .then((rs) => rs.data)
+          .catch(() => {
+            return {};
+          });
+
+        token.ipfs = JSON.stringify(ipfs);
+        await this.soulboundTokenRepository.update(token.id, {
+          ipfs: token.ipfs,
+        });
+      }
+
+      const nft = {
+        id: token?.id || '',
+        contract_address: cw4973Contract[0].smart_contract.address,
+        token_id: token?.token_id || '',
+        token_uri: token?.token_uri || '',
+        token_name: cw4973Contract[0].name || '',
+        token_name_ipfs: token?.token_name || '',
+        animation_url: token?.animation_url || '',
+        token_img: token?.token_img || '',
+        img_type: token?.img_type || '',
+        receiver_address: token?.receiver_address || '',
+        status: token?.status || '',
+        picked: token?.picked || '',
+        signature: token?.signature || '',
+        pub_key: token?.pub_key || '',
+        minter_address: cw4973Contract[0].minter || '',
+        type: 'CW4973',
+        ipfs: JSON.parse(token?.ipfs) || '',
+      };
+      return nft;
+    }
   }
 }

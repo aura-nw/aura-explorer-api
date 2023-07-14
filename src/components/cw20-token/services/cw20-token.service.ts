@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In } from 'typeorm';
+import { In, Not } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
@@ -82,9 +82,7 @@ export class Cw20TokenService {
     }
 
     //get value
-    assetDto.value = (
-      Number(assetDto.balance) * Number(assetDto.price)
-    ).toString();
+    assetDto.value = Number(assetDto.balance) * Number(assetDto.price);
     result.push(assetDto);
 
     //Get IBC tokens
@@ -101,15 +99,6 @@ export class Cw20TokenService {
       );
     }
 
-    let limit = request.limit;
-    let offset = request.offset;
-
-    if (request.offset === 0) {
-      limit -= result.length;
-    } else {
-      offset -= result.length;
-    }
-
     // Attributes for cw20
     const cw20Attributes = `marketing_info
       name
@@ -118,7 +107,7 @@ export class Cw20TokenService {
       smart_contract {
         address
       }
-      cw20_holders {
+      cw20_holders(where: {address: {_eq: $owner}}) {
         amount
         address
       }`;
@@ -143,8 +132,6 @@ export class Cw20TokenService {
         cw20Attributes,
       ),
       variables: {
-        limit: limit,
-        offset: offset,
         owner: request?.account_address,
         address: contractAddress,
         name: tokenName,
@@ -156,13 +143,11 @@ export class Cw20TokenService {
       .data[this.chainDB];
 
     const asset = response?.cw20_contract;
-    const count = response?.cw20_contract_aggregate?.aggregate?.count;
 
     let tokens = [];
     if (asset?.length > 0) {
-      const listContract_address = asset?.map((i) => i.smart_contract.address);
       const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
-        where: { contract_address: In(listContract_address) },
+        where: [{ coin_id: Not('') }, { verify_status: 'VERIFIED' }],
       });
       tokens = asset.map((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo.find(
@@ -178,20 +163,31 @@ export class Cw20TokenService {
         asset.decimals = item.decimals || 0;
         asset.balance =
           item.cw20_holders?.find((f) => f.address === request?.account_address)
-            .amount || 0;
+            ?.amount || 0;
         asset.price = tokenMarketsInfo?.current_price || 0;
         asset.price_change_percentage_24h =
           tokenMarketsInfo?.price_change_percentage_24h || 0;
-        asset.value = (Number(asset.balance) * Number(asset.price)).toString();
+        asset.value = Number(asset.balance) * Number(asset.price);
         return asset;
       });
     }
+
+    // Sort cw20's token table.
+    tokens.sort((item1, item2) => {
+      // 1st priority VERIFIED.
+      const compareStatus = item2.verify_status.localeCompare(
+        item1.verify_status,
+      );
+      // 2nd priority token value DESC.
+      const compareValue = item2.value - item1.value;
+      return compareStatus || compareValue;
+    });
 
     if (request.offset === 0) {
       tokens = result.concat(tokens);
     }
 
-    return { tokens, count: count + result.length };
+    return { tokens, count: tokens.length };
   }
 
   async getPriceById(ctx: RequestContext, id: string): Promise<any> {
@@ -209,9 +205,15 @@ export class Cw20TokenService {
   ): Promise<TokenMarkets[]> {
     this.logger.log(ctx, `${this.getPriceById.name} was called!`);
     const listAddress = request?.contractAddress ? request.contractAddress : [];
-    return await this.tokenMarketsRepository.find({
-      where: { contract_address: In(listAddress) },
-    });
+    if (listAddress.length > 0) {
+      return await this.tokenMarketsRepository.find({
+        where: { contract_address: In(listAddress) },
+      });
+    } else {
+      return await this.tokenMarketsRepository.find({
+        where: [{ coin_id: Not('') }, { verify_status: 'VERIFIED' }],
+      });
+    }
   }
 
   async getTotalAssetByAccountAddress(
@@ -236,7 +238,55 @@ export class Cw20TokenService {
     });
     const price = tokenData?.current_price || 0;
 
-    return balance * price;
+    const auraPrice = balance * price;
+
+    // Attributes for cw20
+    const cw20Attributes = `
+     smart_contract {
+       address
+     }
+     cw20_holders {
+       amount
+       address
+     }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_HOLDER,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        owner: accountAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_HOLDER,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw20_contract'];
+
+    let cw20Price = 0;
+
+    if (response?.length > 0) {
+      const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
+        where: { coin_id: Not(''), verify_status: 'VERIFIED' },
+      });
+      response.forEach((item) => {
+        const tokenMarketsInfo = listTokenMarketsInfo?.find(
+          (f) => f.contract_address === item.smart_contract.address,
+        );
+        const price = tokenMarketsInfo?.current_price
+          ? Number(tokenMarketsInfo?.current_price)
+          : 0;
+        const holder = item.cw20_holders?.find(
+          (item) => item.address === accountAddress,
+        );
+        const amount = holder?.amount || 0;
+        cw20Price += price * amount;
+      });
+    }
+
+    return auraPrice + cw20Price;
   }
 
   /**
@@ -273,7 +323,8 @@ export class Cw20TokenService {
     ).data[this.chainDB]['account'];
     const accountBalances =
       accountData?.length > 0 ? accountData[0]?.balances : [];
-    const ibcBalances = accountBalances?.filter(
+    const balances = accountBalances?.length ? accountBalances : [];
+    const ibcBalances = balances?.filter(
       (str) => str?.minimal_denom || str?.denom,
     );
     if (ibcBalances?.length > 0) {

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ValidatorRepository } from '../../../components/validator/repositories/validator.repository';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 
 import * as util from 'util';
@@ -24,7 +23,6 @@ export class AccountService {
   constructor(
     private readonly logger: AkcLogger,
     private serviceUtil: ServiceUtil,
-    private validatorRepository: ValidatorRepository,
   ) {
     this.logger.setContext(AccountService.name);
     const appParams = appConfig.default();
@@ -55,7 +53,7 @@ export class AccountService {
       account_number
       address`;
 
-    const graphqlQuery = {
+    const graphqlQueryAcc = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.ACCOUNT,
         this.chainDB,
@@ -67,6 +65,23 @@ export class AccountService {
       operationName: INDEXER_API_V2.OPERATION_NAME.ACCOUNT,
     };
 
+    // get validator list
+    const validatorAttributes = `jailed
+      image_url
+      description
+      account_address
+      operator_address`;
+
+    const graphqlQueryVal = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.VALIDATORS,
+        this.chainDB,
+        validatorAttributes,
+      ),
+      variables: {},
+      operationName: INDEXER_API_V2.OPERATION_NAME.VALIDATORS,
+    };
+
     const delegationsParam = `cosmos/staking/v1beta1/delegations/${address}`;
     const unbondingParam = `cosmos/staking/v1beta1/delegators/${address}/unbonding_delegations`;
     const redelegationsParam = `cosmos/staking/v1beta1/delegators/${address}/redelegations`;
@@ -74,16 +89,14 @@ export class AccountService {
 
     const [
       account,
-      validatorData,
+      validators,
       delegationsResponse,
       unbondingResponse,
       redelegationsResponse,
       accountResponse,
     ] = await Promise.all([
-      this.serviceUtil.fetchDataFromGraphQL(graphqlQuery),
-      this.validatorRepository.find({
-        order: { power: 'DESC' },
-      }),
+      this.serviceUtil.fetchDataFromGraphQL(graphqlQueryAcc),
+      this.serviceUtil.fetchDataFromGraphQL(graphqlQueryVal),
       this.serviceUtil.getDataAPI(this.api, delegationsParam, ctx),
       this.serviceUtil.getDataAPI(this.api, unbondingParam, ctx),
       this.serviceUtil.getDataAPI(this.api, redelegationsParam, ctx),
@@ -92,7 +105,7 @@ export class AccountService {
 
     const accountData = account?.data[this.chainDB]['account'];
     const data = accountData[0];
-
+    const validatorData = validators?.data[this.chainDB]['validator'];
     if (!data) {
       return accountData;
     }
@@ -119,7 +132,10 @@ export class AccountService {
     let available = 0;
     accountOutput.available = this.changeUauraToAura(available);
     if (data?.spendable_balances) {
-      const uaura = data.spendable_balances?.find(
+      const spendable_balances = data.spendable_balances?.length
+        ? data.spendable_balances
+        : [];
+      const uaura = spendable_balances?.find(
         (f) => f.denom === this.minimalDenom,
       );
       if (uaura) {
@@ -166,9 +182,10 @@ export class AccountService {
         delegation.reward = '0';
 
         if (validator.length > 0) {
-          delegation.validator_name = validator[0].title;
+          delegation.validator_name = validator[0].description?.moniker;
           delegation.validator_address = validator_address;
-          delegation.validator_identity = validator[0].identity;
+          delegation.validator_identity = validator[0].description?.identity;
+          delegation.image_url = validator[0].image_url;
           delegation.jailed = Number(validator[0].jailed);
         }
         delegation.amount = this.changeUauraToAura(item.balance.amount);
@@ -228,9 +245,10 @@ export class AccountService {
           const unbonding = new AccountUnbonding();
 
           if (validator.length > 0) {
-            unbonding.validator_name = validator[0].title;
+            unbonding.validator_name = validator[0].description?.moniker;
             unbonding.validator_address = validator_address;
-            unbonding.validator_identity = validator[0].identity;
+            unbonding.validator_identity = validator[0].description?.identity;
+            unbonding.image_url = validator[0].image_url;
             unbonding.jailed = Number(validator[0].jailed);
           }
           unbonding.amount = this.changeUauraToAura(item1.balance);
@@ -276,16 +294,22 @@ export class AccountService {
           const redelegation = new AccountRedelegation();
 
           if (validatorSrc.length > 0) {
-            redelegation.validator_src_name = validatorSrc[0].title;
+            redelegation.validator_src_name =
+              validatorSrc[0].description?.moniker;
             redelegation.validator_src_address = validator_src_address;
-            redelegation.validator_src_identity = validatorSrc[0].identity;
+            redelegation.validator_src_identity =
+              validatorSrc[0].description?.identity;
             redelegation.validator_src_jailed = Number(validatorSrc[0].jailed);
+            redelegation.image_src_url = validatorSrc[0].image_url;
           }
           if (validatorDst.length > 0) {
-            redelegation.validator_dst_name = validatorDst[0].title;
+            redelegation.validator_dst_name =
+              validatorDst[0].description?.moniker;
             redelegation.validator_dst_address = validator_dst_address;
-            redelegation.validator_dst_identity = validatorDst[0].identity;
+            redelegation.validator_dst_identity =
+              validatorDst[0].description?.identity;
             redelegation.validator_dst_jailed = Number(validatorDst[0].jailed);
+            redelegation.image_dst_url = validatorDst[0].image_url;
           }
           redelegation.amount = this.changeUauraToAura(item1.balance);
           redelegation.completion_time =
@@ -297,7 +321,9 @@ export class AccountService {
     }
 
     // get validator by delegation address
-    const validator = validatorData.filter((e) => e.acc_address === address);
+    const validator = validatorData.filter(
+      (e) => e.account_address === address,
+    );
     accountOutput.commission = '0';
 
     // get commission
