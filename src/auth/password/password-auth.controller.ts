@@ -63,14 +63,10 @@ export class PasswordAuthController {
     await this.userService.sendResetPasswordEmail(user);
   }
 
-  @Post('reset-password/email=:email&code=:code')
+  @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  async resetPassword(
-    @Param('email') email: string,
-    @Param('code') code: string,
-    @Body() request: ResetPasswordDto,
-  ) {
-    await this.userService.resetPassword(email, code, request);
+  async resetPassword(@Body() request: ResetPasswordDto) {
+    await this.userService.resetPassword(request);
   }
 
   @Post('login-with-password')
