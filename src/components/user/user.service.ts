@@ -389,7 +389,7 @@ export class UserService {
         user.encryptedPassword,
       ))
     ) {
-      throw new UnauthorizedException('Invalid password.');
+      throw new UnauthorizedException('Incorrect password.');
     }
 
     user.encryptedPassword = await this.hashPassword(passwordParams.password);
