@@ -49,7 +49,6 @@ export class UserService {
     private usersRepository: UserRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
-    private mailService: MailService,
     private configService: ConfigService,
   ) {}
 
@@ -380,19 +379,26 @@ export class UserService {
     passwordParams: ChangePasswordDto,
   ): Promise<void> {
     const user = await this.findOneById(userId);
+    const isMatchOldPassword = await this.verifyPassword(
+      passwordParams.oldPassword,
+      user.encryptedPassword,
+    );
 
-    if (
-      !(await this.verifyPassword(
-        passwordParams.oldPassword,
-        user.encryptedPassword,
-      ))
-    ) {
-      throw new UnauthorizedException('Invalid password.');
+    const isNewPasswordSameAsOld = await this.verifyPassword(
+      passwordParams.password,
+      user.encryptedPassword,
+    );
+
+    if (!isMatchOldPassword) {
+      throw new UnauthorizedException('Incorrect password.');
+    } else if (isNewPasswordSameAsOld) {
+      throw new BadRequestException(
+        'New password must be different from current password.',
+      );
     }
-
     user.encryptedPassword = await this.hashPassword(passwordParams.password);
 
-    this.userActivityRepository.save(user);
+    await this.usersRepository.save(user);
   }
 
   async hashPassword(password: string): Promise<string> {
