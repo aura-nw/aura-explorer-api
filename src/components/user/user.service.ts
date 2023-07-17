@@ -49,7 +49,6 @@ export class UserService {
     private usersRepository: UserRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
-    private mailService: MailService,
     private configService: ConfigService,
   ) {}
 
@@ -318,19 +317,24 @@ export class UserService {
     }
     return userActivity;
   }
-  async resetPassword(
-    email: string,
-    resetPasswordToken: string,
-    passwordParams: ResetPasswordDto,
-  ) {
+  async resetPassword(passwordParams: ResetPasswordDto) {
     const user = await this.usersRepository.findOne({
-      where: { email, resetPasswordToken },
+      where: {
+        email: passwordParams.email,
+      },
     });
 
     if (!user) {
       throw new BadRequestException(
         'User not registered with us before or the link reset password is invalid.',
       );
+    }
+
+    if (
+      user.resetPasswordToken !== null &&
+      user.resetPasswordToken !== passwordParams.resetPasswordToken
+    ) {
+      throw new BadRequestException('Invalid token');
     }
 
     // Check expired reset password link (available in 24h).
@@ -354,13 +358,6 @@ export class UserService {
       }
     }
 
-    if (
-      user.resetPasswordToken !== null &&
-      user.resetPasswordToken !== resetPasswordToken
-    ) {
-      throw new BadRequestException('Invalid token');
-    }
-
     // Set new password.
     user.encryptedPassword = await this.hashPassword(passwordParams.password);
 
@@ -382,19 +379,26 @@ export class UserService {
     passwordParams: ChangePasswordDto,
   ): Promise<void> {
     const user = await this.findOneById(userId);
+    const isMatchOldPassword = await this.verifyPassword(
+      passwordParams.oldPassword,
+      user.encryptedPassword,
+    );
 
-    if (
-      !(await this.verifyPassword(
-        passwordParams.oldPassword,
-        user.encryptedPassword,
-      ))
-    ) {
-      throw new UnauthorizedException('Invalid password.');
+    const isNewPasswordSameAsOld = await this.verifyPassword(
+      passwordParams.password,
+      user.encryptedPassword,
+    );
+
+    if (!isMatchOldPassword) {
+      throw new UnauthorizedException('Incorrect password.');
+    } else if (isNewPasswordSameAsOld) {
+      throw new BadRequestException(
+        'New password must be different from current password.',
+      );
     }
-
     user.encryptedPassword = await this.hashPassword(passwordParams.password);
 
-    this.userActivityRepository.save(user);
+    await this.usersRepository.save(user);
   }
 
   async hashPassword(password: string): Promise<string> {
