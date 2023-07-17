@@ -6,7 +6,7 @@ import {
 import { Secp256k1, Secp256k1Signature, sha256 } from '@cosmjs/crypto';
 import { fromBase64 } from '@cosmjs/encoding';
 import { Injectable } from '@nestjs/common';
-import { AURA_INFO, DEFAULT_IPFS } from '../constants';
+import { CURRENT_NETWORK, DEFAULT_IPFS } from '../constants';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class ContractUtil {
       const pubkeyFormated = encodeSecp256k1Pubkey(fromBase64(pubkey));
       const address = pubkeyToAddress(
         pubkeyFormated,
-        AURA_INFO.CONTRACT_ADDRESS,
+        CURRENT_NETWORK.CONTRACT_LENGTH.toString(),
       );
       const msgDecode = this.createSignMessageByData(address, msg);
 

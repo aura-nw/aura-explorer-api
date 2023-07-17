@@ -1,0 +1,22 @@
+[
+  {
+    "NAME": "Aura",
+    "ADDRESS_PREFIX": "aura",
+    "COIN_ID": "aura-network",
+    "IMAGE": "https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg",
+    "ACCOUNT_LENGTH": 43,
+    "CONTRACT_LENGTH": 63,
+    "LOGO": "aura-logo.jpg",
+    "SUPPORT_EMAIL": "support@aura.netwwork"
+  },
+  {
+    "NAME": "Nois",
+    "ADDRESS_PREFIX": "nois",
+    "COIN_ID": "-",
+    "IMAGE": "https://nois.network/assets/logo-small-a95f6260.svg",
+    "ACCOUNT_LENGTH": 43,
+    "CONTRACT_LENGTH": 63,
+    "LOGO": "nois-logo.jpg",
+    "SUPPORT_EMAIL": "support@aura.netwwork"
+  }
+]

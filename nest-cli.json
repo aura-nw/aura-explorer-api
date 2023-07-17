@@ -3,9 +3,16 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "assets": [
-      "components/mail/templates/**/*",
-      "components/mail/images/**/*"
-    ],
-    "watchAssets": true
+      {
+        "include": "components/mail/templates/**/*",
+        "outDir": "./dist/src",
+        "watchAssets": true
+      },
+      {
+        "include": "components/mail/images/**/*",
+        "outDir": "./dist/src",
+        "watchAssets": true
+      }
+    ]
   }
 }

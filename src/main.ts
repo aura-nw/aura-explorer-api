@@ -13,6 +13,7 @@ import {
   RequestIdMiddleware,
   QUEUES,
   SYNC_SERVICE_QUEUES,
+  CURRENT_NETWORK,
 } from './shared';
 
 import { AppModule } from './app.module';
@@ -32,8 +33,9 @@ async function bootstrap() {
   app.enableCors();
 
   // Swagger setup
+  const network = CURRENT_NETWORK.NAME;
   const options = new DocumentBuilder()
-    .setTitle('Aura Explorer API service')
+    .setTitle(`${network} Explorer API service`)
     .setDescription('API Swagger')
     .setVersion('1.0')
     .addBearerAuth()
@@ -55,7 +57,7 @@ async function bootstrap() {
     serverAdapter,
     options: {
       uiConfig: {
-        boardTitle: 'AuraScan Board',
+        boardTitle: `${network}Scan Board`,
         miscLinks: [{ text: 'API Docs', url: '/doc' }],
       },
     },

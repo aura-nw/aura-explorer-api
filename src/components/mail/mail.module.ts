@@ -4,6 +4,7 @@ import { MailService } from './mail.service';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import { Module } from '@nestjs/common';
+import { CURRENT_NETWORK } from '../../shared';
 
 @Module({
   imports: [
@@ -18,7 +19,9 @@ import { Module } from '@nestjs/common';
           },
         },
         defaults: {
-          from: `"Team AuraScan" <${config.get('mail.sender')}>`,
+          from: `Team ${CURRENT_NETWORK.NAME}Scan <${config.get(
+            'mail.sender',
+          )}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),

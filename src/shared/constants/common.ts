@@ -1,3 +1,11 @@
+import * as networks from '../../../network.json';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+export const CURRENT_NETWORK = networks.find((NETWORK) => {
+  return NETWORK.NAME === process.env.NETWORK;
+});
+
 export const VALIDATION_PIPE_OPTIONS = { transform: true };
 
 export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
@@ -52,18 +60,6 @@ export const INDEXER_API_V2 = {
     VALIDATORS: 'Validators',
   },
 };
-
-export enum AURA_INFO {
-  CONTRACT_ADDRESS = 'aura',
-  COIN_ID = 'aura-network',
-  IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg',
-  NAME = 'Aura',
-}
-
-export enum LENGTH {
-  CONTRACT_ADDRESS = 63,
-  ACCOUNT_ADDRESS = 43,
-}
 
 export const ERROR_MAP = {
   CONTRACT_VERIFIED: {
@@ -161,7 +157,7 @@ export const ADMIN_ERROR_MAP = {
   },
   INVALID_FORMAT: {
     Code: 'E003',
-    Message: 'Invalid aura address format',
+    Message: `Invalid ${CURRENT_NETWORK.NAME} address format`,
   },
   INVALID_NAME_TAG: {
     Code: 'E004',
@@ -266,8 +262,6 @@ export const MSGS_ACTIVE_USER = {
   EA003: { message: 'Token not match', code: 'EA003' },
 };
 
-export const SUPPORT_EMAIL = 'support@aura.netwwork';
-
 export const QUEUES = {
   SEND_MAIL: {
     QUEUE_NAME: 'send-mail',
@@ -284,4 +278,3 @@ export const MSGS_USER = {
   EU002: { message: 'Wrong email or password', code: 'EU002' },
 };
 
-export const AURA_LOGO = 'aura-logo.jpg';

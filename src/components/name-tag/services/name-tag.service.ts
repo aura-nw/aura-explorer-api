@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
-  AURA_INFO,
   AkcLogger,
-  LENGTH,
+  CURRENT_NETWORK,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
@@ -98,9 +97,9 @@ export class NameTagService {
 
   private async validate(req: StoreNameTagParamsDto, isCreate = true) {
     const validFormat =
-      req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-      (req.address.length === LENGTH.CONTRACT_ADDRESS ||
-        req.address.length === LENGTH.ACCOUNT_ADDRESS);
+      req.address.startsWith(CURRENT_NETWORK.ADDRESS_PREFIX) &&
+      (req.address.length === CURRENT_NETWORK.CONTRACT_LENGTH ||
+        req.address.length === CURRENT_NETWORK.ACCOUNT_LENGTH);
 
     if (!validFormat) {
       return {

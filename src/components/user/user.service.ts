@@ -15,11 +15,11 @@ import {
 
 import { User } from '../../shared/entities/user.entity';
 import {
+  CURRENT_NETWORK,
   MESSAGES,
   MSGS_ACTIVE_USER,
   PROVIDER,
   QUEUES,
-  SUPPORT_EMAIL,
   USER_ACTIVITIES,
   USER_ROLE,
 } from '../../shared';
@@ -237,7 +237,7 @@ export class UserService {
 
     if (userActivity.sendMailAttempt > FIVE_TIMES) {
       throw new BadRequestException(
-        `You have reached the maximum number of ${type} email sent per day. Kindly come back tomorrow or contact us via mailbox [${SUPPORT_EMAIL}] for special case!.`,
+        `You have reached the maximum number of ${type} email sent per day. Kindly come back tomorrow or contact us via mailbox [${CURRENT_NETWORK.SUPPORT_EMAIL}] for special case!.`,
       );
     }
   }

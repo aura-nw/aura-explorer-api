@@ -32,16 +32,16 @@ export class PasswordAuthController {
     @Param('code') code: string,
     @Res() res,
   ) {
-    const auraScanUrl = this.configService.get('auraScanUrl');
+    const chainScanUrl = this.configService.get('chainScanUrl');
 
     const resultActive = await this.userService.activeUser(email, code);
 
     if (resultActive.code === MSGS_ACTIVE_USER.SA001.code) {
-      res.redirect(`${auraScanUrl}/user/welcome`);
+      res.redirect(`${chainScanUrl}/user/welcome`);
     } else if (resultActive.code === MSGS_ACTIVE_USER.EA001.code) {
-      res.redirect(`${auraScanUrl}/user/already-active`);
+      res.redirect(`${chainScanUrl}/user/already-active`);
     } else {
-      res.redirect(`${auraScanUrl}/something-wrong`);
+      res.redirect(`${chainScanUrl}/something-wrong`);
     }
   }
 

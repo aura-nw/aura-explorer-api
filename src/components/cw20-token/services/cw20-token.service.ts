@@ -4,9 +4,8 @@ import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
   AkcLogger,
-  AURA_INFO,
+  CURRENT_NETWORK,
   INDEXER_API_V2,
-  LENGTH,
   RequestContext,
   TokenMarkets,
 } from '../../../shared';
@@ -49,14 +48,14 @@ export class Cw20TokenService {
   ): Promise<any> {
     this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
     let result = [];
-    //aura
+    //get asset
     const assetDto = new AssetDto();
-    assetDto.name = AURA_INFO.NAME;
+    assetDto.name = CURRENT_NETWORK.NAME;
     assetDto.symbol = this.denom;
-    assetDto.image = AURA_INFO.IMAGE;
+    assetDto.image = CURRENT_NETWORK.IMAGE;
     assetDto.denom = this.minimalDenom;
     assetDto.decimals = this.decimals;
-    assetDto.verify_text = 'Verified by Aura Network';
+    assetDto.verify_text = `Verified by ${CURRENT_NETWORK.NAME} Network`;
     assetDto.verify_status = 'VERIFIED';
 
     //get balance
@@ -66,13 +65,13 @@ export class Cw20TokenService {
         request.account_address,
       ),
       this.tokenMarketsRepository.findOne({
-        where: { coin_id: AURA_INFO.COIN_ID },
+        where: { coin_id: CURRENT_NETWORK.COIN_ID },
       }),
     ]);
 
     assetDto.balance =
       totalBalances && totalBalances?.total ? totalBalances.total : 0;
-    // price of aura
+    // price of network coin.
     if (tokenData) {
       assetDto.price = tokenData.current_price || 0;
       assetDto.price_change_percentage_24h =
@@ -113,8 +112,8 @@ export class Cw20TokenService {
       }`;
 
     const isSearchByContractAddress =
-      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-      keyword.length === LENGTH.CONTRACT_ADDRESS;
+      keyword.startsWith(CURRENT_NETWORK.ADDRESS_PREFIX) &&
+      keyword.length === CURRENT_NETWORK.CONTRACT_LENGTH;
     let contractAddress;
     let tokenName;
     if (keyword) {
@@ -225,7 +224,7 @@ export class Cw20TokenService {
       `${this.getTotalAssetByAccountAddress.name} was called!`,
     );
     // let total = 0;
-    //get balance of aura wallet
+    //get balance of current network wallet
     let balance = 0;
     const accountData = await this.accountService.getAccountDetailByAddress(
       ctx,
@@ -234,21 +233,21 @@ export class Cw20TokenService {
     balance = accountData ? Number(accountData.total) : 0;
 
     const tokenData = await this.tokenMarketsRepository.findOne({
-      where: { coin_id: AURA_INFO.COIN_ID },
+      where: { coin_id: CURRENT_NETWORK.COIN_ID },
     });
     const price = tokenData?.current_price || 0;
 
-    const auraPrice = balance * price;
+    const nativeTokenPrice = balance * price;
 
     // Attributes for cw20
     const cw20Attributes = `
-     smart_contract {
-       address
-     }
-     cw20_holders {
-       amount
-       address
-     }`;
+      smart_contract {
+        address
+      }
+      cw20_holders {
+        amount
+        address
+      }`;
 
     const graphqlQuery = {
       query: util.format(
@@ -286,7 +285,7 @@ export class Cw20TokenService {
       });
     }
 
-    return auraPrice + cw20Price;
+    return nativeTokenPrice + cw20Price;
   }
 
   /**

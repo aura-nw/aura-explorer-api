@@ -2,9 +2,9 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { User } from '../../shared/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
-import { AURA_LOGO, PROVIDER } from '../../shared';
+import { CURRENT_NETWORK, PROVIDER } from '../../shared';
 import { join } from 'path';
-
+const LOGO = CURRENT_NETWORK.LOGO || 'aura-logo.jpg';
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -23,17 +23,17 @@ export class MailService {
     const emailParam = encodeURIComponent(user.email);
     const verifyEmailPath = `/${apiPrefix}/auth/verify-email/email=${emailParam}&code=${token}`;
     const verifyEmailUrl = appDomain + verifyEmailPath;
-    const logoPath = join(__dirname, 'images', AURA_LOGO);
+    const logoPath = join(__dirname, 'images', LOGO);
 
     try {
       await this.mailerService.sendMail({
         to: user.email,
-        subject: 'Verify your email with Aurascan.',
+        subject: `Verify your email with ${CURRENT_NETWORK.NAME}scan.`,
         template: './verification',
-        context: { url: verifyEmailUrl },
+        context: { url: verifyEmailUrl, networkName: CURRENT_NETWORK.NAME },
         attachments: [
           {
-            filename: AURA_LOGO,
+            filename: CURRENT_NETWORK.LOGO,
             path: logoPath,
             cid: 'logo',
           },
@@ -46,21 +46,20 @@ export class MailService {
   }
 
   async sendMailResetPassword(user: User, token: string) {
-    const auraScanUrl = this.configService.get('auraScanUrl');
-    const emailParam = encodeURIComponent(user.email);
-    const resetPasswordPath = `/user/reset-password/email=${emailParam}&code=${token}`;
-    const resetPasswordUrl = auraScanUrl + resetPasswordPath;
-    const logoPath = join(__dirname, 'images', AURA_LOGO);
+    const chainScanUrl = this.configService.get('chainScanUrl');
+    const resetPasswordPath = `/user/reset-password/email/${user.email}/code/${token}`;
+    const resetPasswordUrl = chainScanUrl + resetPasswordPath;
+    const logoPath = join(__dirname, 'images', LOGO);
 
     try {
       await this.mailerService.sendMail({
         to: user.email,
-        subject: 'Aurascan account recovery.',
+        subject: `${CURRENT_NETWORK.NAME}scan account recovery.`,
         template: './recovery-password',
         context: { url: resetPasswordUrl },
         attachments: [
           {
-            filename: AURA_LOGO,
+            filename: CURRENT_NETWORK.LOGO,
             path: logoPath,
             cid: 'logo',
           },
