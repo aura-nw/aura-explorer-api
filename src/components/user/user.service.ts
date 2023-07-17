@@ -317,19 +317,24 @@ export class UserService {
     }
     return userActivity;
   }
-  async resetPassword(
-    email: string,
-    resetPasswordToken: string,
-    passwordParams: ResetPasswordDto,
-  ) {
+  async resetPassword(passwordParams: ResetPasswordDto) {
     const user = await this.usersRepository.findOne({
-      where: { email, resetPasswordToken },
+      where: {
+        email: passwordParams.email,
+      },
     });
 
     if (!user) {
       throw new BadRequestException(
         'User not registered with us before or the link reset password is invalid.',
       );
+    }
+
+    if (
+      user.resetPasswordToken !== null &&
+      user.resetPasswordToken !== passwordParams.resetPasswordToken
+    ) {
+      throw new BadRequestException('Invalid token');
     }
 
     // Check expired reset password link (available in 24h).
@@ -351,13 +356,6 @@ export class UserService {
           throw new BadRequestException('Reset password link expired.');
         }
       }
-    }
-
-    if (
-      user.resetPasswordToken !== null &&
-      user.resetPasswordToken !== resetPasswordToken
-    ) {
-      throw new BadRequestException('Invalid token');
     }
 
     // Set new password.

@@ -1,9 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Matches } from 'class-validator';
+import { IsNotEmpty, Matches } from 'class-validator';
 import { MatchPassword } from '../../../components/user/validators/validate-match-password';
 import { REGEX_PARTERN } from '../../../shared';
 
 export class ResetPasswordDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  resetPasswordToken: string;
+
   @ApiProperty()
   @Matches(REGEX_PARTERN.PASSWORD, {
     message:
