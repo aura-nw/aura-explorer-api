@@ -247,6 +247,9 @@ export const ROLES_KEY = 'roles';
 export const REGEX_PARTERN = {
   NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/),
   URL: new RegExp(/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/),
+  PASSWORD: new RegExp(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[`~!@#$%^&*()_+{}|/:;",.?<>\[\]`])[A-Za-z\d~!@#$%^&*()_+{}|/:;",.?<>\[\]]{8,}$/,
+  ),
 };
 
 export enum USER_ACTIVITIES {
