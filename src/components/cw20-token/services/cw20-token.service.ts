@@ -160,7 +160,7 @@ export class Cw20TokenService {
         asset.verify_text = tokenMarketsInfo?.verify_text || '';
         asset.name = item.name || '';
         asset.symbol = item.symbol || '';
-        asset.decimals = item.decimals || 0;
+        asset.decimals = item.decimal || 0;
         asset.balance =
           item.cw20_holders?.find((f) => f.address === request?.account_address)
             ?.amount || 0;
