@@ -241,13 +241,14 @@ export class Cw20TokenService {
 
     // Attributes for cw20
     const cw20Attributes = `
-      smart_contract {
-        address
-      }
-      cw20_holders {
-        amount
-        address
-      }`;
+     decimal
+     smart_contract {
+       address
+     }
+     cw20_holders {
+       amount
+       address
+     }`;
 
     const graphqlQuery = {
       query: util.format(
@@ -281,7 +282,9 @@ export class Cw20TokenService {
           (item) => item.address === accountAddress,
         );
         const amount = holder?.amount || 0;
-        cw20Price += price * amount;
+        cw20Price += item.decimal
+          ? (price * amount) / Math.pow(10, Number(item.decimal))
+          : price * amount;
       });
     }
 
