@@ -363,6 +363,9 @@ export class UserService {
 
     // Reset resetPasswordToken.
     user.resetPasswordToken = null;
+    if (user.provider !== PROVIDER.PASSWORD) {
+      user.provider = PROVIDER.PASSWORD;
+    }
 
     await this.usersRepository.save(user);
   }
