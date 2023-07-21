@@ -9,5 +9,6 @@ export class dropCoinIdTableSmartContracts1669354408384
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }

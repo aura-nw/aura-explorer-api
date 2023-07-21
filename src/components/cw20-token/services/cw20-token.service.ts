@@ -1,14 +1,11 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
-import { SmartContractRepository } from 'src/components/contract/repositories/smart-contract.repository';
-import { In } from 'typeorm';
+import { In, Not } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
   AkcLogger,
   AURA_INFO,
-  INDEXER_API,
+  INDEXER_API_V2,
   LENGTH,
   RequestContext,
   TokenMarkets,
@@ -17,112 +14,33 @@ import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { AssetDto } from '../dtos/asset.dto';
 import { Cw20TokenByOwnerParamsDto } from '../dtos/cw20-token-by-owner-params.dto';
-import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
+import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 
 @Injectable()
 export class Cw20TokenService {
   private appParams;
-  private indexerUrl;
-  private indexerChainId;
   private denom;
   private minimalDenom;
   private decimals;
   private precisionDiv;
   private configUrl;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
-    private smartContractRepository: SmartContractRepository,
     private serviceUtil: ServiceUtil,
     private accountService: AccountService,
-    private httpService: HttpService,
   ) {
     this.logger.setContext(Cw20TokenService.name);
     this.appParams = appConfig.default();
-    this.indexerUrl = this.appParams.indexer.url;
-    this.indexerChainId = this.appParams.indexer.chainId;
     this.denom = this.appParams.chainInfo.coinDenom;
     this.minimalDenom = this.appParams.chainInfo.coinMinimalDenom;
     this.decimals = this.appParams.chainInfo.coinDecimals;
     this.precisionDiv = this.appParams.chainInfo.precisionDiv;
     this.configUrl = this.appParams.configUrl;
-  }
-
-  async getCw20Tokens(
-    ctx: RequestContext,
-    request: Cw20TokenParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCw20Tokens.name} was called!`);
-
-    const { list, count } =
-      await this.tokenMarketsRepository.getCw20TokenMarkets(request);
-
-    if (count == 0) {
-      return { tokens: list, count: count };
-    }
-
-    const lstAddress = list?.map((i) => i.contract_address);
-
-    const tokensInfo =
-      await this.smartContractRepository.getTokensByListContractAddress(
-        lstAddress,
-      );
-
-    const holderResponse = await lastValueFrom(
-      this.httpService.get(
-        `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
-        {
-          params: { chainId: this.indexerChainId, addresses: lstAddress },
-        },
-      ),
-    ).then((rs) => rs.data);
-
-    const listHolder = holderResponse?.data || [];
-
-    const tokens = list.map((item: TokenMarkets) => {
-      const current_price = item.current_price || 0;
-      const circulating_market_cap = item.circulating_market_cap || 0;
-      let holders_change_percentage_24h = 0;
-      let holders = 0;
-
-      const holderInfo = listHolder.find(
-        (f) => f.contract_address === item.contract_address,
-      );
-      if (holderInfo) {
-        holders = holderInfo.holders || 0;
-        holders_change_percentage_24h = holderInfo.percentage || 0;
-      }
-
-      const tokenFind = tokensInfo.find(
-        (f) => String(f.contract_address) === item.contract_address,
-      );
-
-      const contract_verification = tokenFind?.contract_verification || '';
-
-      return {
-        coin_id: item.coin_id || '',
-        contract_address: item.contract_address || '',
-        name: item.name || '',
-        symbol: item.symbol || '',
-        image: item.image || '',
-        verify_status: item.verify_status || '',
-        verify_text: item.verify_text || '',
-        description: item.description || '',
-        circulating_market_cap: circulating_market_cap,
-        volume_24h: item.total_volume || 0,
-        price: current_price,
-        price_change_percentage_24h: item.price_change_percentage_24h || 0,
-        holders_change_percentage_24h,
-        holders,
-        max_total_supply: item.max_supply || 0,
-        fully_diluted_market_cap: item.fully_diluted_valuation || 0,
-        contract_verification,
-      };
-    });
-
-    return { tokens, count: count };
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getCw20TokensByOwner(
@@ -164,9 +82,7 @@ export class Cw20TokenService {
     }
 
     //get value
-    assetDto.value = (
-      Number(assetDto.balance) * Number(assetDto.price)
-    ).toString();
+    assetDto.value = Number(assetDto.balance) * Number(assetDto.price);
     result.push(assetDto);
 
     //Get IBC tokens
@@ -183,80 +99,95 @@ export class Cw20TokenService {
       );
     }
 
-    let limit = request.limit;
-    let offset = request.offset;
-
-    if (request.offset === 0) {
-      limit -= result.length;
-    } else {
-      offset -= result.length;
-    }
-
-    const params = [
-      request.account_address,
-      this.indexerChainId,
-      limit,
-      offset,
-    ];
-
-    let getByOwnerUrl = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_CW20_TOKENS_BY_OWNER,
-      ...params,
-    )}`;
+    // Attributes for cw20
+    const cw20Attributes = `marketing_info
+      name
+      symbol
+      decimal
+      smart_contract {
+        address
+      }
+      cw20_holders(where: {address: {_eq: $owner}}) {
+        amount
+        address
+      }`;
 
     const isSearchByContractAddress =
       keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
       keyword.length === LENGTH.CONTRACT_ADDRESS;
-
+    let contractAddress;
+    let tokenName;
     if (keyword) {
       if (isSearchByContractAddress) {
-        getByOwnerUrl = `${getByOwnerUrl}&contractAddress=${keyword}`;
+        contractAddress = keyword;
       } else {
-        getByOwnerUrl = `${getByOwnerUrl}&tokenName=${keyword}`;
+        tokenName = `%${keyword}%`;
       }
     }
 
-    const resultGetCw20Tokens = await this.serviceUtil.getDataAPI(
-      getByOwnerUrl,
-      '',
-      ctx,
-    );
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_OWNER,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        owner: request?.account_address,
+        address: contractAddress,
+        name: tokenName,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_OWNER,
+    };
 
-    const asset = resultGetCw20Tokens?.data?.assets?.CW20?.asset;
-    const count = resultGetCw20Tokens?.data?.assets?.CW20?.count;
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+
+    const asset = response?.cw20_contract;
 
     let tokens = [];
-    if (asset.length > 0) {
-      const listContract_address = asset?.map((i) => i.contract_address);
+    if (asset?.length > 0) {
       const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
-        where: { contract_address: In(listContract_address) },
+        where: [{ coin_id: Not('') }, { verify_status: 'VERIFIED' }],
       });
       tokens = asset.map((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo.find(
-          (f) => f.contract_address === item.contract_address,
+          (f) => f.contract_address === item.smart_contract.address,
         );
         const asset = new AssetDto();
-        asset.contract_address = item.contract_address || '-';
+        asset.contract_address = item.smart_contract.address || '-';
         asset.image = tokenMarketsInfo?.image || '';
         asset.verify_status = tokenMarketsInfo?.verify_status || '';
         asset.verify_text = tokenMarketsInfo?.verify_text || '';
-        asset.name = item.asset_info?.data?.name || '';
-        asset.symbol = item.asset_info?.data?.symbol || '';
-        asset.decimals = item.asset_info?.data?.decimals || 0;
-        asset.balance = item.balance || 0;
+        asset.name = item.name || '';
+        asset.symbol = item.symbol || '';
+        asset.decimals = item.decimal || 0;
+        asset.balance =
+          item.cw20_holders?.find((f) => f.address === request?.account_address)
+            ?.amount || 0;
         asset.price = tokenMarketsInfo?.current_price || 0;
         asset.price_change_percentage_24h =
           tokenMarketsInfo?.price_change_percentage_24h || 0;
-        asset.value = (Number(asset.balance) * Number(asset.price)).toString();
+        asset.value = Number(asset.balance) * Number(asset.price);
         return asset;
       });
     }
+
+    // Sort cw20's token table.
+    tokens.sort((item1, item2) => {
+      // 1st priority VERIFIED.
+      const compareStatus = item2.verify_status.localeCompare(
+        item1.verify_status,
+      );
+      // 2nd priority token value DESC.
+      const compareValue = item2.value - item1.value;
+      return compareStatus || compareValue;
+    });
 
     if (request.offset === 0) {
       tokens = result.concat(tokens);
     }
 
-    return { tokens, count: count + result.length };
+    return { tokens, count: tokens.length };
   }
 
   async getPriceById(ctx: RequestContext, id: string): Promise<any> {
@@ -266,6 +197,23 @@ export class Cw20TokenService {
     });
 
     return tokenData?.current_price || 0;
+  }
+
+  async getTokenMarket(
+    ctx: RequestContext,
+    request: Cw20TokenMarketParamsDto,
+  ): Promise<TokenMarkets[]> {
+    this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+    const listAddress = request?.contractAddress ? request.contractAddress : [];
+    if (listAddress.length > 0) {
+      return await this.tokenMarketsRepository.find({
+        where: { contract_address: In(listAddress) },
+      });
+    } else {
+      return await this.tokenMarketsRepository.find({
+        where: [{ coin_id: Not('') }, { verify_status: 'VERIFIED' }],
+      });
+    }
   }
 
   async getTotalAssetByAccountAddress(
@@ -290,7 +238,58 @@ export class Cw20TokenService {
     });
     const price = tokenData?.current_price || 0;
 
-    return balance * price;
+    const auraPrice = balance * price;
+
+    // Attributes for cw20
+    const cw20Attributes = `
+     decimal
+     smart_contract {
+       address
+     }
+     cw20_holders {
+       amount
+       address
+     }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_HOLDER,
+        this.chainDB,
+        cw20Attributes,
+      ),
+      variables: {
+        owner: accountAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_HOLDER,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['cw20_contract'];
+
+    let cw20Price = 0;
+
+    if (response?.length > 0) {
+      const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
+        where: { coin_id: Not(''), verify_status: 'VERIFIED' },
+      });
+      response.forEach((item) => {
+        const tokenMarketsInfo = listTokenMarketsInfo?.find(
+          (f) => f.contract_address === item.smart_contract.address,
+        );
+        const price = tokenMarketsInfo?.current_price
+          ? Number(tokenMarketsInfo?.current_price)
+          : 0;
+        const holder = item.cw20_holders?.find(
+          (item) => item.address === accountAddress,
+        );
+        const amount = holder?.amount || 0;
+        cw20Price += item.decimal
+          ? (price * amount) / Math.pow(10, Number(item.decimal))
+          : price * amount;
+      });
+    }
+
+    return auraPrice + cw20Price;
   }
 
   /**
@@ -301,17 +300,34 @@ export class Cw20TokenService {
   async getIBCTokens(ctx: RequestContext, accountAddress: string) {
     this.logger.log(ctx, `${this.getIBCTokens.name} was called!`);
     const result = [];
-    const accountData = await this.serviceUtil.getDataAPI(
-      `${this.indexerUrl}${util.format(
-        INDEXER_API.ACCOUNT_INFO,
-        accountAddress,
-        this.indexerChainId,
-      )}`,
-      '',
-      ctx,
-    );
-    const accountBalances = accountData?.data?.account_balances;
-    const ibcBalances = accountBalances?.filter(
+    // get account detail
+    const accountAttributes = `type
+      sequence
+      spendable_balances
+      pubkey
+      id
+      balances
+      account_number
+      address`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.ACCOUNT,
+        this.chainDB,
+        accountAttributes,
+      ),
+      variables: {
+        address: accountAddress,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.ACCOUNT,
+    };
+    const accountData = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['account'];
+    const accountBalances =
+      accountData?.length > 0 ? accountData[0]?.balances : [];
+    const balances = accountBalances?.length ? accountBalances : [];
+    const ibcBalances = balances?.filter(
       (str) => str?.minimal_denom || str?.denom,
     );
     if (ibcBalances?.length > 0) {

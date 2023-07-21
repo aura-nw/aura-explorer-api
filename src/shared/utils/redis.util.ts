@@ -26,7 +26,7 @@ export class RedisUtil {
     });
   }
 
-  public convertDateToString(date: Date) {
+  public convertDateToString() {
     const timestamp = new Date();
     timestamp.setSeconds(0, 0);
     return timestamp.toISOString();

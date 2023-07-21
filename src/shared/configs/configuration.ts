@@ -43,6 +43,11 @@ export default () => ({
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID,
   },
+  indexerV2: {
+    graphQL: `${process.env.INDEXER_V2_URL}${process.env.INDEXER_V2_PATH}`,
+    chainDB: process.env.INDEXER_V2_DB,
+    secret: process.env.INDEXER_V2_SECRET,
+  },
   chainInfo: {
     coinDenom: process.env.COIN_DENOM,
     coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,
@@ -50,4 +55,15 @@ export default () => ({
     precisionDiv: Math.pow(10, Number(process.env.COIN_DECIMALS)),
   },
   configUrl: process.env.CONFIG_URL,
+  googleOAuth: {
+    clientId: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    redirectUrl: process.env.GOOGLE_REDIRECT_URL,
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    tokenExpiresIn: process.env.JWT_TOKEN_EXPIRES_IN,
+    refreshTokenExpiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN,
+  },
+  adminInitEmail: process.env.ADMIN_INIT_EMAIL,
 });

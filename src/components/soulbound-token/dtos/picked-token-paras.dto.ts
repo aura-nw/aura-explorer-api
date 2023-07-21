@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, Max, Min } from 'class-validator';
-import { SOULBOUND_PICKED_TOKEN } from 'src/shared';
+import { IsNotEmpty, Min } from 'class-validator';
+import { SOULBOUND_PICKED_TOKEN } from '../../../shared';
 
 export class PickedTokenParasDto {
   @ApiProperty()

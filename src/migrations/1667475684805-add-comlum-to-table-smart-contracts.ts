@@ -15,5 +15,6 @@ export class addComlumToTableSmartContracts1667475684805
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
