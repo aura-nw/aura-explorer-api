@@ -1,9 +1,7 @@
 import {
   CacheInterceptor,
   CacheModule,
-  CacheModuleAsyncOptions,
   CacheModuleOptions,
-  Inject,
   Module,
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';

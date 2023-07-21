@@ -2,192 +2,83 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
-import { bufferTime, lastValueFrom, retry, timeout } from 'rxjs';
-import { Not } from 'typeorm';
-import { SmartContractCodeRepository } from '../../../components/contract-code/repositories/smart-contract-code.repository';
+import { lastValueFrom, retry, timeout } from 'rxjs';
 import {
   AkcLogger,
-  CONTRACT_CODE_RESULT,
   CONTRACT_STATUS,
-  CONTRACT_TYPE,
   ERROR_MAP,
-  INDEXER_API,
+  INDEXER_API_V2,
+  INFRASTRUCTURE_ERROR,
   RequestContext,
   VERIFY_CODE_RESULT,
+  VERIFY_STEP,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { ContractByCreatorOutputDto } from '../dtos/contract-by-creator-output.dto';
-import { ContractByCreatorParamsDto } from '../dtos/contract-by-creator-params.dto';
-import { ContractParamsDto } from '../dtos/contract-params.dto';
-import { ContractStatusOutputDto } from '../dtos/contract-status-output.dto';
-import { VerifyContractParamsDto } from '../dtos/verify-contract-params.dto';
-import { SmartContractRepository } from '../repositories/smart-contract.repository';
-import { TagRepository } from '../repositories/tag.repository';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
-import { SmartContract } from '../../../shared/entities/smart-contract.entity';
-import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
-import { VerifyCodeStep } from '../../../shared/entities/verify-code-step.entity';
-import { VerifyCodeStepRepository } from '../repositories/verify-code-step.repository';
 import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
-import { ContractCodeIdParamsDto } from '../dtos/contract-code-id-params.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
+import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
+import { ContractUtil } from '../../../shared/utils/contract.util';
 @Injectable()
 export class ContractService {
-  private api;
-  private rpc;
   private verifyContractUrl;
-  private verifyContractStatusUrl;
-  private appParams;
-  private indexerUrl: string;
-  private indexerChainId: string;
+  private chainDB: string;
 
   constructor(
     private readonly logger: AkcLogger,
-    private smartContractRepository: SmartContractRepository,
-    private tagRepository: TagRepository,
-    private smartContractCodeRepository: SmartContractCodeRepository,
     private serviceUtil: ServiceUtil,
     private configService: ConfigService,
     private httpService: HttpService,
-    private tokenMarketsRepository: TokenMarketsRepository,
     private soulboundTokenRepository: SoulboundTokenRepository,
-    private verifyCodeStepRepository: VerifyCodeStepRepository,
+    private contractUtil: ContractUtil,
   ) {
     this.logger.setContext(ContractService.name);
-    this.api = this.configService.get('API');
-    this.rpc = this.configService.get('RPC');
     this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
-    this.verifyContractStatusUrl = this.configService.get(
-      'VERIFY_CONTRACT_STATUS_URL',
-    );
-    this.appParams = appConfig.default();
-    this.indexerUrl = this.appParams.indexer.url;
-    this.indexerChainId = this.appParams.indexer.chainId;
+    const appParams = appConfig.default();
+    this.chainDB = appParams.indexerV2.chainDB;
   }
 
-  async getContracts(
-    ctx: RequestContext,
-    request: ContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContracts.name} was called!`);
-    const [contracts, count] = await this.smartContractRepository.getContracts(
-      request,
-    );
+  private async getCodeDetail(codeId: number) {
+    // Attributes for contract code detail
+    const codeAttributes = `code_id
+      creator
+      store_hash
+      type
+      status
+      created_at
+      code_id_verifications(order_by: {updated_at: desc}) {
+        verified_at
+        compiler_version
+        github_url
+        verification_status
+        verify_step
+      }
+      smart_contracts {
+        address
+        name
+      }`;
 
-    return { contracts, count };
-  }
+    const where = { code_id: { _eq: codeId } };
 
-  async getContractsCodeId(
-    ctx: RequestContext,
-    request: ContractCodeIdParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeId.name} was called!`);
-    const [contracts, count] =
-      await this.smartContractCodeRepository.getContractsCodeId(request);
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_DETAIL,
+        this.chainDB,
+        this.chainDB,
+        codeAttributes,
+      ),
+      variables: {
+        where: where,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CONTRACT_CODE_DETAIL,
+    };
 
-    return { contracts, count };
-  }
-
-  async getContractsCodeIdDetail(
-    ctx: RequestContext,
-    codeId: number,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractsCodeIdDetail.name} was called!`);
-    const contracts =
-      await this.smartContractCodeRepository.getContractsCodeIdDetail(codeId);
+    const contracts = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['code'];
 
     return contracts;
-  }
-
-  async getContractByAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getContractByAddress.name} was called!`);
-    let contract: any = null;
-    const contractData =
-      await this.smartContractRepository.getContractsByContractAddress(
-        contractAddress,
-      );
-    if (contractData) {
-      contract = contractData;
-      const codeId = contractData.code_id;
-      const balanceParams = `cosmos/bank/v1beta1/balances/${contractAddress}`;
-      const [balanceData] = await Promise.all([
-        this.serviceUtil.getDataAPI(this.api, balanceParams, ctx),
-      ]);
-      contract.balance = 0;
-      if (
-        balanceData &&
-        balanceData?.balances &&
-        balanceData?.balances?.length > 0
-      ) {
-        contract.balance = Number(balanceData.balances[0].amount);
-      }
-      const contractCode = await this.smartContractCodeRepository.findOne({
-        where: {
-          code_id: codeId,
-        },
-      });
-      contract.type = contractCode ? contractCode.type : '';
-      const result = contractCode ? contractCode.result : '';
-      if (result !== CONTRACT_CODE_RESULT.CORRECT) {
-        contract.token_name = '';
-        contract.token_symbol = '';
-      }
-    }
-    return contract;
-  }
-
-  async getTagByAddress(
-    ctx: RequestContext,
-    accountAddress: string,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getTagByAddress.name} was called!`);
-    const tag = this.tagRepository.findOne({
-      where: {
-        account_address: accountAddress,
-        contract_address: contractAddress,
-      },
-    });
-
-    return tag;
-  }
-
-  async verifyContract(
-    ctx: RequestContext,
-    request: VerifyContractParamsDto,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.verifyContract.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: request.contract_address },
-    });
-    if (
-      !contract ||
-      (contract &&
-        contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED)
-    ) {
-      const error = {
-        Code: ERROR_MAP.CONTRACT_VERIFIED.Code,
-        Message: ERROR_MAP.CONTRACT_VERIFIED.Message,
-      };
-      return error;
-    }
-    const properties = {
-      commit: request.commit,
-      compilerVersion: request.compiler_version,
-      contractAddress: request.contract_address,
-      contractUrl: request.url,
-      wasmFile: request.wasm_file,
-    };
-    const result = await lastValueFrom(
-      this.httpService.post(this.verifyContractUrl, properties),
-    ).then((rs) => rs.data);
-
-    return result;
   }
 
   async verifyCodeId(
@@ -195,20 +86,18 @@ export class ContractService {
     request: VerifyCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
-    const contract = await this.smartContractCodeRepository.findOne({
-      where: { code_id: request.code_id },
-    });
-    if (!contract) {
+    const contract = await this.getCodeDetail(request.code_id);
+    if (contract?.length === 0) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
         Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
       };
       return error;
     }
-
+    const codeVerification = contract[0].code_id_verifications;
     if (
-      contract.contract_verification !== CONTRACT_STATUS.UNVERIFIED &&
-      contract.contract_verification !== CONTRACT_STATUS.VERIFYFAIL
+      codeVerification.length > 0 &&
+      codeVerification[0].verification_status !== CONTRACT_STATUS.VERIFYFAIL
     ) {
       const error = {
         Code: ERROR_MAP.CONTRACT_VERIFIED_VERIFYING.Code,
@@ -217,58 +106,8 @@ export class ContractService {
       return error;
     }
 
-    const verifySteps = [];
-    const verifyCodeSteps = await this.verifyCodeStepRepository.find({
-      where: { code_id: contract.code_id },
-    });
-    // update to initial data when re-verify at contract verify fail
-    if (verifyCodeSteps.length > 0) {
-      for (let index = 1; index < 9; index++) {
-        const step = {
-          id: verifyCodeSteps[index - 1]?.id,
-          code_id: contract.code_id,
-          check_id: index,
-          msg_code: null,
-          result:
-            index === 1
-              ? VERIFY_CODE_RESULT.IN_PROGRESS
-              : VERIFY_CODE_RESULT.PENDING,
-        };
-        verifySteps.push(step);
-      }
-    } else {
-      // Generate code step
-      for (let index = 1; index < 9; index++) {
-        const step = {
-          code_id: contract.code_id,
-          check_id: index,
-          result:
-            index === 1
-              ? VERIFY_CODE_RESULT.IN_PROGRESS
-              : VERIFY_CODE_RESULT.PENDING,
-        };
-        verifySteps.push(step);
-      }
-    }
-
-    if (verifySteps.length > 0) {
-      try {
-        // Update contract verify status to verifying
-        contract.contract_verification = CONTRACT_STATUS.VERIFYING;
-        await this.smartContractCodeRepository.save(contract);
-
-        // insert or update verify step status
-        await this.verifyCodeStepRepository.save(verifySteps);
-      } catch (err) {
-        this.logger.error(
-          ctx,
-          `Class ${ContractService.name} call ${this.verifyCodeId.name} error ${err?.code} method error: ${err?.stack}`,
-        );
-      }
-    }
-
     const properties = {
-      codeId: contract.code_id,
+      codeId: contract[0].code_id,
       commit: request.commit,
       compilerVersion: request.compiler_version,
       contractUrl: request.url,
@@ -283,40 +122,71 @@ export class ContractService {
 
   async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
     this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
-    const verifyCodeSteps =
-      await this.verifyCodeStepRepository.getVerifyCodeStep(codeId);
 
-    const data = plainToClass(VerifyCodeStepOutputDto, verifyCodeSteps, {
+    const codeVerificationAttributes = `verify_step
+      verification_status`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
+        this.chainDB,
+        codeVerificationAttributes,
+      ),
+      variables: {
+        codeId: codeId,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.VERIFY_STEP,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB]['code_id_verification'];
+
+    const verifySteps = [];
+
+    if (response.length > 0) {
+      for (let index = 0; index < VERIFY_STEP.length; index++) {
+        const stepId = index + 1;
+        // Get last success element
+        const result = response[0];
+        const defaultStep = {
+          code_id: codeId,
+          check_id: stepId,
+          check_name: VERIFY_STEP[index].name,
+        };
+        if (stepId === result?.verify_step.step) {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: result?.verify_step.msg_code,
+            result: result?.verify_step.result,
+          });
+        } else if (stepId < result?.verify_step.step) {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: VERIFY_STEP[index].msgCode,
+            result: VERIFY_CODE_RESULT.SUCCESS,
+          });
+        } else {
+          verifySteps.push({
+            ...defaultStep,
+            msg_code: null,
+            result: VERIFY_CODE_RESULT.PENDING,
+          });
+        }
+      }
+    }
+    const data = plainToClass(VerifyCodeStepOutputDto, verifySteps, {
       excludeExtraneousValues: true,
     });
-    return data;
-  }
-
-  async getContractsMatchCreationCode(
-    ctx: RequestContext,
-    contractAddress: string,
-  ): Promise<any> {
-    this.logger.log(
-      ctx,
-      `${this.getContractsMatchCreationCode.name} was called!`,
-    );
-    const contract = await this.smartContractRepository.findOne({
-      where: { contract_address: contractAddress },
-    });
-    let contracts = [];
-    let count = 0;
-    if (contract) {
-      const contractHash = contract.contract_hash;
-      [contracts, count] = await this.smartContractRepository.findAndCount({
-        where: {
-          contract_address: Not(contractAddress),
-          contract_hash: contractHash,
-        },
-        order: { updated_at: 'DESC' },
-      });
+    let error = {};
+    if (
+      response[0].verify_step.step === INFRASTRUCTURE_ERROR.STEP &&
+      response[0].verify_step.result === VERIFY_CODE_RESULT.SUCCESS &&
+      response[0].verification_status === INFRASTRUCTURE_ERROR.FAIL
+    ) {
+      error = ERROR_MAP.INFRASTRUCTURE_ERROR;
     }
 
-    return { contracts: contracts, count };
+    return { data, error };
   }
 
   async verifyContractStatus(
@@ -324,10 +194,8 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.smartContractCodeRepository.findOne({
-      where: { code_id: codeId },
-    });
-    if (!contract) {
+    const contract = await this.getCodeDetail(codeId);
+    if (contract?.length === 0) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
         Message: ERROR_MAP.CONTRACT_NOT_EXIST.Message,
@@ -335,204 +203,94 @@ export class ContractService {
       return error;
     }
     return {
-      codeId: contract?.code_id,
-      status: contract?.contract_verification || CONTRACT_STATUS.UNVERIFIED,
+      codeId: contract[0].code_id,
+      status:
+        contract[0].code_id_verifications.length > 0
+          ? contract[0].code_id_verifications[0].verification_status
+          : CONTRACT_STATUS.UNVERIFIED,
     };
   }
 
-  /**
-   * Get token by contract address
-   * @param ctx
-   * @param contractAddress
-   * @returns
-   */
-  async getTokenByContractAddress(
-    ctx: RequestContext,
-    contractAddress: string,
-  ) {
-    this.logger.log(ctx, `${this.getTokenByContractAddress.name} was called!`);
-    let token: any = null;
-    const tokenData =
-      await this.smartContractRepository.getTokenByContractAddress(
-        contractAddress,
-      );
-    if (tokenData.length > 0) {
-      token = tokenData[0];
-
-      const tokenMarketData = await this.tokenMarketsRepository.findOne({
-        where: { contract_address: contractAddress },
-      });
-      token.max_total_supply = tokenMarketData?.max_supply || 0;
-      token.circulating_market_cap =
-        tokenMarketData?.circulating_market_cap || 0;
-      token.price = tokenMarketData?.current_price || 0;
-      token.fully_diluted_market_cap =
-        tokenMarketData?.fully_diluted_valuation ||
-        token.max_total_supply * token.price;
-      token.price_change_percentage_24h =
-        tokenMarketData?.price_change_percentage_24h || 0;
-      token.verify_status = tokenMarketData?.verify_status || '';
-      token.verify_text = tokenMarketData?.verify_text || '';
-      token.num_holder = 0;
-      token.holders_change_percentage_24h = 0;
-
-      const holderResponse = await lastValueFrom(
-        this.httpService.get(
-          `${this.indexerUrl}${INDEXER_API.GET_HOLDER_INFO_CW20}`,
-          {
-            params: {
-              chainId: this.indexerChainId,
-              addresses: [contractAddress],
-            },
-          },
-        ),
-      ).then((rs) => rs.data);
-
-      const listHolder = holderResponse?.data || [];
-
-      if (listHolder.length > 0) {
-        token.num_holder = listHolder[0].holders || 0;
-        token.holders_change_percentage_24h = listHolder[0].percentage || 0;
-      }
-    }
-
-    return token;
-  }
-
-  /**
-   * Get contract by code id
-   * @param ctx
-   * @param codeId
-   * @returns
-   */
-  async getContractByCodeId(ctx: RequestContext, codeId: string) {
-    this.logger.log(ctx, `${this.getContractByCodeId.name} was called!`);
-    const contract = await this.smartContractRepository.findOne({
-      where: { code_id: codeId },
-    });
-
-    return contract;
-  }
-
-  async getNftDetail(
+  async getCW4973Detail(
     ctx: RequestContext,
     contractAddress: string,
     tokenId: string,
   ) {
+    this.logger.log(ctx, `${this.getCW4973Detail.name} was called!`);
     // Get contract info
-    const smartContract = await this.smartContractRepository.findOne({
-      where: {
-        contract_address: contractAddress,
+    const abtAttributes = `name
+      minter
+      smart_contract {
+       address
+      }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: {
+        address: contractAddress,
       },
-    });
-    if (smartContract) {
-      // Get smartContratctCode info
-      const smartContratctCode = await this.smartContractCodeRepository.findOne(
-        {
-          where: {
-            code_id: smartContract.code_id,
-          },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
+    };
+
+    // Get CW4973 contract
+    const cw4973Contract = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+    ).data[this.chainDB]['cw721_contract'];
+
+    if (cw4973Contract.length > 0) {
+      const token = await this.soulboundTokenRepository.findOne({
+        where: {
+          token_id: tokenId,
+          contract_address: cw4973Contract[0].smart_contract.address,
         },
-      );
-
-      if (smartContratctCode) {
-        switch (smartContratctCode.type) {
-          case CONTRACT_TYPE.CW4973:
-            return this.getCW4973Token(ctx, smartContract, tokenId);
-          case CONTRACT_TYPE.CW721:
-            return this.getCW721Token(ctx, smartContract, tokenId);
-        }
-      }
-    }
-  }
-
-  async getCW721Token(
-    ctx: RequestContext,
-    smartContract: SmartContract,
-    tokenId: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCW721Token.name} was called!`);
-    const contractAddress = smartContract.contract_address;
-
-    const url = `${this.indexerUrl}${util.format(
-      INDEXER_API.GET_NFT_BY_CONTRACT_ADDRESS_AND_TOKEN_ID,
-      this.indexerChainId,
-      CONTRACT_TYPE.CW721,
-      encodeURIComponent(tokenId),
-      contractAddress,
-    )}`;
-    const result = await this.serviceUtil.getDataAPI(url, '', ctx);
-    let nft = null;
-    if (result && result.data.assets.CW721.asset.length > 0) {
-      nft = result.data.assets.CW721.asset[0];
-      nft.name = '';
-      nft.creator = '';
-      nft.symbol = '';
-      nft.type = CONTRACT_TYPE.CW721;
-      nft.name = smartContract.token_name;
-      nft.creator = smartContract.creator_address;
-      nft.symbol = smartContract.token_symbol;
-      nft.owner = nft.is_burned ? '' : nft.owner;
-    }
-    return nft;
-  }
-
-  async getCW4973Token(
-    ctx: RequestContext,
-    smartContract: SmartContract,
-    tokenId: string,
-  ) {
-    this.logger.log(ctx, `${this.getCW4973Token.name} was called!`);
-    const token = await this.soulboundTokenRepository.findOne({
-      where: {
-        token_id: tokenId,
-        contract_address: smartContract.contract_address,
-      },
-    });
-
-    if (!token) {
-      return null;
-    }
-
-    // Get ipfs info
-    const ipfs = await lastValueFrom(
-      this.httpService
-        .get(this.transform(token?.token_uri))
-        .pipe(timeout(5000), retry(2)),
-    )
-      .then((rs) => rs.data)
-      .catch(() => {
-        return {};
       });
 
-    const nft = {
-      id: token?.id || '',
-      contract_address: smartContract.contract_address,
-      token_id: token?.token_id || '',
-      token_uri: token?.token_uri || '',
-      token_name: smartContract?.token_name || '',
-      token_name_ipfs: token?.token_name || '',
-      animation_url: token?.animation_url || '',
-      token_img: token?.token_img || '',
-      img_type: token?.img_type || '',
-      receiver_address: token?.receiver_address || '',
-      status: token?.status || '',
-      picked: token?.picked || '',
-      signature: token?.signature || '',
-      pub_key: token?.pub_key || '',
-      minter_address: smartContract?.minter_address || '',
-      description: smartContract?.description || '',
-      type: CONTRACT_TYPE.CW4973,
-      ipfs,
-    };
-    return nft;
-  }
+      if (!token) {
+        return null;
+      }
 
-  private transform(value: string): string {
-    if (!value.includes('https://ipfs.io/')) {
-      return this.configService.get('IPFS_URL') + value.replace('://', '/');
-    } else {
-      return value.replace('https://ipfs.io/', this.configService.get('IPFS_URL'));
+      if (!token?.ipfs || token?.ipfs === '{}') {
+        // Get ipfs info
+        const ipfs = await lastValueFrom(
+          this.httpService
+            .get(this.contractUtil.transform(token?.token_uri))
+            .pipe(timeout(5000), retry(2)),
+        )
+          .then((rs) => rs.data)
+          .catch(() => {
+            return {};
+          });
+
+        token.ipfs = JSON.stringify(ipfs);
+        await this.soulboundTokenRepository.update(token.id, {
+          ipfs: token.ipfs,
+        });
+      }
+
+      const nft = {
+        id: token?.id || '',
+        contract_address: cw4973Contract[0].smart_contract.address,
+        token_id: token?.token_id || '',
+        token_uri: token?.token_uri || '',
+        token_name: cw4973Contract[0].name || '',
+        token_name_ipfs: token?.token_name || '',
+        animation_url: token?.animation_url || '',
+        token_img: token?.token_img || '',
+        img_type: token?.img_type || '',
+        receiver_address: token?.receiver_address || '',
+        status: token?.status || '',
+        picked: token?.picked || '',
+        signature: token?.signature || '',
+        pub_key: token?.pub_key || '',
+        minter_address: cw4973Contract[0].minter || '',
+        type: 'CW4973',
+        ipfs: JSON.parse(token?.ipfs) || '',
+      };
+      return nft;
     }
   }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum } from 'class-validator';
 import { Range } from '../utils/enum';
 
 export class MetricParamsDto {
@@ -18,5 +18,5 @@ export class MetricParamsDto {
     description: 'Optional, defaults to 0s',
     default: 0,
   })
-  timezone: number = 0;
+  timezone = 0;
 }

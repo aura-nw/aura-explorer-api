@@ -2,17 +2,14 @@ import { Body, Injectable } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import {
   AkcLogger,
-  AURA_INFO,
-  CONTRACT_TYPE,
   CW4973_CONTRACT,
   ERROR_MAP,
-  LENGTH,
   RequestContext,
   SoulboundToken,
   SOULBOUND_PICKED_TOKEN,
   SOULBOUND_TOKEN_STATUS,
+  INDEXER_API_V2,
 } from '../../../shared';
-import { SmartContractRepository } from '../../contract/repositories/smart-contract.repository';
 import { CreateSoulboundTokenParamsDto } from '../dtos/create-soulbound-token-params.dto';
 import { PickedNftParasDto } from '../dtos/picked-nft-paras.dto';
 import { SoulboundContractOutputDto } from '../dtos/soulbound-contract-output.dto';
@@ -21,7 +18,6 @@ import { TokenOutputDto } from '../dtos/token-output.dto';
 import { TokenParasDto } from '../dtos/token-paras.dto';
 import { UpdateSoulboundTokenParamsDto } from '../dtos/update-soulbound-token-params.dto';
 import { SoulboundTokenRepository } from '../repositories/soulbound-token.repository';
-import { ConfigService } from '@nestjs/config';
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate';
 import { HttpService } from '@nestjs/axios';
 import console from 'console';
@@ -34,8 +30,7 @@ import { PickedTokenParasDto } from '../dtos/picked-token-paras.dto';
 import { ReceiverTokenParasDto } from '../dtos/receive-token-paras.dto';
 import { TokenByReceiverAddressOutput } from '../dtos/token-by-receiver-address-output.dto';
 import { TokenPickedByAddressOutput } from '../dtos/token-picked-by-address-output.dto';
-import { SoulboundTokenParasDto } from '../dtos/soulbound-token-paras.dto';
-import { SoulboundTokenOutputDto } from '../dtos/soulbound-token-output.dto';
+import * as util from 'util';
 import { RedisUtil } from '../../../shared/utils/redis.util';
 import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
@@ -48,55 +43,24 @@ export class SoulboundTokenService {
   private rpc: string;
   private ioRedis: any;
   private channel: string;
+  private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
     private soulboundTokenRepos: SoulboundTokenRepository,
-    private smartContractRepos: SmartContractRepository,
     private soulboundWhiteListRepos: SoulboundWhiteListRepository,
     private SoulboundRejectListRepos: SoulboundRejectListRepository,
     private contractUtil: ContractUtil,
     private serviceUtil: ServiceUtil,
     private httpService: HttpService,
     private redisUtil: RedisUtil,
-    private configService: ConfigService,
   ) {
     this.appParams = appConfig.default();
     this.chainId = this.appParams.indexer.chainId;
     this.rpc = this.appParams.node.rpc;
     this.ioRedis = this.redisUtil.getIoRedis();
     this.channel = this.appParams.cacheManagement.redis.channel;
-  }
-
-  /**
-   * Get data soulbound token list
-   * @param ctx
-   * @param req
-   * @returns
-   */
-  async getSoulboundTokenList(
-    ctx: RequestContext,
-    req: SoulboundTokenParasDto,
-  ) {
-    this.logger.log(
-      ctx,
-      `============== ${
-        this.getSoulboundTokenList.name
-      } was called with paras: ${JSON.stringify(req)}! ==============`,
-    );
-
-    const { tokens, count } =
-      await this.smartContractRepos.getSoulboundTokensList(
-        req.keyword,
-        req.limit,
-        req.offset,
-      );
-
-    const data = plainToClass(SoulboundTokenOutputDto, tokens, {
-      excludeExtraneousValues: true,
-    });
-
-    return { data: data, count };
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   /**
@@ -112,25 +76,46 @@ export class SoulboundTokenService {
         this.getContracts.name
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
-    const { contracts, count } =
-      await this.smartContractRepos.getContractByMinter(
-        req.minterAddress,
-        req.keyword,
-        req.limit,
-        req.offset,
-      );
-    const addresses = contracts?.map((item) => item.contract_address);
+
+    const abtAttributes = `minter
+      smart_contract {
+        address
+      }`;
+
+    const variables: any = {
+      limit: req.limit,
+      offset: req.offset,
+      minter: req.minterAddress,
+      address: req?.keyword ? req?.keyword : null,
+    };
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_TOKEN_BY_MINTER,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: variables,
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_TOKEN_BY_MINTER,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
+      .data[this.chainDB];
+
+    const addresses = response?.cw721_contract?.map(
+      (item) => item.smart_contract.address,
+    );
     const results: SoulboundContractOutputDto[] = [];
     if (addresses.length > 0) {
       const status = await this.soulboundTokenRepos.countStatus(addresses);
-      contracts.forEach((item: any) => {
+      response?.cw721_contract?.forEach((item: any) => {
         let soulboundContract = new SoulboundContractOutputDto();
         let claimedQty = 0,
           unclaimedQty = 0;
         soulboundContract = { ...item };
 
         status
-          ?.filter((f) => f.contract_address === item.contract_address)
+          ?.filter((f) => f.contract_address === item.smart_contract.address)
           ?.forEach((m) => {
             if (m.status === SOULBOUND_TOKEN_STATUS.EQUIPPED) {
               claimedQty = Number(m.quantity) || 0;
@@ -145,7 +130,10 @@ export class SoulboundTokenService {
         results.push(soulboundContract);
       });
     }
-    return { contracts: results, count };
+    return {
+      contracts: results,
+      count: response?.cw721_contract_aggregate.aggregate.count,
+    };
   }
 
   /**
@@ -162,7 +150,6 @@ export class SoulboundTokenService {
       } was called with paras: ${JSON.stringify(req)}! ==============`,
     );
     const { tokens, count } = await this.soulboundTokenRepos.getTokens(
-      req.minterAddress,
       req.contractAddress,
       req.keyword,
       req.status,
@@ -173,59 +160,6 @@ export class SoulboundTokenService {
       excludeExtraneousValues: true,
     });
     return { data, count };
-  }
-
-  /**
-   * Get list tokens by minter address and contract address
-   * @param ctx
-   * @param req
-   * @returns
-   */
-  async getTokensDetail(ctx: RequestContext, tokenId: string) {
-    this.logger.log(
-      ctx,
-      `============== ${this.getTokens.name} was called with paras: tokenId=${tokenId}! ==============`,
-    );
-    const token = await this.soulboundTokenRepos.findOne({
-      where: { token_id: tokenId },
-    });
-
-    const addresses = token?.contract_address || '';
-
-    const contract = await this.smartContractRepos.findOne({
-      where: { contract_address: addresses },
-    });
-
-    const ipfs = await this.serviceUtil.getDataAPI(
-      this.transform(token?.token_uri),
-      '',
-      ctx,
-    );
-
-    if (!ipfs) {
-      return {
-        code: ERROR_MAP.TOKEN_URI_INVALID.Code,
-        message: ERROR_MAP.TOKEN_URI_INVALID.Message,
-      };
-    }
-
-    return {
-      id: token?.id || '',
-      contract_address: addresses,
-      token_id: token?.token_id || '',
-      token_uri: token?.token_uri || '',
-      token_name: contract?.token_name || '',
-      img_type: token?.img_type || '',
-      receiver_address: token?.receiver_address || '',
-      status: token?.status || '',
-      picked: token?.picked || '',
-      signature: token?.signature || '',
-      pub_key: token?.pub_key || '',
-      minter_address: contract?.minter_address || '',
-      description: contract?.description || '',
-      type: CONTRACT_TYPE.CW4973,
-      ipfs,
-    };
   }
 
   /**
@@ -316,27 +250,16 @@ export class SoulboundTokenService {
     }
 
     const entity = new SoulboundToken();
-    const contract = await this.smartContractRepos.findOne({
-      where: {
-        contract_address: req.contract_address,
-        minter_address: address,
-      },
+
+    const response = await this.getCW4973Contract({
+      minter: address,
+      address: req.contract_address,
     });
-    if (contract) {
-      const isReceiverAddress =
-        contract.contract_address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-        contract.contract_address.length === LENGTH.CONTRACT_ADDRESS;
 
-      if (!isReceiverAddress) {
-        return {
-          code: ERROR_MAP.YOUR_ADDRESS_INVALID.Code,
-          message: ERROR_MAP.YOUR_ADDRESS_INVALID.Message,
-        };
-      }
-
+    if (response?.length > 0) {
       const ipfs = await lastValueFrom(
         this.httpService
-          .get(this.transform(req.token_uri))
+          .get(this.contractUtil.transform(req.token_uri))
           .pipe(timeout(8000), retry(5)),
       )
         .then((rs) => rs.data)
@@ -356,7 +279,7 @@ export class SoulboundTokenService {
       if (imgUrl) {
         contentType = await lastValueFrom(
           this.httpService
-            .get(this.transform(imgUrl))
+            .get(this.contractUtil.transform(imgUrl))
             .pipe(timeout(18000), retry(5)),
         )
           .then((rs) => rs?.headers['content-type'])
@@ -372,7 +295,7 @@ export class SoulboundTokenService {
         }
       }
 
-      entity.contract_address = contract.contract_address;
+      entity.contract_address = response[0].smart_contract.address;
       entity.status = SOULBOUND_TOKEN_STATUS.UNCLAIM;
       entity.receiver_address = receiver_address;
       entity.token_uri = req.token_uri;
@@ -380,13 +303,14 @@ export class SoulboundTokenService {
       entity.pub_key = req.pubKey;
       entity.token_img = ipfs.image;
       entity.token_name = ipfs.name;
+      entity.ipfs = JSON.stringify(ipfs);
       entity.img_type = contentType;
       entity.is_notify = true;
       entity.animation_url = ipfs.animation_url;
       entity.token_id = this.createTokenId(
         this.chainId,
         receiver_address,
-        contract.minter_address,
+        response[0].minter,
         req.token_uri,
       );
       try {
@@ -538,26 +462,28 @@ export class SoulboundTokenService {
     let allContract;
     // Case: reject all abt form this minter address
     if (req.rejectAll) {
-      const smartcontract = await this.smartContractRepos.findOne({
-        where: { contract_address: req.contractAddress },
+      const smartcontract = await this.getCW4973Contract({
+        address: req.contractAddress,
       });
 
-      // Find all contract with this minter address
-      allContract = await this.smartContractRepos.getContractCW4973(
-        smartcontract.minter_address,
-      );
+      if (smartcontract.length > 0) {
+        // Find all contract with this minter address
+        allContract = await this.getCW4973Contract({
+          minter: smartcontract[0].minter,
+        });
 
-      const rejectToken = {
-        account_address: req.receiverAddress,
-        reject_address: smartcontract.minter_address,
-      };
-      // add this minter address to block list.
-      await this.SoulboundRejectListRepos.save(rejectToken);
+        const rejectToken = {
+          account_address: req.receiverAddress,
+          reject_address: smartcontract[0].minter,
+        };
+        // add this minter address to block list.
+        await this.SoulboundRejectListRepos.save(rejectToken);
+      }
     }
 
     // Filter contract address to update status.
     const contractAddress = allContract?.map(
-      (item) => item.contract_address,
+      (item) => item.smart_contract.address,
     ) || [req.contractAddress];
 
     const result = await this.soulboundTokenRepos.updateRejectStatus(
@@ -669,7 +595,7 @@ export class SoulboundTokenService {
             },
           }),
         )
-        .then(async (config) => {
+        .then(async () => {
           if (address === entity.receiver_address) {
             const result = await this.soulboundTokenRepos.update(entity.id, {
               picked: req.picked,
@@ -758,11 +684,24 @@ export class SoulboundTokenService {
     return JSON.stringify(doc);
   }
 
-  private transform(value: string): string {
-    if (!value.includes('https://ipfs.io/')) {
-      return this.configService.get('IPFS_URL') + value.replace('://', '/');
-    } else {
-      return value.replace('https://ipfs.io/', this.configService.get('IPFS_URL'));
-    }
+  private async getCW4973Contract(variables) {
+    const abtAttributes = `minter
+      smart_contract {
+        address
+      }`;
+
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW4973_CONTRACT,
+        this.chainDB,
+        abtAttributes,
+      ),
+      variables: variables,
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_CONTRACT,
+    };
+
+    return (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)).data[
+      this.chainDB
+    ]['cw721_contract'];
   }
 }

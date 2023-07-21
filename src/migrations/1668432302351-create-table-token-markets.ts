@@ -12,5 +12,6 @@ export class createTableTokenMarkets1668432302351
          \`current_holder\` int NOT NULL DEFAULT 0, \`holder_change_percentage_24h\` FLOAT NOT NULL DEFAULT 0,  PRIMARY KEY (\`id\`))`);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
   public async down(queryRunner: QueryRunner): Promise<void> {}
 }
