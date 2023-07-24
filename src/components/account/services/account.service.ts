@@ -191,7 +191,7 @@ export class AccountService {
         delegation.amount = this.changeUauraToAura(item.balance.amount);
         if (
           reward.length > 0 &&
-          reward[0].reward.length > 0 &&
+          reward[0].reward?.length > 0 &&
           reward[0].reward[0].denom === this.minimalDenom
         ) {
           delegation.reward = this.changeUauraToAura(
@@ -337,6 +337,7 @@ export class AccountService {
       );
       if (
         commissionData &&
+        commissionData.commission?.commission?.length > 0 &&
         commissionData.commission.commission[0].denom === this.minimalDenom
       ) {
         commission = commissionData.commission.commission[0].amount;
