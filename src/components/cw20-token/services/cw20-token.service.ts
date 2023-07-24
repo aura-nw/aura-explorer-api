@@ -160,7 +160,7 @@ export class Cw20TokenService {
         asset.verify_text = tokenMarketsInfo?.verify_text || '';
         asset.name = item.name || '';
         asset.symbol = item.symbol || '';
-        asset.decimals = item.decimals || 0;
+        asset.decimals = item.decimal || 0;
         asset.balance =
           item.cw20_holders?.find((f) => f.address === request?.account_address)
             ?.amount || 0;
@@ -242,6 +242,7 @@ export class Cw20TokenService {
 
     // Attributes for cw20
     const cw20Attributes = `
+     decimal
      smart_contract {
        address
      }
@@ -282,7 +283,9 @@ export class Cw20TokenService {
           (item) => item.address === accountAddress,
         );
         const amount = holder?.amount || 0;
-        cw20Price += price * amount;
+        cw20Price += item.decimal
+          ? (price * amount) / Math.pow(10, Number(item.decimal))
+          : price * amount;
       });
     }
 

@@ -73,10 +73,10 @@ export class GoogleOAuthService {
   ): Promise<GoogleOAuthLoginResponseDto> {
     const userInfo = await this.authenticate(request);
     const {
-      user: { name: userName },
+      user: { name: userName, email: userEmail, provider: provider },
       picture,
     } = userInfo;
     const jwtTokens = await this.jwtAuthService.login(userInfo.user);
-    return { ...jwtTokens, userName, picture };
+    return { ...jwtTokens, userName, picture, userEmail, provider };
   }
 }
