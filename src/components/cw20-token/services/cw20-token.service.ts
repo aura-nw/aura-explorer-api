@@ -156,7 +156,7 @@ export class Cw20TokenService {
         const asset = new AssetDto();
         asset.contract_address = item.smart_contract.address || '-';
         asset.image = item.marketing_info?.logo?.url
-          ? item.marketing_info?.logo?.url
+          ? item.marketing_info.logo.url
           : tokenMarketsInfo?.image || '';
         asset.verify_status = tokenMarketsInfo?.verify_status || '';
         asset.verify_text = tokenMarketsInfo?.verify_text || '';
