@@ -231,8 +231,9 @@ export enum NAME_TAG_TYPE {
 export const MESSAGES = {
   ERROR: {
     NOT_PERMISSION: 'You have not permission!',
-    BANNED: 'You have been banned',
+    BANNED: 'You have been banned.',
     BAD_REQUEST: 'Bad request.',
+    SOME_THING_WRONG: 'Something went wrong.',
   },
 };
 
