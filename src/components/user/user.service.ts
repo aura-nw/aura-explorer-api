@@ -382,24 +382,34 @@ export class UserService {
     passwordParams: ChangePasswordDto,
   ): Promise<void> {
     const user = await this.findOneById(userId);
-    const isMatchOldPassword = await this.verifyPassword(
-      passwordParams.oldPassword,
-      user.encryptedPassword,
-    );
-
-    const isNewPasswordSameAsOld = await this.verifyPassword(
-      passwordParams.password,
-      user.encryptedPassword,
-    );
-
-    if (!isMatchOldPassword) {
-      throw new UnauthorizedException('Incorrect password.');
-    } else if (isNewPasswordSameAsOld) {
-      throw new BadRequestException(
-        'New password must be different from current password.',
+    // If user's provider is google and the first time change password then create new password.
+    if (user.provider === PROVIDER.GOOGLE && user.encryptedPassword == null) {
+      user.encryptedPassword = await this.hashPassword(passwordParams.password);
+      user.provider = PROVIDER.PASSWORD;
+    } else if (user.provider === PROVIDER.PASSWORD) {
+      // Verify password before change.
+      const isMatchOldPassword = await this.verifyPassword(
+        passwordParams.oldPassword,
+        user.encryptedPassword,
       );
+
+      const isNewPasswordSameAsOld = await this.verifyPassword(
+        passwordParams.password,
+        user.encryptedPassword,
+      );
+
+      if (!isMatchOldPassword) {
+        throw new UnauthorizedException('Incorrect password.');
+      } else if (isNewPasswordSameAsOld) {
+        throw new BadRequestException(
+          'New password must be different from current password.',
+        );
+      }
+
+      user.encryptedPassword = await this.hashPassword(passwordParams.password);
+    } else {
+      throw new BadRequestException(MESSAGES.ERROR.SOME_THING_WRONG);
     }
-    user.encryptedPassword = await this.hashPassword(passwordParams.password);
 
     await this.usersRepository.save(user);
   }
@@ -409,6 +419,10 @@ export class UserService {
   }
 
   async verifyPassword(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash);
+    try {
+      return await bcrypt.compare(password, hash);
+    } catch {
+      throw new BadRequestException(MESSAGES.ERROR.SOME_THING_WRONG);
+    }
   }
 }
