@@ -1,10 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, Matches } from 'class-validator';
 import { MatchPassword } from '../validators/validate-match-password';
 import { REGEX_PARTERN } from '../../../shared';
 
 export class ChangePasswordDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   oldPassword: string;
 
