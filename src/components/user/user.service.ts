@@ -387,6 +387,11 @@ export class UserService {
       user.encryptedPassword = await this.hashPassword(passwordParams.password);
       user.provider = PROVIDER.PASSWORD;
     } else if (user.provider === PROVIDER.PASSWORD) {
+      // Old password must be provided.
+      if (!passwordParams.oldPassword) {
+        throw new BadRequestException('Old password can not be empty.');
+      }
+
       // Verify password before change.
       const isMatchOldPassword = await this.verifyPassword(
         passwordParams.oldPassword,
@@ -399,7 +404,7 @@ export class UserService {
       );
 
       if (!isMatchOldPassword) {
-        throw new UnauthorizedException('Incorrect password.');
+        throw new UnauthorizedException('Incorrect old password.');
       } else if (isNewPasswordSameAsOld) {
         throw new BadRequestException(
           'New password must be different from current password.',
