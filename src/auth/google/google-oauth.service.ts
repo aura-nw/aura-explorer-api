@@ -59,6 +59,12 @@ export class GoogleOAuthService {
           verifiedAt: new Date(),
         });
       }
+
+      if (!user.verifiedAt) {
+        user.verifiedAt = new Date();
+        await this.userService.save(user);
+      }
+
       if (request.site !== SITE.MAIN) {
         this.userService.checkRole(user);
       }

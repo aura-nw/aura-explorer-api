@@ -95,6 +95,10 @@ export class UserService {
     }
   }
 
+  async save(user: User): Promise<void> {
+    await this.usersRepository.save(user);
+  }
+
   checkRole(user: DeepPartial<User>): void {
     if (!user) {
       throw new UnauthorizedException(MESSAGES.ERROR.NOT_PERMISSION);
