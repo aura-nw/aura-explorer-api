@@ -17,6 +17,7 @@ import { User } from '../../shared/entities/user.entity';
 import {
   MESSAGES,
   MSGS_ACTIVE_USER,
+  MSGS_USER,
   PROVIDER,
   QUEUES,
   SUPPORT_EMAIL,
@@ -93,6 +94,10 @@ export class UserService {
     } else {
       throw new NotFoundException('User not found');
     }
+  }
+
+  async save(user: User): Promise<void> {
+    await this.usersRepository.save(user);
   }
 
   checkRole(user: DeepPartial<User>): void {
@@ -262,6 +267,10 @@ export class UserService {
   async sendResetPasswordEmail(user: User): Promise<void> {
     if (!user) {
       throw new BadRequestException('User have not registered.');
+    }
+
+    if (!user.verifiedAt) {
+      throw new BadRequestException(MSGS_USER.EU001);
     }
 
     user.resetPasswordToken = await this.generateTokenWithLength(
