@@ -113,7 +113,7 @@ export class Cw20TokenService {
       }`;
 
     const isSearchByContractAddress =
-      keyword.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      keyword.startsWith(AURA_INFO.ADDRESS_PREFIX) &&
       keyword.length === LENGTH.CONTRACT_ADDRESS;
     let contractAddress;
     let tokenName;

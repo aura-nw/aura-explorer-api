@@ -76,4 +76,5 @@ export default () => ({
   appDomain: process.env.APP_DOMAIN,
   bcryptSalt: process.env.BCRYPT_SALT || 8,
   auraScanUrl: process.env.AURA_SCAN_URL,
+  addressPrefix: process.env.ADDRESS_PREFIX,
 });
