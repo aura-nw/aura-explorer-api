@@ -1,12 +1,12 @@
 import { Brackets, EntityRepository, Repository } from 'typeorm';
-import { NameTag } from '../../../shared/entities/name-tag.entity';
+import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { Logger } from '@nestjs/common';
 import { User } from '../../../shared/entities/user.entity';
 import { PAGE_REQUEST } from '../../../shared';
 
-@EntityRepository(NameTag)
-export class NameTagRepository extends Repository<NameTag> {
-  private readonly _logger = new Logger(NameTagRepository.name);
+@EntityRepository(PublicNameTag)
+export class PublicNameTagRepository extends Repository<PublicNameTag> {
+  private readonly _logger = new Logger(PublicNameTagRepository.name);
 
   /**
    * Get list name tags
@@ -15,28 +15,27 @@ export class NameTagRepository extends Repository<NameTag> {
    * @param offset
    * @returns
    */
-  async getNameTags(keyword: string, limit: number, offset: number) {
+  async getPublicNameTags(keyword: string, limit: number, offset: number) {
     this._logger.log(
-      `============== ${this.getNameTags.name} was called! ==============`,
+      `============== ${this.getPublicNameTags.name} was called! ==============`,
     );
-    const builder = this.createQueryBuilder('tag')
+    const builder = this.createQueryBuilder('public_name_tag')
       .select(
-        `tag.id,
-        tag.address,
-        tag.type,
-        tag.name_tag,
-        tag.created_at,
+        `public_name_tag.id,
+        public_name_tag.address,
+        public_name_tag.type,
+        public_name_tag.name_tag,
+        public_name_tag.created_at,
         user.email,
         enterprise_url as enterpriseUrl`,
       )
-      .leftJoin(User, 'user', 'user.id = tag.updated_by')
-      .where('tag.deleted_at IS NULL');
+      .leftJoin(User, 'user', 'user.id = public_name_tag.updated_by');
 
     const _finalizeResult = async () => {
       const result = await builder
         .limit(limit)
         .offset(offset)
-        .orderBy('tag.updated_at', 'DESC')
+        .orderBy('public_name_tag.updated_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();
@@ -58,28 +57,19 @@ export class NameTagRepository extends Repository<NameTag> {
     return await _finalizeResult();
   }
 
-  async getNameTag(
-    keyword: string[],
+  async getNameTagMainSite(
     limit: number,
     nextKey: number,
-  ): Promise<NameTag[]> {
-    limit = Number(limit) || PAGE_REQUEST.MAX_200;
+  ): Promise<PublicNameTag[]> {
+    limit = Number(limit) || PAGE_REQUEST.MAX_500;
 
-    if (limit > PAGE_REQUEST.MAX_200) {
-      limit = PAGE_REQUEST.MAX_200;
+    if (limit > PAGE_REQUEST.MAX_500) {
+      limit = PAGE_REQUEST.MAX_500;
     }
 
     let qb = this.createQueryBuilder()
       .select(['id', 'address', 'name_tag', 'enterprise_url as enterpriseUrl'])
-      .limit(Number(limit) || PAGE_REQUEST.MAX_200);
-
-    if (keyword?.length == 1) {
-      qb = qb.where('LOWER(name_tag) LIKE LOWER(:name_tag) ', {
-        name_tag: `%${keyword[0]}%`,
-      });
-    } else if (keyword?.length > 1) {
-      qb = qb.where('address IN(:...addresses)', { addresses: keyword });
-    }
+      .limit(Number(limit) || PAGE_REQUEST.MAX_500);
 
     if (nextKey) {
       qb = qb.andWhere('id > :nextKey', { nextKey });

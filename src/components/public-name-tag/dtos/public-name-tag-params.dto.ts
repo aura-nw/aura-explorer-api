@@ -3,7 +3,7 @@ import { Min, Max } from 'class-validator';
 import { PAGE_REQUEST } from '../../../shared';
 import { Transform } from 'class-transformer';
 
-export class NameTagParamsDto {
+export class PublicNameTagParamsDto {
   @ApiPropertyOptional({
     description: `Optional, defaults to 20`,
     default: 20,
