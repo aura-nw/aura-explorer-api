@@ -54,7 +54,7 @@ export const INDEXER_API_V2 = {
 };
 
 export enum AURA_INFO {
-  CONTRACT_ADDRESS = 'aura',
+  ADDRESS_PREFIX = 'aura',
   COIN_ID = 'aura-network',
   IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg',
   NAME = 'Aura',
@@ -178,6 +178,7 @@ export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
   MAX_200: 200,
+  MAX_500: 500,
 };
 
 export enum SOULBOUND_TOKEN_STATUS {
@@ -284,8 +285,8 @@ export const SYNC_SERVICE_QUEUES = {
 };
 
 export const MSGS_USER = {
-  EU001: { message: 'User must be verified', code: 'EU001' },
-  EU002: { message: 'Wrong email or password', code: 'EU002' },
+  EU001: { message: 'User must be verified.', code: 'EU001' },
+  EU002: { message: 'Wrong email or password.', code: 'EU002' },
 };
 
 export const AURA_LOGO = 'aura-logo.jpg';
