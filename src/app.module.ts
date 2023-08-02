@@ -3,8 +3,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { SharedModule } from './shared/shared.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ComponentsModule } from './components/components.module';
 import { AccountModule } from './components/account/account.module';
 import { ServiceUtil } from './shared/utils/service.util';
@@ -28,7 +26,6 @@ import { AuthModule } from './auth/auth.module';
     SoulboundTokenModule,
     NameTagModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, ServiceUtil, MetricService],
+  providers: [ServiceUtil, MetricService],
 })
 export class AppModule {}
