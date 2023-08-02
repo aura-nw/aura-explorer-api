@@ -2,8 +2,10 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { AkcLogger } from '../logger/logger.service';
 import { lastValueFrom } from 'rxjs';
-import * as appConfig from '../../shared/configs/configuration';
 import axios from 'axios';
+import { bech32 } from 'bech32';
+import { ConfigService } from '@nestjs/config';
+import { AURA_INFO } from '../constants';
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
@@ -11,9 +13,9 @@ export class ServiceUtil {
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
+    private configService: ConfigService,
   ) {
-    const appParams = appConfig.default();
-    this.indexerV2 = appParams.indexerV2;
+    this.indexerV2 = this.configService.get('indexerV2');
   }
 
   /**
@@ -65,6 +67,28 @@ export class ServiceUtil {
     } catch (error) {
       this.logger.error(query, `Error while querying from graphql! ${error}`);
       return null;
+    }
+  }
+
+  async isValidBech32Address(address: string): Promise<any> {
+    const prefix = AURA_INFO.ADDRESS_PREFIX;
+
+    if (!address) {
+      return false;
+    }
+
+    try {
+      const { prefix: decodedPrefix } = bech32.decode(address);
+
+      if (prefix !== decodedPrefix) {
+        throw new Error(
+          `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 }
