@@ -4,8 +4,7 @@ export class Cw20TokenMarketParamsDto {
   @ApiPropertyOptional({
     description: `Optional contract address to search token market`,
     type: String,
-    isArray: true,
-    default: [],
+    default: '',
   })
-  contractAddress: string[];
+  contractAddress: string;
 }
