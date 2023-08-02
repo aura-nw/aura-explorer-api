@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './components/mail/mail.module';
 import { PasswordAuthModule } from './auth/password/password-auth.module';
 import { QueuesModule } from './components/queues/queues.module';
+import { PrivateNameTagModule } from './components/private-name-tag/private-name-tag.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { QueuesModule } from './components/queues/queues.module';
     Cw20TokenModule,
     SoulboundTokenModule,
     NameTagModule,
+    PrivateNameTagModule,
     MailModule,
     ConfigModule.forRoot({
       isGlobal: true,
