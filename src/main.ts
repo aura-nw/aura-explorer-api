@@ -33,7 +33,12 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('doc', app, document);
+
+  if (process.env.NODE_ENV === 'production') {
+    SwaggerModule.setup('doc', app, null);
+  } else {
+    SwaggerModule.setup('doc', app, document);
+  }
 
   //bull-board
   const redisOpts = configService.get('cacheManagement.redis');
