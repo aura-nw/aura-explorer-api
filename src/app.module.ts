@@ -10,11 +10,11 @@ import { ContractModule } from './components/contract/contract.module';
 import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
 import { MetricService } from './components/metric/services/metric.service';
 import { SoulboundTokenModule } from './components/soulbound-token/soulbound-token.module';
-import { NameTagModule } from './components/name-tag/name-tag.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './components/mail/mail.module';
 import { PasswordAuthModule } from './auth/password/password-auth.module';
 import { QueuesModule } from './components/queues/queues.module';
+import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { QueuesModule } from './components/queues/queues.module';
     ContractModule,
     Cw20TokenModule,
     SoulboundTokenModule,
-    NameTagModule,
+    PublicNameTagModule,
     MailModule,
     ConfigModule.forRoot({
       isGlobal: true,

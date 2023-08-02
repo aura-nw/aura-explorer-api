@@ -25,10 +25,7 @@ export class ContractUtil {
   async verifySignatue(signature: string, msg: string, pubkey: string) {
     try {
       const pubkeyFormated = encodeSecp256k1Pubkey(fromBase64(pubkey));
-      const address = pubkeyToAddress(
-        pubkeyFormated,
-        AURA_INFO.CONTRACT_ADDRESS,
-      );
+      const address = pubkeyToAddress(pubkeyFormated, AURA_INFO.ADDRESS_PREFIX);
       const msgDecode = this.createSignMessageByData(address, msg);
 
       const resultVerify = await Secp256k1.verifySignature(

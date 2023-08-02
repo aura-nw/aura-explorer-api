@@ -1,30 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
-  AURA_INFO,
   AkcLogger,
-  LENGTH,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
-import { NameTagParamsDto } from '../dtos/name-tag-params.dto';
-import { NameTagRepository } from '../repositories/name-tag.repository';
-import { StoreNameTagParamsDto } from '../dtos/store-name-tag-params.dto';
-import { NameTag } from '../../../shared/entities/name-tag.entity';
-import { GetNameTagDto } from '../dtos/get-name-tag.dto';
-import { GethNameTagResult } from '../dtos/get-name-tag-result.dto';
+import { PublicNameTagParamsDto } from '../dtos/public-name-tag-params.dto';
+import { PublicNameTagRepository } from '../repositories/public-name-tag.repository';
+import { StorePublicNameTagParamsDto } from '../dtos/store-public-name-tag-params.dto';
+import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
+import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { Not } from 'typeorm';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 
 @Injectable()
-export class NameTagService {
+export class PublicNameTagService {
   constructor(
     private readonly logger: AkcLogger,
-    private nameTagRepository: NameTagRepository,
+    private nameTagRepository: PublicNameTagRepository,
+    private serviceUtil: ServiceUtil,
   ) {}
 
-  async getNameTags(ctx: RequestContext, req: NameTagParamsDto) {
-    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { result, count } = await this.nameTagRepository.getNameTags(
+  async getPublicNameTags(ctx: RequestContext, req: PublicNameTagParamsDto) {
+    this.logger.log(ctx, `${this.getPublicNameTags.name} was called!`);
+    const { result, count } = await this.nameTagRepository.getPublicNameTags(
       req.keyword,
       req.limit,
       req.offset,
@@ -33,18 +32,21 @@ export class NameTagService {
     return { result, count };
   }
 
-  async getNameTagsDetail(ctx: RequestContext, id: number) {
-    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
+  async getPublicNameTagsDetail(ctx: RequestContext, id: number) {
+    this.logger.log(ctx, `${this.getPublicNameTagsDetail.name} was called!`);
     return await this.nameTagRepository.findOne(id);
   }
 
-  async createNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
-    this.logger.log(ctx, `${this.createNameTag.name} was called!`);
+  async createPublicNameTag(
+    ctx: RequestContext,
+    req: StorePublicNameTagParamsDto,
+  ) {
+    this.logger.log(ctx, `${this.createPublicNameTag.name} was called!`);
     const errorMsg = await this.validate(req);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new NameTag();
+    const entity = new PublicNameTag();
     entity.address = req.address;
     entity.type = req.type;
     entity.name_tag = req.nameTag;
@@ -56,18 +58,21 @@ export class NameTagService {
     } catch (err) {
       this.logger.error(
         ctx,
-        `Class ${NameTagService.name} call ${this.createNameTag.name} error ${err?.code} method error: ${err?.stack}`,
+        `Class ${PublicNameTagService.name} call ${this.createPublicNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
     }
   }
 
-  async updateNameTag(ctx: RequestContext, req: StoreNameTagParamsDto) {
-    this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
+  async updatePublicNameTag(
+    ctx: RequestContext,
+    req: StorePublicNameTagParamsDto,
+  ) {
+    this.logger.log(ctx, `${this.updatePublicNameTag.name} was called!`);
     const errorMsg = await this.validate(req, false);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new NameTag();
+    const entity = new PublicNameTag();
     entity.address = req.address;
     entity.type = req.type;
     entity.name_tag = req.nameTag;
@@ -79,28 +84,27 @@ export class NameTagService {
     } catch (err) {
       this.logger.error(
         ctx,
-        `Class ${NameTagService.name} call ${this.updateNameTag.name} error ${err?.code} method error: ${err?.stack}`,
+        `Class ${PublicNameTagService.name} call ${this.updatePublicNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
     }
   }
 
-  async deleteNameTag(ctx: RequestContext, id: number) {
-    this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
+  async deletePublicNameTag(ctx: RequestContext, id: number) {
+    this.logger.log(ctx, `${this.deletePublicNameTag.name} was called!`);
     try {
       return await this.nameTagRepository.delete(id);
     } catch (err) {
       this.logger.error(
         ctx,
-        `Class ${NameTagService.name} call ${this.updateNameTag.name} error ${err?.code} method error: ${err?.stack}`,
+        `Class ${PublicNameTagService.name} call ${this.deletePublicNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
     }
   }
 
-  private async validate(req: StoreNameTagParamsDto, isCreate = true) {
-    const validFormat =
-      req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
-      (req.address.length === LENGTH.CONTRACT_ADDRESS ||
-        req.address.length === LENGTH.ACCOUNT_ADDRESS);
+  private async validate(req: StorePublicNameTagParamsDto, isCreate = true) {
+    const validFormat = await this.serviceUtil.isValidBech32Address(
+      req.address,
+    );
 
     if (!validFormat) {
       return {
@@ -125,7 +129,7 @@ export class NameTagService {
     if (isCreate) {
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
-        where: { address: req.address, deleted_at: null },
+        where: { address: req.address },
       });
       if (address) {
         return {
@@ -138,7 +142,6 @@ export class NameTagService {
     const tag = await this.nameTagRepository.findOne({
       where: {
         name_tag: req.nameTag,
-        deleted_at: null,
         address: Not(req.address),
       },
     });
@@ -153,24 +156,23 @@ export class NameTagService {
     return false;
   }
 
-  async getNameTag(req: GetNameTagDto): Promise<GethNameTagResult> {
-    const nameTags = await this.nameTagRepository.getNameTag(
-      req.keyword,
+  async getNameTagMainSite(req: {
+    limit: number;
+    nextKey: number;
+  }): Promise<GetPublicNameTagResult> {
+    const nameTags = await this.nameTagRepository.getNameTagMainSite(
       Number(req.limit),
       Number(req.nextKey),
     );
 
-    let nextKey;
-
-    if (nameTags.length <= 1) {
-      nextKey = null;
-    } else {
-      nextKey = nameTags.slice(-1)[0]?.id;
-    }
+    const nextKey = nameTags.slice(-1)[0]?.id;
 
     const data = {
-      data: { nameTags },
-      nextKey,
+      data: {
+        nameTags: nameTags,
+        count: Number(nameTags.length),
+        nextKey: nextKey || null,
+      },
     };
 
     return data;

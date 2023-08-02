@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NAME_TAG_TYPE } from '../../../shared';
-import { IsOptional, IsUrl } from 'class-validator';
+import { IsOptional } from 'class-validator';
 
-export class StoreNameTagParamsDto {
+export class StorePublicNameTagParamsDto {
   @ApiProperty({ default: '' })
   id: number;
 
