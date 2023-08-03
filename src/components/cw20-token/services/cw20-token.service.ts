@@ -7,6 +7,7 @@ import {
   AURA_INFO,
   INDEXER_API_V2,
   RequestContext,
+  TOKEN_COIN,
   TokenMarkets,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
@@ -53,6 +54,7 @@ export class Cw20TokenService {
     assetDto.decimals = this.decimals;
     assetDto.verify_text = 'Verified by Aura Network';
     assetDto.verify_status = 'VERIFIED';
+    assetDto.type = TOKEN_COIN.NATIVE;
 
     //get balance
     const [totalBalances, tokenData] = await Promise.all([
@@ -121,6 +123,7 @@ export class Cw20TokenService {
           (f) => f.contract_address === item.smart_contract.address,
         );
         const asset = new AssetDto();
+        asset.type = TOKEN_COIN.CW20;
         asset.contract_address = item.smart_contract.address || '-';
         asset.image = item.marketing_info?.logo?.url
           ? item.marketing_info.logo.url
@@ -151,7 +154,8 @@ export class Cw20TokenService {
       return compareStatus || compareValue;
     });
 
-    return { tokens: result.concat(tokens), count: tokens.length };
+    tokens = result.concat(tokens);
+    return { tokens, count: tokens.length };
   }
 
   async getPriceById(ctx: RequestContext, id: string): Promise<any> {
@@ -302,6 +306,7 @@ export class Cw20TokenService {
       for (let i = 0; i < ibcBalances.length; i++) {
         const item = ibcBalances[i];
         const asset = new AssetDto();
+        asset.type = TOKEN_COIN.IBC;
         asset.balance = Number(
           (item.amount / this.precisionDiv).toFixed(this.decimals),
         );

@@ -290,3 +290,9 @@ export const MSGS_USER = {
 };
 
 export const AURA_LOGO = 'aura-logo.jpg';
+
+export enum TOKEN_COIN {
+  NATIVE = 'native',
+  IBC = 'ibc',
+  CW20 = 'cw20',
+}
