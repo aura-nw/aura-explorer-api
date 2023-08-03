@@ -45,9 +45,9 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('LOWER(tag.address) LIKE LOWER(:keyword)', {
+          qb.where('LOWER(public_name_tag.address) LIKE LOWER(:keyword)', {
             keyword: `%${keyword}%`,
-          }).orWhere('tag.name_tag LIKE :keyword', {
+          }).orWhere('public_name_tag.name_tag LIKE :keyword', {
             keyword: `%${keyword}%`,
           });
         }),
