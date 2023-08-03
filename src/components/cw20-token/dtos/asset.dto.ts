@@ -12,4 +12,5 @@ export class AssetDto {
   decimals = 0;
   verify_status = '';
   verify_text = '';
+  type = '';
 }
