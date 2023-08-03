@@ -54,7 +54,7 @@ export const INDEXER_API_V2 = {
 };
 
 export enum AURA_INFO {
-  CONTRACT_ADDRESS = 'aura',
+  ADDRESS_PREFIX = 'aura',
   COIN_ID = 'aura-network',
   IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg',
   NAME = 'Aura',
@@ -168,12 +168,17 @@ export const ADMIN_ERROR_MAP = {
     Message:
       'Name tag not accept special character except dot(.), dash(-), underscore(_)',
   },
+  INVALID_URL: {
+    Code: 'E005',
+    Message: 'Invalid URL format',
+  },
 };
 
 export const PAGE_REQUEST = {
   MIN: 1,
   MAX: 100,
   MAX_200: 200,
+  MAX_500: 500,
 };
 
 export enum SOULBOUND_TOKEN_STATUS {
@@ -211,6 +216,12 @@ export enum USER_ROLE {
 export enum PROVIDER {
   FACEBOOK = 'facebook',
   GOOGLE = 'google',
+  PASSWORD = 'password',
+}
+
+export enum SITE {
+  MAIN = 'main',
+  ADMIN = 'admin',
 }
 
 export enum NAME_TAG_TYPE {
@@ -221,8 +232,9 @@ export enum NAME_TAG_TYPE {
 export const MESSAGES = {
   ERROR: {
     NOT_PERMISSION: 'You have not permission!',
-    BANNED: 'You have been banned',
+    BANNED: 'You have been banned.',
     BAD_REQUEST: 'Bad request.',
+    SOME_THING_WRONG: 'Something went wrong.',
   },
 };
 
@@ -239,4 +251,48 @@ export const VERIFY_STEP = [
 
 export const ROLES_KEY = 'roles';
 
-export const REGEX_PARTERN = { NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/) };
+export const REGEX_PARTERN = {
+  NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/),
+  URL: new RegExp(/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/),
+  PASSWORD: new RegExp(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[`~!@#$%^&*()_+{}|/:;",.?<>\[\]`])[A-Za-z\d~!@#$%^&*()_+{}|/:;",.?<>\[\]]{8,}$/,
+  ),
+};
+
+export enum USER_ACTIVITIES {
+  SEND_MAIL_VERIFY = 'SEND_MAIL_VERIFY',
+  SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+}
+
+export const MSGS_ACTIVE_USER = {
+  SA001: { message: 'Success', code: 'SA001' },
+  EA001: { message: 'User already verified', code: 'EA001' },
+  EA002: { message: 'User not found', code: 'EA002' },
+  EA003: { message: 'Token not match', code: 'EA003' },
+};
+
+export const SUPPORT_EMAIL = 'support@aura.netwwork';
+
+export const QUEUES = {
+  SEND_MAIL: {
+    QUEUE_NAME: 'send-mail',
+    JOB: 'job-send-mail',
+  },
+};
+
+export const SYNC_SERVICE_QUEUES = {
+  SMART_CONTRACT: 'smart-contracts',
+};
+
+export const MSGS_USER = {
+  EU001: { message: 'User must be verified.', code: 'EU001' },
+  EU002: { message: 'Wrong email or password.', code: 'EU002' },
+};
+
+export const AURA_LOGO = 'aura-logo.jpg';
+
+export enum TOKEN_COIN {
+  NATIVE = 'native',
+  IBC = 'ibc',
+  CW20 = 'cw20',
+}

@@ -13,6 +13,7 @@ import {
   BadRequestException,
   UsePipes,
   ValidationPipe,
+  Req,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -35,13 +36,12 @@ import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { User } from '../../../../src/shared/entities/user.entity';
 import { UserDto } from '../dtos/user.dto';
+import { CreateUserWithPasswordDto } from '../../../auth/password/dtos/create-user-with-password.dto';
+import { ChangePasswordDto } from '../dtos/change-password.dto';
 
 @ApiTags('users')
 @Controller('users')
 @UsePipes(new ValidationPipe({ whitelist: true }))
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RoleGuard)
-@Roles(USER_ROLE.ADMIN)
 @ApiUnauthorizedResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
 })
@@ -54,6 +54,9 @@ import { UserDto } from '../dtos/user.dto';
 export class UsersController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @Get()
   @ApiOperation({ summary: 'Return all users.' })
   @ApiOkResponse({
@@ -68,6 +71,9 @@ export class UsersController {
     return { data: allUsers, meta: {} };
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @Get(':id')
   @ApiOperation({ summary: 'Return user detail.' })
   @ApiOkResponse({
@@ -88,6 +94,9 @@ export class UsersController {
     return { data: user, meta: {} };
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @Post()
   @ApiOperation({ summary: 'Create user.' })
   @ApiCreatedResponse({
@@ -105,6 +114,9 @@ export class UsersController {
     }
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @Patch(':id')
   @ApiOperation({ summary: 'Update user.' })
   @ApiOkResponse({ description: 'User updated.' })
@@ -122,6 +134,9 @@ export class UsersController {
     }
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete user.' })
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -132,5 +147,20 @@ export class UsersController {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  @Post('register-with-password')
+  @HttpCode(HttpStatus.OK)
+  async registerWithPassword(@Body() request: CreateUserWithPasswordDto) {
+    await this.userService.createUserWithPassword(request);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  @HttpCode(HttpStatus.OK)
+  @Post('change-password')
+  async changePassword(@Req() req, @Body() body: ChangePasswordDto) {
+    await this.userService.changePassword(req.user.id, body);
   }
 }
