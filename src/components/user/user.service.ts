@@ -107,8 +107,6 @@ export class UserService {
 
     if (user.role === USER_ROLE.BANNED) {
       throw new UnauthorizedException(MESSAGES.ERROR.BANNED);
-    } else if (user.role === USER_ROLE.USER) {
-      throw new UnauthorizedException(MESSAGES.ERROR.NOT_PERMISSION);
     }
   }
 
