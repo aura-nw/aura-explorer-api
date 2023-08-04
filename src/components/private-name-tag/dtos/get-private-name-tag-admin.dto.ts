@@ -2,27 +2,24 @@ import { ApiProperty } from '@nestjs/swagger';
 
 class PrivateNameTagAttributes {
   @ApiProperty({ example: 1 })
-  id;
+  id: number;
 
   @ApiProperty({
     example: 'aura1dylphmzd0gkdpuvyy3h7u5ffr8x0y2eajj0q5w2q8txnw33g0k0ss34201',
   })
-  address;
+  address: string;
 
-  @ApiProperty({ example: 'address' })
-  type;
+  @ApiProperty({ example: 'account' })
+  type: string;
 
   @ApiProperty({ example: 'name' })
-  name_tag;
+  name_tag: string;
+
+  @ApiProperty({ example: 'note' })
+  note: string;
 
   @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
-  created_at;
-
-  @ApiProperty({ example: 'Abc1234@gmail12.com' })
-  email;
-
-  @ApiProperty({ example: 'https://example.com/' })
-  enterpriseUrl;
+  created_at: Date;
 }
 
 export class GetPrivateNameTagAdminResult {

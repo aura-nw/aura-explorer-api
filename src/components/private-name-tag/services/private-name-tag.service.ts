@@ -53,7 +53,12 @@ export class PrivateNameTagService {
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const entity = await this.privateNameTagRepository.findOne(id);
+    const entity = await this.privateNameTagRepository.findOne(id, {
+      where: { created_by: ctx.user.id },
+    });
+    if (!entity) {
+      throw new NotFoundException('Private Name Tag not found');
+    }
     entity.name_tag = await this.decrypt(entity.name_tag);
 
     return entity;
@@ -88,7 +93,9 @@ export class PrivateNameTagService {
     req: UpdatePrivateNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    const entity = await this.privateNameTagRepository.findOne(id);
+    const entity = await this.privateNameTagRepository.findOne(id, {
+      where: { created_by: ctx.user.id },
+    });
     if (!entity) {
       throw new NotFoundException('Private Name Tag not found');
     }
@@ -119,6 +126,12 @@ export class PrivateNameTagService {
   async deleteNameTag(ctx: RequestContext, id: number) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     try {
+      const entity = await this.privateNameTagRepository.findOne(id, {
+        where: { created_by: ctx.user.id },
+      });
+      if (!entity) {
+        throw new NotFoundException("Don't have Owner Private Name Tag");
+      }
       return await this.privateNameTagRepository.delete(id);
     } catch (err) {
       this.logger.error(

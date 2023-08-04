@@ -11,6 +11,9 @@ class PrivateNameTagResponseAttributes {
 
   @ApiProperty({ example: 'public-name' })
   name_tag: string;
+
+  @ApiProperty({ example: 'note' })
+  note: string;
 }
 
 class ListPrivateNameTag {
