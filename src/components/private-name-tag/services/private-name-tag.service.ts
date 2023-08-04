@@ -10,7 +10,6 @@ import {
 import { PrivateNameTagParamsDto } from '../dtos/private-name-tag-params.dto';
 import { PrivateNameTagRepository } from '../repositories/private-name-tag.repository';
 import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-params.dto';
-import { GetPrivateNameTagDto } from '../dtos/get-private-name-tag.dto';
 import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { Not } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -37,6 +36,7 @@ export class PrivateNameTagService {
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { result, count } = await this.privateNameTagRepository.getNameTags(
+      ctx.user.id,
       req.keyword,
       req.limit,
       req.offset,
@@ -130,7 +130,7 @@ export class PrivateNameTagService {
 
   private async validate(req: CreatePrivateNameTagParamsDto, isCreate = true) {
     const validFormat =
-      req.address.startsWith(AURA_INFO.CONTRACT_ADDRESS) &&
+      req.address.startsWith(AURA_INFO.ADDRESS_PREFIX) &&
       (req.address.length === LENGTH.CONTRACT_ADDRESS ||
         req.address.length === LENGTH.ACCOUNT_ADDRESS);
 
@@ -177,26 +177,25 @@ export class PrivateNameTagService {
     return false;
   }
 
-  async getNameTag(
-    req: GetPrivateNameTagDto,
-  ): Promise<GetPrivateNameTagResult> {
-    const nameTags = await this.privateNameTagRepository.getNameTag(
-      req.keyword,
+  async getNameTagMainSite(req: {
+    user_id: number;
+    limit: number;
+    nextKey: number;
+  }): Promise<GetPrivateNameTagResult> {
+    const nameTags = await this.privateNameTagRepository.getNameTagMainSite(
+      Number(req.user_id),
       Number(req.limit),
       Number(req.nextKey),
     );
 
-    let nextKey;
-
-    if (nameTags.length <= 1) {
-      nextKey = null;
-    } else {
-      nextKey = nameTags.slice(-1)[0]?.id;
-    }
+    const nextKey = nameTags.slice(-1)[0]?.id;
 
     const data = {
-      data: { nameTags },
-      nextKey,
+      data: {
+        nameTags: nameTags,
+        count: Number(nameTags.length),
+        nextKey: nextKey || null,
+      },
     };
 
     return data;

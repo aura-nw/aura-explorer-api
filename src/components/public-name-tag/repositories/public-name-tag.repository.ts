@@ -1,12 +1,12 @@
 import { Brackets, EntityRepository, Repository } from 'typeorm';
-import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
+import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { Logger } from '@nestjs/common';
 import { User } from '../../../shared/entities/user.entity';
 import { PAGE_REQUEST } from '../../../shared';
 
-@EntityRepository(PrivateNameTag)
-export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
-  private readonly _logger = new Logger(PrivateNameTagRepository.name);
+@EntityRepository(PublicNameTag)
+export class PublicNameTagRepository extends Repository<PublicNameTag> {
+  private readonly _logger = new Logger(PublicNameTagRepository.name);
 
   /**
    * Get list name tags
@@ -15,32 +15,27 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
    * @param offset
    * @returns
    */
-  async getNameTags(
-    user_id: number,
-    keyword: string,
-    limit: number,
-    offset: number,
-  ) {
+  async getPublicNameTags(keyword: string, limit: number, offset: number) {
     this._logger.log(
-      `============== ${this.getNameTags.name} was called! ==============`,
+      `============== ${this.getPublicNameTags.name} was called! ==============`,
     );
-    const builder = this.createQueryBuilder('tag')
+    const builder = this.createQueryBuilder('public_name_tag')
       .select(
-        `tag.id,
-        tag.address,
-        tag.type,
-        tag.name_tag,
-        tag.created_at,
-        user.email`,
+        `public_name_tag.id,
+        public_name_tag.address,
+        public_name_tag.type,
+        public_name_tag.name_tag,
+        public_name_tag.created_at,
+        user.email,
+        enterprise_url as enterpriseUrl`,
       )
-      .leftJoin(User, 'user', 'user.id = tag.created_by')
-      .where('tag.created_by = :user_id', { user_id });
+      .leftJoin(User, 'user', 'user.id = public_name_tag.updated_by');
 
     const _finalizeResult = async () => {
       const result = await builder
         .limit(limit)
         .offset(offset)
-        .orderBy('tag.updated_at', 'DESC')
+        .orderBy('public_name_tag.updated_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();
@@ -50,9 +45,9 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('LOWER(tag.address) LIKE LOWER(:keyword)', {
+          qb.where('LOWER(public_name_tag.address) LIKE LOWER(:keyword)', {
             keyword: `%${keyword}%`,
-          }).orWhere('tag.name_tag LIKE :keyword', {
+          }).orWhere('public_name_tag.name_tag LIKE :keyword', {
             keyword: `%${keyword}%`,
           });
         }),
@@ -63,10 +58,9 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
   }
 
   async getNameTagMainSite(
-    user_id: number,
     limit: number,
     nextKey: number,
-  ): Promise<PrivateNameTag[]> {
+  ): Promise<PublicNameTag[]> {
     limit = Number(limit) || PAGE_REQUEST.MAX_500;
 
     if (limit > PAGE_REQUEST.MAX_500) {
@@ -74,8 +68,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     }
 
     let qb = this.createQueryBuilder()
-      .select(['id', 'address', 'name_tag'])
-      .where('created_by = :user_id', { user_id })
+      .select(['id', 'address', 'name_tag', 'enterprise_url as enterpriseUrl'])
       .limit(Number(limit) || PAGE_REQUEST.MAX_500);
 
     if (nextKey) {

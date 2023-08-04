@@ -1,3 +1,3 @@
-import { NameTagParamsDto } from '../../../components/name-tag/dtos/name-tag-params.dto';
+import { PublicNameTagParamsDto } from '../../../components/public-name-tag/dtos/public-name-tag-params.dto';
 
-export class PrivateNameTagParamsDto extends NameTagParamsDto {}
+export class PrivateNameTagParamsDto extends PublicNameTagParamsDto {}

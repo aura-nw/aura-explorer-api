@@ -17,6 +17,7 @@ import {
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -36,11 +37,11 @@ import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
-import { GetPrivateNameTagDto } from '../dtos/get-private-name-tag.dto';
+import { GetPrivateNameTagAdminResult } from '../dtos/get-private-name-tag-admin.dto';
 import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 
-@Controller('private-name-tag')
+@Controller()
 @ApiTags('private-name-tag')
 @ApiUnauthorizedResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
@@ -59,23 +60,25 @@ export class PrivateNameTagController {
     this.logger.setContext(PrivateNameTagController.name);
   }
 
-  @Get()
+  @Get('admin/private-name-tag')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list private name tag' })
   @ApiResponse({ status: HttpStatus.OK })
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: GetPrivateNameTagAdminResult })
   async getNameTags(
     @ReqContext() ctx: RequestContext,
     @Query() request: PrivateNameTagParamsDto,
-  ): Promise<BaseApiResponse<PrivateNameTag[]>> {
+  ): Promise<BaseApiResponse<GetPrivateNameTagAdminResult[]>> {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { data, count } = await this.nameTagService.getNameTags(ctx, request);
 
     return { data, meta: { count } };
   }
 
-  @Get(':id')
+  @Get('admin/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -90,7 +93,7 @@ export class PrivateNameTagController {
     return result;
   }
 
-  @Post()
+  @Post('admin/private-name-tag')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -104,7 +107,7 @@ export class PrivateNameTagController {
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put(':id')
+  @Put('admin/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -119,7 +122,7 @@ export class PrivateNameTagController {
     return await this.nameTagService.updateNameTag(ctx, id, request);
   }
 
-  @Delete(':id')
+  @Delete('admin/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -133,16 +136,37 @@ export class PrivateNameTagController {
     return await this.nameTagService.deleteNameTag(ctx, id);
   }
 
-  @Post('get-name-tag')
-  @ApiOperation({ summary: 'get name tag by address or name' })
+  @Get('private-name-tag')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all private name tag.' })
   @ApiOkResponse({
-    description: 'return name tag by address or name.',
+    description: 'Get all private name tag.',
     type: GetPrivateNameTagResult,
   })
-  @HttpCode(HttpStatus.OK)
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Number of private name tag per page. Max is 500.',
+  })
+  @ApiQuery({
+    name: 'nextKey',
+    type: Number,
+    required: false,
+    description: 'Key for next page.',
+  })
   async getNameTag(
-    @Body() request: GetPrivateNameTagDto,
+    @ReqContext() ctx: RequestContext,
+    @Query('limit') limit?: number,
+    @Query('nextKey') nextKey?: number,
   ): Promise<GetPrivateNameTagResult> {
-    return await this.nameTagService.getNameTag(request);
+    return await this.nameTagService.getNameTagMainSite({
+      user_id: ctx.user?.id || 0,
+      limit,
+      nextKey,
+    });
   }
 }

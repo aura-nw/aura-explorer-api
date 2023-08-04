@@ -1,11 +1,11 @@
-import { Column, DeleteDateColumn, Entity, Unique } from 'typeorm';
+import { Column, Entity, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { NAME_TAG_TYPE } from '../constants/common';
 
-@Entity('name_tag')
+@Entity('public_name_tag')
 @Unique(['name_tag'])
 @Unique(['address'])
-export class NameTag extends BaseEntityIncrementId {
+export class PublicNameTag extends BaseEntityIncrementId {
   @Column()
   type: NAME_TAG_TYPE;
 
@@ -17,9 +17,6 @@ export class NameTag extends BaseEntityIncrementId {
 
   @Column()
   updated_by: number;
-
-  @DeleteDateColumn({ type: 'timestamp', nullable: true })
-  deleted_at: Date;
 
   @Column({ nullable: true, name: 'enterprise_url' })
   enterpriseUrl: string;

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class PrivateNameTagResponseAttributes {
+class PublicNameTagResponseAttributes {
   @ApiProperty({ example: 1 })
   id: number;
 
@@ -11,11 +11,14 @@ class PrivateNameTagResponseAttributes {
 
   @ApiProperty({ example: 'public-name' })
   name_tag: string;
+
+  @ApiProperty({ example: 'https://example.com/' })
+  enterpriseUrl: string;
 }
 
-class ListPrivateNameTag {
-  @ApiProperty({ isArray: true, type: PrivateNameTagResponseAttributes })
-  nameTags: PrivateNameTagResponseAttributes[];
+class ListPublicNameTag {
+  @ApiProperty({ isArray: true, type: PublicNameTagResponseAttributes })
+  nameTags: PublicNameTagResponseAttributes[];
 
   @ApiProperty()
   count: number;
@@ -24,7 +27,7 @@ class ListPrivateNameTag {
   nextKey: number;
 }
 
-export class GetPrivateNameTagResult {
+export class GetPublicNameTagResult {
   @ApiProperty()
-  data: ListPrivateNameTag;
+  data: ListPublicNameTag;
 }
