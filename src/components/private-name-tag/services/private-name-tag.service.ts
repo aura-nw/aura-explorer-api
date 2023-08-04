@@ -73,6 +73,7 @@ export class PrivateNameTagService {
     const entity = new PrivateNameTag();
     entity.address = req.address;
     entity.type = req.type;
+    entity.note = req.note;
     entity.name_tag = await this.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
 
@@ -112,6 +113,8 @@ export class PrivateNameTagService {
     entity.type = req.type;
     entity.name_tag = await this.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
+    entity.note = req.note;
+
     try {
       const result = await this.privateNameTagRepository.update(id, entity);
       return { data: result, meta: {} };
@@ -202,16 +205,22 @@ export class PrivateNameTagService {
     );
 
     const nextKey = nameTags.slice(-1)[0]?.id;
+    const data = await Promise.all(
+      nameTags.map(async (item) => {
+        item.name_tag = await this.decrypt(item.name_tag);
+        return item;
+      }),
+    );
 
-    const data = {
+    const result = {
       data: {
-        nameTags: nameTags,
+        nameTags: data,
         count: Number(nameTags.length),
         nextKey: nextKey || null,
       },
     };
 
-    return data;
+    return result;
   }
 
   // source is plain text
