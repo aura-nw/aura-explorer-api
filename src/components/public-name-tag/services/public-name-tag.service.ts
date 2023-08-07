@@ -12,6 +12,7 @@ import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { Not } from 'typeorm';
 import { ServiceUtil } from '../../../shared/utils/service.util';
+import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
 
 @Injectable()
 export class PublicNameTagService {
@@ -65,7 +66,7 @@ export class PublicNameTagService {
 
   async updatePublicNameTag(
     ctx: RequestContext,
-    req: StorePublicNameTagParamsDto,
+    req: UpdatePublicNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updatePublicNameTag.name} was called!`);
     const errorMsg = await this.validate(req, false);
@@ -73,7 +74,6 @@ export class PublicNameTagService {
       return errorMsg;
     }
     const entity = new PublicNameTag();
-    entity.address = req.address;
     entity.type = req.type;
     entity.name_tag = req.nameTag;
     entity.updated_by = req.userId;
@@ -101,17 +101,7 @@ export class PublicNameTagService {
     }
   }
 
-  private async validate(req: StorePublicNameTagParamsDto, isCreate = true) {
-    const validFormat = await this.serviceUtil.isValidBech32Address(
-      req.address,
-    );
-
-    if (!validFormat) {
-      return {
-        code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-        message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
-      };
-    }
+  private async validate(req: any, isCreate = true) {
     if (!req.nameTag.match(REGEX_PARTERN.NAME_TAG)) {
       return {
         code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
@@ -127,6 +117,16 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
+      const validFormat = await this.serviceUtil.isValidBech32Address(
+        req.address,
+      );
+
+      if (!validFormat) {
+        return {
+          code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
+          message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
+        };
+      }
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
         where: { address: req.address },

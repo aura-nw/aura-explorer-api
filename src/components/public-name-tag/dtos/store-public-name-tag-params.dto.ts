@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { NAME_TAG_TYPE } from '../../../shared';
-import { IsOptional } from 'class-validator';
+import { IsOptional, MaxLength } from 'class-validator';
 
 export class StorePublicNameTagParamsDto {
   @ApiProperty({ default: '' })
@@ -13,6 +13,7 @@ export class StorePublicNameTagParamsDto {
   address: string;
 
   @ApiProperty({ default: '' })
+  @MaxLength(35)
   nameTag: string;
 
   @ApiProperty({ default: '' })
