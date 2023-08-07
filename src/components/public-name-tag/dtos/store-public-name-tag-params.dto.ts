@@ -16,9 +16,6 @@ export class StorePublicNameTagParamsDto {
   @MaxLength(35)
   nameTag: string;
 
-  @ApiProperty({ default: '' })
-  userId: number;
-
   @IsOptional()
   @ApiPropertyOptional({
     default: null,

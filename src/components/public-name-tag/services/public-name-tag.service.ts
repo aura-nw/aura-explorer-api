@@ -40,6 +40,7 @@ export class PublicNameTagService {
 
   async createPublicNameTag(
     ctx: RequestContext,
+    userId: number,
     req: StorePublicNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.createPublicNameTag.name} was called!`);
@@ -51,7 +52,7 @@ export class PublicNameTagService {
     entity.address = req.address;
     entity.type = req.type;
     entity.name_tag = req.nameTag;
-    entity.updated_by = req.userId;
+    entity.updated_by = userId;
     entity.enterpriseUrl = req.enterpriseUrl;
     try {
       const result = await this.nameTagRepository.save(entity);
@@ -66,6 +67,7 @@ export class PublicNameTagService {
 
   async updatePublicNameTag(
     ctx: RequestContext,
+    userId: number,
     req: UpdatePublicNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updatePublicNameTag.name} was called!`);
@@ -74,9 +76,8 @@ export class PublicNameTagService {
       return errorMsg;
     }
     const entity = new PublicNameTag();
-    entity.type = req.type;
     entity.name_tag = req.nameTag;
-    entity.updated_by = req.userId;
+    entity.updated_by = userId;
     entity.enterpriseUrl = req.enterpriseUrl;
     try {
       const result = await this.nameTagRepository.update(req.id, entity);

@@ -7,14 +7,8 @@ export class UpdatePublicNameTagParamsDto {
   id: number;
 
   @ApiProperty({ default: '' })
-  type: NAME_TAG_TYPE;
-
-  @ApiProperty({ default: '' })
   @MaxLength(35)
   nameTag: string;
-
-  @ApiProperty({ default: '' })
-  userId: number;
 
   @IsOptional()
   @ApiPropertyOptional({
