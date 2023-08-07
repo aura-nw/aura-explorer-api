@@ -66,7 +66,7 @@ export class GoogleOAuthService {
       }
 
       if (request.site !== SITE.MAIN) {
-        this.userService.checkRole(user);
+        this.userService.checkRole(user, SITE.ADMIN);
       }
       return { user, picture };
     } catch (error) {
