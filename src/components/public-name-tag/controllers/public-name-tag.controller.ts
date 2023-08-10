@@ -10,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -41,6 +42,7 @@ import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { GetPublicNameTagAdminResult } from '../dtos/get-public-name-tag-admin.dto';
+import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
 
 @Controller()
 @ApiTags('public-name-tag')
@@ -104,10 +106,15 @@ export class PublicNameTagController {
   @ApiResponse({ status: HttpStatus.CREATED })
   async createPublicNameTag(
     @ReqContext() ctx: RequestContext,
+    @Req() req,
     @Body() request: StorePublicNameTagParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.createPublicNameTag.name} was called!`);
-    return await this.nameTagService.createPublicNameTag(ctx, request);
+    return await this.nameTagService.createPublicNameTag(
+      ctx,
+      req.user.id,
+      request,
+    );
   }
 
   @Put('admin/public-name-tag')
@@ -118,10 +125,15 @@ export class PublicNameTagController {
   @ApiResponse({ status: HttpStatus.OK })
   async updateNameTag(
     @ReqContext() ctx: RequestContext,
-    @Body() request: StorePublicNameTagParamsDto,
+    @Req() req,
+    @Body() request: UpdatePublicNameTagParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    return await this.nameTagService.updatePublicNameTag(ctx, request);
+    return await this.nameTagService.updatePublicNameTag(
+      ctx,
+      req.user.id,
+      request,
+    );
   }
 
   @Delete('admin/public-name-tag/:id')

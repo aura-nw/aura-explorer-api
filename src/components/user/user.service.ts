@@ -20,6 +20,7 @@ import {
   MSGS_USER,
   PROVIDER,
   QUEUES,
+  SITE,
   SUPPORT_EMAIL,
   USER_ACTIVITIES,
   USER_ROLE,
@@ -100,13 +101,17 @@ export class UserService {
     await this.usersRepository.save(user);
   }
 
-  checkRole(user: DeepPartial<User>): void {
+  checkRole(user: DeepPartial<User>, site = SITE.MAIN): void {
     if (!user) {
       throw new UnauthorizedException(MESSAGES.ERROR.NOT_PERMISSION);
     }
 
     if (user.role === USER_ROLE.BANNED) {
       throw new UnauthorizedException(MESSAGES.ERROR.BANNED);
+    }
+
+    if (site === SITE.ADMIN && user.role === USER_ROLE.USER) {
+      throw new UnauthorizedException(MESSAGES.ERROR.NOT_PERMISSION);
     }
   }
 
