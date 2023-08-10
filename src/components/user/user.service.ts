@@ -28,7 +28,6 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { randomBytes } from 'crypto';
-import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
@@ -37,6 +36,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
+import { secondsToDate } from '../../shared/utils/service.util';
 const VERIFICATION_TOKEN_LENGTH = 20;
 const RESET_PASSWORD_TOKEN_LENGTH = 21;
 const RANDOM_BYTES_LENGTH = 20;
@@ -376,6 +376,9 @@ export class UserService {
       user.provider = PROVIDER.PASSWORD;
     }
 
+    // Set last required login.
+    user.lastRequiredLogin = new Date();
+
     await this.usersRepository.save(user);
   }
 
@@ -425,6 +428,8 @@ export class UserService {
       throw new BadRequestException(MESSAGES.ERROR.SOME_THING_WRONG);
     }
 
+    user.lastRequiredLogin = new Date();
+
     await this.usersRepository.save(user);
   }
 
@@ -437,6 +442,15 @@ export class UserService {
       return await bcrypt.compare(password, hash);
     } catch {
       throw new BadRequestException(MESSAGES.ERROR.SOME_THING_WRONG);
+    }
+  }
+
+  checkLastRequiredLogin(user: User, jwtIat: number): void {
+    if (user.lastRequiredLogin > secondsToDate(jwtIat)) {
+      throw new UnauthorizedException({
+        code: MESSAGES.ERROR.NEED_TO_BE_LOGGED_IN_AGAIN.CODE,
+        message: MESSAGES.ERROR.NEED_TO_BE_LOGGED_IN_AGAIN.MESSAGE,
+      });
     }
   }
 }

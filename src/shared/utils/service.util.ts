@@ -92,3 +92,8 @@ export class ServiceUtil {
     }
   }
 }
+
+export function secondsToDate(seconds: number): Date {
+  const secondsToMilliseconds = 1000;
+  return new Date(seconds * secondsToMilliseconds);
+}
