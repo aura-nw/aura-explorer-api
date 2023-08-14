@@ -34,4 +34,7 @@ export class User extends BaseEntityIncrementId {
     cascade: true,
   })
   userActivities: UserActivity[];
+
+  @Column({ nullable: true, name: 'last_required_login' })
+  lastRequiredLogin: Date;
 }

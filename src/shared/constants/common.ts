@@ -235,6 +235,10 @@ export const MESSAGES = {
     BANNED: 'You have been banned.',
     BAD_REQUEST: 'Bad request.',
     SOME_THING_WRONG: 'Something went wrong.',
+    NEED_TO_BE_LOGGED_IN_AGAIN: {
+      CODE: 'E001',
+      MESSAGE: 'You need to be logged in again.',
+    },
   },
 };
 
