@@ -31,7 +31,6 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { randomBytes } from 'crypto';
-import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserWithPasswordDto } from '../../auth/password/dtos/create-user-with-password.dto';
@@ -388,6 +387,9 @@ export class UserService {
       user.provider = PROVIDER.PASSWORD;
     }
 
+    // Set last required login.
+    user.lastRequiredLogin = new Date();
+
     await this.usersRepository.save(user);
   }
 
@@ -436,6 +438,8 @@ export class UserService {
     } else {
       throw new BadRequestException(MESSAGES.ERROR.SOME_THING_WRONG);
     }
+
+    user.lastRequiredLogin = new Date();
 
     await this.usersRepository.save(user);
   }
