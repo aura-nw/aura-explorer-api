@@ -61,8 +61,8 @@ export class PrivateNameTagController {
   }
 
   @Get('admin/private-name-tag')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  // @UseGuards(JwtAuthGuard, RoleGuard)
+  // @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list private name tag' })
   @ApiResponse({ status: HttpStatus.OK })
@@ -71,11 +71,12 @@ export class PrivateNameTagController {
   async getNameTags(
     @ReqContext() ctx: RequestContext,
     @Query() request: PrivateNameTagParamsDto,
-  ): Promise<BaseApiResponse<GetPrivateNameTagAdminResult[]>> {
+  ) {
+    // ): Promise<BaseApiResponse<GetPrivateNameTagAdminResult[]>> {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { data, count } = await this.nameTagService.getNameTags(ctx, request);
-
-    return { data, meta: { count } };
+    // const { data, count } = await this.nameTagService.getNameTags(ctx, request);
+    await this.nameTagService.getNameTags(ctx, request);
+    // return { data, meta: { count } };
   }
 
   @Get('admin/private-name-tag/:id')

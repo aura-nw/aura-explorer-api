@@ -13,27 +13,21 @@ import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-p
 import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { Not } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { KMS } from 'aws-sdk';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
+import { EncryptionService } from '../../encryption/encryption.service';
 
 @Injectable()
 export class PrivateNameTagService {
-  private kms: KMS;
   constructor(
     private readonly logger: AkcLogger,
     private configService: ConfigService,
+    private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
-  ) {
-    this.kms = new KMS({
-      accessKeyId: this.configService.get<string>('kms.accessKeyId'),
-      secretAccessKey: this.configService.get<string>('kms.secretAccessKey'),
-      region: this.configService.get<string>('kms.region'),
-      apiVersion: this.configService.get<string>('kms.apiVersion'),
-    });
-  }
+  ) { }
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
+    return await this.encryptionService.printKey();
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { result, count } = await this.privateNameTagRepository.getNameTags(
       ctx.user.id,
@@ -43,7 +37,7 @@ export class PrivateNameTagService {
     );
     const data = await Promise.all(
       result.map(async (item) => {
-        item.name_tag = await this.decrypt(item.name_tag);
+        // item.name_tag = await this.decrypt(item.name_tag);
         return item;
       }),
     );
@@ -59,7 +53,7 @@ export class PrivateNameTagService {
     if (!entity) {
       throw new NotFoundException('Private Name Tag not found');
     }
-    entity.name_tag = await this.decrypt(entity.name_tag);
+    // entity.name_tag = await this.decrypt(entity.name_tag);
 
     return entity;
   }
@@ -74,7 +68,7 @@ export class PrivateNameTagService {
     entity.address = req.address;
     entity.type = req.type;
     entity.note = req.note;
-    entity.name_tag = await this.encrypt(req.nameTag);
+    // entity.name_tag = await this.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
 
     try {
@@ -111,7 +105,7 @@ export class PrivateNameTagService {
       return errorMsg;
     }
     entity.type = req.type;
-    entity.name_tag = await this.encrypt(req.nameTag);
+    // entity.name_tag = await this.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
     entity.note = req.note;
 
@@ -178,7 +172,7 @@ export class PrivateNameTagService {
 
     const tag = await this.privateNameTagRepository.findOne({
       where: {
-        name_tag: await this.encrypt(req.nameTag),
+        // name_tag: await this.encrypt(req.nameTag),
         address: Not(req.address),
       },
     });
@@ -207,7 +201,7 @@ export class PrivateNameTagService {
     const nextKey = nameTags.slice(-1)[0]?.id;
     const data = await Promise.all(
       nameTags.map(async (item) => {
-        item.name_tag = await this.decrypt(item.name_tag);
+        // item.name_tag = await this.decrypt(item.name_tag);
         return item;
       }),
     );
@@ -221,26 +215,5 @@ export class PrivateNameTagService {
     };
 
     return result;
-  }
-
-  // source is plain text
-  async encrypt(source: string) {
-    const params = {
-      KeyId: this.configService.get<string>('kms.alias'),
-      Plaintext: source,
-    };
-    const { CiphertextBlob } = await this.kms.encrypt(params).promise();
-
-    // store encrypted data as base64 encoded string
-    return CiphertextBlob.toString('base64');
-  }
-
-  // source is cipher text
-  async decrypt(source: string) {
-    const params = {
-      CiphertextBlob: Buffer.from(source, 'base64'),
-    };
-    const { Plaintext } = await this.kms.decrypt(params).promise();
-    return Plaintext.toString();
   }
 }

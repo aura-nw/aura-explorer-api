@@ -7,16 +7,18 @@ import { PrivateNameTagController } from './controllers/private-name-tag.control
 import { PrivateNameTagRepository } from './repositories/private-name-tag.repository';
 import { PrivateNameTagService } from './services/private-name-tag.service';
 import { UserModule } from '../user/user.module';
+import { EncryptionService } from '../encryption/encryption.service';
+import { CipherKey } from '../../shared/entities/cipher-key.entity';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([PrivateNameTagRepository]),
+    TypeOrmModule.forFeature([PrivateNameTagRepository, CipherKey]),
     HttpModule,
     ConfigModule,
     UserModule,
   ],
-  providers: [PrivateNameTagService],
+  providers: [PrivateNameTagService, EncryptionService],
   controllers: [PrivateNameTagController],
   exports: [PrivateNameTagService],
 })

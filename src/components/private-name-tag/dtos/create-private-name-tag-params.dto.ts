@@ -3,7 +3,7 @@ import { StorePublicNameTagParamsDto } from '../../public-name-tag/dtos/store-pu
 
 export class CreatePrivateNameTagParamsDto extends OmitType(
   StorePublicNameTagParamsDto,
-  ['id', 'userId', 'enterpriseUrl'] as const,
+  ['id', 'enterpriseUrl'] as const,
 ) {
   @ApiProperty({ default: null })
   note: string;

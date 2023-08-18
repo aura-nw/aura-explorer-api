@@ -15,6 +15,9 @@ import { AllExceptionsFilter } from './filters/all-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AkcLoggerModule } from './logger/logger.module';
 import { RedisUtil } from './utils/redis.util';
+import { EncryptionService } from '../components/encryption/encryption.service';
+import { EncryptionModule } from '../components/encryption/encryption.module';
+import { EncryptionOptions } from '../components/encryption/encryption.interface';
 
 @Module({
   imports: [
@@ -60,6 +63,18 @@ import { RedisUtil } from './utils/redis.util';
     }),
 
     AkcLoggerModule,
+    EncryptionModule.registerAsync({
+      imports: [EncryptionModule],
+      inject: [EncryptionService],
+      useFactory: async (encryptionService: EncryptionService) => {
+        const key = await encryptionService.getKey();
+        const result: EncryptionOptions = {
+          key,
+        }
+        return result;
+      },
+      providers: [EncryptionService],
+    })
   ],
   exports: [ConfigModule, AkcLoggerModule],
   providers: [
@@ -69,4 +84,4 @@ import { RedisUtil } from './utils/redis.util';
     RedisUtil,
   ],
 })
-export class SharedModule {}
+export class SharedModule { }

@@ -76,6 +76,7 @@ export default () => ({
   bcryptSalt: process.env.BCRYPT_SALT || 8,
   auraScanUrl: process.env.AURA_SCAN_URL,
   kms: {
+    kdf: process.env.KMS_KDF,
     accessKeyId: process.env.KMS_ACCESS_KEY_ID,
     secretAccessKey: process.env.KMS_SECRET_ACCESS_KEY,
     region: process.env.KMS_REGION,
