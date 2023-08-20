@@ -17,10 +17,12 @@ import { AkcLoggerModule } from './logger/logger.module';
 import { RedisUtil } from './utils/redis.util';
 import { EncryptionService } from '../components/encryption/encryption.service';
 import { EncryptionModule } from '../components/encryption/encryption.module';
-import { EncryptionOptions } from '../components/encryption/encryption.interface';
+import { EncryptionModuleOptions } from '../components/encryption/encryption.interface';
+import { CipherKey } from './entities/cipher-key.entity';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([CipherKey]),
     ConfigModule.forRoot(configModuleOptions),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -63,18 +65,18 @@ import { EncryptionOptions } from '../components/encryption/encryption.interface
     }),
 
     AkcLoggerModule,
-    EncryptionModule.registerAsync({
+    EncryptionModule.forRootAsync({
       imports: [EncryptionModule],
       inject: [EncryptionService],
       useFactory: async (encryptionService: EncryptionService) => {
         const key = await encryptionService.getKey();
-        const result: EncryptionOptions = {
+        console.log('key: ', key);
+        const result: EncryptionModuleOptions = {
           key,
-        }
+        };
         return result;
       },
-      providers: [EncryptionService],
-    })
+    }),
   ],
   exports: [ConfigModule, AkcLoggerModule],
   providers: [
@@ -84,4 +86,4 @@ import { EncryptionOptions } from '../components/encryption/encryption.interface
     RedisUtil,
   ],
 })
-export class SharedModule { }
+export class SharedModule {}

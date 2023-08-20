@@ -1,11 +1,11 @@
-
 import { ModuleMetadata, Provider } from '@nestjs/common';
-import { EncryptionOptions } from './encryption.interface';
+import { EncryptionModuleOptions } from './encryption.interface';
 
-export const ENCRYPTION_CONFIG_OPTIONS = 'ENCRYPTION_CONFIG_OPTIONS';
-
-export interface EncryptionAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-    useFactory: (...args: any[]) => Promise<EncryptionOptions> | EncryptionOptions;
-    inject?: any[];
-    providers?: Provider[];
+export interface EncryptionAsyncOptions
+  extends Pick<ModuleMetadata, 'imports'> {
+  useFactory: (
+    ...args: any[]
+  ) => Promise<EncryptionModuleOptions> | EncryptionModuleOptions;
+  inject?: any[];
+  providers?: Provider[];
 }

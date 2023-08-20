@@ -24,7 +24,7 @@ export class PrivateNameTagService {
     private configService: ConfigService,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
-  ) { }
+  ) {}
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
     return await this.encryptionService.printKey();
