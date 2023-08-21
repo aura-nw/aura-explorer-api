@@ -15,9 +15,12 @@ import { AllExceptionsFilter } from './filters/all-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AkcLoggerModule } from './logger/logger.module';
 import { RedisUtil } from './utils/redis.util';
+import { EncryptionModule } from '../components/encryption/encryption.module';
+import { CipherKey } from './entities/cipher-key.entity';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([CipherKey]),
     ConfigModule.forRoot(configModuleOptions),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -60,6 +63,7 @@ import { RedisUtil } from './utils/redis.util';
     }),
 
     AkcLoggerModule,
+    EncryptionModule,
   ],
   exports: [ConfigModule, AkcLoggerModule],
   providers: [
