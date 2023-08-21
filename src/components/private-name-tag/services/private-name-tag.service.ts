@@ -137,10 +137,9 @@ export class PrivateNameTagService {
   }
 
   private async validate(req: CreatePrivateNameTagParamsDto, isCreate = true) {
-    const validFormat =
-      req.address.startsWith(AURA_INFO.ADDRESS_PREFIX) &&
-      (req.address.length === LENGTH.CONTRACT_ADDRESS ||
-        req.address.length === LENGTH.ACCOUNT_ADDRESS);
+const validFormat = await this.serviceUtil.isValidBech32Address(
+   req.address,
+);
 
     if (!validFormat) {
       return {
