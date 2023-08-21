@@ -4,7 +4,6 @@ import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('cipher_keys')
 export class CipherKey extends BaseEntityIncrementId {
-  @Unique('cipher_text', ['cipher_text'])
-  @Column()
+  @Column('text')
   cipher_text: string;
 }

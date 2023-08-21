@@ -21,13 +21,11 @@ import { EncryptionService } from '../../encryption/encryption.service';
 export class PrivateNameTagService {
   constructor(
     private readonly logger: AkcLogger,
-    private configService: ConfigService,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
   ) {}
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
-    return await this.encryptionService.printKey();
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { result, count } = await this.privateNameTagRepository.getNameTags(
       ctx.user.id,
@@ -37,7 +35,7 @@ export class PrivateNameTagService {
     );
     const data = await Promise.all(
       result.map(async (item) => {
-        // item.name_tag = await this.decrypt(item.name_tag);
+        item.name_tag = await this.encryptionService.decrypt(item.name_tag);
         return item;
       }),
     );
@@ -53,7 +51,7 @@ export class PrivateNameTagService {
     if (!entity) {
       throw new NotFoundException('Private Name Tag not found');
     }
-    // entity.name_tag = await this.decrypt(entity.name_tag);
+    entity.name_tag = await this.encryptionService.decrypt(entity.name_tag);
 
     return entity;
   }
@@ -68,7 +66,7 @@ export class PrivateNameTagService {
     entity.address = req.address;
     entity.type = req.type;
     entity.note = req.note;
-    // entity.name_tag = await this.encrypt(req.nameTag);
+    entity.name_tag = await this.encryptionService.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
 
     try {
@@ -105,7 +103,7 @@ export class PrivateNameTagService {
       return errorMsg;
     }
     entity.type = req.type;
-    // entity.name_tag = await this.encrypt(req.nameTag);
+    entity.name_tag = await this.encryptionService.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
     entity.note = req.note;
 
@@ -172,7 +170,7 @@ export class PrivateNameTagService {
 
     const tag = await this.privateNameTagRepository.findOne({
       where: {
-        // name_tag: await this.encrypt(req.nameTag),
+        name_tag: await this.encryptionService.encrypt(req.nameTag),
         address: Not(req.address),
       },
     });
@@ -201,7 +199,7 @@ export class PrivateNameTagService {
     const nextKey = nameTags.slice(-1)[0]?.id;
     const data = await Promise.all(
       nameTags.map(async (item) => {
-        // item.name_tag = await this.decrypt(item.name_tag);
+        item.name_tag = await this.encryptionService.decrypt(item.name_tag);
         return item;
       }),
     );

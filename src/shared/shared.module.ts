@@ -15,9 +15,7 @@ import { AllExceptionsFilter } from './filters/all-exception.filter';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { AkcLoggerModule } from './logger/logger.module';
 import { RedisUtil } from './utils/redis.util';
-import { EncryptionService } from '../components/encryption/encryption.service';
 import { EncryptionModule } from '../components/encryption/encryption.module';
-import { EncryptionModuleOptions } from '../components/encryption/encryption.interface';
 import { CipherKey } from './entities/cipher-key.entity';
 
 @Module({
@@ -65,18 +63,7 @@ import { CipherKey } from './entities/cipher-key.entity';
     }),
 
     AkcLoggerModule,
-    EncryptionModule.forRootAsync({
-      imports: [EncryptionModule],
-      inject: [EncryptionService],
-      useFactory: async (encryptionService: EncryptionService) => {
-        const key = await encryptionService.getKey();
-        console.log('key: ', key);
-        const result: EncryptionModuleOptions = {
-          key,
-        };
-        return result;
-      },
-    }),
+    EncryptionModule,
   ],
   exports: [ConfigModule, AkcLoggerModule],
   providers: [
