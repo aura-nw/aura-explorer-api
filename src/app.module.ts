@@ -14,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './components/mail/mail.module';
 import { PasswordAuthModule } from './auth/password/password-auth.module';
 import { QueuesModule } from './components/queues/queues.module';
+import { PrivateNameTagModule } from './components/private-name-tag/private-name-tag.module';
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { PublicNameTagModule } from './components/public-name-tag/public-name-ta
     ContractModule,
     Cw20TokenModule,
     SoulboundTokenModule,
+    PrivateNameTagModule,
     PublicNameTagModule,
     MailModule,
     ConfigModule.forRoot({
