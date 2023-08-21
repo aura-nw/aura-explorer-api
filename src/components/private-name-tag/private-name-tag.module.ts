@@ -9,6 +9,7 @@ import { PrivateNameTagService } from './services/private-name-tag.service';
 import { UserModule } from '../user/user.module';
 import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
+import { ServiceUtil } from '../../shared/utils/service.util';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { CipherKey } from '../../shared/entities/cipher-key.entity';
     ConfigModule,
     UserModule,
   ],
-  providers: [PrivateNameTagService, EncryptionService],
+  providers: [PrivateNameTagService, EncryptionService, ServiceUtil],
   controllers: [PrivateNameTagController],
   exports: [PrivateNameTagService],
 })

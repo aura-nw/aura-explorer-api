@@ -12,10 +12,10 @@ import { PrivateNameTagRepository } from '../repositories/private-name-tag.repos
 import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-params.dto';
 import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { Not } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
+import { ServiceUtil } from '../../../shared/utils/service.util';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -23,6 +23,7 @@ export class PrivateNameTagService {
     private readonly logger: AkcLogger,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
+    private serviceUtil: ServiceUtil,
   ) {}
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
@@ -137,9 +138,9 @@ export class PrivateNameTagService {
   }
 
   private async validate(req: CreatePrivateNameTagParamsDto, isCreate = true) {
-const validFormat = await this.serviceUtil.isValidBech32Address(
-   req.address,
-);
+    const validFormat = await this.serviceUtil.isValidBech32Address(
+      req.address,
+    );
 
     if (!validFormat) {
       return {
