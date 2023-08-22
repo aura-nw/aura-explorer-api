@@ -282,6 +282,10 @@ export const QUEUES = {
     QUEUE_NAME: 'send-mail',
     JOB: 'job-send-mail',
   },
+  SYNC_CW4973_NFT_STATUS: 'sync-cw4973-nft-status',
+  SYNC_CW20_PRICE: 'sync-cw20-price',
+  SYNC_COIN_ID: 'sync-coin-id',
+  SYNC_TOKEN_PRICE: 'sync-token-price',
 };
 
 export const SYNC_SERVICE_QUEUES = {
@@ -299,4 +303,9 @@ export enum TOKEN_COIN {
   NATIVE = 'native',
   IBC = 'ibc',
   CW20 = 'cw20',
+}
+
+export enum PROCESSOR {
+  SMART_CONTRACT = 'smart-contracts',
+  TOKEN_PRICE = 'token-price',
 }
