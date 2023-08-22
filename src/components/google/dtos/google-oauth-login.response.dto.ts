@@ -10,6 +10,12 @@ export class GoogleOAuthLoginResponseDto {
   @ApiProperty({ description: 'User name', example: 'example name' })
   userName: string;
 
+  @ApiProperty({ description: 'User email', example: 'example email' })
+  userEmail: string;
+
+  @ApiProperty({ description: 'User provider', example: 'example provider' })
+  provider: string;
+
   @ApiProperty({
     description: 'User picture',
     example: 'https://example.com...',
