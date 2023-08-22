@@ -9,6 +9,9 @@ class PrivateNameTagAttributes {
   })
   address: string;
 
+  @ApiProperty({ example: false })
+  is_favorite: boolean;
+
   @ApiProperty({ example: 'account' })
   type: string;
 
@@ -20,6 +23,9 @@ class PrivateNameTagAttributes {
 
   @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
   created_at: Date;
+
+  @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
+  updated_at: Date;
 }
 
 export class GetPrivateNameTagAdminResult {

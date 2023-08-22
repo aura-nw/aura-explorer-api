@@ -8,6 +8,9 @@ export class PrivateNameTag extends BaseEntityIncrementId {
   @Column()
   type: NAME_TAG_TYPE;
 
+  @Column({ default: false })
+  is_favorite: boolean;
+
   @Column('text')
   name_tag: string;
 

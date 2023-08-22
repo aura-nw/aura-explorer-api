@@ -11,6 +11,9 @@ export class CreatePrivateNameTagParamsDto extends OmitType(
   @IsEnum(NAME_TAG_TYPE)
   type: NAME_TAG_TYPE;
 
+  @ApiProperty({ default: false })
+  isFavorite: boolean;
+
   @ApiProperty({ default: null })
   note: string;
 }
