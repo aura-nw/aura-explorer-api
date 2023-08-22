@@ -60,7 +60,7 @@ export class PrivateNameTagController {
     this.logger.setContext(PrivateNameTagController.name);
   }
 
-  @Get('admin/private-name-tag')
+  @Get('user/private-name-tag')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -78,7 +78,7 @@ export class PrivateNameTagController {
     return { data, meta: { count } };
   }
 
-  @Get('admin/private-name-tag/:id')
+  @Get('user/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -93,7 +93,7 @@ export class PrivateNameTagController {
     return result;
   }
 
-  @Post('admin/private-name-tag')
+  @Post('user/private-name-tag')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -107,7 +107,7 @@ export class PrivateNameTagController {
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put('admin/private-name-tag/:id')
+  @Put('user/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
@@ -122,7 +122,7 @@ export class PrivateNameTagController {
     return await this.nameTagService.updateNameTag(ctx, id, request);
   }
 
-  @Delete('admin/private-name-tag/:id')
+  @Delete('user/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
