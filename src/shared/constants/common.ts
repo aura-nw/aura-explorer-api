@@ -237,7 +237,7 @@ export const MESSAGES = {
     SOME_THING_WRONG: 'Something went wrong.',
     NEED_TO_BE_LOGGED_IN_AGAIN: {
       CODE: 'E001',
-      MESSAGE: 'You need to be logged in again.',
+      MESSAGE: 'You need to log in again using new password.',
     },
   },
 };
