@@ -9,8 +9,8 @@ class PrivateNameTagResponseAttributes {
   })
   address: string;
 
-  @ApiProperty({ example: false })
-  is_favorite: boolean;
+  @ApiProperty({ example: false, name: is_favorite })
+  isFavorite: boolean;
 
   @ApiProperty({ example: 'public-name' })
   name_tag: string;
