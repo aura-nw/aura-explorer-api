@@ -106,7 +106,7 @@ export class PrivateNameTagService {
 
     const entitySave = { ...entity, ...req };
     if (req.nameTag) {
-      entity.nameTag = await this.encryptionService.encrypt(req.nameTag);
+      entitySave.nameTag = await this.encryptionService.encrypt(req.nameTag);
     }
 
     try {
@@ -170,7 +170,7 @@ export class PrivateNameTagService {
         };
       }
     }
-    
+
     return false;
   }
 
