@@ -6,8 +6,8 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
-  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -107,7 +107,7 @@ export class PrivateNameTagController {
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put('user/private-name-tag/:id')
+  @Patch('user/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()

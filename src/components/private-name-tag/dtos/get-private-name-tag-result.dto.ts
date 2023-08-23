@@ -9,20 +9,20 @@ class PrivateNameTagResponseAttributes {
   })
   address: string;
 
-  @ApiProperty({ example: false, name: is_favorite })
+  @ApiProperty({ example: false })
   isFavorite: boolean;
 
   @ApiProperty({ example: 'public-name' })
-  name_tag: string;
+  nameTag: string;
 
   @ApiProperty({ example: 'note' })
   note: string;
-  
-  @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
-  created_at: Date;
 
   @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
-  updated_at: Date;
+  createdAt: Date;
+
+  @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
+  updatedAt: Date;
 }
 
 class ListPrivateNameTag {

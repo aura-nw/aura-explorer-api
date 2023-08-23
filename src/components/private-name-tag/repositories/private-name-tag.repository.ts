@@ -28,13 +28,11 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
       .select(
         `tag.id,
         tag.address,
-        tag.is_favorite,
+        tag.is_favorite as isFavorite,
         tag.type,
-        tag.name_tag,
-        tag.created_at,
-        user.email,
-        tag.created_at,
-        tag.updated_at`,
+        tag.name_tag as nameTag,
+        tag.created_at as createdAt,
+        tag.updated_at as updatedAt`,
       )
       .leftJoin(User, 'user', 'user.id = tag.created_by')
       .where('tag.created_by = :user_id', { user_id });
@@ -79,12 +77,12 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     let qb = this.createQueryBuilder()
       .select([
         'id',
-        'is_favorite',
+        'is_favorite as isFavorite',
         'address',
-        'name_tag',
+        'name_tag as nameTag',
         'note',
-        'created_at',
-        'updated_at',
+        'created_at as createdAt',
+        'updated_at as updatedAt',
       ])
       .where('created_by = :user_id', { user_id })
       .limit(Number(limit) || PAGE_REQUEST.MAX_500);
