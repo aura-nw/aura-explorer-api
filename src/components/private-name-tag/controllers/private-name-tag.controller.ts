@@ -10,6 +10,8 @@ import {
   Post,
   Query,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -113,6 +115,7 @@ export class PrivateNameTagController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update Private name tag' })
   @ApiResponse({ status: HttpStatus.OK })
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateNameTag(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,

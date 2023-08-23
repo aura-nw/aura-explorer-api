@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   AURA_INFO,
@@ -16,6 +20,7 @@ import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
 import { ServiceUtil } from '../../../shared/utils/service.util';
+import { validate } from 'class-validator';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -89,6 +94,8 @@ export class PrivateNameTagService {
     req: UpdatePrivateNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
+    // const validateResult = await validate(req, { whitelist: true });
+
     const entity = await this.privateNameTagRepository.findOne(id, {
       where: { createdBy: ctx.user.id },
     });
@@ -101,7 +108,11 @@ export class PrivateNameTagService {
     }
     entity.createdBy = ctx.user.id;
 
+    console.log(req);
+
     const entitySave = { ...entity, ...req };
+
+    console.log(entitySave);
 
     try {
       const result = await this.privateNameTagRepository.update(id, entitySave);
