@@ -6,10 +6,12 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
-  Put,
   Query,
   UseGuards,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -107,12 +109,13 @@ export class PrivateNameTagController {
     return await this.nameTagService.createNameTag(ctx, request);
   }
 
-  @Put('user/private-name-tag/:id')
+  @Patch('user/private-name-tag/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update Private name tag' })
   @ApiResponse({ status: HttpStatus.OK })
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateNameTag(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,
@@ -140,6 +143,7 @@ export class PrivateNameTagController {
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all private name tag.' })
   @ApiOkResponse({

@@ -8,10 +8,7 @@ import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([CipherKey]),
-    ConfigModule,
-  ],
+  imports: [TypeOrmModule.forFeature([CipherKey]), ConfigModule],
   providers: [EncryptionService],
   controllers: [],
   exports: [],
