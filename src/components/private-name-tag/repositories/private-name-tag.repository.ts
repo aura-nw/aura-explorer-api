@@ -41,7 +41,8 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
       const result = await builder
         .limit(limit)
         .offset(offset)
-        .orderBy('tag.updated_at', 'DESC')
+        .orderBy('tag.is_favorite', 'DESC')
+        .addOrderBy('tag.updated_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();
@@ -85,6 +86,8 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
         'updated_at as updatedAt',
       ])
       .where('created_by = :user_id', { user_id })
+      .orderBy('is_favorite', 'DESC')
+      .addOrderBy('updated_at', 'DESC')
       .limit(Number(limit) || PAGE_REQUEST.MAX_500);
 
     if (nextKey) {

@@ -94,7 +94,6 @@ export class PrivateNameTagService {
     req: UpdatePrivateNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    // const validateResult = await validate(req, { whitelist: true });
 
     const entity = await this.privateNameTagRepository.findOne(id, {
       where: { createdBy: ctx.user.id },
@@ -103,16 +102,12 @@ export class PrivateNameTagService {
       throw new NotFoundException('Private Name Tag not found');
     }
 
+    entity.createdBy = ctx.user.id;
+
+    const entitySave = { ...entity, ...req };
     if (req.nameTag) {
       entity.nameTag = await this.encryptionService.encrypt(req.nameTag);
     }
-    entity.createdBy = ctx.user.id;
-
-    console.log(req);
-
-    const entitySave = { ...entity, ...req };
-
-    console.log(entitySave);
 
     try {
       const result = await this.privateNameTagRepository.update(id, entitySave);
@@ -175,21 +170,7 @@ export class PrivateNameTagService {
         };
       }
     }
-
-    const tag = await this.privateNameTagRepository.findOne({
-      where: {
-        nameTag: await this.encryptionService.encrypt(req.nameTag),
-        address: Not(req.address),
-      },
-    });
-
-    if (tag) {
-      return {
-        code: ADMIN_ERROR_MAP.DUPLICATE_TAG.Code,
-        message: ADMIN_ERROR_MAP.DUPLICATE_TAG.Message,
-      };
-    }
-
+    
     return false;
   }
 
@@ -206,7 +187,6 @@ export class PrivateNameTagService {
 
     const nextKey = nameTags.slice(-1)[0]?.id;
 
-    console.log(nameTags);
     const data = await Promise.all(
       nameTags.map(async (item) => {
         item.nameTag = await this.encryptionService.decrypt(item.nameTag);
