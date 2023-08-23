@@ -9,17 +9,23 @@ class PrivateNameTagAttributes {
   })
   address: string;
 
+  @ApiProperty({ example: false })
+  isFavorite: boolean;
+
   @ApiProperty({ example: 'account' })
   type: string;
 
   @ApiProperty({ example: 'name' })
-  name_tag: string;
+  nameTag: string;
 
   @ApiProperty({ example: 'note' })
   note: string;
 
   @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
-  created_at: Date;
+  createdAt: Date;
+
+  @ApiProperty({ example: '2023-07-31T02:55:47.994Z' })
+  updatedAt: Date;
 }
 
 export class GetPrivateNameTagAdminResult {
