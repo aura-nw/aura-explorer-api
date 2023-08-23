@@ -140,6 +140,7 @@ export class PrivateNameTagController {
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
+  @ApiResponse({ status: HttpStatus.OK })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all private name tag.' })
   @ApiOkResponse({

@@ -65,6 +65,7 @@ export class PrivateNameTagService {
     }
     const entity = new PrivateNameTag();
     entity.address = req.address;
+    entity.is_favorite = req.isFavorite;
     entity.type = req.type;
     entity.note = req.note;
     entity.name_tag = await this.encryptionService.encrypt(req.nameTag);
@@ -104,6 +105,7 @@ export class PrivateNameTagService {
       return errorMsg;
     }
     entity.type = req.type;
+    entity.is_favorite = req.isFavorite;
     entity.name_tag = await this.encryptionService.encrypt(req.nameTag);
     entity.created_by = ctx.user.id;
     entity.note = req.note;

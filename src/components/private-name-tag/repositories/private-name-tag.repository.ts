@@ -82,6 +82,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
         'is_favorite',
         'address',
         'name_tag',
+        'note',
         'created_at',
         'updated_at',
       ])
