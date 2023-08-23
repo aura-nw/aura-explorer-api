@@ -9,7 +9,7 @@ class PrivateNameTagAttributes {
   })
   address: string;
 
-  @ApiProperty({ example: false, name: 'is_favorite' })
+  @ApiProperty({ example: false })
   isFavorite: boolean;
 
   @ApiProperty({ example: 'account' })

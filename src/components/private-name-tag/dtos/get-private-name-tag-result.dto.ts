@@ -12,7 +12,7 @@ class PrivateNameTagResponseAttributes {
   @ApiProperty({ example: false })
   isFavorite: boolean;
 
-  @ApiProperty({ example: 'public-name' })
+  @ApiProperty({ example: 'private-name-tag' })
   nameTag: string;
 
   @ApiProperty({ example: 'note' })
