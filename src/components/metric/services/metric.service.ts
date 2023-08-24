@@ -170,7 +170,7 @@ export class MetricService {
         formatDate = 'YYYY-MM-01T00:00:00.000';
         break;
       case RangeType.hour:
-        compareDate.add(-360, 'h'); // Value of 15 day
+        compareDate.add(-720, 'h'); // Value of 30 day
         formatDate = 'YYYY-MM-DDTHH:00:00.000';
         break;
       default:
