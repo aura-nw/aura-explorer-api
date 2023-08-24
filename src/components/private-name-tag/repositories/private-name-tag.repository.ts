@@ -28,6 +28,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
       .select(
         `tag.id,
         tag.address,
+        tag.note,
         tag.is_favorite as isFavorite,
         tag.type,
         tag.name_tag as nameTag,
