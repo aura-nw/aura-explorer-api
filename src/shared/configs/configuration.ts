@@ -37,7 +37,6 @@ export default () => ({
       channel: process.env.REDIS_ABT_CHANNEL,
     },
   },
-  threads: process.env.THREADS,
   indexer: {
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID,
@@ -83,5 +82,4 @@ export default () => ({
     apiVersion: process.env.KMS_API_VERSION,
     alias: process.env.KMS_ALIAS,
   },
-  addressPrefix: process.env.ADDRESS_PREFIX,
 });
