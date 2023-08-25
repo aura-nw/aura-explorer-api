@@ -15,6 +15,10 @@ export class Cw20MetricParamsDto {
   @ApiProperty()
   readonly rangeType: RangeType = RangeType.minute;
 
+  @ApiPropertyOptional()
+  @Transform(({ value }) => Number(value))
+  step: number;
+
   @ApiProperty()
   @IsNotEmpty()
   coinId: string;

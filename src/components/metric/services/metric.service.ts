@@ -36,13 +36,13 @@ export class MetricService {
     min: number,
     max: number,
     rangeType: RangeType,
+    step: number,
     coinId: string,
   ): Promise<TokenOutput[]> {
     try {
       this.logger.log(ctx, `${this.getTokenInfo.name} was called!`);
       // const { step, fluxType, amount } = buildCondition(range);
-      const range = rangeType === RangeType.minute ? 3 : 1;
-      const queryStep = `${range}${rangeType}`;
+      const queryStep = `${step || 1}${rangeType}`;
       const minDate = new Date(min),
         maxDate = new Date(max);
 
