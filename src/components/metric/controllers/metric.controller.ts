@@ -47,6 +47,7 @@ export class MetricController {
       query.min,
       query.max,
       query.rangeType,
+      query.step,
       query.coinId,
     );
 

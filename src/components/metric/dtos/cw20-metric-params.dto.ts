@@ -17,6 +17,12 @@ export class Cw20MetricParamsDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  step: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
   coinId: string;
 
   @ApiProperty()
