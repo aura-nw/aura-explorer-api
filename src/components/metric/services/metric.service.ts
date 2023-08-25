@@ -162,7 +162,7 @@ export class MetricService {
     const compareDate = moment(maxDate).utc();
     switch (rangeType) {
       case RangeType.day:
-        compareDate.add(-365, 'd'); // Value of 1 year
+        compareDate.add(-730, 'd'); // Value of 2 years
         formatDate = 'YYYY-MM-DDT00:00:00.000';
         break;
       case RangeType.month:
@@ -170,11 +170,11 @@ export class MetricService {
         formatDate = 'YYYY-MM-01T00:00:00.000';
         break;
       case RangeType.hour:
-        compareDate.add(-720, 'h'); // Value of 30 day
+        compareDate.add(-1440, 'h'); // Value of 60 days
         formatDate = 'YYYY-MM-DDTHH:00:00.000';
         break;
       default:
-        compareDate.add(-1440, 'm'); // Value of 24 hourse
+        compareDate.add(-2880, 'm'); // Value of 48 hours
         formatDate = 'YYYY-MM-DDTHH:mm:00.000';
         break;
     }
