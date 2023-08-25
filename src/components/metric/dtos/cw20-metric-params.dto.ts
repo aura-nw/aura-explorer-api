@@ -15,9 +15,7 @@ export class Cw20MetricParamsDto {
   @ApiProperty()
   readonly rangeType: RangeType = RangeType.minute;
 
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsNumber()
+  @ApiPropertyOptional()
   @Transform(({ value }) => Number(value))
   step: number;
 
