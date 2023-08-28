@@ -82,4 +82,5 @@ export default () => ({
     apiVersion: process.env.KMS_API_VERSION,
     alias: process.env.KMS_ALIAS,
   },
+  ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
 });

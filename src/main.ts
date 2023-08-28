@@ -50,6 +50,7 @@ async function bootstrap() {
   const queues = [
     createQueueAdapter(QUEUES.SEND_MAIL.QUEUE_NAME, configService),
     createQueueAdapter(SYNC_SERVICE_QUEUES.SMART_CONTRACT, configService),
+    createQueueAdapter(QUEUES.CW4973.QUEUE_NAME, configService),
   ];
 
   const serverAdapter = new ExpressAdapter();
