@@ -2,7 +2,14 @@ import { InjectQueue, Process, Processor } from '@nestjs/bull';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { Logger } from '@nestjs/common';
 import { Queue } from 'bull';
-import { COIN_MARKET_CAP_API, GECKOTERMINAL_API, QUEUES, TokenMarkets } from '../../../shared';
+import {
+  AURA_INFO,
+  COINGECKO_API,
+  COIN_MARKET_CAP_API,
+  GECKOTERMINAL_API,
+  QUEUES,
+  TokenMarkets,
+} from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { InfluxDBClient } from '../../metric/services/influxdb-client';
@@ -48,22 +55,22 @@ export class TokenProcessor {
   @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_PRICE)
   async syncAuraTokenPrice(): Promise<void> {
     try {
-      const geckoTerminal = this.appParams.geckoterminal.api;
+      const geckoTerminal = this.appParams.geckoterminal;
 
       const token = await this.tokenMarketsRepository.findOne({
         where: {
-          coin_id: 'aura-network',
+          coin_id: AURA_INFO.COIN_ID,
         },
       });
 
       const para = `${util.format(
         GECKOTERMINAL_API.GET_TOKEN_PRICE,
-        this.appParams.geckoterminal.pool,
-        this.appParams.geckoterminal.coinAddress,
+        geckoTerminal.pool,
+        geckoTerminal.coinAddress,
       )}`;
 
       const response = await this.serviceUtil.getDataAPI(
-        geckoTerminal.API,
+        geckoTerminal.api,
         para,
         '',
       );
@@ -187,7 +194,7 @@ export class TokenProcessor {
         const data = response?.data[key];
         let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.slug);
         if (tokenInfo) {
-          tokenInfo = SyncDataHelpers.updateCoinMarketsData(tokenInfo, data);
+          tokenInfo = this.updateCoinMarketsData(tokenInfo, data);
           coinMarkets.push(tokenInfo);
         }
       }
@@ -204,7 +211,7 @@ export class TokenProcessor {
   }
 
   async syncCoingeckoPrice(listTokens) {
-    const coingecko = this.appParams.COINGECKO;
+    const coingecko = this.appParams.coingecko;
     this.logger.log(`============== Call Coingecko Api ==============`);
     const coinIds = listTokens.join(',');
     const coinMarkets: TokenMarkets[] = [];
@@ -212,11 +219,11 @@ export class TokenProcessor {
     const para = `${util.format(
       COINGECKO_API.GET_COINS_MARKET,
       coinIds,
-      coingecko.MAX_REQUEST,
+      coingecko.maxRequest,
     )}`;
 
     const [response, tokenInfos] = await Promise.all([
-      this.serviceUtil.getDataAPI(coingecko.API, para, ''),
+      this.serviceUtil.getDataAPI(coingecko.api, para, ''),
       this.tokenMarketsRepository.find({
         where: {
           coin_id: In(listTokens),
@@ -229,13 +236,13 @@ export class TokenProcessor {
         const data = response[index];
         let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.id);
         if (tokenInfo) {
-          tokenInfo = SyncDataHelpers.updateTokenMarketsData(tokenInfo, data);
+          tokenInfo = this.updateTokenMarketsData(tokenInfo, data);
           coinMarkets.push(tokenInfo);
         }
       }
     }
     if (coinMarkets.length > 0) {
-      await this.tokenMarketsRepository.update(coinMarkets);
+      await this.tokenMarketsRepository.save(coinMarkets);
 
       this.logger.log(`============== Write data to Influxdb ==============`);
       await this.influxDbClient.writeBlockTokenPriceAndVolume(coinMarkets);
@@ -243,5 +250,48 @@ export class TokenProcessor {
         `============== Write data to Influxdb  successfully ==============`,
       );
     }
+  }
+
+  updateCoinMarketsData(currentData: TokenMarkets, data: any): TokenMarkets {
+    const quote = data.quote?.USD;
+    const coinInfo = { ...currentData };
+    coinInfo.current_price = Number(quote?.price?.toFixed(6)) || 0;
+    coinInfo.price_change_percentage_24h =
+      Number(quote?.percent_change_24h?.toFixed(6)) || 0;
+    coinInfo.total_volume = Number(quote?.volume_24h?.toFixed(6)) || 0;
+    coinInfo.circulating_supply =
+      Number(data.circulating_supply?.toFixed(6)) || 0;
+    const circulating_market_cap =
+      coinInfo.circulating_supply * coinInfo.current_price;
+    coinInfo.circulating_market_cap =
+      Number(circulating_market_cap?.toFixed(6)) || 0;
+    coinInfo.max_supply = Number(data.max_supply?.toFixed(6)) || 0;
+    coinInfo.market_cap =
+      Number(data.self_reported_market_cap?.toFixed(6)) || 0;
+    coinInfo.fully_diluted_valuation =
+      Number(quote?.fully_diluted_market_cap?.toFixed(6)) || 0;
+
+    return coinInfo;
+  }
+
+  updateTokenMarketsData(currentData: TokenMarkets, data: any): TokenMarkets {
+    const coinInfo = { ...currentData };
+    coinInfo.current_price = Number(data.current_price?.toFixed(6)) || 0;
+    coinInfo.price_change_percentage_24h =
+      Number(data.price_change_percentage_24h?.toFixed(6)) || 0;
+    coinInfo.total_volume = Number(data.total_volume?.toFixed(6)) || 0;
+    coinInfo.circulating_supply =
+      Number(data.circulating_supply?.toFixed(6)) || 0;
+
+    const circulating_market_cap =
+      coinInfo.circulating_supply * coinInfo.current_price;
+    coinInfo.circulating_market_cap =
+      Number(circulating_market_cap?.toFixed(6)) || 0;
+    coinInfo.max_supply = Number(data.max_supply?.toFixed(6)) || 0;
+    coinInfo.market_cap = Number(data.market_cap?.toFixed(6)) || 0;
+    coinInfo.fully_diluted_valuation =
+      Number(data.fully_diluted_valuation?.toFixed(6)) || 0;
+
+    return coinInfo;
   }
 }

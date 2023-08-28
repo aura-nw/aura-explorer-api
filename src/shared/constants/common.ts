@@ -25,13 +25,11 @@ export enum CONTRACT_CODE_RESULT {
 }
 
 export enum GECKOTERMINAL_API {
-  GET_TOKEN_PRICE = '/networks/%s/pools/%s',
+  GET_TOKEN_PRICE = 'networks/%s/pools/%s',
 }
 
 export enum COINGECKO_API {
-  GET_PRICE_VOLUME = 'simple/price?ids=%s&vs_currencies=usd&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true',
   GET_COINS_MARKET = 'coins/markets?vs_currency=usd&ids=%s&order=market_cap_desc&per_page=%s&page=1&sparkline=false&price_change_percentage=24h',
-  GET_COINS = 'coins/list?include_platform=true',
 }
 
 export enum COIN_MARKET_CAP_API {

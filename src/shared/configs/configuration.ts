@@ -98,7 +98,7 @@ export default () => ({
   coinMarketCap: {
     api: process.env.COIN_MARKET_CAP_API_EP,
     apiKey: process.env.COIN_MARKET_CAP_API_KEY,
-    MAX_REQUEST: Number(process.env.MAX_REQUEST) || 250,
-    COIN_MARKET_CAP_PLATFORM: process.env.PLATFORM || 'ethereum',
+    maxRequest: Number(process.env.MAX_REQUEST) || 250,
+    platform: process.env.PLATFORM || 'ethereum',
   },
 });

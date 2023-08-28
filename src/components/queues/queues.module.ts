@@ -2,6 +2,7 @@ import { Injectable, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 import { SendMailModule } from './send-mail/send-mail.module';
+import { TokenModule } from './token/token.module';
 
 @Injectable()
 @Module({
@@ -21,6 +22,7 @@ import { SendMailModule } from './send-mail/send-mail.module';
       inject: [ConfigService],
     }),
     SendMailModule,
+    TokenModule,
   ],
 })
 export class QueuesModule {}

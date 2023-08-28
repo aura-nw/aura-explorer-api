@@ -57,8 +57,7 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
   async countCw20TokensHavingCoinId() {
     const sqlSelect = `tm.contract_address, tm.coin_id`;
 
-    const queryBuilder = this.repos
-      .createQueryBuilder('tm')
+    const queryBuilder = this.createQueryBuilder('tm')
       .select(sqlSelect)
       .where("tm.coin_id <> '' ")
       .andWhere("tm.coin_id <> 'aura-network' ");
@@ -69,8 +68,7 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
   async getCw20TokenMarketsHavingCoinId(limit: number, pageIndex: number) {
     const sqlSelect = ` tm.coin_id`;
 
-    const queryBuilder = this.repos
-      .createQueryBuilder('tm')
+    const queryBuilder = this.createQueryBuilder('tm')
       .select(sqlSelect)
       .where("tm.coin_id <> '' ")
       .andWhere("tm.coin_id <> 'aura-network' ")
