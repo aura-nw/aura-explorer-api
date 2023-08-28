@@ -103,6 +103,7 @@ export class PrivateNameTagService {
     }
 
     entity.createdBy = ctx.user.id;
+    entity.updatedAt = new Date();
 
     const entitySave = { ...entity, ...req };
     if (req.nameTag) {
