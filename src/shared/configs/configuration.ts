@@ -93,13 +93,10 @@ export default () => ({
   coingecko: {
     api: process.env.COINGECKO_API,
     maxRequest: Number(process.env.MAX_REQUEST) || 250,
-    platform: process.env.PLATFORM || 'ethereum',
   },
   coinMarketCap: {
     api: process.env.COIN_MARKET_CAP_API_EP,
     apiKey: process.env.COIN_MARKET_CAP_API_KEY,
-    maxRequest: Number(process.env.MAX_REQUEST) || 250,
-    platform: process.env.PLATFORM || 'ethereum',
   },
   keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
 });

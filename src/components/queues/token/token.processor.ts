@@ -172,12 +172,12 @@ export class TokenProcessor {
 
     const headersRequest = {
       'Content-Type': 'application/json',
-      'X-CMC_PRO_API_KEY': this.appParams.COIN_MARKET_CAP.API_KEY,
+      'X-CMC_PRO_API_KEY': coinMarketCap.apiKey,
     };
 
     const [response, tokenInfos] = await Promise.all([
       this.serviceUtil.getDataAPIWithHeader(
-        coinMarketCap.API,
+        coinMarketCap.api,
         para,
         headersRequest,
       ),
