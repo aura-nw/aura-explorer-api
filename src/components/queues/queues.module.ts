@@ -16,6 +16,8 @@ import { TokenModule } from './token/token.module';
           backoff: {
             type: 'exponential',
             delay: 1000,
+            removeOnFail: config.get('keepJobCount'),
+            removeOnComplete: { count: config.get('keepJobCount') },
           },
         },
       }),

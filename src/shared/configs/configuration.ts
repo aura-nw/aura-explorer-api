@@ -101,4 +101,5 @@ export default () => ({
     maxRequest: Number(process.env.MAX_REQUEST) || 250,
     platform: process.env.PLATFORM || 'ethereum',
   },
+  keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
 });
