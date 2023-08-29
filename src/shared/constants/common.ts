@@ -36,6 +36,8 @@ export enum COIN_MARKET_CAP_API {
   GET_COINS_MARKET = 'cryptocurrency/quotes/latest?slug=%s',
 }
 
+export const COIN_MARKET_CAP = 'COIN_MARKET_CAP';
+
 export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,

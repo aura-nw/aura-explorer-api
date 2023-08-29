@@ -5,6 +5,7 @@ import { Queue } from 'bull';
 import {
   AURA_INFO,
   COINGECKO_API,
+  COIN_MARKET_CAP,
   COIN_MARKET_CAP_API,
   GECKOTERMINAL_API,
   QUEUES,
@@ -144,7 +145,7 @@ export class TokenProcessor {
 
   async handleSyncPriceVolume(listTokens: string[]): Promise<void> {
     try {
-      if (this.appParams.priceHostSync === 'COIN_MARKET_CAP') {
+      if (this.appParams.priceHostSync === COIN_MARKET_CAP) {
         await this.syncCoinMarketCapPrice(listTokens);
       } else {
         await this.syncCoingeckoPrice(listTokens);
