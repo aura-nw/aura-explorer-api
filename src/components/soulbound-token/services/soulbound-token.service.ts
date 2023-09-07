@@ -424,6 +424,28 @@ export class SoulboundTokenService {
   }
 
   /**
+   * count soulbound token of receiver address
+   * @param ctx
+   * @param receiverAddress
+   * @returns
+   */
+  async countTokenByReceiverAddress(
+    ctx: RequestContext,
+    receiverAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `============== ${this.countTokenByReceiverAddress.name} was called with paras: ${receiverAddress}! ==============`,
+    );
+    const result = await this.soulboundTokenRepos.count({
+      where: {
+        receiver_address: receiverAddress,
+      },
+    });
+    return result;
+  }
+
+  /**
    * Update notify of soulbound token
    * @param ctx
    * @param req
