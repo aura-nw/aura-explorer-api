@@ -35,6 +35,7 @@ import { RedisUtil } from '../../../shared/utils/redis.util';
 import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 import { SoulboundRejectListRepository } from '../repositories/soulbound-reject-list.repository';
+import { Not } from 'typeorm';
 
 @Injectable()
 export class SoulboundTokenService {
@@ -440,6 +441,7 @@ export class SoulboundTokenService {
     const result = await this.soulboundTokenRepos.count({
       where: {
         receiver_address: receiverAddress,
+        status: Not(SOULBOUND_TOKEN_STATUS.REJECTED),
       },
     });
     return result;
