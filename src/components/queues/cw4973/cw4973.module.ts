@@ -1,6 +1,6 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
-import { AkcLoggerModule, QUEUES } from '../../../shared';
+import { AkcLoggerModule, QUEUES, SyncStatus } from '../../../shared';
 import { CW4973Processor } from './cw4973.processor';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { HttpModule } from '@nestjs/axios';
@@ -13,7 +13,11 @@ import { SyncPointRepository } from '../../sync-point/repositories/sync-point.re
     BullModule.registerQueueAsync({
       name: QUEUES.CW4973.QUEUE_NAME,
     }),
-    TypeOrmModule.forFeature([SoulboundTokenRepository, SyncPointRepository]),
+    TypeOrmModule.forFeature([
+      SoulboundTokenRepository,
+      SyncPointRepository,
+      SyncStatus,
+    ]),
     AkcLoggerModule,
     HttpModule,
   ],
