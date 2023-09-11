@@ -71,6 +71,8 @@ export class CW4973Processor {
         type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
         point: 0,
       });
+
+      return;
     }
 
     const graphQlQuery = {

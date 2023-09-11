@@ -5,7 +5,7 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO, CW4973_CONTRACT } from '../constants';
+import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
 import { sha256 } from 'js-sha256';
 @Injectable()
 export class ServiceUtil {
@@ -152,10 +152,10 @@ export class ServiceUtil {
 
   transform(value: string): string {
     const ipfsUrl = this.configService.get('ipfsUrl');
-    if (!value.includes('https://ipfs.io/')) {
+    if (!value.includes(DEFAULT_IPFS)) {
       return ipfsUrl + value.replace('://', '/');
     } else {
-      return value.replace('https://ipfs.io/', ipfsUrl);
+      return value.replace(DEFAULT_IPFS, ipfsUrl);
     }
   }
 }
