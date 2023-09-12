@@ -298,7 +298,7 @@ export const QUEUES = {
   },
 
   TOKEN: {
-    QUEUE_NAME: 'token-price',
+    QUEUE_NAME: 'token-price-queue',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
   },
