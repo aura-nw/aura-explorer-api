@@ -102,4 +102,10 @@ export class TokenMarkets extends BaseEntityIncrementId {
 
   @Column({ name: 'verify_text', nullable: true })
   verify_text: string;
+
+  @Column({ name: 'denom', nullable: true })
+  denom: string;
+
+  @Column({ name: 'decimal', default: 0 })
+  decimal: number;
 }
