@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { In, Not } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 import * as util from 'util';
 import { AccountService } from '../../../components/account/services/account.service';
 import {
@@ -23,7 +23,6 @@ export class Cw20TokenService {
   private minimalDenom;
   private decimals;
   private precisionDiv;
-  private configUrl;
   private chainDB;
 
   constructor(
@@ -38,7 +37,6 @@ export class Cw20TokenService {
     this.minimalDenom = this.appParams.chainInfo.coinMinimalDenom;
     this.decimals = this.appParams.chainInfo.coinDecimals;
     this.precisionDiv = this.appParams.chainInfo.precisionDiv;
-    this.configUrl = this.appParams.configUrl;
     this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
@@ -117,7 +115,9 @@ export class Cw20TokenService {
 
     let tokens = [];
     if (asset?.length > 0) {
-      const listTokenMarketsInfo = await this.tokenMarketsRepository.find();
+      const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
+        where: { contract_address: Not(IsNull()) },
+      });
       tokens = asset.map((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo.find(
           (f) => f.contract_address === item.smart_contract.address,
@@ -174,7 +174,10 @@ export class Cw20TokenService {
     this.logger.log(ctx, `${this.getPriceById.name} was called!`);
     if (query.contractAddress) {
       return await this.tokenMarketsRepository.find({
-        where: { contract_address: query.contractAddress },
+        where: [
+          { contract_address: query.contractAddress },
+          { denom: query.contractAddress },
+        ],
       });
     } else {
       return await this.tokenMarketsRepository.find();
@@ -296,13 +299,10 @@ export class Cw20TokenService {
       (str) => str?.minimal_denom || str?.denom,
     );
     if (ibcBalances?.length > 0) {
-      //get coin info from config
-      const configData = await this.serviceUtil.getDataAPI(
-        this.configUrl,
-        '',
-        ctx,
-      );
-      const coins = configData?.coins;
+      //get coin info from DB
+      const listIbcTokenMarketsInfo = await this.tokenMarketsRepository.find({
+        where: { denom: Not(IsNull()) },
+      });
       for (let i = 0; i < ibcBalances.length; i++) {
         const item = ibcBalances[i];
         const asset = new AssetDto();
@@ -312,13 +312,20 @@ export class Cw20TokenService {
         );
         //get ibc info
         const denom = item.minimal_denom || item.denom;
-        const findCoin = coins?.find((f) => f.denom === denom);
-        if (findCoin) {
-          asset.name = findCoin.name;
-          asset.symbol = findCoin.display;
-          asset.image = findCoin.logo;
-          asset.denom = findCoin.denom;
-          asset.decimals = Number(findCoin.decimal) || 0;
+        const tokenMarketsInfo = listIbcTokenMarketsInfo.find(
+          (f) => f.denom === denom,
+        );
+        if (tokenMarketsInfo) {
+          asset.name = tokenMarketsInfo.name;
+          asset.symbol = tokenMarketsInfo.symbol;
+          asset.image = tokenMarketsInfo.image;
+          asset.denom = tokenMarketsInfo.denom;
+          asset.verify_status = tokenMarketsInfo?.verify_status || '';
+          asset.verify_text = tokenMarketsInfo?.verify_text || '';
+          asset.price = tokenMarketsInfo?.current_price || null;
+          asset.price_change_percentage_24h =
+            tokenMarketsInfo?.price_change_percentage_24h || 0;
+          asset.decimals = Number(tokenMarketsInfo.decimal) || 0;
           result.push(asset);
         }
       }
