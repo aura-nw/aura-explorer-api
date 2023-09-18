@@ -1,6 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityRepository, ObjectLiteral, Repository } from 'typeorm';
+import {
+  Brackets,
+  EntityRepository,
+  IsNull,
+  Not,
+  ObjectLiteral,
+  Repository,
+} from 'typeorm';
 import { CONTRACT_CODE_RESULT, TokenMarkets } from '../../../shared';
 import { SmartContractCode } from '../../../shared/entities/smart-contract-code.entity';
 import { Cw20TokenParamsDto } from '../dtos/cw20-token-params.dto';
@@ -52,5 +59,53 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
     const count = await queryBuilder.getCount();
 
     return { list, count };
+  }
+
+  /**
+   * Get list name tags
+   * @param keyword
+   * @param limit
+   * @param offset
+   * @returns
+   */
+  async getIbcTokens(keyword: string, limit: number, offset: number) {
+    this._logger.log(
+      `============== ${this.getIbcTokens.name} was called! ==============`,
+    );
+    const builder = this.createQueryBuilder('ibc_tokens').select(`ibc_tokens.id,
+      ibc_tokens.denom,
+      ibc_tokens.coin_id,
+      ibc_tokens.symbol,
+      ibc_tokens.name,
+      ibc_tokens.image,
+      ibc_tokens.verify_status,
+      ibc_tokens.verify_text,
+      ibc_tokens.decimal,
+      ibc_tokens.created_at`);
+    const _finalizeResult = async () => {
+      const result = await builder
+        .limit(limit)
+        .offset(offset)
+        .where({ denom: Not(IsNull()) })
+        .orderBy('ibc_tokens.updated_at', 'DESC')
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { result, count };
+    };
+
+    if (keyword) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(ibc_tokens.denom) LIKE LOWER(:keyword)', {
+            keyword: `%${keyword}%`,
+          }).orWhere('ibc_tokens.name LIKE :keyword', {
+            keyword: `%${keyword}%`,
+          });
+        }),
+      );
+    }
+
+    return await _finalizeResult();
   }
 }
