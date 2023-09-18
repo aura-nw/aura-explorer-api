@@ -62,7 +62,7 @@ export class PrivateNameTagService {
 
   async createNameTag(ctx: RequestContext, req: CreatePrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.createNameTag.name} was called!`);
-    const errorMsg = await this.validate(req);
+    const errorMsg = await this.validate(ctx.user.id, req);
     if (errorMsg) {
       return errorMsg;
     }
@@ -93,7 +93,7 @@ export class PrivateNameTagService {
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     const request: CreatePrivateNameTagParamsDto = { ...req, address: '' };
-    const errorMsg = await this.validate(request, false);
+    const errorMsg = await this.validate(ctx.user.id, request, false);
     if (errorMsg) {
       return errorMsg;
     }
@@ -144,7 +144,11 @@ export class PrivateNameTagService {
     }
   }
 
-  private async validate(req: CreatePrivateNameTagParamsDto, isCreate = true) {
+  private async validate(
+    user_id: number,
+    req: CreatePrivateNameTagParamsDto,
+    isCreate = true,
+  ) {
     if (isCreate) {
       const validFormat = await this.serviceUtil.isValidBech32Address(
         req.address,
@@ -165,7 +169,7 @@ export class PrivateNameTagService {
 
       // check duplicate address
       const entity = await this.privateNameTagRepository.findOne({
-        where: { address: req.address },
+        where: { createdBy: user_id, address: req.address },
       });
       if (entity) {
         return {
@@ -177,7 +181,10 @@ export class PrivateNameTagService {
 
     // check duplicate private name tag
     const entity = await this.privateNameTagRepository.findOne({
-      where: { nameTag: await this.encryptionService.encrypt(req.nameTag) },
+      where: {
+        createdBy: user_id,
+        nameTag: await this.encryptionService.encrypt(req.nameTag),
+      },
     });
     if (entity) {
       return {
