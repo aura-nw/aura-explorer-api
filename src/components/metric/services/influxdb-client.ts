@@ -1,5 +1,11 @@
-import { InfluxDB, QueryApi, WriteApi } from '@influxdata/influxdb-client';
+import {
+  InfluxDB,
+  Point,
+  QueryApi,
+  WriteApi,
+} from '@influxdata/influxdb-client';
 import { TokenOutput } from '../dtos/token-output.dto';
+import { TokenMarkets } from '../../../shared';
 
 export class InfluxDBClient {
   private client: InfluxDB;
@@ -17,6 +23,11 @@ export class InfluxDBClient {
 
   initQueryApi(): void {
     this.queryApi = this.client.getQueryApi(this.org);
+  }
+
+  initWriteApi(): void {
+    this.writeApi = this.client.getWriteApi(this.org, this.bucket);
+    return;
   }
 
   queryData(measurement, statTime, step) {
@@ -281,5 +292,48 @@ export class InfluxDBClient {
       });
     });
     return output;
+  }
+
+  async writeBlockTokenPriceAndVolume(tokens: TokenMarkets[]) {
+    const points: Array<Point> = [];
+    tokens.forEach((token) => {
+      const point = new Point('token_cw20_measurement')
+        .tag('token_id', token.coin_id)
+        .stringField('coinId', token.coin_id)
+        .stringField('type', 'CW20')
+        .stringField('last_updated', token.updated_at)
+        .floatField('current_price', token.current_price)
+        .floatField(
+          'price_change_percentage_24h',
+          token.price_change_percentage_24h,
+        )
+        .floatField('total_volume', token.total_volume)
+        .floatField('circulating_supply', token.circulating_supply)
+        .floatField('circulating_market_cap', token.circulating_market_cap)
+        .floatField('max_supply', token.max_supply)
+        .floatField('market_cap', token.market_cap)
+        // .intField('current_holder', token.current_holder)
+        // .floatField('percent_hold', token.holder_change_percentage_24h)
+        .timestamp(this.convertDate(token.updated_at));
+      points.push(point);
+    });
+
+    if (points.length > 0) {
+      this.writeApi.writePoints(points);
+      await this.writeApi.flush();
+    }
+  }
+
+  /**
+   * convertDate
+   * @param timestamp
+   * @returns
+   */
+  convertDate(timestamp: any): Date {
+    const strTime = String(timestamp);
+    const idx = strTime.lastIndexOf('.');
+    const dateConvert =
+      idx > -1 ? strTime.substring(0, idx) + '.000Z' : strTime;
+    return new Date(dateConvert);
   }
 }

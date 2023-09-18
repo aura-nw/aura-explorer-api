@@ -41,6 +41,26 @@ export class ServiceUtil {
     }
   }
 
+  /**
+   * getDataAPIWithHeader
+   * @param api
+   * @param params
+   * @param ctx
+   * @returns
+   */
+  async getDataAPIWithHeader(api, params, headersRequest) {
+    try {
+      return lastValueFrom(
+        this.httpService.get(api + params, {
+          timeout: 30000,
+          headers: headersRequest,
+        }),
+      ).then((rs) => rs.data);
+    } catch (err) {
+      return null;
+    }
+  }
+
   async fetchDataFromGraphQL(query, endpoint?, method?) {
     this.logger.log(query, `${this.fetchDataFromGraphQL.name} was called`);
     endpoint = endpoint ? endpoint : this.indexerV2.graphQL;

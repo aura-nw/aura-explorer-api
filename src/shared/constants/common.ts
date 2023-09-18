@@ -27,6 +27,20 @@ export enum CONTRACT_CODE_RESULT {
   INCORRECT = 'Incorrect',
 }
 
+export enum GECKOTERMINAL_API {
+  GET_TOKEN_PRICE = 'networks/%s/pools/%s',
+}
+
+export enum COINGECKO_API {
+  GET_COINS_MARKET = 'coins/markets?vs_currency=usd&ids=%s&order=market_cap_desc&per_page=%s&page=1&sparkline=false&price_change_percentage=24h',
+}
+
+export enum COIN_MARKET_CAP_API {
+  GET_COINS_MARKET = 'cryptocurrency/quotes/latest?slug=%s',
+}
+
+export const COIN_MARKET_CAP = 'COIN_MARKET_CAP';
+
 export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
@@ -286,6 +300,11 @@ export const QUEUES = {
   SEND_MAIL: {
     QUEUE_NAME: 'send-mail',
     JOB: 'job-send-mail',
+  },
+  TOKEN: {
+    QUEUE_NAME: 'token-price-queue',
+    JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
+    JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',
