@@ -19,6 +19,7 @@ import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
 import { ServiceUtil } from '../../../shared/utils/service.util';
+import { Not } from 'typeorm';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -62,7 +63,7 @@ export class PrivateNameTagService {
 
   async createNameTag(ctx: RequestContext, req: CreatePrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.createNameTag.name} was called!`);
-    const errorMsg = await this.validate(ctx.user.id, req);
+    const errorMsg = await this.validate(0, ctx.user.id, req);
     if (errorMsg) {
       return errorMsg;
     }
@@ -93,7 +94,7 @@ export class PrivateNameTagService {
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     const request: CreatePrivateNameTagParamsDto = { ...req, address: '' };
-    const errorMsg = await this.validate(ctx.user.id, request, false);
+    const errorMsg = await this.validate(id, ctx.user.id, request, false);
     if (errorMsg) {
       return errorMsg;
     }
@@ -145,6 +146,7 @@ export class PrivateNameTagService {
   }
 
   private async validate(
+    id: number,
     user_id: number,
     req: CreatePrivateNameTagParamsDto,
     isCreate = true,
@@ -182,6 +184,7 @@ export class PrivateNameTagService {
     // check duplicate private name tag
     const entity = await this.privateNameTagRepository.findOne({
       where: {
+        id: Not(id),
         createdBy: user_id,
         nameTag: await this.encryptionService.encrypt(req.nameTag),
       },
