@@ -223,4 +223,20 @@ export class SoulboundTokenController {
       minterAddress,
     );
   }
+
+  @Get('count/:receiverAddress')
+  async countTokenByReceiverAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('receiverAddress') receiverAddress: string,
+  ) {
+    this.logger.log(
+      ctx,
+      `${this.countTokenByReceiverAddress.name} was called!`,
+    );
+    const token = await this.soulboundTokenService.countTokenByReceiverAddress(
+      ctx,
+      receiverAddress,
+    );
+    return { data: token };
+  }
 }

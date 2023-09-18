@@ -99,4 +99,5 @@ export default () => ({
     apiKey: process.env.COIN_MARKET_CAP_API_KEY,
   },
   keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
+  ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
 });

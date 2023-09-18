@@ -1,5 +1,8 @@
 export const VALIDATION_PIPE_OPTIONS = { transform: true };
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require('dotenv').config();
+
 export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
 
 export const FORWARDED_FOR_TOKEN_HEADER = 'x-forwarded-for';
@@ -51,6 +54,7 @@ export const INDEXER_API_V2 = {
     CW20_OWNER: `query CW20Owner($limit: Int, $offset: Int, $owner: String, $name: String, $address: String) { %s { cw20_contract(limit: $limit, offset: $offset, where: {cw20_holders: {address: {_eq: $owner}, amount: {_gt: 0}}, name: {_ilike: $name}, smart_contract: {address: {_eq: $address}}}) { %s } } }`,
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
+    CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${process.env.INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { data} cw721_contract {smart_contract {address}} sender}}}`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -64,6 +68,7 @@ export const INDEXER_API_V2 = {
     CW20_OWNER: 'CW20Owner',
     CW20_HOLDER: 'CW20Holder',
     VALIDATORS: 'Validators',
+    CW4973_STATUS: 'QueryCW4973Status',
   },
 };
 
@@ -296,11 +301,17 @@ export const QUEUES = {
     QUEUE_NAME: 'send-mail',
     JOB: 'job-send-mail',
   },
-
   TOKEN: {
     QUEUE_NAME: 'token-price-queue',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
+  },
+  CW4973: {
+    QUEUE_NAME: 'cw4973',
+    JOBS: {
+      SYNC_ID_STATUS: 'cw4973-id-status',
+      SYNC_4973_STATUS: 'cw4973-status',
+    },
   },
 };
 
@@ -319,4 +330,8 @@ export enum TOKEN_COIN {
   NATIVE = 'native',
   IBC = 'ibc',
   CW20 = 'cw20',
+}
+
+export enum SYNC_POINT_TYPE {
+  CW4973_BLOCK_HEIGHT = 'CW4973_BLOCK_HEIGHT',
 }
