@@ -69,6 +69,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     user_id: number,
     limit: number,
     nextKey: number,
+    keyword: string,
   ): Promise<PrivateNameTag[]> {
     limit = Number(limit) || PAGE_REQUEST.MAX_500;
 
@@ -93,6 +94,18 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
 
     if (nextKey) {
       qb = qb.andWhere('id > :nextKey', { nextKey });
+    }
+
+    if (keyword) {
+      qb.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(tag.address) LIKE LOWER(:keyword)', {
+            keyword: `%${keyword}%`,
+          }).orWhere('tag.name_tag LIKE :keyword', {
+            keyword: `%${keyword}%`,
+          });
+        }),
+      );
     }
 
     return qb.getRawMany();

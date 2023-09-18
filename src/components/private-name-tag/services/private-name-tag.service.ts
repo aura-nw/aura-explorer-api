@@ -203,11 +203,13 @@ export class PrivateNameTagService {
     user_id: number;
     limit: number;
     nextKey: number;
+    keyword: string;
   }): Promise<GetPrivateNameTagResult> {
     const nameTags = await this.privateNameTagRepository.getNameTagMainSite(
       Number(req.user_id),
       Number(req.limit),
       Number(req.nextKey),
+      req.keyword,
     );
 
     const nextKey = nameTags.slice(-1)[0]?.id;

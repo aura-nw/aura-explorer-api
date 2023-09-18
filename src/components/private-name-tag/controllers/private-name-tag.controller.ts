@@ -166,11 +166,13 @@ export class PrivateNameTagController {
     @ReqContext() ctx: RequestContext,
     @Query('limit') limit?: number,
     @Query('nextKey') nextKey?: number,
+    @Query('keyword') keyword?: string,
   ): Promise<GetPrivateNameTagResult> {
     return await this.nameTagService.getNameTagMainSite({
       user_id: ctx.user?.id || 0,
       limit,
       nextKey,
+      keyword,
     });
   }
 }
