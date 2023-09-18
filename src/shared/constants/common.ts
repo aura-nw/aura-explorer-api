@@ -415,6 +415,13 @@ export const QUEUES = {
     QUEUE_NAME: 'send-mail',
     JOB: 'job-send-mail',
   },
+  CW4973: {
+    QUEUE_NAME: 'cw4973',
+    JOBS: {
+      SYNC_ID_STATUS: 'cw4973-id-status',
+      SYNC_4973_STATUS: 'cw4973-status',
+    },
+  },
 };
 
 export const SYNC_SERVICE_QUEUES = {

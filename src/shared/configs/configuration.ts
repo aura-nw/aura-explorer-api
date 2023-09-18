@@ -82,6 +82,7 @@ export default () => ({
     apiVersion: process.env.KMS_API_VERSION,
     alias: process.env.KMS_ALIAS,
   },
+
   addressPrefix: process.env.ADDRESS_PREFIX,
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
   googleRecaptchaOptions: {
@@ -93,4 +94,5 @@ export default () => ({
   watchList: {
     limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 10,
   },
+  ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
 });
