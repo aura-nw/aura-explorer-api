@@ -17,9 +17,9 @@ import { CW4973QueueModule } from './cw4973/cw4973.module';
           backoff: {
             type: 'exponential',
             delay: 1000,
-            removeOnFail: config.get('keepJobCount'),
-            removeOnComplete: { count: config.get('keepJobCount') },
           },
+          removeOnFail: config.get('keepJobCount'),
+          removeOnComplete: { count: config.get('keepJobCount') },
         },
       }),
       inject: [ConfigService],
