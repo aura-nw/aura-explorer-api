@@ -162,6 +162,12 @@ export class PrivateNameTagController {
     required: false,
     description: 'Key for next page.',
   })
+  @ApiQuery({
+    name: 'keyword',
+    type: String,
+    required: false,
+    description: 'Key for search: Address/Name Tag.',
+  })
   async getNameTag(
     @ReqContext() ctx: RequestContext,
     @Query('limit') limit?: number,

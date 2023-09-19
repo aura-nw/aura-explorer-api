@@ -210,6 +210,7 @@ export class PrivateNameTagService {
       Number(req.limit),
       Number(req.nextKey),
       req.keyword,
+      await this.encryptionService.encrypt(req.keyword),
     );
 
     const nextKey = nameTags.slice(-1)[0]?.id;
