@@ -101,8 +101,8 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
       qb.andWhere(
         new Brackets((qb) => {
           qb.where('address = :keyword', { keyword }).orWhere(
-            'name_tag = :keyword',
-            { keyword: keywordEncrypt },
+            'name_tag = :keywordEncrypt',
+            { keywordEncrypt: keywordEncrypt },
           );
         }),
       );
