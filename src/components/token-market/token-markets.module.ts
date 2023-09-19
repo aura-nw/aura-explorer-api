@@ -8,6 +8,7 @@ import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets
 import { TokenMarketService } from './services/token-market.service';
 import { TokenMarketController } from './controllers/token-market.controller';
 import { UserModule } from '../user/user.module';
+import { IsUniqueConstraint } from './validators/validate-unique';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { UserModule } from '../user/user.module';
     ConfigModule,
     UserModule,
   ],
-  providers: [TokenMarketService, ServiceUtil],
+  providers: [TokenMarketService, IsUniqueConstraint, ServiceUtil],
   controllers: [TokenMarketController],
   exports: [TokenMarketService],
 })

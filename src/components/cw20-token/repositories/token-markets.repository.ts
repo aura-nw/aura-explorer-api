@@ -72,21 +72,24 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
     this._logger.log(
       `============== ${this.getIbcTokens.name} was called! ==============`,
     );
-    const builder = this.createQueryBuilder('ibc_tokens').select(`ibc_tokens.id,
-      ibc_tokens.denom,
-      ibc_tokens.coin_id,
-      ibc_tokens.symbol,
-      ibc_tokens.name,
-      ibc_tokens.image,
-      ibc_tokens.verify_status,
-      ibc_tokens.verify_text,
-      ibc_tokens.decimal,
-      ibc_tokens.created_at`);
+    const builder = this.createQueryBuilder('ibc_tokens')
+      .select(
+        `ibc_tokens.id,
+        ibc_tokens.denom,
+        ibc_tokens.coin_id,
+        ibc_tokens.symbol,
+        ibc_tokens.name,
+        ibc_tokens.image,
+        ibc_tokens.verify_status,
+        ibc_tokens.verify_text,
+        ibc_tokens.decimal,
+        ibc_tokens.created_at`,
+      )
+      .where({ denom: Not(IsNull()) });
     const _finalizeResult = async () => {
       const result = await builder
         .limit(limit)
         .offset(offset)
-        .where({ denom: Not(IsNull()) })
         .orderBy('ibc_tokens.updated_at', 'DESC')
         .getRawMany();
 
@@ -100,6 +103,53 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
           qb.where('LOWER(ibc_tokens.denom) LIKE LOWER(:keyword)', {
             keyword: `%${keyword}%`,
           }).orWhere('ibc_tokens.name LIKE :keyword', {
+            keyword: `%${keyword}%`,
+          });
+        }),
+      );
+    }
+
+    return await _finalizeResult();
+  }
+
+  /**
+   * Get list name tags
+   * @param keyword
+   * @param limit
+   * @param offset
+   * @returns
+   */
+  async getCW20Tokens(keyword: string, limit: number, offset: number) {
+    this._logger.log(
+      `============== ${this.getIbcTokens.name} was called! ==============`,
+    );
+    const builder = this.createQueryBuilder('cw20_tokens')
+      .select(
+        `cw20_tokens.id,
+        cw20_tokens.contract_address,
+        cw20_tokens.coin_id,
+        cw20_tokens.verify_status,
+        cw20_tokens.verify_text,
+        cw20_tokens.created_at`,
+      )
+      .where({ contract_address: Not(IsNull()) });
+    const _finalizeResult = async () => {
+      const result = await builder
+        .limit(limit)
+        .offset(offset)
+        .orderBy('cw20_tokens.updated_at', 'DESC')
+        .getRawMany();
+
+      const count = await builder.getCount();
+      return { result, count };
+    };
+
+    if (keyword) {
+      builder.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(cw20_tokens.contract_address) LIKE LOWER(:keyword)', {
+            keyword: `%${keyword}%`,
+          }).orWhere('cw20_tokens.coin_id LIKE :keyword', {
             keyword: `%${keyword}%`,
           });
         }),

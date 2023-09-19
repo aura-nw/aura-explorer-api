@@ -35,7 +35,7 @@ class IbcTokenResponseAttributes {
   decimal: number;
 }
 
-class ListIbcTokenTag {
+class ListIbcToken {
   @ApiProperty({ isArray: true, type: IbcTokenResponseAttributes })
   ibcTokens: IbcTokenResponseAttributes[];
 
@@ -45,8 +45,16 @@ class ListIbcTokenTag {
   @ApiProperty()
   nextKey: number;
 }
+class IbcToken {
+  @ApiProperty({ type: IbcTokenResponseAttributes })
+  ibcToken: IbcTokenResponseAttributes;
+}
 
 export class GetIbcTokenResult {
   @ApiProperty()
-  data: ListIbcTokenTag;
+  data: ListIbcToken;
+}
+export class GetIbcTokenDetail {
+  @ApiProperty()
+  data: IbcToken;
 }
