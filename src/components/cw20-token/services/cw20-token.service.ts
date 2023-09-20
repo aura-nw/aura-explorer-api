@@ -266,9 +266,7 @@ export class Cw20TokenService {
       const price = tokenMarketsInfo?.current_price
         ? Number(tokenMarketsInfo?.current_price)
         : 0;
-      ibcPrice += item.decimal
-        ? (price * item.balance) / Math.pow(10, Number(item.decimal))
-        : price * item.balance;
+      ibcPrice += price * item.balance;
     });
 
     return auraPrice + cw20Price + ibcPrice;

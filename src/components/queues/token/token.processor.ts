@@ -193,10 +193,10 @@ export class TokenProcessor {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (const [key, value] of Object.entries(response?.data)) {
         const data = response?.data[key];
-        let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.slug);
-        if (tokenInfo) {
-          tokenInfo = this.updateCoinMarketsData(tokenInfo, data);
-          coinMarkets.push(tokenInfo);
+        const tokenInfo = tokenInfos?.filter((f) => f.coin_id === data.slug);
+        for (let index = 0; index < tokenInfo?.length; index++) {
+          const element = this.updateCoinMarketsData(tokenInfo[index], data);
+          coinMarkets.push(element);
         }
       }
     }
@@ -235,10 +235,10 @@ export class TokenProcessor {
     if (response) {
       for (let index = 0; index < response.length; index++) {
         const data = response[index];
-        let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.id);
-        if (tokenInfo) {
-          tokenInfo = this.updateTokenMarketsData(tokenInfo, data);
-          coinMarkets.push(tokenInfo);
+        const tokenInfo = tokenInfos?.filter((f) => f.coin_id === data.id);
+        for (let index = 0; index < tokenInfo?.length; index++) {
+          const element = this.updateTokenMarketsData(tokenInfo[index], data);
+          coinMarkets.push(element);
         }
       }
     }

@@ -40,6 +40,7 @@ import {
 } from '../dtos/get-ibc-token-result.dto';
 import { IbcTokenParamsDto } from '../dtos/ibc-token-params.dto';
 import { StoreIbcTokenParamsDto } from '../dtos/store-ibc-token-params.dto';
+import { StoreCW20TokenParamsDto } from '../dtos/store-cw20-token-params.dto';
 
 @Controller()
 @ApiTags('ibc-token')
@@ -80,26 +81,6 @@ export class TokenMarketController {
     return { data: result, meta: { count } };
   }
 
-  @Get('admin/cw20-token')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get list cw20 token' })
-  @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: GetIbcTokenResult })
-  async getCW20Token(
-    @ReqContext() ctx: RequestContext,
-    @Query() request: IbcTokenParamsDto,
-  ): Promise<BaseApiResponse<TokenMarkets[]>> {
-    this.logger.log(ctx, `${this.getCW20Token.name} was called!`);
-    const { result, count } = await this.tokenMarketService.getCW20Tokens(
-      ctx,
-      request,
-    );
-
-    return { data: result, meta: { count } };
-  }
-
   @Get('admin/ibc-token/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
@@ -111,7 +92,7 @@ export class TokenMarketController {
     @Param('id') id: number,
   ): Promise<TokenMarkets> {
     this.logger.log(ctx, `${this.getIbcTokenDetail.name} was called!`);
-    const result = await this.tokenMarketService.getIbcTokenDetail(ctx, id);
+    const result = await this.tokenMarketService.getTokenDetail(ctx, id);
     return result;
   }
 
@@ -135,11 +116,11 @@ export class TokenMarketController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update ibc token' })
   @ApiResponse({ status: HttpStatus.OK })
-  async updateNameTag(
+  async updateIbcToken(
     @ReqContext() ctx: RequestContext,
     @Body() request: StoreIbcTokenParamsDto,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
+    this.logger.log(ctx, `${this.updateIbcToken.name} was called!`);
     return await this.tokenMarketService.updateIbcToken(ctx, request);
   }
 
@@ -149,11 +130,88 @@ export class TokenMarketController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete ibc token' })
   @ApiResponse({ status: HttpStatus.OK })
-  async deleteNameTag(
+  async deleteIbcToken(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.deleteNameTag.name} was called!`);
-    return await this.tokenMarketService.deleteIbcToken(ctx, id);
+    this.logger.log(ctx, `${this.deleteIbcToken.name} was called!`);
+    return await this.tokenMarketService.deleteToken(ctx, id);
+  }
+
+  @Get('admin/cw20-token')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get list cw20 token' })
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: GetIbcTokenResult })
+  async getCW20Token(
+    @ReqContext() ctx: RequestContext,
+    @Query() request: IbcTokenParamsDto,
+  ): Promise<BaseApiResponse<TokenMarkets[]>> {
+    this.logger.log(ctx, `${this.getCW20Token.name} was called!`);
+    const { result, count } = await this.tokenMarketService.getCW20Tokens(
+      ctx,
+      request,
+    );
+
+    return { data: result, meta: { count } };
+  }
+
+  @Get('admin/cw20-token/:id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get cw20 token by id.' })
+  @ApiOkResponse({ type: GetIbcTokenDetail })
+  async getCW20Detail(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: number,
+  ): Promise<TokenMarkets> {
+    this.logger.log(ctx, `${this.getIbcTokenDetail.name} was called!`);
+    const result = await this.tokenMarketService.getTokenDetail(ctx, id);
+    return result;
+  }
+
+  @Post('admin/cw20-token')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create cw20 token' })
+  @ApiResponse({ status: HttpStatus.CREATED })
+  async createCW20Token(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: StoreCW20TokenParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.createCW20Token.name} was called!`);
+    return await this.tokenMarketService.createCW20Token(ctx, request);
+  }
+
+  @Put('admin/cw20-token')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update cw20 token' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async updateCW20Token(
+    @ReqContext() ctx: RequestContext,
+    @Body() request: StoreIbcTokenParamsDto,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.updateCW20Token.name} was called!`);
+    return await this.tokenMarketService.updateIbcToken(ctx, request);
+  }
+
+  @Delete('admin/ibc-token/:id')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete ibc token' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async deleteCW20Token(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.deleteCW20Token.name} was called!`);
+    return await this.tokenMarketService.deleteToken(ctx, id);
   }
 }
