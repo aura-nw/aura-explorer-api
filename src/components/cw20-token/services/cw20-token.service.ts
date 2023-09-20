@@ -235,11 +235,11 @@ export class Cw20TokenService {
       .data[this.chainDB]['cw20_contract'];
 
     let cw20Price = 0;
-
+    let ibcPrice = 0;
+    const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
+      where: { coin_id: Not(''), verify_status: 'VERIFIED' },
+    });
     if (response?.length > 0) {
-      const listTokenMarketsInfo = await this.tokenMarketsRepository.find({
-        where: { coin_id: Not(''), verify_status: 'VERIFIED' },
-      });
       response.forEach((item) => {
         const tokenMarketsInfo = listTokenMarketsInfo?.find(
           (f) => f.contract_address === item.smart_contract.address,
@@ -257,7 +257,19 @@ export class Cw20TokenService {
       });
     }
 
-    return auraPrice + cw20Price;
+    //Get IBC tokens
+    const ibcTokens = await this.getIBCTokens(ctx, accountAddress);
+    ibcTokens?.forEach((item) => {
+      const tokenMarketsInfo = listTokenMarketsInfo?.find(
+        (f) => f.denom === item.denom,
+      );
+      const price = tokenMarketsInfo?.current_price
+        ? Number(tokenMarketsInfo?.current_price)
+        : 0;
+      ibcPrice += price * item.balance;
+    });
+
+    return auraPrice + cw20Price + ibcPrice;
   }
 
   /**
