@@ -158,4 +158,28 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
 
     return await _finalizeResult();
   }
+
+  async countCw20TokensHavingCoinId() {
+    const sqlSelect = `tm.contract_address, tm.coin_id`;
+
+    const queryBuilder = this.createQueryBuilder('tm')
+      .select(sqlSelect)
+      .where("tm.coin_id <> '' ")
+      .andWhere("tm.coin_id <> 'aura-network' ");
+
+    return await queryBuilder.getCount();
+  }
+
+  async getCw20TokenMarketsHavingCoinId(limit: number, pageIndex: number) {
+    const sqlSelect = ` tm.coin_id`;
+
+    const queryBuilder = this.createQueryBuilder('tm')
+      .select(sqlSelect)
+      .where("tm.coin_id <> '' ")
+      .andWhere("tm.coin_id <> 'aura-network' ")
+      .limit(limit)
+      .offset(pageIndex * limit);
+
+    return await queryBuilder.getRawMany();
+  }
 }
