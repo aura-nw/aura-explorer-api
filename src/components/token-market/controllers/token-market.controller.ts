@@ -41,9 +41,13 @@ import {
 import { IbcTokenParamsDto } from '../dtos/ibc-token-params.dto';
 import { StoreIbcTokenParamsDto } from '../dtos/store-ibc-token-params.dto';
 import { StoreCW20TokenParamsDto } from '../dtos/store-cw20-token-params.dto';
+import {
+  GetCW20TokenDetail,
+  GetCW20TokenResult,
+} from '../dtos/get-cw20-token-result.dto';
 
 @Controller()
-@ApiTags('ibc-token')
+@ApiTags('token-market')
 @ApiUnauthorizedResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
 })
@@ -144,7 +148,7 @@ export class TokenMarketController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list cw20 token' })
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: GetIbcTokenResult })
+  @ApiOkResponse({ type: GetCW20TokenResult })
   async getCW20Token(
     @ReqContext() ctx: RequestContext,
     @Query() request: IbcTokenParamsDto,
@@ -163,7 +167,7 @@ export class TokenMarketController {
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get cw20 token by id.' })
-  @ApiOkResponse({ type: GetIbcTokenDetail })
+  @ApiOkResponse({ type: GetCW20TokenDetail })
   async getCW20Detail(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,
@@ -195,17 +199,17 @@ export class TokenMarketController {
   @ApiResponse({ status: HttpStatus.OK })
   async updateCW20Token(
     @ReqContext() ctx: RequestContext,
-    @Body() request: StoreIbcTokenParamsDto,
+    @Body() request: StoreCW20TokenParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.updateCW20Token.name} was called!`);
-    return await this.tokenMarketService.updateIbcToken(ctx, request);
+    return await this.tokenMarketService.updateCW20Token(ctx, request);
   }
 
-  @Delete('admin/ibc-token/:id')
+  @Delete('admin/cw20-token/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete ibc token' })
+  @ApiOperation({ summary: 'Delete cw20 token' })
   @ApiResponse({ status: HttpStatus.OK })
   async deleteCW20Token(
     @ReqContext() ctx: RequestContext,

@@ -117,8 +117,8 @@ export class TokenMarketService {
     }
   }
 
-  async updateCw20Token(ctx: RequestContext, req: StoreCW20TokenParamsDto) {
-    this.logger.log(ctx, `${this.updateCw20Token.name} was called!`);
+  async updateCW20Token(ctx: RequestContext, req: StoreCW20TokenParamsDto) {
+    this.logger.log(ctx, `${this.updateCW20Token.name} was called!`);
 
     const entity = new TokenMarkets();
     entity.contract_address = req.contract_address;
@@ -133,7 +133,7 @@ export class TokenMarketService {
     } catch (err) {
       this.logger.error(
         ctx,
-        `Class ${TokenMarketService.name} call ${this.updateIbcToken.name} error ${err?.code} method error: ${err?.stack}`,
+        `Class ${TokenMarketService.name} call ${this.updateCW20Token.name} error ${err?.code} method error: ${err?.stack}`,
       );
     }
   }

@@ -186,7 +186,7 @@ export class PrivateNameTagService {
       where: {
         id: Not(id),
         createdBy: user_id,
-        nameTag: await this.encryptionService.encrypt(req.nameTag ?? ""),
+        nameTag: await this.encryptionService.encrypt(req.nameTag ?? ''),
       },
     });
     if (entity) {

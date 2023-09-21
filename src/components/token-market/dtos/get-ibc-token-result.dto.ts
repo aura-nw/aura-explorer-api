@@ -41,9 +41,6 @@ class ListIbcToken {
 
   @ApiProperty()
   count: number;
-
-  @ApiProperty()
-  nextKey: number;
 }
 class IbcToken {
   @ApiProperty({ type: IbcTokenResponseAttributes })

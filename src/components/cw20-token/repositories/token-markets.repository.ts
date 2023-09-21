@@ -128,6 +128,7 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
         `cw20_tokens.id,
         cw20_tokens.contract_address,
         cw20_tokens.coin_id,
+        cw20_tokens.image,
         cw20_tokens.verify_status,
         cw20_tokens.verify_text,
         cw20_tokens.created_at`,
