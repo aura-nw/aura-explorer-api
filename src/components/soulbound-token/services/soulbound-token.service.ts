@@ -35,10 +35,7 @@ import { RedisUtil } from '../../../shared/utils/redis.util';
 import { SoulboundWhiteListRepository } from '../repositories/soulbound-white-list.repository';
 import { TokenUpdatedParasDto } from '../dtos/token-updated-paras.dto';
 import { SoulboundRejectListRepository } from '../repositories/soulbound-reject-list.repository';
-<<<<<<< HEAD
 import { Not } from 'typeorm';
-=======
->>>>>>> euphoria
 
 @Injectable()
 export class SoulboundTokenService {
