@@ -159,6 +159,10 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E002',
     Message: 'Duplicate name tag',
   },
+  DUPLICATE_PRIVATE_TAG: {
+    Code: 'E002',
+    Message: 'Duplicate private name tag',
+  },
   INVALID_FORMAT: {
     Code: 'E003',
     Message: 'Invalid aura address format',
