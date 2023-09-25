@@ -37,7 +37,6 @@ export default () => ({
       channel: process.env.REDIS_ABT_CHANNEL,
     },
   },
-  threads: process.env.THREADS,
   indexer: {
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID,
