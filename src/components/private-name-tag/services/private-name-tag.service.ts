@@ -20,15 +20,20 @@ import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-p
 import { EncryptionService } from '../../encryption/encryption.service';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { Not } from 'typeorm';
+import * as appConfig from '../../../shared/configs/configuration';
 
 @Injectable()
 export class PrivateNameTagService {
+  private config;
+
   constructor(
     private readonly logger: AkcLogger,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
     private serviceUtil: ServiceUtil,
-  ) {}
+  ) {
+    this.config = appConfig.default();
+  }
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
@@ -169,6 +174,21 @@ export class PrivateNameTagService {
         };
       }
 
+      // check limited private name tag
+      const count = await this.privateNameTagRepository.count({
+        where: { createdBy: user_id },
+      });
+
+      console.log(`Count: ${count}`);
+      console.log(`Config: ${this.config.limitedPrivateNameTag}`);
+
+      if (count >= this.config.limitedPrivateNameTag) {
+        return {
+          code: ADMIN_ERROR_MAP.LIMIT_PRIVATE_NAME_TAG.Code,
+          message: ADMIN_ERROR_MAP.LIMIT_PRIVATE_NAME_TAG.Message,
+        };
+      }
+
       // check duplicate address
       const entity = await this.privateNameTagRepository.findOne({
         where: { createdBy: user_id, address: req.address },
@@ -186,7 +206,7 @@ export class PrivateNameTagService {
       where: {
         id: Not(id),
         createdBy: user_id,
-        nameTag: await this.encryptionService.encrypt(req.nameTag ?? ""),
+        nameTag: await this.encryptionService.encrypt(req.nameTag ?? ''),
       },
     });
     if (entity) {

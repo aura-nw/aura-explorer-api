@@ -195,6 +195,10 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E005',
     Message: 'Invalid URL format',
   },
+  LIMIT_PRIVATE_NAME_TAG: {
+    Code: 'E006',
+    Message: 'You have reached out of 10 max limitation of private name tag',
+  },
 };
 
 export const PAGE_REQUEST = {
