@@ -14,7 +14,6 @@ import {
 import { PrivateNameTagParamsDto } from '../dtos/private-name-tag-params.dto';
 import { PrivateNameTagRepository } from '../repositories/private-name-tag.repository';
 import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-params.dto';
-import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
@@ -40,6 +39,7 @@ export class PrivateNameTagService {
     const { result, count } = await this.privateNameTagRepository.getNameTags(
       ctx.user.id,
       req.keyword,
+      await this.encryptionService.encrypt(req.keyword ?? ''),
       req.limit,
       req.offset,
     );
@@ -179,9 +179,6 @@ export class PrivateNameTagService {
         where: { createdBy: user_id },
       });
 
-      console.log(`Count: ${count}`);
-      console.log(`Config: ${this.config.limitedPrivateNameTag}`);
-
       if (count >= this.config.limitedPrivateNameTag) {
         return {
           code: ADMIN_ERROR_MAP.LIMIT_PRIVATE_NAME_TAG.Code,
@@ -217,39 +214,5 @@ export class PrivateNameTagService {
     }
 
     return false;
-  }
-
-  async getNameTagMainSite(req: {
-    user_id: number;
-    limit: number;
-    nextKey: number;
-    keyword: string;
-  }): Promise<GetPrivateNameTagResult> {
-    const nameTags = await this.privateNameTagRepository.getNameTagMainSite(
-      Number(req.user_id),
-      Number(req.limit),
-      Number(req.nextKey),
-      req.keyword,
-      await this.encryptionService.encrypt(req.keyword),
-    );
-
-    const nextKey = nameTags.slice(-1)[0]?.id;
-
-    const data = await Promise.all(
-      nameTags.map(async (item) => {
-        item.nameTag = await this.encryptionService.decrypt(item.nameTag);
-        return item;
-      }),
-    );
-
-    const result = {
-      data: {
-        nameTags: data,
-        count: Number(nameTags.length),
-        nextKey: nextKey || null,
-      },
-    };
-
-    return result;
   }
 }
