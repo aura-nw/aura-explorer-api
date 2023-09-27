@@ -18,6 +18,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
   async getNameTags(
     user_id: number,
     keyword: string,
+    keywordEncrypt: string,
     limit: number,
     offset: number,
   ) {
@@ -53,61 +54,15 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('LOWER(tag.address) LIKE LOWER(:keyword)', {
-            keyword: `%${keyword}%`,
-          }).orWhere('tag.name_tag LIKE :keyword', {
-            keyword: `%${keyword}%`,
+          qb.where('tag.address = :keyword', {
+            keyword: `${keyword}`,
+          }).orWhere('tag.name_tag = :keywordEncrypt', {
+            keywordEncrypt: `${keywordEncrypt}`,
           });
         }),
       );
     }
 
     return await _finalizeResult();
-  }
-
-  async getNameTagMainSite(
-    user_id: number,
-    limit: number,
-    nextKey: number,
-    keyword: string,
-    keywordEncrypt: string,
-  ): Promise<PrivateNameTag[]> {
-    limit = Number(limit) || PAGE_REQUEST.MAX_500;
-
-    if (limit > PAGE_REQUEST.MAX_500) {
-      limit = PAGE_REQUEST.MAX_500;
-    }
-
-    let qb = this.createQueryBuilder()
-      .select([
-        'id',
-        'is_favorite as isFavorite',
-        'address',
-        'name_tag as nameTag',
-        'note',
-        'created_at as createdAt',
-        'updated_at as updatedAt',
-      ])
-      .where('created_by = :user_id', { user_id })
-      .orderBy('is_favorite', 'DESC')
-      .addOrderBy('updated_at', 'DESC')
-      .limit(Number(limit) || PAGE_REQUEST.MAX_500);
-
-    if (nextKey) {
-      qb = qb.andWhere('id > :nextKey', { nextKey });
-    }
-
-    if (keyword) {
-      qb.andWhere(
-        new Brackets((qb) => {
-          qb.where('address = :keyword', { keyword }).orWhere(
-            'name_tag = :keywordEncrypt',
-            { keywordEncrypt: keywordEncrypt },
-          );
-        }),
-      );
-    }
-
-    return qb.getRawMany();
   }
 }
