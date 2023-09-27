@@ -83,4 +83,5 @@ export default () => ({
     alias: process.env.KMS_ALIAS,
   },
   addressPrefix: process.env.ADDRESS_PREFIX,
+  limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
 });

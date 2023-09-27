@@ -40,7 +40,6 @@ import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { GetPrivateNameTagAdminResult } from '../dtos/get-private-name-tag-admin.dto';
-import { GetPrivateNameTagResult } from '../dtos/get-private-name-tag-result.dto';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 
 @Controller()
@@ -137,48 +136,5 @@ export class PrivateNameTagController {
   ): Promise<any> {
     this.logger.log(ctx, `${this.deleteNameTag.name} was called!`);
     return await this.nameTagService.deleteNameTag(ctx, id);
-  }
-
-  @Get('private-name-tag')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
-  @ApiBearerAuth()
-  @ApiResponse({ status: HttpStatus.OK })
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get all private name tag.' })
-  @ApiOkResponse({
-    description: 'Get all private name tag.',
-    type: GetPrivateNameTagResult,
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    description: 'Number of private name tag per page. Max is 500.',
-  })
-  @ApiQuery({
-    name: 'nextKey',
-    type: Number,
-    required: false,
-    description: 'Key for next page.',
-  })
-  @ApiQuery({
-    name: 'keyword',
-    type: String,
-    required: false,
-    description: 'Key for search: Address/Name Tag.',
-  })
-  async getNameTag(
-    @ReqContext() ctx: RequestContext,
-    @Query('limit') limit?: number,
-    @Query('nextKey') nextKey?: number,
-    @Query('keyword') keyword?: string,
-  ): Promise<GetPrivateNameTagResult> {
-    return await this.nameTagService.getNameTagMainSite({
-      user_id: ctx.user?.id || 0,
-      limit,
-      nextKey,
-      keyword,
-    });
   }
 }
