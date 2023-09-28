@@ -31,7 +31,7 @@
     "@cosmjs/cosmwasm-stargate": "^0.29.4",
     "@cosmjs/crypto": "^0.29.4",
     "@cosmjs/encoding": "^0.29.4",
-        "@influxdata/influxdb-client": "^1.31.0",
+    "@influxdata/influxdb-client": "^1.31.0",
     "@nestjs-modules/mailer": "^1.8.1",
     "@nestjs/axios": "0.0.3",
     "@nestjs/bull": "^10.0.1",
@@ -71,7 +71,8 @@
     "tendermint": "^5.0.2",
     "typeorm": "^0.2.38",
     "uuid": "^8.3.2",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "bignumber.js": "^9.0.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",

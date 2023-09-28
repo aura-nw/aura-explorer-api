@@ -4,6 +4,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
