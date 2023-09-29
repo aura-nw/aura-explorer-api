@@ -52,7 +52,7 @@ export class ExportCsvService {
     }
 
     const data = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB];
+      ?.data[this.chainDB];
 
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
@@ -66,20 +66,22 @@ export class ExportCsvService {
       envConfig.coins,
     );
     let dataExport;
+    let fileName;
     if (payload.dataType === TYPE_EXPORT.ExecutedTxs) {
+      fileName = `export-account-executed-${payload.address}.csv`;
       dataExport = txs.map((tx) => {
         return {
           TxHash: tx.tx_hash,
-          MessageRaw: JSON.stringify(tx.lstTypeTemp),
-          Message: tx.type,
+          MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
+          Message: tx.lstType,
           Result: tx.status,
           Timestamp: tx.timestamp,
-          UnixTimestamp: tx.timestamp,
+          UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           Fee: tx.fee,
           BlockHeight: tx.height,
         };
       });
     }
-    return dataExport;
+    return { data: dataExport, fileName };
   }
 }

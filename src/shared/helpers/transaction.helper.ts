@@ -34,6 +34,7 @@ export class TransactionHelper {
           }
         }
       }
+      const lstType = this.getTypeTxMsg(lstTypeTemp);
 
       let denom = coinInfo.coinDenom;
       const _amount = _.get(element, 'events[0].event_attributes[2].value');
@@ -235,6 +236,7 @@ export class TransactionHelper {
         action,
         eventAttr,
         lstTypeTemp,
+        lstType,
       };
     });
     return txs;
@@ -269,6 +271,42 @@ export class TransactionHelper {
       }
     }
     return { type, action };
+  }
+
+  static getTypeTxMsg(value) {
+    let result = '';
+    value?.forEach((element, index) => {
+      const typeMsg = element.type || element['@type'];
+      let type;
+      if (typeMsg === TRANSACTION_TYPE_ENUM.ExecuteContract) {
+        try {
+          let dataTemp = _.get(element, 'content.msg') || _.get(element, 'msg');
+          if (typeof dataTemp === 'string') {
+            try {
+              dataTemp = JSON.parse(dataTemp);
+            } catch (e) {}
+          }
+          const action = Object.keys(dataTemp)[0];
+          type = 'Contract: ' + action;
+        } catch (e) {}
+      } else {
+        type =
+          _.find(TYPE_TRANSACTION, { label: typeMsg })?.value ||
+          typeMsg.split('.').pop();
+      }
+
+      if (index <= 4) {
+        if (result?.length > 0) {
+          result += ', ' + type;
+        } else {
+          result += type;
+        }
+      }
+    });
+    if (value?.length > 5) {
+      result += ', ...';
+    }
+    return result;
   }
 
   static getDataIBC(value, coinConfig) {
