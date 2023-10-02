@@ -5,7 +5,7 @@ import { parse } from 'json2csv';
 export class StorageHelper {
   static getFileStream = async (
     fileName: string,
-    data: string,
+    data: any,
     encoding,
   ): Promise<ReadStream> => {
     const csv = parse(data);
