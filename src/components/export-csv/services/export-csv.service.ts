@@ -30,25 +30,49 @@ export class ExportCsvService {
 
     let graphqlQuery;
 
-    if (payload.dataType === TYPE_EXPORT.ExecutedTxs) {
-      payload.compositeKey = 'message.sender';
-      graphqlQuery = {
-        query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
-        variables: {
-          limit: payload.limit || 100,
-          compositeKey: 'message.sender',
-          address: payload.address,
-          heightLT:
-            payload.dataRangeType === RANGE_EXPORT.Height ? payload.max : null,
-          heightGT:
-            payload.dataRangeType === RANGE_EXPORT.Height ? payload.min : null,
-          startTime:
-            payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
-          endTime:
-            payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
-        },
-        operationName: INDEXER_API_V2.OPERATION_NAME.TX_EXECUTED,
-      };
+    switch (payload.dataType) {
+      case TYPE_EXPORT.ExecutedTxs:
+        graphqlQuery = {
+          query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
+          variables: {
+            limit: payload.limit || 100,
+            compositeKey: 'message.sender',
+            address: payload.address,
+            heightLT:
+              payload.dataRangeType === RANGE_EXPORT.Height
+                ? payload.max
+                : null,
+            heightGT:
+              payload.dataRangeType === RANGE_EXPORT.Height
+                ? payload.min
+                : null,
+            startTime:
+              payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+            endTime:
+              payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+          },
+          operationName: INDEXER_API_V2.OPERATION_NAME.TX_EXECUTED,
+        };
+        break;
+      case TYPE_EXPORT.AuraTxs:
+        graphqlQuery = {
+          query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
+          variables: {
+            limit: payload.limit || 100,
+            compositeKeyIn: payload.compositeKey,
+            address: payload.address,
+            heightLT: payload.heightLT,
+            heightGT: payload.heightGT,
+            listTxMsgType: payload.listTxMsgType,
+            listTxMsgTypeNotIn: payload.listTxMsgTypeNotIn,
+            startTime: payload.startTime,
+            endTime: payload.endTime,
+          },
+          operationName: INDEXER_API_V2.OPERATION_NAME.TX_COIN_TRANSFER,
+        };
+        break;
+      default:
+        break;
     }
 
     const data = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))

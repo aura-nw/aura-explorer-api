@@ -70,6 +70,27 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    TX_COIN_TRANSFER: `query QueryTxMsgOfAccount($compositeKeyIn: [String!] = null, $address: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, value: {_eq: $address}, event: {tx_msg_index: {_is_null: false}}}, timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+          hash
+          height
+          fee
+          timestamp
+          code
+          transaction_messages {
+            type
+            content
+          }
+           events(where: {type: {_eq: "transfer"}, tx_msg_index: {_is_null: false}, event_attribute_index: {composite_key: {_in: $compositeKeyIn}, value: {_eq: $address}}}) {
+            event_attributes {
+              composite_key
+              value
+            }
+          }
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -85,6 +106,7 @@ export const INDEXER_API_V2 = {
     VALIDATORS: 'Validators',
     CW4973_STATUS: 'QueryCW4973Status',
     TX_EXECUTED: 'QueryTxOfAccount',
+    TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
   },
 };
 

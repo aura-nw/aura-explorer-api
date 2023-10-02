@@ -66,7 +66,7 @@ export class TransactionHelper {
           break;
         case TYPE_EXPORT.AuraTxs:
           const arrTemp = [];
-          element?.events?.forEach((data, i) => {
+          element?.events?.forEach((data) => {
             toAddress = data.event_attributes.find(
               (k) => k.composite_key === 'transfer.recipient',
             )?.value;

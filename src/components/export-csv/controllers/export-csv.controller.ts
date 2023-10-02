@@ -15,7 +15,7 @@ export class ExportCsvController {
     this.logger.setContext(ExportCsvController.name);
   }
 
-  @Get('execute')
+  @Get()
   @ApiOperation({ summary: 'Get csv transaction execute' })
   @ApiResponse({ status: HttpStatus.OK, schema: {} })
   async exportTransactionDataToCSV(
