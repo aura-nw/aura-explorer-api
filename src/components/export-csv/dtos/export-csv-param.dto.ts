@@ -35,7 +35,4 @@ export class ExportCsvParamDto {
   @ApiProperty({ default: '' })
   @IsNotEmpty()
   max: string;
-
-  @ApiPropertyOptional({ default: false })
-  includePVN: boolean;
 }

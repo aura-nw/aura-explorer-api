@@ -9,12 +9,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PrivateNameTagRepository } from '../private-name-tag/repositories/private-name-tag.repository';
 import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
     SharedModule,
     HttpModule,
     ConfigModule,
+    UserModule,
     TypeOrmModule.forFeature([PrivateNameTagRepository, CipherKey]),
   ],
   providers: [ExportCsvService, EncryptionService, ServiceUtil],

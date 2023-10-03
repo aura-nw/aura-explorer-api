@@ -37,9 +37,12 @@ export class ExportCsvService {
     this.logger.log(ctx, `${this.exportTransactionDataToCSV.name} was called!`);
 
     let graphqlQuery;
+    let dataExport = [];
+    let fileName;
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
+        fileName = `export-account-executed-${payload.address}.csv`;
         graphqlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
           variables: {
@@ -63,6 +66,7 @@ export class ExportCsvService {
         };
         break;
       case TYPE_EXPORT.AuraTxs:
+        fileName = `export-account-coin-transfer-${payload.address}.csv`;
         graphqlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
           variables: {
@@ -85,6 +89,65 @@ export class ExportCsvService {
           operationName: INDEXER_API_V2.OPERATION_NAME.TX_COIN_TRANSFER,
         };
         break;
+      case TYPE_EXPORT.FtsTxs:
+        fileName = `export-account-token-transfer-${payload.address}.csv`;
+        graphqlQuery = {
+          query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
+          variables: {
+            limit: 1000,
+            receiver: payload.address,
+            sender: payload.address,
+            heightLT:
+              payload.dataRangeType === RANGE_EXPORT.Height
+                ? +payload.max + 1
+                : null,
+            heightGT:
+              payload.dataRangeType === RANGE_EXPORT.Height
+                ? +payload.min - 1
+                : null,
+            startTime:
+              payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+            endTime:
+              payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+            actionIn: [
+              'mint',
+              'burn',
+              'transfer',
+              'send',
+              'transfer_from',
+              'burn_from',
+              'send_from',
+            ],
+          },
+          operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
+        };
+        break;
+      case TYPE_EXPORT.NftTxs:
+        fileName = `export-account-nft-transfer-${payload.address}.csv`;
+        graphqlQuery = {
+          query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
+          variables: {
+            limit: 1000,
+            receiver: payload.address,
+            sender: payload.address,
+            heightLT:
+              payload.dataRangeType === RANGE_EXPORT.Height
+                ? +payload.max + 1
+                : null,
+            heightGT:
+              payload.dataRangeType === RANGE_EXPORT.Height
+                ? +payload.min - 1
+                : null,
+            startTime:
+              payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+            endTime:
+              payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+            actionIn: ['mint', 'burn', 'transfer_nft', 'send_nft'],
+            neqCw4973: 'crates.io:cw4973',
+          },
+          operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
+        };
+        break;
       default:
         break;
     }
@@ -92,6 +155,9 @@ export class ExportCsvService {
     const data = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
       ?.data[this.chainDB];
 
+    if (data.length === 0) {
+      return { data: dataExport, fileName };
+    }
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
@@ -103,12 +169,27 @@ export class ExportCsvService {
       payload.address,
       envConfig.coins,
     );
-    let dataExport = [];
-    let fileName;
+
+    let lstPrivateName;
+    if (ctx?.user?.id) {
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        ctx.user.id,
+        null,
+        null,
+        500,
+        0,
+      );
+
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
-        fileName = `export-account-executed-${payload.address}.csv`;
         dataExport = txs.map((tx) => {
           return {
             TxHash: tx.tx_hash,
@@ -123,56 +204,84 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.AuraTxs:
-        let lstPrivateName;
-        if (payload.includePVN && ctx?.user?.id) {
-          const { result } = await this.privateNameTagRepository.getNameTags(
-            ctx.user.id,
-            null,
-            null,
-            500,
-            0,
-          );
-
-          lstPrivateName = await Promise.all(
-            result.map(async (item) => {
-              item.nameTag = await this.encryptionService.decrypt(item.nameTag);
-              return item;
-            }),
-          );
-        }
-
-        fileName = `export-account-coin-transfer-${payload.address}.csv`;
         txs.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
               TxHash: tx.tx_hash,
               MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
               Message: tx.lstType,
-              Result: tx.status,
               Timestamp: tx.timestamp,
               UnixTimestamp: Math.floor(
                 new Date(tx.timestamp).getTime() / 1000,
               ),
               FromAddress: evt.fromAddress,
-              fromAddressPrivateNameTag: payload.includePVN
-                ? lstPrivateName?.find(
-                    (item) => item.address === evt.fromAddress,
-                  )?.nameTag || ''
-                : '',
+              fromAddressPrivateNameTag:
+                lstPrivateName?.find((item) => item.address === evt.fromAddress)
+                  ?.nameTag || '',
               ToAddress: evt.toAddress,
-              toAddressPrivateNameTag: payload.includePVN
-                ? lstPrivateName?.find((item) => item.address === evt.toAddress)
-                    ?.nameTag || ''
-                : '',
+              toAddressPrivateNameTag:
+                lstPrivateName?.find((item) => item.address === evt.toAddress)
+                  ?.nameTag || '',
               AmountIn: evt.toAddress === payload.address ? evt.amount : '',
               AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
               Symbol: evt.denom,
-              Fee: tx.fee,
-              BlockHeight: tx.height,
               Denom: evt.denomOrigin || '',
             });
           });
         });
+      case TYPE_EXPORT.FtsTxs:
+        txs.forEach((tx) => {
+          tx.arrEvent.forEach((evt) => {
+            dataExport.push({
+              TxHash: tx.tx_hash,
+              MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
+              Message: tx.lstType,
+              Timestamp: tx.timestamp,
+              UnixTimestamp: Math.floor(
+                new Date(tx.timestamp).getTime() / 1000,
+              ),
+              FromAddress: evt.fromAddress,
+              fromAddressPrivateNameTag:
+                lstPrivateName?.find((item) => item.address === evt.fromAddress)
+                  ?.nameTag || '',
+              ToAddress: evt.toAddress,
+              toAddressPrivateNameTag:
+                lstPrivateName?.find((item) => item.address === evt.toAddress)
+                  ?.nameTag || '',
+              AmountIn: evt.toAddress === payload.address ? evt.amount : '',
+              AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
+              Symbol: evt.denom,
+              TokenContractAddress: tx.contractAddress,
+            });
+          });
+        });
+        break;
+      case TYPE_EXPORT.NftTxs:
+        txs.forEach((tx) => {
+          tx.arrEvent.forEach((evt) => {
+            dataExport.push({
+              TxHash: tx.tx_hash,
+              MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
+              Message: tx.lstType,
+              Timestamp: tx.timestamp,
+              UnixTimestamp: Math.floor(
+                new Date(tx.timestamp).getTime() / 1000,
+              ),
+              FromAddress: evt.fromAddress,
+              fromAddressPrivateNameTag:
+                lstPrivateName?.find((item) => item.address === evt.fromAddress)
+                  ?.nameTag || '',
+              ToAddress: evt.toAddress,
+              toAddressPrivateNameTag:
+                lstPrivateName?.find((item) => item.address === evt.toAddress)
+                  ?.nameTag || '',
+              TokenIdIn: evt.toAddress === payload.address ? evt.tokenId : '',
+              TokenIdOut: evt.toAddress !== payload.address ? evt.tokenId : '',
+              NFTContractAddress: evt.contractAddress,
+            });
+          });
+        });
+        break;
       default:
         break;
     }

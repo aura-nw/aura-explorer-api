@@ -91,6 +91,77 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    TX_TOKEN_TRANSFER: `query Cw20TXMultilCondition($receiver: String = null, $sender: String = null, $contractAddr: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $txHash: String = null, $actionIn: [String!] = null, $actionNotIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {events: {smart_contract_events: {cw20_activities: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], action: {_in: $actionIn, _nin: $actionNotIn}}, smart_contract: {address: {_eq: $contractAddr}}}}, timestamp: {_gte: $startTime, _lte: $endTime}, _and: {height: {_gt: $heightGT, _lt: $heightLT}, hash: {_eq: $txHash}}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}}, order_by: {height: desc}, limit: $limit) {
+          gas_used
+          hash
+          height
+          timestamp
+          code
+          transaction_messages {
+            content
+            type
+          }
+          events(where: {smart_contract_events: {cw20_activities: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], id: {_is_null: false}}}}) {
+            smart_contract_events {
+              cw20_activities {
+                amount
+                action
+                from
+                to
+                sender
+              }
+              smart_contract {
+                address
+                cw20_contract {
+                  symbol
+                  decimal
+                }
+              }
+            }
+          }
+        }
+      }
+    }`,
+    TX_NFT_TRANSFER: `query Cw721TXMultilCondition($receiver: String = null, $sender: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $contractAddr: String = null, $tokenId: String = null, $txHash: String = null, $neqCw4973: String, $eqCw4973: String = null, $actionIn: [String!] = null, $actionNotIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {events: {smart_contract_events: {cw721_activity: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], cw721_token: {token_id: {_eq: $tokenId}}, action: {_in: $actionIn, _nin: $actionNotIn}}, smart_contract: {name: {_neq: $neqCw4973, _eq: $eqCw4973}, address: {_eq: $contractAddr}}}}, timestamp: {_gte: $startTime, _lte: $endTime}, _and: {height: {_gt: $heightGT, _lt: $heightLT}, hash: {_eq: $txHash}}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}}, order_by: {height: desc}, limit: $limit) {
+          gas_used
+          hash
+          height
+          timestamp
+          code
+          transaction_messages {
+            content
+            type
+          }
+          events(where: {smart_contract_events: {cw721_activity: {id: {_is_null: false}, _or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], cw721_token: {token_id: {_eq: $tokenId}}}}}) {
+            smart_contract_events {
+              cw721_activity {
+                action
+                from
+                to
+                sender
+                cw721_token {
+                  token_id
+                }
+                cw721_contract {
+                  smart_contract {
+                    address
+                  }
+                }
+              }
+            }
+          }
+          event_attribute_index(where: {composite_key: {_eq: "wasm.spender"}}) {
+            composite_key
+            key
+            value
+          }
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -107,6 +178,8 @@ export const INDEXER_API_V2 = {
     CW4973_STATUS: 'QueryCW4973Status',
     TX_EXECUTED: 'QueryTxOfAccount',
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
+    TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
+    TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
   },
 };
 
