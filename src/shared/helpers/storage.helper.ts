@@ -1,30 +1,26 @@
-import {
-  writeFile,
-  unlink,
-  createReadStream,
-  ReadStream,
-  readFileSync,
-} from 'fs';
+import { writeFile, unlink, readFileSync } from 'fs';
 import { promisify } from 'util';
 import { parse } from 'json2csv';
 
 export class StorageHelper {
-  static getFileStream = async (
-    fileName: string,
-    data: any,
-    encoding,
-  ): Promise<ReadStream> => {
-    const csv = parse(data);
-    await this.createFile(fileName, csv);
-    return createReadStream(`${__dirname}/${fileName}`, encoding);
-  };
-
+  /**
+   * Get file buffer
+   *
+   * @param fileName
+   * @param data
+   * @param fields
+   * @param encoding
+   *
+   * @returns {Promise<Buffer>}
+   */
   static getFileBuffer = async (
     fileName: string,
-    data: any,
+    data,
+    fields,
     encoding,
   ): Promise<Buffer> => {
-    const csv = parse(data);
+    data = data.length > 0 ? data : {};
+    const csv = parse(data, { fields, includeEmptyRows: true });
     await this.createFile(fileName, csv);
     return readFileSync(`${__dirname}/${fileName}`, encoding);
   };

@@ -39,6 +39,7 @@ export class ExportCsvService {
     let graphqlQuery;
     let dataExport = [];
     let fileName;
+    let header;
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
@@ -155,9 +156,6 @@ export class ExportCsvService {
     const data = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
       ?.data[this.chainDB];
 
-    if (data.length === 0) {
-      return { data: dataExport, fileName };
-    }
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
@@ -179,7 +177,6 @@ export class ExportCsvService {
         500,
         0,
       );
-
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
@@ -190,7 +187,17 @@ export class ExportCsvService {
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
-        dataExport = txs.map((tx) => {
+        header = [
+          'TxHash',
+          'MessageRaw',
+          'Message',
+          'Result',
+          'Timestamp',
+          'UnixTimestamp',
+          'Fee',
+          'BlockHeight',
+        ];
+        dataExport = txs?.map((tx) => {
           return {
             TxHash: tx.tx_hash,
             MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
@@ -204,7 +211,22 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.AuraTxs:
-        txs.forEach((tx) => {
+        header = [
+          'TxHash',
+          'MessageRaw',
+          'Message',
+          'Timestamp',
+          'UnixTimestamp',
+          'FromAddress',
+          'FromAddressPrivateNameTag',
+          'ToAddress',
+          'ToAddressPrivateNameTag',
+          'AmountIn',
+          'AmountOut',
+          'Symbol',
+          'Denom',
+        ];
+        txs?.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
               TxHash: tx.tx_hash,
@@ -215,11 +237,11 @@ export class ExportCsvService {
                 new Date(tx.timestamp).getTime() / 1000,
               ),
               FromAddress: evt.fromAddress,
-              fromAddressPrivateNameTag:
+              FromAddressPrivateNameTag:
                 lstPrivateName?.find((item) => item.address === evt.fromAddress)
                   ?.nameTag || '',
               ToAddress: evt.toAddress,
-              toAddressPrivateNameTag:
+              ToAddressPrivateNameTag:
                 lstPrivateName?.find((item) => item.address === evt.toAddress)
                   ?.nameTag || '',
               AmountIn: evt.toAddress === payload.address ? evt.amount : '',
@@ -229,8 +251,24 @@ export class ExportCsvService {
             });
           });
         });
+        break;
       case TYPE_EXPORT.FtsTxs:
-        txs.forEach((tx) => {
+        header = [
+          'TxHash',
+          'MessageRaw',
+          'Message',
+          'Timestamp',
+          'UnixTimestamp',
+          'FromAddress',
+          'FromAddressPrivateNameTag',
+          'ToAddress',
+          'ToAddressPrivateNameTag',
+          'AmountIn',
+          'AmountOut',
+          'Symbol',
+          'TokenContractAddress',
+        ];
+        txs?.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
               TxHash: tx.tx_hash,
@@ -241,11 +279,11 @@ export class ExportCsvService {
                 new Date(tx.timestamp).getTime() / 1000,
               ),
               FromAddress: evt.fromAddress,
-              fromAddressPrivateNameTag:
+              FromAddressPrivateNameTag:
                 lstPrivateName?.find((item) => item.address === evt.fromAddress)
                   ?.nameTag || '',
               ToAddress: evt.toAddress,
-              toAddressPrivateNameTag:
+              ToAddressPrivateNameTag:
                 lstPrivateName?.find((item) => item.address === evt.toAddress)
                   ?.nameTag || '',
               AmountIn: evt.toAddress === payload.address ? evt.amount : '',
@@ -257,7 +295,21 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.NftTxs:
-        txs.forEach((tx) => {
+        header = [
+          'TxHash',
+          'MessageRaw',
+          'Message',
+          'Timestamp',
+          'UnixTimestamp',
+          'FromAddress',
+          'FromAddressPrivateNameTag',
+          'ToAddress',
+          'ToAddressPrivateNameTag',
+          'TokenIdIn',
+          'TokenIdOut',
+          'NFTContractAddress',
+        ];
+        txs?.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
               TxHash: tx.tx_hash,
@@ -268,11 +320,11 @@ export class ExportCsvService {
                 new Date(tx.timestamp).getTime() / 1000,
               ),
               FromAddress: evt.fromAddress,
-              fromAddressPrivateNameTag:
+              FromAddressPrivateNameTag:
                 lstPrivateName?.find((item) => item.address === evt.fromAddress)
                   ?.nameTag || '',
               ToAddress: evt.toAddress,
-              toAddressPrivateNameTag:
+              ToAddressPrivateNameTag:
                 lstPrivateName?.find((item) => item.address === evt.toAddress)
                   ?.nameTag || '',
               TokenIdIn: evt.toAddress === payload.address ? evt.tokenId : '',
@@ -285,6 +337,6 @@ export class ExportCsvService {
       default:
         break;
     }
-    return { data: dataExport, fileName };
+    return { data: dataExport, fileName, header };
   }
 }

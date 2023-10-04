@@ -45,10 +45,10 @@ export class ExportCsvController {
     @Res() res: Response,
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSV.name} was called!`);
-    const { data, fileName } =
+    const { data, fileName, header } =
       await this.exportCsvService.exportTransactionDataToCSV(ctx, query);
 
-    await StorageHelper.getFileBuffer(fileName, data, 'utf-8')
+    return await StorageHelper.getFileBuffer(fileName, data, header, 'utf-8')
       .then((file) => {
         res.set({
           'Content-Type': 'application/json',
@@ -71,15 +71,16 @@ export class ExportCsvController {
     @Res() res,
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSVPrivate.name} was called!`);
-    const { data, fileName } =
+    const { data, fileName, header } =
       await this.exportCsvService.exportTransactionDataToCSV(ctx, query);
-    return await StorageHelper.getFileStream(fileName, data, 'binary')
+
+    return await StorageHelper.getFileBuffer(fileName, data, header, 'utf-8')
       .then((file) => {
         res.set({
           'Content-Type': 'application/json',
           'Content-Disposition': `attachment; filename="${fileName}"`,
         });
-        file.pipe(res);
+        res.send(file);
       })
       .finally(() => StorageHelper.deleteFile(fileName));
   }
