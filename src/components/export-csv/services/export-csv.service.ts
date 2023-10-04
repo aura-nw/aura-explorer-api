@@ -40,7 +40,7 @@ export class ExportCsvService {
     let graphqlQuery;
     let dataExport = [];
     let fileName;
-    let header;
+    let fields;
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
@@ -188,7 +188,7 @@ export class ExportCsvService {
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
-        header = [
+        fields = [
           'TxHash',
           'MessageRaw',
           'Message',
@@ -212,7 +212,7 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.AuraTxs:
-        header = [
+        fields = [
           'TxHash',
           'MessageRaw',
           'Message',
@@ -254,7 +254,7 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.FtsTxs:
-        header = [
+        fields = [
           'TxHash',
           'MessageRaw',
           'Message',
@@ -296,7 +296,7 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.NftTxs:
-        header = [
+        fields = [
           'TxHash',
           'MessageRaw',
           'Message',
@@ -338,6 +338,6 @@ export class ExportCsvService {
       default:
         break;
     }
-    return { data: dataExport, fileName, header };
+    return { data: dataExport, fileName, fields };
   }
 }

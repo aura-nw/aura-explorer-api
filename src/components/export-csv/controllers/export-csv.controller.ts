@@ -20,11 +20,11 @@ import {
   USER_ROLE,
 } from '../../../shared';
 import { ExportCsvParamDto } from '../dtos/export-csv-param.dto';
-import { StorageHelper } from '../../../shared/helpers/storage.helper';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Response } from 'express';
+import { parse } from 'json2csv';
 
 @ApiTags('export-csv')
 @Controller('export-csv')
@@ -45,18 +45,19 @@ export class ExportCsvController {
     @Res() res: Response,
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSV.name} was called!`);
-    const { data, fileName, header } =
+    const { data, fileName, fields } =
       await this.exportCsvService.exportTransactionDataToCSV(ctx, query);
 
-    return await StorageHelper.getFileBuffer(fileName, data, header, 'utf-8')
-      .then((file) => {
-        res.set({
-          'Content-Type': 'application/json',
-          'Content-Disposition': `attachment; filename="${fileName}"`,
-        });
-        res.send(file);
-      })
-      .finally(() => StorageHelper.deleteFile(fileName));
+    const csv = await parse(data.length > 0 ? data : {}, {
+      fields,
+      includeEmptyRows: true,
+    });
+
+    res.set({
+      'Content-Type': 'application/json',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+    });
+    res.send(csv);
   }
 
   @Get('private-name-tag')
@@ -72,21 +73,22 @@ export class ExportCsvController {
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSVPrivate.name} was called!`);
     const userId = ctx.user?.id;
-    const { data, fileName, header } =
+    const { data, fileName, fields } =
       await this.exportCsvService.exportTransactionDataToCSV(
         ctx,
         query,
         userId,
       );
 
-    return await StorageHelper.getFileBuffer(fileName, data, header, 'utf-8')
-      .then((file) => {
-        res.set({
-          'Content-Type': 'application/json',
-          'Content-Disposition': `attachment; filename="${fileName}"`,
-        });
-        res.send(file);
-      })
-      .finally(() => StorageHelper.deleteFile(fileName));
+    const csv = await parse(data.length > 0 ? data : {}, {
+      fields,
+      includeEmptyRows: true,
+    });
+
+    res.set({
+      'Content-Type': 'application/json',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+    });
+    res.send(csv);
   }
 }
