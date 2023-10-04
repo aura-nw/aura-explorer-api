@@ -24,7 +24,7 @@ import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Response } from 'express';
-import { parse } from 'json2csv';
+import { Parser } from '@json2csv/plainjs';
 
 @ApiTags('export-csv')
 @Controller('export-csv')
@@ -45,19 +45,7 @@ export class ExportCsvController {
     @Res() res: Response,
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSV.name} was called!`);
-    const { data, fileName, fields } =
-      await this.exportCsvService.exportTransactionDataToCSV(ctx, query);
-
-    const csv = await parse(data.length > 0 ? data : {}, {
-      fields,
-      includeEmptyRows: true,
-    });
-
-    res.set({
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${fileName}"`,
-    });
-    res.send(csv);
+    this.proccessCSV(ctx, query, res);
   }
 
   @Get('private-name-tag')
@@ -73,6 +61,10 @@ export class ExportCsvController {
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSVPrivate.name} was called!`);
     const userId = ctx.user?.id;
+    this.proccessCSV(ctx, query, res, userId);
+  }
+
+  private async proccessCSV(ctx, query, res, userId = null) {
     const { data, fileName, fields } =
       await this.exportCsvService.exportTransactionDataToCSV(
         ctx,
@@ -80,10 +72,10 @@ export class ExportCsvController {
         userId,
       );
 
-    const csv = await parse(data.length > 0 ? data : {}, {
+    const csvParser = new Parser({
       fields,
-      includeEmptyRows: true,
     });
+    const csv = csvParser.parse(data?.length > 0 ? data : {});
 
     res.set({
       'Content-Type': 'application/json',

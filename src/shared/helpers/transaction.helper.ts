@@ -18,7 +18,7 @@ export class TransactionHelper {
     currentAddress,
     coinConfig = null,
   ) {
-    const txs = _.get(data, 'transaction').map((element) => {
+    const txs = _.get(data, 'transaction')?.map((element) => {
       const code = _.get(element, 'code');
       const tx_hash = _.get(element, 'hash');
       const lstTypeTemp = _.get(element, 'transaction_messages');
@@ -91,7 +91,7 @@ export class TransactionHelper {
               let amount;
               let denom = coinInfo.coinDenom;
               let denomOrigin;
-              const decimal = 6;
+              const decimal = coinInfo.coinDecimals;
               if (rawAmount?.indexOf('ibc') > -1) {
                 const dataIBC = this.getDataIBC(rawAmount, coinConfig);
                 amount = this.balanceOf(
