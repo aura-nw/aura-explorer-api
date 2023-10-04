@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { AkcLogger, INDEXER_API_V2, RequestContext } from '../../../shared';
+import { AkcLogger, INDEXER_API_V2, RequestContext, TX_HEADER } from '../../../shared';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
@@ -188,16 +188,7 @@ export class ExportCsvService {
 
     switch (payload.dataType) {
       case TYPE_EXPORT.ExecutedTxs:
-        fields = [
-          'TxHash',
-          'MessageRaw',
-          'Message',
-          'Result',
-          'Timestamp',
-          'UnixTimestamp',
-          'Fee',
-          'BlockHeight',
-        ];
+        fields = TX_HEADER.EXECUTED;
         dataExport = txs?.map((tx) => {
           return {
             TxHash: tx.tx_hash,
@@ -212,21 +203,7 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.AuraTxs:
-        fields = [
-          'TxHash',
-          'MessageRaw',
-          'Message',
-          'Timestamp',
-          'UnixTimestamp',
-          'FromAddress',
-          'FromAddressPrivateNameTag',
-          'ToAddress',
-          'ToAddressPrivateNameTag',
-          'AmountIn',
-          'AmountOut',
-          'Symbol',
-          'Denom',
-        ];
+        fields = TX_HEADER.COIN_TRANSFER;
         txs?.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
@@ -254,21 +231,7 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.FtsTxs:
-        fields = [
-          'TxHash',
-          'MessageRaw',
-          'Message',
-          'Timestamp',
-          'UnixTimestamp',
-          'FromAddress',
-          'FromAddressPrivateNameTag',
-          'ToAddress',
-          'ToAddressPrivateNameTag',
-          'AmountIn',
-          'AmountOut',
-          'Symbol',
-          'TokenContractAddress',
-        ];
+        fields = TX_HEADER.TOKEN_TRANSFER;
         txs?.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
@@ -296,20 +259,7 @@ export class ExportCsvService {
         });
         break;
       case TYPE_EXPORT.NftTxs:
-        fields = [
-          'TxHash',
-          'MessageRaw',
-          'Message',
-          'Timestamp',
-          'UnixTimestamp',
-          'FromAddress',
-          'FromAddressPrivateNameTag',
-          'ToAddress',
-          'ToAddressPrivateNameTag',
-          'TokenIdIn',
-          'TokenIdOut',
-          'NFTContractAddress',
-        ];
+        fields = TX_HEADER.NFT_TRANSFER;
         txs?.forEach((tx) => {
           tx.arrEvent.forEach((evt) => {
             dataExport.push({
