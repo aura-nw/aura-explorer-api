@@ -22,13 +22,14 @@ export class StorageHelper {
     data = data.length > 0 ? data : {};
     const csv = parse(data, { fields, includeEmptyRows: true });
     await this.createFile(fileName, csv);
-    return readFileSync(`${__dirname}/${fileName}`, encoding);
+    const path = `${__dirname}/${fileName}`;
+    return readFileSync(path, encoding);
   };
 
   static createFile = async (fileName: string, data: string): Promise<void> => {
     const write = promisify(writeFile);
-
-    return await write(`${__dirname}/${fileName}`, data, 'utf8');
+    const path = `${__dirname}/${fileName}`;
+    return await write(path, data, 'utf8');
   };
 
   /**
@@ -40,7 +41,7 @@ export class StorageHelper {
    */
   static deleteFile = async (fileName: string): Promise<void> => {
     const remove = promisify(unlink);
-
-    return await remove(`${__dirname}/${fileName}`);
+    const path = `${__dirname}/${fileName}`;
+    return await remove(path);
   };
 }
