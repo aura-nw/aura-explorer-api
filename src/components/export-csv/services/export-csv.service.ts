@@ -33,6 +33,7 @@ export class ExportCsvService {
   async exportTransactionDataToCSV(
     ctx: RequestContext,
     payload: ExportCsvParamDto,
+    userId = null,
   ) {
     this.logger.log(ctx, `${this.exportTransactionDataToCSV.name} was called!`);
 
@@ -169,9 +170,9 @@ export class ExportCsvService {
     );
 
     let lstPrivateName;
-    if (ctx?.user?.id) {
+    if (userId) {
       const { result } = await this.privateNameTagRepository.getNameTags(
-        ctx.user.id,
+        userId,
         null,
         null,
         500,

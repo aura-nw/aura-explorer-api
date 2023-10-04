@@ -71,8 +71,13 @@ export class ExportCsvController {
     @Res() res,
   ): Promise<any> {
     this.logger.log(ctx, `${this.exportCSVPrivate.name} was called!`);
+    const userId = ctx.user?.id;
     const { data, fileName, header } =
-      await this.exportCsvService.exportTransactionDataToCSV(ctx, query);
+      await this.exportCsvService.exportTransactionDataToCSV(
+        ctx,
+        query,
+        userId,
+      );
 
     return await StorageHelper.getFileBuffer(fileName, data, header, 'utf-8')
       .then((file) => {
