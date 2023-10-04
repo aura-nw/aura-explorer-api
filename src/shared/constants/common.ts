@@ -395,6 +395,8 @@ export const VERIFY_STEP = [
 
 export const ROLES_KEY = 'roles';
 
+export const SPLASH = '/';
+
 export const REGEX_PARTERN = {
   NAME_TAG: new RegExp(/^[a-zA-Z0-9._-\s]+$/),
   URL: new RegExp(/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/),

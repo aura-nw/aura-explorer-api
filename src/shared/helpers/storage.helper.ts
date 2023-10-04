@@ -2,6 +2,7 @@ import { writeFile, unlink, readFileSync } from 'fs';
 import { promisify } from 'util';
 import { parse } from 'json2csv';
 import { join } from 'path';
+import { SPLASH } from '../constants';
 
 export class StorageHelper {
   /**
@@ -23,13 +24,13 @@ export class StorageHelper {
     data = data.length > 0 ? data : {};
     const csv = parse(data, { fields, includeEmptyRows: true });
     await this.createFile(fileName, csv);
-    const path = join(__dirname, '/', fileName);
+    const path = join(__dirname, SPLASH, fileName);
     return readFileSync(path, encoding);
   };
 
   static createFile = async (fileName: string, data: string): Promise<void> => {
     const write = promisify(writeFile);
-    const path = join(__dirname, '/', fileName);
+    const path = join(__dirname, SPLASH, fileName);
     return await write(path, data, 'utf8');
   };
 
@@ -42,7 +43,7 @@ export class StorageHelper {
    */
   static deleteFile = async (fileName: string): Promise<void> => {
     const remove = promisify(unlink);
-    const path = join(__dirname, '/', fileName);
+    const path = join(__dirname, SPLASH, fileName);
     return await remove(path);
   };
 }
