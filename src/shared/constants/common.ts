@@ -513,3 +513,6 @@ export const TX_HEADER = {
     'NFTContractAddress',
   ],
 };
+
+export const EXPORT_LIMIT_RECORD = 1000;
+export const LIMIT_PRIVATE_NAME_TAG = 500;

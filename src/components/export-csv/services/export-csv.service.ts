@@ -3,7 +3,9 @@ import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import {
   AkcLogger,
+  EXPORT_LIMIT_RECORD,
   INDEXER_API_V2,
+  LIMIT_PRIVATE_NAME_TAG,
   RequestContext,
   TX_HEADER,
 } from '../../../shared';
@@ -61,7 +63,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
       variables: {
-        limit: 1000,
+        limit: EXPORT_LIMIT_RECORD,
         compositeKey: 'message.sender',
         address: payload.address,
         heightLT:
@@ -119,7 +121,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
       variables: {
-        limit: 1000,
+        limit: EXPORT_LIMIT_RECORD,
         compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
         address: payload.address,
         heightLT:
@@ -161,7 +163,7 @@ export class ExportCsvService {
         userId,
         null,
         null,
-        500,
+        LIMIT_PRIVATE_NAME_TAG,
         0,
       );
       lstPrivateName = await Promise.all(
@@ -205,7 +207,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
       variables: {
-        limit: 1000,
+        limit: EXPORT_LIMIT_RECORD,
         receiver: payload.address,
         sender: payload.address,
         heightLT:
@@ -256,7 +258,7 @@ export class ExportCsvService {
         userId,
         null,
         null,
-        500,
+        LIMIT_PRIVATE_NAME_TAG,
         0,
       );
       lstPrivateName = await Promise.all(
@@ -300,7 +302,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
       variables: {
-        limit: 1000,
+        limit: EXPORT_LIMIT_RECORD,
         receiver: payload.address,
         sender: payload.address,
         heightLT:
@@ -344,7 +346,7 @@ export class ExportCsvService {
         userId,
         null,
         null,
-        500,
+        LIMIT_PRIVATE_NAME_TAG,
         0,
       );
       lstPrivateName = await Promise.all(
