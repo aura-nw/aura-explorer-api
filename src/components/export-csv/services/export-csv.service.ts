@@ -58,7 +58,7 @@ export class ExportCsvService {
     }
   }
 
-  private async executed(payload) {
+  private async executed(payload: ExportCsvParamDto) {
     const fileName = `export-account-executed-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
@@ -116,7 +116,7 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async coinTransfer(payload, userId) {
+  private async coinTransfer(payload: ExportCsvParamDto, userId) {
     const fileName = `export-account-coin-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
@@ -202,7 +202,7 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async tokenTransfer(payload, userId) {
+  private async tokenTransfer(payload: ExportCsvParamDto, userId) {
     const fileName = `export-account-token-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
@@ -297,7 +297,7 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async nftTransfer(payload, userId) {
+  private async nftTransfer(payload: ExportCsvParamDto, userId) {
     const fileName = `export-account-nft-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,

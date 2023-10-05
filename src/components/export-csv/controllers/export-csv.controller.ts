@@ -43,7 +43,7 @@ export class ExportCsvController {
     @ReqContext() ctx: RequestContext,
     @Query() query: ExportCsvParamDto,
     @Res() res: Response,
-  ): Promise<any> {
+  ): Promise<void> {
     this.logger.log(ctx, `${this.exportCSV.name} was called!`);
     this.proccessCSV(ctx, query, res);
   }
@@ -58,7 +58,7 @@ export class ExportCsvController {
     @ReqContext() ctx: RequestContext,
     @Query() query: ExportCsvParamDto,
     @Res() res,
-  ): Promise<any> {
+  ): Promise<void> {
     this.logger.log(ctx, `${this.exportCSVPrivate.name} was called!`);
     const userId = ctx.user?.id;
     this.proccessCSV(ctx, query, res, userId);
