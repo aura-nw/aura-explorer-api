@@ -16,6 +16,7 @@ import { PasswordAuthModule } from './auth/password/password-auth.module';
 import { QueuesModule } from './components/queues/queues.module';
 import { PrivateNameTagModule } from './components/private-name-tag/private-name-tag.module';
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
+import { ExportCsvModule } from './components/export-csv/export-csv.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { PublicNameTagModule } from './components/public-name-tag/public-name-ta
     SoulboundTokenModule,
     PrivateNameTagModule,
     PublicNameTagModule,
+    ExportCsvModule,
     MailModule,
     ConfigModule.forRoot({
       isGlobal: true,
