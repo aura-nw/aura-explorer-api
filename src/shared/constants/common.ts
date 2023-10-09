@@ -55,6 +55,113 @@ export const INDEXER_API_V2 = {
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
     CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${process.env.INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { data} cw721_contract {smart_contract {address}} sender}}}`,
+    TX_EXECUTED: `query QueryTxOfAccount($compositeKey: String = null, $address: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {event_attribute_index: {composite_key: {_eq: $compositeKey}, value: {_eq: $address}}, timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+          hash
+          height
+          fee
+          timestamp
+          code
+          transaction_messages {
+            type
+            content
+          }
+        }
+      }
+    }`,
+    TX_COIN_TRANSFER: `query QueryTxMsgOfAccount($compositeKeyIn: [String!] = null, $address: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, value: {_eq: $address}, event: {tx_msg_index: {_is_null: false}}}, timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+          hash
+          height
+          fee
+          timestamp
+          code
+          transaction_messages {
+            type
+            content
+          }
+          events(where: {type: {_eq: "transfer"}, tx_msg_index: {_is_null: false}, event_attribute_index: {composite_key: {_in: $compositeKeyIn}, value: {_eq: $address}}}) {
+            event_attributes {
+              composite_key
+              value
+            }
+          }
+        }
+      }
+    }`,
+    TX_TOKEN_TRANSFER: `query Cw20TXMultilCondition($receiver: String = null, $sender: String = null, $contractAddr: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $txHash: String = null, $actionIn: [String!] = null, $actionNotIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {events: {smart_contract_events: {cw20_activities: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], action: {_in: $actionIn, _nin: $actionNotIn}}, smart_contract: {address: {_eq: $contractAddr}}}}, timestamp: {_gte: $startTime, _lte: $endTime}, _and: {height: {_gt: $heightGT, _lt: $heightLT}, hash: {_eq: $txHash}}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}}, order_by: {height: desc}, limit: $limit) {
+          gas_used
+          hash
+          height
+          timestamp
+          code
+          transaction_messages {
+            content
+            type
+          }
+          events(where: {smart_contract_events: {cw20_activities: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], id: {_is_null: false}}}}) {
+            smart_contract_events {
+              cw20_activities {
+                amount
+                action
+                from
+                to
+                sender
+              }
+              smart_contract {
+                address
+                cw20_contract {
+                  symbol
+                  decimal
+                }
+              }
+            }
+          }
+        }
+      }
+    }`,
+    TX_NFT_TRANSFER: `query Cw721TXMultilCondition($receiver: String = null, $sender: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $contractAddr: String = null, $tokenId: String = null, $txHash: String = null, $neqCw4973: String, $eqCw4973: String = null, $actionIn: [String!] = null, $actionNotIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        transaction(where: {events: {smart_contract_events: {cw721_activity: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], cw721_token: {token_id: {_eq: $tokenId}}, action: {_in: $actionIn, _nin: $actionNotIn}}, smart_contract: {name: {_neq: $neqCw4973, _eq: $eqCw4973}, address: {_eq: $contractAddr}}}}, timestamp: {_gte: $startTime, _lte: $endTime}, _and: {height: {_gt: $heightGT, _lt: $heightLT}, hash: {_eq: $txHash}}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}}, order_by: {height: desc}, limit: $limit) {
+          gas_used
+          hash
+          height
+          timestamp
+          code
+          transaction_messages {
+            content
+            type
+          }
+          events(where: {smart_contract_events: {cw721_activity: {id: {_is_null: false}, _or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], cw721_token: {token_id: {_eq: $tokenId}}}}}) {
+            smart_contract_events {
+              cw721_activity {
+                action
+                from
+                to
+                sender
+                cw721_token {
+                  token_id
+                }
+                cw721_contract {
+                  smart_contract {
+                    address
+                  }
+                }
+              }
+            }
+          }
+          event_attribute_index(where: {composite_key: {_eq: "wasm.spender"}}) {
+            composite_key
+            key
+            value
+          }
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -69,6 +176,10 @@ export const INDEXER_API_V2 = {
     CW20_HOLDER: 'CW20Holder',
     VALIDATORS: 'Validators',
     CW4973_STATUS: 'QueryCW4973Status',
+    TX_EXECUTED: 'QueryTxOfAccount',
+    TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
+    TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
+    TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
   },
 };
 
@@ -345,3 +456,63 @@ export enum TOKEN_COIN {
 export enum SYNC_POINT_TYPE {
   CW4973_BLOCK_HEIGHT = 'CW4973_BLOCK_HEIGHT',
 }
+
+export const TX_HEADER = {
+  EXECUTED: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    'Result',
+    'Timestamp',
+    'UnixTimestamp',
+    'Fee',
+    'BlockHeight',
+  ],
+  COIN_TRANSFER: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    'Timestamp',
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'AmountIn',
+    'AmountOut',
+    'Symbol',
+    'Denom',
+  ],
+  TOKEN_TRANSFER: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    'Timestamp',
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'AmountIn',
+    'AmountOut',
+    'Symbol',
+    'TokenContractAddress',
+  ],
+  NFT_TRANSFER: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    'Timestamp',
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'TokenIdIn',
+    'TokenIdOut',
+    'NFTContractAddress',
+  ],
+};
+
+export const EXPORT_LIMIT_RECORD = 1000;
+export const LIMIT_PRIVATE_NAME_TAG = 500;
