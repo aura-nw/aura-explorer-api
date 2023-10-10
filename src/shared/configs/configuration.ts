@@ -74,5 +74,14 @@ export default () => ({
   appDomain: process.env.APP_DOMAIN,
   bcryptSalt: process.env.BCRYPT_SALT || 8,
   auraScanUrl: process.env.AURA_SCAN_URL,
+  kms: {
+    kdf: process.env.KMS_KDF,
+    accessKeyId: process.env.KMS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.KMS_SECRET_ACCESS_KEY,
+    region: process.env.KMS_REGION,
+    apiVersion: process.env.KMS_API_VERSION,
+    alias: process.env.KMS_ALIAS,
+  },
   addressPrefix: process.env.ADDRESS_PREFIX,
+  limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
 });

@@ -159,6 +159,10 @@ export const ADMIN_ERROR_MAP = {
     Code: 'E002',
     Message: 'Duplicate name tag',
   },
+  DUPLICATE_PRIVATE_TAG: {
+    Code: 'E002',
+    Message: 'Duplicate private name tag',
+  },
   INVALID_FORMAT: {
     Code: 'E003',
     Message: 'Invalid aura address format',
@@ -171,6 +175,12 @@ export const ADMIN_ERROR_MAP = {
   INVALID_URL: {
     Code: 'E005',
     Message: 'Invalid URL format',
+  },
+  LIMIT_PRIVATE_NAME_TAG: {
+    Code: 'E006',
+    Message: `You have reached out of ${
+      process.env.LIMITED_PRIVATE_NAME_TAG || 10
+    } max limitation of private name tag`,
   },
 };
 
