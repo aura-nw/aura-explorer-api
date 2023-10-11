@@ -464,7 +464,7 @@ export const TX_HEADER = {
     'Message',
     'Result',
     {
-      label: 'Timestamp(UTC)',
+      label: 'Timestamp (UTC)',
       value: 'Timestamp',
     },
     'UnixTimestamp',
@@ -476,7 +476,7 @@ export const TX_HEADER = {
     'MessageRaw',
     'Message',
     {
-      label: 'Timestamp(UTC)',
+      label: 'Timestamp (UTC)',
       value: 'Timestamp',
     },
     'UnixTimestamp',
@@ -494,7 +494,7 @@ export const TX_HEADER = {
     'MessageRaw',
     'Message',
     {
-      label: 'Timestamp(UTC)',
+      label: 'Timestamp (UTC)',
       value: 'Timestamp',
     },
     'UnixTimestamp',
@@ -512,7 +512,7 @@ export const TX_HEADER = {
     'MessageRaw',
     'Message',
     {
-      label: 'Timestamp(UTC)',
+      label: 'Timestamp (UTC)',
       value: 'Timestamp',
     },
     'UnixTimestamp',
