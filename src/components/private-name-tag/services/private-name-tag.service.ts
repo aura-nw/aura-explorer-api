@@ -156,7 +156,7 @@ export class PrivateNameTagService {
     req: CreatePrivateNameTagParamsDto,
     isCreate = true,
   ) {
-    if (!req.nameTag.match(REGEX_PARTERN.NAME_TAG)) {
+    if (req.nameTag && !req.nameTag?.match(REGEX_PARTERN.NAME_TAG)) {
       return {
         code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
         message: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Message,
