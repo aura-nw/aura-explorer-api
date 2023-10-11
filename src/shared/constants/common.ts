@@ -434,6 +434,12 @@ export const QUEUES = {
       SYNC_4973_STATUS: 'cw4973-status',
     },
   },
+  NOTIFICATION: {
+    QUEUE_NAME: 'notification',
+    JOBS: {
+      SYNC_NOTIFICATION: 'sync_notification',
+    }
+  },
 };
 
 export const SYNC_SERVICE_QUEUES = {
