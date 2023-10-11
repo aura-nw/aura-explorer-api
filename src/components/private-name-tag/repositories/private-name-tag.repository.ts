@@ -48,7 +48,10 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
         .getRawMany();
 
       const count = await builder.getCount();
-      return { result, count };
+      const countFavorite = result.filter(
+        (item) => item.isFavorite == 1,
+      ).length;
+      return { result, count, countFavorite };
     };
 
     if (keyword) {

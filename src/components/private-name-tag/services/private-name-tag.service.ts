@@ -36,13 +36,14 @@ export class PrivateNameTagService {
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { result, count } = await this.privateNameTagRepository.getNameTags(
-      ctx.user.id,
-      req.keyword,
-      await this.encryptionService.encrypt(req.keyword ?? ''),
-      req.limit,
-      req.offset,
-    );
+    const { result, count, countFavorite } =
+      await this.privateNameTagRepository.getNameTags(
+        ctx.user.id,
+        req.keyword,
+        await this.encryptionService.encrypt(req.keyword ?? ''),
+        req.limit,
+        req.offset,
+      );
     const data = await Promise.all(
       result.map(async (item) => {
         item.nameTag = await this.encryptionService.decrypt(item.nameTag);
@@ -50,7 +51,7 @@ export class PrivateNameTagService {
       }),
     );
 
-    return { data, count };
+    return { data, count, countFavorite };
   }
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
