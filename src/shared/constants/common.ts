@@ -162,6 +162,58 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    TX_DETAIL_NOTIFICATION: `query TxDetailNotification($heightGT: Int, $heightLT: Int, $listFilterCW20: [String!] = null, $listFilterCW721: [String!] = null, $compositeKeyIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        executed: transaction(where: {height: {_gte: $heightGT, _lt: $heightLT}}) {
+          height
+          transaction_messages {
+            type
+            sender
+          }
+        }
+        coin_transfer: event(where: {tx_msg_index: {_is_null: false}, event_attributes: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}}) {
+          event_attributes {
+            composite_key
+            value
+          }
+        }
+        token_transfer: cw20_activity(where: {height: {_gte: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}) {
+          action
+          amount
+          from
+          to
+          cw20_contract {
+            smart_contract {
+              address
+            }
+            symbol
+            decimal
+            marketing_info
+            name
+          }
+        }
+        nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gte: $heightGT, _lt: $heightLT}}) {
+          action
+          from
+          to
+          cw721_token {
+            token_id
+          }
+          cw721_contract {
+            smart_contract {
+              address
+            }
+          }
+          smart_contract_event {
+            smart_contract_event_attributes {
+              value
+              key
+            }
+          }
+        }
+      }
+    }
+    `,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -180,6 +232,7 @@ export const INDEXER_API_V2 = {
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
+    TX_DETAIL_NOTIFICATION: 'TxDetailNotification',
   },
 };
 
@@ -438,7 +491,7 @@ export const QUEUES = {
     QUEUE_NAME: 'notification',
     JOBS: {
       SYNC_NOTIFICATION: 'sync_notification',
-    }
+    },
   },
 };
 
@@ -461,6 +514,7 @@ export enum TOKEN_COIN {
 
 export enum SYNC_POINT_TYPE {
   CW4973_BLOCK_HEIGHT = 'CW4973_BLOCK_HEIGHT',
+  TX_BLOCK_HEIGHT = 'TX_BLOCK_HEIGHT',
 }
 
 export const TX_HEADER = {
