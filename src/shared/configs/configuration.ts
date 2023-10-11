@@ -84,4 +84,10 @@ export default () => ({
   },
   addressPrefix: process.env.ADDRESS_PREFIX,
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
+  rateLimiter: {
+    csvExport: {
+      limit: Number(process.env.LIMITER_CSV_EXPORT) || 10,
+      ttl: Number(process.env.LIMITER_CSV_EXPORT_TTL) || 300000,
+    },
+  },
 });
