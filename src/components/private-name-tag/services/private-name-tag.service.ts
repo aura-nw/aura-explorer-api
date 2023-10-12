@@ -36,13 +36,14 @@ export class PrivateNameTagService {
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { result, count } = await this.privateNameTagRepository.getNameTags(
-      ctx.user.id,
-      req.keyword,
-      await this.encryptionService.encrypt(req.keyword ?? ''),
-      req.limit,
-      req.offset,
-    );
+    const { result, count, countFavorite } =
+      await this.privateNameTagRepository.getNameTags(
+        ctx.user.id,
+        req.keyword,
+        await this.encryptionService.encrypt(req.keyword ?? ''),
+        req.limit,
+        req.offset,
+      );
     const data = await Promise.all(
       result.map(async (item) => {
         item.nameTag = await this.encryptionService.decrypt(item.nameTag);
@@ -50,7 +51,7 @@ export class PrivateNameTagService {
       }),
     );
 
-    return { data, count };
+    return { data, count, countFavorite };
   }
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
@@ -156,7 +157,7 @@ export class PrivateNameTagService {
     req: CreatePrivateNameTagParamsDto,
     isCreate = true,
   ) {
-    if (!req.nameTag.match(REGEX_PARTERN.NAME_TAG)) {
+    if (req.nameTag && !req.nameTag?.match(REGEX_PARTERN.NAME_TAG)) {
       return {
         code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
         message: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Message,
