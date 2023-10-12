@@ -18,6 +18,8 @@ import { NotificationModule } from './notification/notification.module';
             type: 'exponential',
             delay: 1000,
           },
+          removeOnFail: config.get('keepJobCount'),
+          removeOnComplete: { count: config.get('keepJobCount') },
         },
       }),
       inject: [ConfigService],
