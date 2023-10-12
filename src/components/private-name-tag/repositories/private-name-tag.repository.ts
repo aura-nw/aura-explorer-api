@@ -51,6 +51,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
       const countFavorite = await this.count({
         where: {
           isFavorite: true,
+          createdBy: user_id,
         },
       });
 
