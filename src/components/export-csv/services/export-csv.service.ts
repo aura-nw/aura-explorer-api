@@ -6,6 +6,7 @@ import {
   EXPORT_LIMIT_RECORD,
   INDEXER_API_V2,
   LIMIT_PRIVATE_NAME_TAG,
+  QUERY_LIMIT_RECORD,
   RequestContext,
   TX_HEADER,
 } from '../../../shared';
@@ -63,7 +64,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
       variables: {
-        limit: 100,
+        limit: QUERY_LIMIT_RECORD,
         address: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
@@ -119,7 +120,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
       variables: {
-        limit: 100,
+        limit: QUERY_LIMIT_RECORD,
         compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
         address: payload.address,
         heightLT:
@@ -205,7 +206,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
       variables: {
-        limit: 100,
+        limit: QUERY_LIMIT_RECORD,
         receiver: payload.address,
         sender: payload.address,
         heightLT:
@@ -300,7 +301,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
       variables: {
-        limit: 100,
+        limit: QUERY_LIMIT_RECORD,
         receiver: payload.address,
         sender: payload.address,
         heightLT:

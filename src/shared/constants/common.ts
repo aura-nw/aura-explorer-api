@@ -573,5 +573,6 @@ export const TX_HEADER = {
   ],
 };
 
+export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
