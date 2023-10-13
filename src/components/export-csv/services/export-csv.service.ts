@@ -391,7 +391,7 @@ export class ExportCsvService {
     while (
       next &&
       result.transaction?.length < EXPORT_LIMIT_RECORD &&
-      timesLoop <= MAX_LOOP
+      timesLoop < MAX_LOOP
     ) {
       const response = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
