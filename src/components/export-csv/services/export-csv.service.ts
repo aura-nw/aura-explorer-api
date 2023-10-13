@@ -396,7 +396,7 @@ export class ExportCsvService {
       const response = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
       )?.data[this.chainDB];
-      if (response?.transaction.length < 100) {
+      if (response?.transaction.length < QUERY_LIMIT_RECORD) {
         next = false;
       } else {
         graphqlQuery.variables.heightLT =
