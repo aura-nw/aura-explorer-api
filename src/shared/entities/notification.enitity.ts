@@ -1,20 +1,22 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
+import { NotificationToken } from './notification-token.enitity';
 
 @Entity('notification')
 export class Notification extends BaseEntityIncrementId {
-  @Column()
-  address: string;
+  @JoinColumn({ name: 'notification_token_id', referencedColumnName: 'id' })
+  @ManyToOne(() => NotificationToken)
+  notification_token: NotificationToken;
 
-  @Column({ name: 'user_id' })
+  @Column()
   userId: number;
-
-  @Column()
-  height: number;
 
   @Column()
   type: string;
 
   @Column()
   content: string;
+
+  @Column()
+  is_read: boolean;
 }

@@ -8,6 +8,8 @@ import { CronExpression } from '@nestjs/schedule';
 import { SyncPointRepository } from '../../sync-point/repositories/sync-point.repository';
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { Notification } from '../../../shared/entities/notification.enitity';
+import * as firebaseAdmin from 'firebase-admin';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -26,6 +28,16 @@ export class NotificationProcessor {
     this.logger.log(
       '============== Constructor CW4973Processor Service ==============',
     );
+    firebaseAdmin.initializeApp({
+      credential: firebaseAdmin.credential.cert({
+        projectId: process.env.FCM_PROJECT_ID,
+        privateKey: Buffer.from(process.env.FCM_PRIVATE_KEY, 'base64').toString(
+          'ascii',
+        ),
+        clientEmail: process.env.FCM_CLIENT_EMAIL,
+      }),
+    });
+
     this.indexerChainId = this.configService.get('indexer.chainId');
     this.indexerApi = this.configService.get('indexerV2.graphQL');
 
@@ -83,6 +95,17 @@ export class NotificationProcessor {
       ?.data[this.chainDB];
 
     if (response?.executed?.length > 0) {
+      const address = [];
+      const lstNotification: Notification[] = [];
+      response?.executed?.forEach((tx) => {
+        tx.transaction_messages.forEach((msg) => {
+          if (address.includes(msg.sender)) {
+            let notification: Notification;
+            notification.content = `${msg.sender}${msg.type}`;
+            lstNotification.push(notification);
+          }
+        });
+      });
     }
     if (response?.coin_transfer?.length > 0) {
     }
