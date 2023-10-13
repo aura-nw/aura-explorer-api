@@ -386,10 +386,11 @@ export class ExportCsvService {
     const result = { transaction: [] };
     let next = true;
     let timesLoop = 0;
+    const MAX_LOOP = 10;
     while (
       next &&
       result.transaction?.length < EXPORT_LIMIT_RECORD &&
-      timesLoop <= 10
+      timesLoop <= MAX_LOOP
     ) {
       const response = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
