@@ -63,8 +63,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
       variables: {
-        limit: EXPORT_LIMIT_RECORD,
-        compositeKey: 'message.sender',
+        limit: 100,
         address: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
@@ -84,8 +83,7 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_EXECUTED,
     };
 
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      ?.data[this.chainDB];
+    const response = await this.queryData(graphqlQuery);
 
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
@@ -121,7 +119,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
       variables: {
-        limit: EXPORT_LIMIT_RECORD,
+        limit: 100,
         compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
         address: payload.address,
         heightLT:
@@ -142,8 +140,7 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_COIN_TRANSFER,
     };
 
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      ?.data[this.chainDB];
+    const response = await this.queryData(graphqlQuery);
 
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
@@ -158,7 +155,9 @@ export class ExportCsvService {
     );
 
     let lstPrivateName;
+    let fields = TX_HEADER.COIN_TRANSFER;
     if (userId) {
+      fields = TX_HEADER.COIN_TRANSFER_NAMETAG;
       const { result } = await this.privateNameTagRepository.getNameTags(
         userId,
         null,
@@ -174,7 +173,6 @@ export class ExportCsvService {
       );
     }
     const data = [];
-    const fields = TX_HEADER.COIN_TRANSFER;
     txs?.forEach((tx) => {
       tx.arrEvent.forEach((evt) => {
         data.push({
@@ -207,7 +205,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
       variables: {
-        limit: EXPORT_LIMIT_RECORD,
+        limit: 100,
         receiver: payload.address,
         sender: payload.address,
         heightLT:
@@ -237,8 +235,7 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
     };
 
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      ?.data[this.chainDB];
+    const response = await this.queryData(graphqlQuery);
 
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
@@ -253,7 +250,9 @@ export class ExportCsvService {
     );
 
     let lstPrivateName;
+    let fields = TX_HEADER.TOKEN_TRANSFER;
     if (userId) {
+      fields = TX_HEADER.TOKEN_TRANSFER_NAMETAG;
       const { result } = await this.privateNameTagRepository.getNameTags(
         userId,
         null,
@@ -269,7 +268,6 @@ export class ExportCsvService {
       );
     }
     const data = [];
-    const fields = TX_HEADER.TOKEN_TRANSFER;
     txs?.forEach((tx) => {
       tx.arrEvent.forEach((evt) => {
         data.push({
@@ -302,7 +300,7 @@ export class ExportCsvService {
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
       variables: {
-        limit: EXPORT_LIMIT_RECORD,
+        limit: 100,
         receiver: payload.address,
         sender: payload.address,
         heightLT:
@@ -325,8 +323,7 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
     };
 
-    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      ?.data[this.chainDB];
+    const response = await this.queryData(graphqlQuery);
 
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
@@ -341,7 +338,9 @@ export class ExportCsvService {
     );
 
     let lstPrivateName;
+    let fields = TX_HEADER.NFT_TRANSFER;
     if (userId) {
+      fields = TX_HEADER.NFT_TRANSFER_NAMETAG;
       const { result } = await this.privateNameTagRepository.getNameTags(
         userId,
         null,
@@ -357,7 +356,6 @@ export class ExportCsvService {
       );
     }
     const data = [];
-    const fields = TX_HEADER.NFT_TRANSFER;
     txs?.forEach((tx) => {
       tx.arrEvent.forEach((evt) => {
         data.push({
@@ -382,5 +380,30 @@ export class ExportCsvService {
     });
 
     return { data, fileName, fields };
+  }
+
+  private async queryData(graphqlQuery) {
+    const result = { transaction: [] };
+    let next = true;
+    let timesLoop = 0;
+    while (
+      next &&
+      result.transaction?.length < EXPORT_LIMIT_RECORD &&
+      timesLoop <= 10
+    ) {
+      const response = (
+        await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
+      )?.data[this.chainDB];
+      if (response?.transaction.length < 100) {
+        next = false;
+      } else {
+        graphqlQuery.variables.heightLT =
+          response?.transaction[response.transaction.length - 1]?.height;
+      }
+      result.transaction?.push(...response?.transaction);
+      timesLoop++;
+    }
+
+    return result;
   }
 }
