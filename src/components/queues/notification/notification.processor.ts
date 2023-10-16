@@ -15,7 +15,6 @@ import * as firebaseAdmin from 'firebase-admin';
 export class NotificationProcessor {
   private readonly logger = new Logger(NotificationProcessor.name);
   private indexerChainId;
-  private indexerApi;
   private chainDB;
 
   constructor(
@@ -39,7 +38,6 @@ export class NotificationProcessor {
     });
 
     this.indexerChainId = this.configService.get('indexer.chainId');
-    this.indexerApi = this.configService.get('indexerV2.graphQL');
 
     this.queue.add(
       QUEUES.NOTIFICATION.JOBS.SYNC_NOTIFICATION,
@@ -61,9 +59,10 @@ export class NotificationProcessor {
     });
 
     if (!currentTxHeight) {
-      const params = `?chainid=${this.indexerChainId}`;
       const data = await lastValueFrom(
-        this.httpService.get(this.indexerApi + params),
+        this.httpService.get(
+          `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
+        ),
       ).then((rs) => rs.data);
       await this.syncPointRepos.save({
         type: SYNC_POINT_TYPE.TX_BLOCK_HEIGHT,
