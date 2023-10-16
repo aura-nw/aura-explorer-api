@@ -3,11 +3,13 @@ import { Module } from '@nestjs/common';
 import { QUEUES, SharedModule, SyncStatus } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { NotificationProcessor } from './notification.processor';
 import { SyncPointRepository } from '../../sync-point/repositories/sync-point.repository';
+import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
+import { PublicNameTagRepository } from '../../public-name-tag/repositories/public-name-tag.repository';
+import { NotificationTokenRepository } from './repositories/notification-token.repository';
 
 @Module({
   imports: [
@@ -15,7 +17,9 @@ import { SyncPointRepository } from '../../sync-point/repositories/sync-point.re
     ConfigModule,
     HttpModule,
     TypeOrmModule.forFeature([
-      TokenMarketsRepository,
+      PrivateNameTagRepository,
+      PublicNameTagRepository,
+      NotificationTokenRepository,
       SyncPointRepository,
       SyncStatus,
     ]),

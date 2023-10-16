@@ -166,6 +166,8 @@ export const INDEXER_API_V2 = {
       ${process.env.INDEXER_V2_DB} {
         executed: transaction(where: {height: {_gte: $heightGT, _lt: $heightLT}}) {
           height
+          hash
+          timestamp
           transaction_messages {
             type
             sender
@@ -176,8 +178,14 @@ export const INDEXER_API_V2 = {
             composite_key
             value
           }
+          transaction {
+            height
+            hash
+          }
         }
         token_transfer: cw20_activity(where: {height: {_gte: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}) {
+          height
+          tx_hash
           action
           amount
           from
@@ -193,11 +201,14 @@ export const INDEXER_API_V2 = {
           }
         }
         nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gte: $heightGT, _lt: $heightLT}}) {
+          tx_hash
+          height
           action
           from
           to
           cw721_token {
             token_id
+            media_info
           }
           cw721_contract {
             smart_contract {
