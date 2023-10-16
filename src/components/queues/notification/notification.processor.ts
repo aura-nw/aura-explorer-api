@@ -291,7 +291,7 @@ export class NotificationProcessor {
           notification.content = `${amount} ${denom} ${method} by ${
             element.address
           } ${this.getNameTag(
-            toAddress,
+            element.address,
             element.userId,
             listPrivateNameTag,
             listPublicNameTag,
@@ -323,17 +323,55 @@ export class NotificationProcessor {
   ) {
     const lstNotification: Notification[] = [];
     if (response?.nft_transfer?.length > 0) {
-      response?.executed?.forEach((tx) => {
-        const notificationInfo: NotificationInfo = {
-          image: tx.cw721_token?.media_info?.offchain?.image?.url,
-          contentType:
-            tx.cw721_token?.media_info?.offchain?.image?.content_type,
-          txHash: tx.tx_hash,
-          type: 'coin_transfer',
+      const resultFlat = Array.from(
+        new Set(response?.nft_transfer?.map((s) => s.tx_hash)),
+      ).map((txHash) => {
+        return {
+          tx_hash: txHash.toString(),
+          activities: response?.nft_transfer?.filter(
+            (s) => s.tx_hash === txHash,
+          ),
         };
-        const listWatch = watchList.filter(
-          (item) => item.address === toAddress || item.address === fromAddress,
-        );
+      });
+
+      resultFlat.forEach((tx) => {
+        const notificationInfo: NotificationInfo = {
+          image: tx.activities[0].cw721_token?.media_info?.offchain?.image?.url,
+          contentType:
+            tx.activities[0].cw721_token?.media_info?.offchain?.image
+              ?.content_type,
+          txHash: tx.tx_hash,
+          type: 'nft_transfer',
+        };
+        const listTokenId = tx.activities
+          .filter((item, index) => {
+            if (index < 2) {
+              return item;
+            }
+          })
+          ?.join(',');
+        tx.activities.forEach((act) => {
+          const listWatch = watchList.filter(
+            (item) => item.address === act.from || item.address === act.to,
+          );
+          listWatch?.forEach((element) => {
+            let notification: Notification;
+            notification.notificationToken = listNotificationToken.find(
+              (item) => item.userId === element.userId,
+            )?.notification_token;
+            const method = element.address === act.to ? 'received' : 'sent';
+            notification.notificationInfo = notificationInfo;
+            notification.content = `${listTokenId} ${
+              tx.activities.length > 2 ? 'and more' : ''
+            } ${method} by ${element.address} ${this.getNameTag(
+              element.address,
+              element.userId,
+              listPrivateNameTag,
+              listPublicNameTag,
+            )}`;
+            lstNotification.push(notification);
+          });
+        });
       });
     }
 
