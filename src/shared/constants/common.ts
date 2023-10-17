@@ -162,7 +162,7 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
-    TX_DETAIL_NOTIFICATION: `query TxDetailNotification($heightGT: Int, $heightLT: Int, $listFilterCW20: [String!] = null, $listFilterCW721: [String!] = null, $compositeKeyIn: [String!] = null) {
+    EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
       ${process.env.INDEXER_V2_DB} {
         executed: transaction(where: {height: {_gte: $heightGT, _lt: $heightLT}}) {
           height
@@ -173,16 +173,26 @@ export const INDEXER_API_V2 = {
             sender
           }
         }
-        coin_transfer: event(where: {tx_msg_index: {_is_null: false}, event_attributes: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}}) {
-          event_attributes {
-            composite_key
-            value
-          }
-          transaction {
-            height
-            hash
+      }
+    }
+    `,
+    COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int, $heightLT: Int, $compositeKeyIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        coin_transfer: transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}, events: {tx_msg_index: {_is_null: false}}}) {
+          height
+          hash
+          events(where: {type: {_eq: "transfer"}}) {
+            event_attributes {
+              composite_key
+              value
+            }
           }
         }
+      }
+    }
+    `,
+    TOKEN_TRANSFER_NOTIFICATION: `query TokenTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW20: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
         token_transfer: cw20_activity(where: {height: {_gte: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}) {
           height
           tx_hash
@@ -200,6 +210,11 @@ export const INDEXER_API_V2 = {
             name
           }
         }
+      }
+    }
+    `,
+    NFT_TRANSFER_NOTIFICATION: `query NftTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW721: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
         nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gte: $heightGT, _lt: $heightLT}}) {
           tx_hash
           height
@@ -243,7 +258,10 @@ export const INDEXER_API_V2 = {
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
-    TX_DETAIL_NOTIFICATION: 'TxDetailNotification',
+    EXECUTED_NOTIFICATION: 'ExecutedNotification',
+    COIN_TRANSFER_NOTIFICATION: 'CoinTransferNotification',
+    TOKEN_TRANSFER_NOTIFICATION: 'TokenTransferNotification',
+    NFT_TRANSFER_NOTIFICATION: 'NftTransferNotification',
   },
 };
 
@@ -501,7 +519,10 @@ export const QUEUES = {
   NOTIFICATION: {
     QUEUE_NAME: 'notification',
     JOBS: {
-      SYNC_NOTIFICATION: 'sync_notification',
+      NOTIFICATION_EXECUTED: 'notification_executed',
+      NOTIFICATION_COIN_TRANSFER: 'notification_coin_transfer',
+      NOTIFICATION_TOKEN_TRANSFER: 'notification_token_transfer',
+      NOTIFICATION_NFT_TRANSFER: 'notification_nft_transfer',
     },
   },
 };
@@ -525,7 +546,10 @@ export enum TOKEN_COIN {
 
 export enum SYNC_POINT_TYPE {
   CW4973_BLOCK_HEIGHT = 'CW4973_BLOCK_HEIGHT',
-  TX_BLOCK_HEIGHT = 'TX_BLOCK_HEIGHT',
+  EXECUTED_HEIGHT = 'EXECUTED_BLOCK_HEIGHT',
+  COIN_TRANSFER_HEIGHT = 'COIN_TRANSFER_HEIGHT',
+  TOKEN_TRANSFER_HEIGHT = 'TOKEN_TRANSFER_HEIGHT',
+  NFT_TRANSFER_HEIGHT = 'NFT_TRANSFER_HEIGHT',
 }
 
 export const TX_HEADER = {

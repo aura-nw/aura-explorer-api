@@ -54,7 +54,31 @@ export class NotificationProcessor {
     this.indexerChainId = this.configService.get('indexer.chainId');
 
     this.queue.add(
-      QUEUES.NOTIFICATION.JOBS.SYNC_NOTIFICATION,
+      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_EXECUTED,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+      },
+    );
+
+    this.queue.add(
+      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_COIN_TRANSFER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+      },
+    );
+
+    this.queue.add(
+      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_NFT_TRANSFER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+      },
+    );
+
+    this.queue.add(
+      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_TOKEN_TRANSFER,
       {},
       {
         repeat: { cron: CronExpression.EVERY_10_SECONDS },
@@ -64,11 +88,11 @@ export class NotificationProcessor {
     this.chainDB = configService.get('indexerV2.chainDB');
   }
 
-  @Process(QUEUES.NOTIFICATION.JOBS.SYNC_NOTIFICATION)
-  async handleJobSyncNotification() {
+  @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_EXECUTED)
+  async notificationExecuted() {
     const currentTxHeight = await this.syncPointRepos.findOne({
       where: {
-        type: SYNC_POINT_TYPE.TX_BLOCK_HEIGHT,
+        type: SYNC_POINT_TYPE.EXECUTED_HEIGHT,
       },
     });
 
@@ -79,29 +103,18 @@ export class NotificationProcessor {
         ),
       ).then((rs) => rs.data);
       await this.syncPointRepos.save({
-        type: SYNC_POINT_TYPE.TX_BLOCK_HEIGHT,
+        type: SYNC_POINT_TYPE.EXECUTED_HEIGHT,
         point: data?.total_blocks,
       });
       return;
     }
 
     const graphQlQuery = {
-      query: INDEXER_API_V2.GRAPH_QL.TX_DETAIL_NOTIFICATION,
+      query: INDEXER_API_V2.GRAPH_QL.EXECUTED_NOTIFICATION,
       variables: {
         heightGT: currentTxHeight.point,
-        listFilterCW20: [
-          'mint',
-          'burn',
-          'transfer',
-          'send',
-          'transfer_from',
-          'burn_from',
-          'send_from',
-        ],
-        listFilterCW721: ['mint', 'burn', 'transfer_nft', 'send_nft'],
-        compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
       },
-      operationName: INDEXER_API_V2.OPERATION_NAME.TX_DETAIL_NOTIFICATION,
+      operationName: INDEXER_API_V2.OPERATION_NAME.EXECUTED_NOTIFICATION,
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery))
@@ -116,41 +129,211 @@ export class NotificationProcessor {
     const publicNameTags = await this.publicNameTagRepository.find();
     const notificationTokens = await this.notificationTokenRepository.find();
 
-    const notifications = [];
-    const executed = await this.processExecutedNotification(
+    const notifications = await this.processExecutedNotification(
       response,
       watchList,
       notificationTokens,
       privateNameTags,
       publicNameTags,
     );
-    const coinTransfer = await this.processCoinTransferNotification(
-      response,
+  }
+
+  @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_COIN_TRANSFER)
+  async notificationCoinTransfer() {
+    const currentTxHeight = await this.syncPointRepos.findOne({
+      where: {
+        type: SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+      },
+    });
+
+    if (!currentTxHeight) {
+      const data = await lastValueFrom(
+        this.httpService.get(
+          `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
+        ),
+      ).then((rs) => rs.data);
+      await this.syncPointRepos.save({
+        type: SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+        point: data?.total_blocks,
+      });
+      return;
+    }
+
+    const graphQlQuery = {
+      query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
+      variables: {
+        heightGT: currentTxHeight.point,
+        compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.COIN_TRANSFER_NOTIFICATION,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery))
+      ?.data[this.chainDB];
+
+    const watchList = [
+      { address: 'aura1xahhax60fakwfng0sdd6wcxd0eeu00r5w3s49h', userId: 1 },
+      { address: 'aura14ce3689drnqwds3xekmw0vqn6mttfhvmgk9k8u', userId: 18 },
+    ];
+
+    const privateNameTags = await this.privateNameTagRepository.find();
+    const publicNameTags = await this.publicNameTagRepository.find();
+    const notificationTokens = await this.notificationTokenRepository.find();
+
+    const listTx = await this.convertDataCoinTransfer(response?.coin_transfer);
+
+    const notifyToTx = this.getTxNotifyFrom(listTx);
+    const coinTransferTo = await this.processCoinTransferNotification(
+      notifyToTx,
       watchList,
       notificationTokens,
       privateNameTags,
       publicNameTags,
     );
-    const tokenTransfer = await this.processTokenTransferNotification(
-      response,
+
+    const notifyFromTx = this.getTxNotifyFrom(listTx);
+    const coinTransferFrom = await this.processCoinTransferNotification(
+      notifyFromTx,
       watchList,
       notificationTokens,
       privateNameTags,
       publicNameTags,
     );
-    const nftTransfer = await this.processNftTransferNotification(
-      response,
+    const notifications = [...coinTransferFrom, ...coinTransferTo];
+  }
+
+  @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_TOKEN_TRANSFER)
+  async notificationTokenTransfer() {
+    const currentTxHeight = await this.syncPointRepos.findOne({
+      where: {
+        type: SYNC_POINT_TYPE.TOKEN_TRANSFER_HEIGHT,
+      },
+    });
+
+    if (!currentTxHeight) {
+      const data = await lastValueFrom(
+        this.httpService.get(
+          `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
+        ),
+      ).then((rs) => rs.data);
+      await this.syncPointRepos.save({
+        type: SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+        point: data?.total_blocks,
+      });
+      return;
+    }
+
+    const graphQlQuery = {
+      query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
+      variables: {
+        heightGT: currentTxHeight.point,
+        listFilterCW20: [
+          'mint',
+          'burn',
+          'transfer',
+          'send',
+          'transfer_from',
+          'burn_from',
+          'send_from',
+        ],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.COIN_TRANSFER_NOTIFICATION,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery))
+      ?.data[this.chainDB];
+
+    const watchList = [
+      { address: 'aura1xahhax60fakwfng0sdd6wcxd0eeu00r5w3s49h', userId: 1 },
+      { address: 'aura14ce3689drnqwds3xekmw0vqn6mttfhvmgk9k8u', userId: 18 },
+    ];
+
+    const privateNameTags = await this.privateNameTagRepository.find();
+    const publicNameTags = await this.publicNameTagRepository.find();
+    const notificationTokens = await this.notificationTokenRepository.find();
+
+    const notifyFromTx = this.getTxNotifyFrom(response?.token_transfer);
+    const nftTransferFrom = await this.processTokenTransferNotification(
+      notifyFromTx,
       watchList,
       notificationTokens,
       privateNameTags,
       publicNameTags,
     );
-    notifications.push(
-      ...executed,
-      ...coinTransfer,
-      ...tokenTransfer,
-      ...nftTransfer,
+
+    const notifyToTx = this.getTxNotifyTo(response?.token_transfer);
+    const nftTransferTo = await this.processTokenTransferNotification(
+      notifyToTx,
+      watchList,
+      notificationTokens,
+      privateNameTags,
+      publicNameTags,
     );
+
+    const notifications = [...nftTransferFrom, ...nftTransferTo];
+  }
+
+  @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_NFT_TRANSFER)
+  async notificationNftTransfer() {
+    const currentTxHeight = await this.syncPointRepos.findOne({
+      where: {
+        type: SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT,
+      },
+    });
+
+    if (!currentTxHeight) {
+      const data = await lastValueFrom(
+        this.httpService.get(
+          `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
+        ),
+      ).then((rs) => rs.data);
+      await this.syncPointRepos.save({
+        type: SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT,
+        point: data?.total_blocks,
+      });
+      return;
+    }
+
+    const graphQlQuery = {
+      query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
+      variables: {
+        heightGT: currentTxHeight.point,
+        listFilterCW721: ['mint', 'burn', 'transfer_nft', 'send_nft'],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.COIN_TRANSFER_NOTIFICATION,
+    };
+
+    const response = (await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery))
+      ?.data[this.chainDB];
+
+    const watchList = [
+      { address: 'aura1xahhax60fakwfng0sdd6wcxd0eeu00r5w3s49h', userId: 1 },
+      { address: 'aura14ce3689drnqwds3xekmw0vqn6mttfhvmgk9k8u', userId: 18 },
+    ];
+
+    const privateNameTags = await this.privateNameTagRepository.find();
+    const publicNameTags = await this.publicNameTagRepository.find();
+    const notificationTokens = await this.notificationTokenRepository.find();
+
+    const notifyFromTx = this.getTxNotifyFrom(response?.nft_transfer);
+    const nftTransferFrom = await this.processNftTransferNotification(
+      notifyFromTx,
+      watchList,
+      notificationTokens,
+      privateNameTags,
+      publicNameTags,
+    );
+
+    const notifyToTx = this.getTxNotifyTo(response?.nft_transfer);
+    const nftTransferTo = await this.processNftTransferNotification(
+      notifyToTx,
+      watchList,
+      notificationTokens,
+      privateNameTags,
+      publicNameTags,
+    );
+
+    const notifications = [...nftTransferFrom, ...nftTransferTo];
   }
 
   private async getNameTag(
@@ -223,26 +406,207 @@ export class NotificationProcessor {
   }
 
   private async processCoinTransferNotification(
-    response,
+    data,
     watchList,
     listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: Notification[] = [];
-    if (response?.coin_transfer?.length > 0) {
-      const envConfig = await lastValueFrom(
-        this.httpService.get(this.config.configUrl),
-      ).then((rs) => rs.data);
+    data?.forEach((tx) => {
+      const notificationInfo: NotificationInfo = {
+        image: tx.image,
+        contentType: 'image/png',
+        txHash: tx.tx_hash,
+        type: 'coin_transfer',
+      };
+      const listTransfer = tx.activities
+        .filter((item, index) => {
+          if (index < 3) {
+            return `${item.amount} ${item.denom}`;
+          }
+        })
+        ?.join(',');
 
-      const coinInfo = envConfig.chain_info.currencies[0];
-      const coinConfig = envConfig.coins;
+      tx.activities.forEach((act) => {
+        const listWatch = watchList.filter(
+          (item) => item.address === act.from || item.address === act.to,
+        );
+        listWatch?.forEach((element) => {
+          let notification: Notification;
+          notification.notificationToken = listNotificationToken.find(
+            (item) => item.userId === element.userId,
+          )?.notification_token;
+          const method = element.address === act.to ? 'received' : 'sent';
+          notification.notificationInfo = notificationInfo;
+          notification.content = `${listTransfer} ${
+            tx.activities.length > 3 ? 'and more' : ''
+          } ${method} by ${element.address} ${this.getNameTag(
+            element.address,
+            element.userId,
+            listPrivateNameTag,
+            listPublicNameTag,
+          )}`;
+          lstNotification.push(notification);
+        });
+      });
+    });
+    return lstNotification;
+  }
 
-      response?.coin_transfer?.forEach((tx) => {
-        const toAddress = tx.event_attributes.find(
+  private async processTokenTransferNotification(
+    data,
+    watchList,
+    listNotificationToken: NotificationToken[],
+    listPrivateNameTag: PrivateNameTag[],
+    listPublicNameTag: PublicNameTag[],
+  ) {
+    const lstNotification: Notification[] = [];
+    data?.forEach((tx) => {
+      const notificationInfo: NotificationInfo = {
+        image: tx.activities[0].cw20_contract?.marketing_info?.logo,
+        contentType: 'image/png',
+        txHash: tx.tx_hash,
+        type: 'token_transfer',
+      };
+      const listTokenId = tx.activities
+        .filter((item, index) => {
+          if (index < 3) {
+            return item.cw20_contract.name;
+          }
+        })
+        ?.join(',');
+
+      tx.activities.forEach((act) => {
+        const listWatch = watchList.filter(
+          (item) => item.address === act.from || item.address === act.to,
+        );
+        listWatch?.forEach((element) => {
+          let notification: Notification;
+          notification.notificationToken = listNotificationToken.find(
+            (item) => item.userId === element.userId,
+          )?.notification_token;
+          const method = element.address === act.to ? 'received' : 'sent';
+          notification.notificationInfo = notificationInfo;
+          notification.content = `${listTokenId} ${
+            tx.activities.length > 2 ? 'and more' : ''
+          } ${method} by ${element.address} ${this.getNameTag(
+            element.address,
+            element.userId,
+            listPrivateNameTag,
+            listPublicNameTag,
+          )}`;
+          lstNotification.push(notification);
+        });
+      });
+    });
+
+    return lstNotification;
+  }
+
+  private async processNftTransferNotification(
+    data,
+    watchList,
+    listNotificationToken: NotificationToken[],
+    listPrivateNameTag: PrivateNameTag[],
+    listPublicNameTag: PublicNameTag[],
+  ) {
+    const lstNotification: Notification[] = [];
+    data?.forEach((tx) => {
+      const notificationInfo: NotificationInfo = {
+        image: tx.activities[0].cw721_token?.media_info?.offchain?.image?.url,
+        contentType:
+          tx.activities[0].cw721_token?.media_info?.offchain?.image
+            ?.content_type,
+        txHash: tx.tx_hash,
+        type: 'nft_transfer',
+      };
+      const listTokenId = tx.activities
+        .filter((item, index) => {
+          if (index < 2) {
+            return item.cw721_token.token_id;
+          }
+        })
+        ?.join(',');
+
+      const listWatch = watchList.filter(
+        (item) => item.address === tx.from || item.address === tx.to,
+      );
+      listWatch?.forEach((element) => {
+        let notification: Notification;
+        notification.notificationToken = listNotificationToken.find(
+          (item) => item.userId === element.userId,
+        )?.notification_token;
+        const method = element.address === tx.to ? 'received' : 'sent';
+        notification.notificationInfo = notificationInfo;
+        notification.content = `${listTokenId} ${
+          tx.activities.length > 2 ? 'and more' : ''
+        } ${method} by ${element.address} ${this.getNameTag(
+          element.address,
+          element.userId,
+          listPrivateNameTag,
+          listPublicNameTag,
+        )}`;
+        lstNotification.push(notification);
+      });
+    });
+    return lstNotification;
+  }
+
+  private getTxNotifyFrom(data) {
+    return Array.from(
+      new Set(
+        data?.map((s) => {
+          return JSON.stringify({ tx_hash: s.tx_hash, from: s.from });
+        }),
+      ),
+    ).map((item: string) => {
+      const data = JSON.parse(item);
+      return {
+        tx_hash: data.txHash,
+        from: data.from,
+        to: null,
+        activities: data?.filter((s) => {
+          return s.tx_hash === data.label && s.from === data.from;
+        }),
+      };
+    });
+  }
+
+  private getTxNotifyTo(data) {
+    return Array.from(
+      new Set(
+        data?.map((s) => {
+          return JSON.stringify({ tx_hash: s.tx_hash, to: s.to });
+        }),
+      ),
+    ).map((item: string) => {
+      const data = JSON.parse(item);
+      return {
+        tx_hash: data.txHash,
+        to: data.to,
+        from: null,
+        activities: data?.filter((s) => {
+          return s.tx_hash === data.label && s.to === data.to;
+        }),
+      };
+    });
+  }
+
+  private async convertDataCoinTransfer(data) {
+    const envConfig = await lastValueFrom(
+      this.httpService.get(this.config.configUrl),
+    ).then((rs) => rs.data);
+
+    const coinInfo = envConfig.chain_info.currencies[0];
+    const coinConfig = envConfig.coins;
+    const listTx = [];
+    data?.forEach((tx) => {
+      tx.events.forEach((evt) => {
+        const toAddress = evt.event_attributes.find(
           (k) => k.composite_key === 'transfer.recipient',
         )?.value;
-        const fromAddress = tx.event_attributes.find(
+        const fromAddress = evt.event_attributes.find(
           (k) => k.composite_key === 'transfer.sender',
         )?.value;
 
@@ -250,7 +614,8 @@ export class NotificationProcessor {
           (k) => k.composite_key === 'transfer.amount',
         )?.value;
 
-        const amountTemp = rawAmount?.match(/\d+/g)[0];
+        const value = rawAmount?.match(/\d+/g);
+        const amountTemp = value?.length > 0 ? value[0] : 0;
         let amount;
         let image = '';
         let denom = coinInfo.coinDenom;
@@ -271,169 +636,17 @@ export class NotificationProcessor {
             coinInfo.coinDecimals,
           );
         }
-        const notificationInfo: NotificationInfo = {
-          image: image,
-          contentType: 'image/png',
-          txHash: tx.transaction.hash,
-          type: 'coin_transfer',
-        };
-        const listWatch = watchList.filter(
-          (item) => item.address === toAddress || item.address === fromAddress,
-        );
-
-        listWatch?.forEach((element) => {
-          let notification: Notification;
-          notification.notificationToken = listNotificationToken.find(
-            (item) => item.userId === element.userId,
-          )?.notification_token;
-          const method = element.address === toAddress ? 'received' : 'sent';
-          notification.notificationInfo = notificationInfo;
-          notification.content = `${amount} ${denom} ${method} by ${
-            element.address
-          } ${this.getNameTag(
-            element.address,
-            element.userId,
-            listPrivateNameTag,
-            listPublicNameTag,
-          )}`;
-          lstNotification.push(notification);
+        listTx.push({
+          tx_hash: tx.hash,
+          from: fromAddress,
+          to: toAddress,
+          amount,
+          image,
+          denom,
         });
       });
-    }
-    return lstNotification;
-  }
+    });
 
-  private async processTokenTransferNotification(
-    response,
-    watchList,
-    listNotificationToken: NotificationToken[],
-    listPrivateNameTag: PrivateNameTag[],
-    listPublicNameTag: PublicNameTag[],
-  ) {
-    const lstNotification: Notification[] = [];
-    if (response?.token_transfer?.length > 0) {
-      const resultFlat = Array.from(
-        new Set(response?.token_transfer?.map((s) => s.tx_hash)),
-      ).map((txHash) => {
-        return {
-          tx_hash: txHash.toString(),
-          activities: response?.token_transfer?.filter(
-            (s) => s.tx_hash === txHash,
-          ),
-        };
-      });
-
-      resultFlat.forEach((tx) => {
-        const notificationInfo: NotificationInfo = {
-          image: tx.activities[0].cw20_contract?.marketing_info?.logo,
-          contentType: 'image/png',
-          txHash: tx.tx_hash,
-          type: 'token_transfer',
-        };
-        const listTokenId = tx.activities
-          .filter((item, index) => {
-            if (index < 3) {
-              return item.cw20_contract.name;
-            }
-          })
-          ?.join(',');
-        tx.activities.forEach((act) => {
-          const listWatch = watchList.filter(
-            (item) => item.address === act.from || item.address === act.to,
-          );
-          listWatch?.forEach((element) => {
-            let notification: Notification;
-            notification.notificationToken = listNotificationToken.find(
-              (item) => item.userId === element.userId,
-            )?.notification_token;
-            const method = element.address === act.to ? 'received' : 'sent';
-            notification.notificationInfo = notificationInfo;
-            notification.content = `${listTokenId} ${
-              tx.activities.length > 2 ? 'and more' : ''
-            } ${method} by ${element.address} ${this.getNameTag(
-              element.address,
-              element.userId,
-              listPrivateNameTag,
-              listPublicNameTag,
-            )}`;
-            lstNotification.push(notification);
-          });
-        });
-      });
-    }
-
-    return lstNotification;
-  }
-
-  private async processNftTransferNotification(
-    response,
-    watchList,
-    listNotificationToken: NotificationToken[],
-    listPrivateNameTag: PrivateNameTag[],
-    listPublicNameTag: PublicNameTag[],
-  ) {
-    const lstNotification: Notification[] = [];
-    if (response?.nft_transfer?.length > 0) {
-      const notifyFromTx = Array.from(
-        new Set(
-          (response?.nft_transfer?.map((s) => {
-            return JSON.stringify({ tx_hash: s.tx_hash, from: s.from });
-          }),
-        ),
-      ).map((item) => {
-        const data = JSON.parse(item);
-        return {
-          tx_hash: data.txHash,
-          from: data.from,
-          data: response?.nft_transfer?.filter((s) => {
-            return s.tx_hash === data.label && s.from === data.data;
-          }),
-        };
-      });
-
-      resultFlat.forEach((tx) => {
-        const notificationInfo: NotificationInfo = {
-          image: tx.activities[0].cw721_token?.media_info?.offchain?.image?.url,
-          contentType:
-            tx.activities[0].cw721_token?.media_info?.offchain?.image
-              ?.content_type,
-          txHash: tx.tx_hash,
-          type: 'nft_transfer',
-        };
-        const listTokenId = tx.activities
-          .filter((item, index) => {
-            if (index < 2) {
-              return item.cw721_token.token_id;
-            }
-          })
-          ?.join(',');
-
-        const listWatch = watchList.filter(
-          (item) =>
-            item.address === tx.activities[0].from ||
-            item.address === tx.activities[0].to,
-        );
-        listWatch?.forEach((element) => {
-          let notification: Notification;
-          notification.notificationToken = listNotificationToken.find(
-            (item) => item.userId === element.userId,
-          )?.notification_token;
-          const method =
-            element.address === tx.activities[0].to ? 'received' : 'sent';
-          notification.notificationInfo = notificationInfo;
-          notification.content = `${listTokenId} ${
-            tx.activities.length > 2 ? 'and more' : ''
-          } ${method} by ${element.address} ${this.getNameTag(
-            element.address,
-            element.userId,
-            listPrivateNameTag,
-            listPublicNameTag,
-          )}`;
-          lstNotification.push(notification);
-        });
-      });
-    }
-
-    return lstNotification;
+    return listTx;
   }
 }
