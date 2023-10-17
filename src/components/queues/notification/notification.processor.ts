@@ -311,24 +311,13 @@ export class NotificationProcessor {
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: Notification[] = [];
-    return lstNotification;
-  }
-
-  private async processNftTransferNotification(
-    response,
-    watchList,
-    listNotificationToken: NotificationToken[],
-    listPrivateNameTag: PrivateNameTag[],
-    listPublicNameTag: PublicNameTag[],
-  ) {
-    const lstNotification: Notification[] = [];
-    if (response?.nft_transfer?.length > 0) {
+    if (response?.token_transfer?.length > 0) {
       const resultFlat = Array.from(
-        new Set(response?.nft_transfer?.map((s) => s.tx_hash)),
+        new Set(response?.token_transfer?.map((s) => s.tx_hash)),
       ).map((txHash) => {
         return {
           tx_hash: txHash.toString(),
-          activities: response?.nft_transfer?.filter(
+          activities: response?.token_transfer?.filter(
             (s) => s.tx_hash === txHash,
           ),
         };
@@ -336,17 +325,15 @@ export class NotificationProcessor {
 
       resultFlat.forEach((tx) => {
         const notificationInfo: NotificationInfo = {
-          image: tx.activities[0].cw721_token?.media_info?.offchain?.image?.url,
-          contentType:
-            tx.activities[0].cw721_token?.media_info?.offchain?.image
-              ?.content_type,
+          image: tx.activities[0].cw20_contract?.marketing_info?.logo,
+          contentType: 'image/png',
           txHash: tx.tx_hash,
-          type: 'nft_transfer',
+          type: 'token_transfer',
         };
         const listTokenId = tx.activities
           .filter((item, index) => {
-            if (index < 2) {
-              return item;
+            if (index < 3) {
+              return item.cw20_contract.name;
             }
           })
           ?.join(',');
@@ -371,6 +358,78 @@ export class NotificationProcessor {
             )}`;
             lstNotification.push(notification);
           });
+        });
+      });
+    }
+
+    return lstNotification;
+  }
+
+  private async processNftTransferNotification(
+    response,
+    watchList,
+    listNotificationToken: NotificationToken[],
+    listPrivateNameTag: PrivateNameTag[],
+    listPublicNameTag: PublicNameTag[],
+  ) {
+    const lstNotification: Notification[] = [];
+    if (response?.nft_transfer?.length > 0) {
+      const notifyFromTx = Array.from(
+        new Set(
+          (response?.nft_transfer?.map((s) => {
+            return JSON.stringify({ tx_hash: s.tx_hash, from: s.from });
+          }),
+        ),
+      ).map((item) => {
+        const data = JSON.parse(item);
+        return {
+          tx_hash: data.txHash,
+          from: data.from,
+          data: response?.nft_transfer?.filter((s) => {
+            return s.tx_hash === data.label && s.from === data.data;
+          }),
+        };
+      });
+
+      resultFlat.forEach((tx) => {
+        const notificationInfo: NotificationInfo = {
+          image: tx.activities[0].cw721_token?.media_info?.offchain?.image?.url,
+          contentType:
+            tx.activities[0].cw721_token?.media_info?.offchain?.image
+              ?.content_type,
+          txHash: tx.tx_hash,
+          type: 'nft_transfer',
+        };
+        const listTokenId = tx.activities
+          .filter((item, index) => {
+            if (index < 2) {
+              return item.cw721_token.token_id;
+            }
+          })
+          ?.join(',');
+
+        const listWatch = watchList.filter(
+          (item) =>
+            item.address === tx.activities[0].from ||
+            item.address === tx.activities[0].to,
+        );
+        listWatch?.forEach((element) => {
+          let notification: Notification;
+          notification.notificationToken = listNotificationToken.find(
+            (item) => item.userId === element.userId,
+          )?.notification_token;
+          const method =
+            element.address === tx.activities[0].to ? 'received' : 'sent';
+          notification.notificationInfo = notificationInfo;
+          notification.content = `${listTokenId} ${
+            tx.activities.length > 2 ? 'and more' : ''
+          } ${method} by ${element.address} ${this.getNameTag(
+            element.address,
+            element.userId,
+            listPrivateNameTag,
+            listPublicNameTag,
+          )}`;
+          lstNotification.push(notification);
         });
       });
     }
