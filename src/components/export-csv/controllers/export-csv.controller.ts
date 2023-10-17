@@ -3,12 +3,9 @@ import {
   Get,
   HttpStatus,
   Query,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
-
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -87,11 +84,5 @@ export class ExportCsvController {
       'Content-Disposition': `attachment; filename="${fileName}"`,
     });
     res.send(csv);
-  }
-  @Get('test-request-obj')
-  async getRequest(@ReqContext() ctx, @Req() req: Request) {
-    this.logger.log(ctx, '', req);
-    console.log(req);
-    return req.headers;
   }
 }
