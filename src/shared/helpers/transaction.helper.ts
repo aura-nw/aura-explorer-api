@@ -38,7 +38,8 @@ export class TransactionHelper {
 
       let denom = coinInfo.coinDenom;
       const _amount = _.get(element, 'events[0].event_attributes[2].value');
-      let amount = this.balanceOf(_amount?.match(/\d+/g)[0]);
+      const value = _amount?.match(/\d+/g);
+      let amount = this.balanceOf(value?.length > 0 ? value[0] : 0);
 
       const status =
         _.get(element, 'code') == CodeTransaction.Success
