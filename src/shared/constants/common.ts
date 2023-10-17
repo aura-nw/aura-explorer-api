@@ -178,10 +178,11 @@ export const INDEXER_API_V2 = {
     `,
     COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int, $heightLT: Int, $compositeKeyIn: [String!] = null) {
       ${process.env.INDEXER_V2_DB} {
-        coin_transfer: transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}, events: {tx_msg_index: {_is_null: false}}}) {
+        coin_transfer: transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}}) {
           height
           hash
-          events(where: {type: {_eq: "transfer"}}) {
+          fee
+          events(where: {type: {_eq: "transfer"}, tx_msg_index: {_is_null: false}}) {
             event_attributes {
               composite_key
               value
