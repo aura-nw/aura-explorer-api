@@ -1,12 +1,8 @@
 export class Notification {
-  content: string;
-  notificationToken: string;
-  notificationInfo: NotificationInfo;
-}
-
-export class NotificationInfo {
-  txHash: string;
+  title: string;
+  body: string;
+  token: string;
   image: string;
-  contentType: string;
+  txHash: string;
   type: string;
 }

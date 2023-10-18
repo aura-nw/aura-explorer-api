@@ -164,12 +164,12 @@ export const INDEXER_API_V2 = {
     }`,
     EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
       ${process.env.INDEXER_V2_DB} {
-        executed: transaction(where: {height: {_gte: $heightGT, _lt: $heightLT}}) {
+        executed: transaction(where: {height: {_gte: $heightGT, _lt: $heightLT}}, order_by: {height: desc}) {
           height
           hash
-          timestamp
           transaction_messages {
             type
+            content
             sender
           }
         }
@@ -178,10 +178,9 @@ export const INDEXER_API_V2 = {
     `,
     COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int, $heightLT: Int, $compositeKeyIn: [String!] = null) {
       ${process.env.INDEXER_V2_DB} {
-        coin_transfer: transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}}) {
+        coin_transfer: transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gte: $heightGT}}}, order_by: {height: desc}) {
           height
           hash
-          fee
           events(where: {type: {_eq: "transfer"}, tx_msg_index: {_is_null: false}}) {
             event_attributes {
               composite_key
@@ -194,7 +193,7 @@ export const INDEXER_API_V2 = {
     `,
     TOKEN_TRANSFER_NOTIFICATION: `query TokenTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW20: [String!] = null) {
       ${process.env.INDEXER_V2_DB} {
-        token_transfer: cw20_activity(where: {height: {_gte: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}) {
+        token_transfer: cw20_activity(where: {height: {_gte: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}, order_by: {height: desc}) {
           height
           tx_hash
           action
@@ -202,9 +201,6 @@ export const INDEXER_API_V2 = {
           from
           to
           cw20_contract {
-            smart_contract {
-              address
-            }
             symbol
             decimal
             marketing_info
@@ -216,7 +212,7 @@ export const INDEXER_API_V2 = {
     `,
     NFT_TRANSFER_NOTIFICATION: `query NftTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW721: [String!] = null) {
       ${process.env.INDEXER_V2_DB} {
-        nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gte: $heightGT, _lt: $heightLT}}) {
+        nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gte: $heightGT, _lt: $heightLT}}, order_by: {height: desc}) {
           tx_hash
           height
           action
@@ -225,17 +221,6 @@ export const INDEXER_API_V2 = {
           cw721_token {
             token_id
             media_info
-          }
-          cw721_contract {
-            smart_contract {
-              address
-            }
-          }
-          smart_contract_event {
-            smart_contract_event_attributes {
-              value
-              key
-            }
           }
         }
       }
