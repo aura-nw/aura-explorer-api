@@ -85,43 +85,48 @@ export class TransactionHelper {
               fromAddress = data.event_attributes?.find(
                 (k) => k.composite_key === 'transfer.sender',
               )?.value;
-              const rawAmount = data.event_attributes?.find(
-                (k) => k.composite_key === 'transfer.amount',
-              )?.value;
-              const amountTemp = rawAmount?.match(/\d+/g)[0];
-              let amount;
-              let denom = coinInfo.coinDenom;
-              let denomOrigin;
-              const decimal = coinInfo.coinDecimals;
-              if (rawAmount?.indexOf('ibc') > -1) {
-                const dataIBC = this.getDataIBC(rawAmount, coinConfig);
-                amount = this.balanceOf(
-                  Number(amountTemp) || 0,
-                  dataIBC['decimal'] || 6,
+              const arrAmount = data.event_attributes
+                ?.find((k) => k.composite_key === 'transfer.amount')
+                ?.value?.split(',');
+              arrAmount?.forEach((rawAmount) => {
+                const value = rawAmount?.match(/\d+/g);
+                const amountTemp = this.balanceOf(
+                  value?.length > 0 ? value[0] : 0,
                 );
-                denom =
-                  dataIBC['display'].indexOf('ibc') === -1
-                    ? 'ibc/' + dataIBC['display']
-                    : dataIBC['display'];
-                denomOrigin = dataIBC['denom'];
-              } else {
-                amount = this.balanceOf(
-                  Number(amountTemp) || 0,
-                  coinInfo.coinDecimals,
-                );
-              }
-              const result = {
-                type,
-                toAddress,
-                fromAddress,
-                amount,
-                denom,
-                action,
-                denomOrigin,
-                amountTemp,
-                decimal,
-              };
-              arrTemp.push(result);
+                let amount;
+                let denom = coinInfo.coinDenom;
+                let denomOrigin;
+                const decimal = coinInfo.coinDecimals;
+                if (rawAmount?.indexOf('ibc') > -1) {
+                  const dataIBC = this.getDataIBC(rawAmount, coinConfig);
+                  amount = this.balanceOf(
+                    Number(amountTemp) || 0,
+                    dataIBC['decimal'] || 6,
+                  );
+                  denom =
+                    dataIBC['display'].indexOf('ibc') === -1
+                      ? 'ibc/' + dataIBC['display']
+                      : dataIBC['display'];
+                  denomOrigin = dataIBC['denom'];
+                } else {
+                  amount = this.balanceOf(
+                    Number(amountTemp) || 0,
+                    coinInfo.coinDecimals,
+                  );
+                }
+                const result = {
+                  type,
+                  toAddress,
+                  fromAddress,
+                  amount,
+                  denom,
+                  action,
+                  denomOrigin,
+                  amountTemp,
+                  decimal,
+                };
+                arrTemp.push(result);
+              });
             }
           });
           arrEvent = arrTemp;
