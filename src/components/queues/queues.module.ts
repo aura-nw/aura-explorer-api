@@ -18,9 +18,9 @@ import { NotificationModule } from './notification/notification.module';
           backoff: {
             type: 'exponential',
             delay: 1000,
-            removeOnFail: config.get('keepJobCount'),
-            removeOnComplete: { count: config.get('keepJobCount') },
           },
+          removeOnFail: config.get('keepJobCount'),
+          removeOnComplete: { count: config.get('keepJobCount') },
         },
       }),
       inject: [ConfigService],

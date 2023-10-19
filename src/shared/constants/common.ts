@@ -55,9 +55,9 @@ export const INDEXER_API_V2 = {
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
     CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${process.env.INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { data} cw721_contract {smart_contract {address}} sender}}}`,
-    TX_EXECUTED: `query QueryTxOfAccount($compositeKey: String = null, $address: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc) {
+    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: String = null) {
       ${process.env.INDEXER_V2_DB} {
-        transaction(where: {event_attribute_index: {composite_key: {_eq: $compositeKey}, value: {_eq: $address}}, timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
           hash
           height
           fee
@@ -544,7 +544,10 @@ export const TX_HEADER = {
     'MessageRaw',
     'Message',
     'Result',
-    'Timestamp',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
     'UnixTimestamp',
     'Fee',
     'BlockHeight',
@@ -553,7 +556,57 @@ export const TX_HEADER = {
     'TxHash',
     'MessageRaw',
     'Message',
-    'Timestamp',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'ToAddress',
+    'AmountIn',
+    'AmountOut',
+    'Symbol',
+    'Denom',
+  ],
+  TOKEN_TRANSFER: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'ToAddress',
+    'AmountIn',
+    'AmountOut',
+    'Symbol',
+    'TokenContractAddress',
+  ],
+  NFT_TRANSFER: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'ToAddress',
+    'TokenIdIn',
+    'TokenIdOut',
+    'NFTContractAddress',
+  ],
+  COIN_TRANSFER_NAMETAG: [
+    'TxHash',
+    'MessageRaw',
+    'Message',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
     'UnixTimestamp',
     'FromAddress',
     'FromAddressPrivateNameTag',
@@ -564,11 +617,14 @@ export const TX_HEADER = {
     'Symbol',
     'Denom',
   ],
-  TOKEN_TRANSFER: [
+  TOKEN_TRANSFER_NAMETAG: [
     'TxHash',
     'MessageRaw',
     'Message',
-    'Timestamp',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
     'UnixTimestamp',
     'FromAddress',
     'FromAddressPrivateNameTag',
@@ -579,11 +635,14 @@ export const TX_HEADER = {
     'Symbol',
     'TokenContractAddress',
   ],
-  NFT_TRANSFER: [
+  NFT_TRANSFER_NAMETAG: [
     'TxHash',
     'MessageRaw',
     'Message',
-    'Timestamp',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
     'UnixTimestamp',
     'FromAddress',
     'FromAddressPrivateNameTag',
@@ -595,6 +654,7 @@ export const TX_HEADER = {
   ],
 };
 
+export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
 
