@@ -189,7 +189,8 @@ export class SoulboundTokenService {
         req.offset,
       );
 
-    const data = plainToClass(TokenByReceiverAddressOutput, tokens, {
+    const result = await this.cw4973MediaInfo(tokens, req.receiverAddress);
+    const data = plainToClass(TokenByReceiverAddressOutput, result, {
       excludeExtraneousValues: true,
     });
     return { data, count: count };
@@ -207,7 +208,8 @@ export class SoulboundTokenService {
       req.receiverAddress,
       req.limit,
     );
-    const data = plainToClass(TokenPickedByAddressOutput, tokens, {
+    const result = await this.cw4973MediaInfo(tokens, req.receiverAddress);
+    const data = plainToClass(TokenPickedByAddressOutput, result, {
       excludeExtraneousValues: true,
     });
     return { data, count: count };
@@ -727,5 +729,41 @@ export class SoulboundTokenService {
     return (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)).data[
       this.chainDB
     ]['cw721_contract'];
+  }
+
+  private async cw4973MediaInfo(tokens, owner) {
+    const graphQlQuery = {
+      query: INDEXER_API_V2.GRAPH_QL.CW4973_MEDIA_INFO,
+      variables: {
+        owner: owner,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_MEDIA_INFO,
+    };
+
+    const cw4973MediaInfo = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
+    )?.data[this.chainDB].cw721_token;
+
+    tokens?.forEach((item) => {
+      const media = cw4973MediaInfo?.find(
+        (element) => element.token_id === item.token_id,
+      );
+      if (media) {
+        const image_url = media.media_info?.offchain?.image?.url || '';
+        const image_content_type =
+          media.media_info?.offchain?.image?.content_type;
+        const animation_url = media.media_info?.offchain?.animation?.url || '';
+        const animation_content_type =
+          media.media_info?.offchain?.animation?.content_type;
+
+        item.token_img = image_url;
+        item.animation_url = animation_url;
+        item.img_type = animation_content_type
+          ? animation_content_type
+          : image_content_type;
+      }
+    });
+
+    return tokens;
   }
 }

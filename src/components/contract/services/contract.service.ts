@@ -242,16 +242,17 @@ export class ContractService {
     ).data[this.chainDB]['cw721_contract'];
 
     if (cw4973Contract.length > 0) {
-      const token = await this.soulboundTokenRepository.findOne({
+      const reuslt = await this.soulboundTokenRepository.findOne({
         where: {
           token_id: tokenId,
           contract_address: cw4973Contract[0].smart_contract.address,
         },
       });
 
-      if (!token) {
+      if (!reuslt) {
         return null;
       }
+      const token = await this.cw4973MediaInfo(reuslt);
 
       if (!token?.ipfs || token?.ipfs === '{}') {
         // Get ipfs info
@@ -292,5 +293,39 @@ export class ContractService {
       };
       return nft;
     }
+  }
+
+  private async cw4973MediaInfo(token) {
+    const graphQlQuery = {
+      query: INDEXER_API_V2.GRAPH_QL.CW4973_MEDIA_INFO,
+      variables: {
+        owner: token.receiver_address,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_MEDIA_INFO,
+    };
+
+    const cw4973MediaInfo = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
+    )?.data[this.chainDB].cw721_token;
+
+    const media = cw4973MediaInfo?.find(
+      (element) => element.token_id === token.token_id,
+    );
+    if (media) {
+      const image_url = media.media_info?.offchain?.image?.url || '';
+      const image_content_type =
+        media.media_info?.offchain?.image?.content_type;
+      const animation_url = media.media_info?.offchain?.animation?.url || '';
+      const animation_content_type =
+        media.media_info?.offchain?.animation?.content_type;
+
+      token.token_img = image_url;
+      token.animation_url = animation_url;
+      token.img_type = animation_content_type
+        ? animation_content_type
+        : image_content_type;
+    }
+
+    return token;
   }
 }
