@@ -10,6 +10,9 @@ import { SyncPointRepository } from '../../sync-point/repositories/sync-point.re
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { PublicNameTagRepository } from '../../public-name-tag/repositories/public-name-tag.repository';
 import { NotificationTokenRepository } from './repositories/notification-token.repository';
+import { EncryptionService } from '../../encryption/encryption.service';
+import { NotificationUtil } from './utils/notification.util';
+import { CipherKey } from '../../../shared/entities/cipher-key.entity';
 
 @Module({
   imports: [
@@ -22,12 +25,18 @@ import { NotificationTokenRepository } from './repositories/notification-token.r
       NotificationTokenRepository,
       SyncPointRepository,
       SyncStatus,
+      CipherKey,
     ]),
     BullModule.registerQueueAsync({
       name: QUEUES.NOTIFICATION.QUEUE_NAME,
     }),
   ],
-  providers: [NotificationProcessor, ServiceUtil],
+  providers: [
+    NotificationProcessor,
+    ServiceUtil,
+    EncryptionService,
+    NotificationUtil,
+  ],
   exports: [
     BullModule.registerQueueAsync({
       name: QUEUES.NOTIFICATION.QUEUE_NAME,

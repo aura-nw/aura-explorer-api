@@ -597,3 +597,13 @@ export const TX_HEADER = {
 
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
+
+export const NOTIFICATION_TITLE = {
+  EXECUTED: 'Executed',
+  TOKEN_SENT: 'Token Sent',
+  TOKEN_RECEIVED: 'Token Received',
+  NFT_SENT: 'NFT Sent',
+  NFT_RECEIVED: 'Token Received',
+  COIN_SENT: 'Coin Sent',
+  COIN_RECEIVED: 'Coin Received',
+};

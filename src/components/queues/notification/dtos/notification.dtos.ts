@@ -1,4 +1,4 @@
-export class Notification {
+export class NotificationDto {
   title: string;
   body: string;
   token: string;
