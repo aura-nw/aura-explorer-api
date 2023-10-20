@@ -146,10 +146,12 @@ export class NotificationProcessor {
             publicNameTags,
           );
 
-        const firebaseMessagingPromises = notifications.map((notification) =>
-          this.sendNotification(notification),
-        );
-        await Promise.all(firebaseMessagingPromises);
+        if (notifications?.length > 0) {
+          const firebaseMessagingPromises = notifications.map((notification) =>
+            this.sendNotification(notification),
+          );
+          await Promise.all(firebaseMessagingPromises);
+        }
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.executed[0].height,
         });
@@ -246,11 +248,12 @@ export class NotificationProcessor {
             publicNameTags,
           );
         const notifications = [...coinTransferFrom, ...coinTransferTo];
-        const firebaseMessagingPromises = notifications.map((notification) =>
-          this.sendNotification(notification),
-        );
-        await Promise.all(firebaseMessagingPromises);
-
+        if (notifications?.length > 0) {
+          const firebaseMessagingPromises = notifications.map((notification) =>
+            this.sendNotification(notification),
+          );
+          await Promise.all(firebaseMessagingPromises);
+        }
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.coin_transfer[0].height,
         });
@@ -358,10 +361,12 @@ export class NotificationProcessor {
 
         const notifications = [...nftTransferFrom, ...nftTransferTo];
 
-        const firebaseMessagingPromises = notifications.map((notification) =>
-          this.sendNotification(notification),
-        );
-        await Promise.all(firebaseMessagingPromises);
+        if (notifications?.length > 0) {
+          const firebaseMessagingPromises = notifications.map((notification) =>
+            this.sendNotification(notification),
+          );
+          await Promise.all(firebaseMessagingPromises);
+        }
 
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.token_transfer[0].height,
@@ -460,10 +465,12 @@ export class NotificationProcessor {
             publicNameTags,
           );
         const notifications = [...nftTransferFrom, ...nftTransferTo];
-        const firebaseMessagingPromises = notifications.map((notification) =>
-          this.sendNotification(notification),
-        );
-        await Promise.all(firebaseMessagingPromises);
+        if (notifications?.length > 0) {
+          const firebaseMessagingPromises = notifications.map((notification) =>
+            this.sendNotification(notification),
+          );
+          await Promise.all(firebaseMessagingPromises);
+        }
 
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.nft_transfer[0].height,
