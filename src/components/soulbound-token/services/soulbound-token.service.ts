@@ -731,7 +731,10 @@ export class SoulboundTokenService {
     ]['cw721_contract'];
   }
 
-  private async cw4973MediaInfo(tokens, owner) {
+  private async cw4973MediaInfo(
+    tokens: SoulboundToken[],
+    owner: string,
+  ): Promise<SoulboundToken[]> {
     const graphQlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.CW4973_MEDIA_INFO,
       variables: {

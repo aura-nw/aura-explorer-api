@@ -10,6 +10,7 @@ import {
   INDEXER_API_V2,
   INFRASTRUCTURE_ERROR,
   RequestContext,
+  SoulboundToken,
   VERIFY_CODE_RESULT,
   VERIFY_STEP,
 } from '../../../shared';
@@ -295,7 +296,9 @@ export class ContractService {
     }
   }
 
-  private async cw4973MediaInfo(token) {
+  private async cw4973MediaInfo(
+    token: SoulboundToken,
+  ): Promise<SoulboundToken> {
     const graphQlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.CW4973_MEDIA_INFO,
       variables: {
