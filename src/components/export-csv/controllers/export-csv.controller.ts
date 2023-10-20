@@ -26,9 +26,11 @@ import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Response } from 'express';
 import { Parser } from '@json2csv/plainjs';
 import { CustomCsvThrottlerGuard } from '../../../shared/guards/custom-csv-throttler-guard';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @ApiTags('export-csv')
 @UseGuards(CustomCsvThrottlerGuard)
+@Recaptcha()
 @Controller('export-csv')
 export class ExportCsvController {
   constructor(

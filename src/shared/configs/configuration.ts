@@ -107,4 +107,10 @@ export default () => ({
       ttl: Number(process.env.LIMITER_CSV_EXPORT_TTL) || 300000,
     },
   },
+  googleRecaptchaOptions: {
+    secretKey: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+    response: (req) => {
+      return req.headers.Recaptcha;
+    },
+  },
 });
