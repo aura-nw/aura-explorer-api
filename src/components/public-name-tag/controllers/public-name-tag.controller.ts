@@ -43,6 +43,7 @@ import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { GetPublicNameTagAdminResult } from '../dtos/get-public-name-tag-admin.dto';
 import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @Controller()
 @ApiTags('public-name-tag')
