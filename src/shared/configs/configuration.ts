@@ -101,4 +101,10 @@ export default () => ({
   keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
   ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
+  googleRecaptchaOptions: {
+    secretKey: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+    response: (req) => {
+      return req.headers.recaptcha;
+    },
+  },
 });
