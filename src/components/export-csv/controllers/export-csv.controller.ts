@@ -25,8 +25,10 @@ import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Response } from 'express';
 import { Parser } from '@json2csv/plainjs';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @ApiTags('export-csv')
+@Recaptcha()
 @Controller('export-csv')
 export class ExportCsvController {
   constructor(

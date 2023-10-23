@@ -1,6 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { SharedModule } from './shared/shared.module';
 import { ComponentsModule } from './components/components.module';
@@ -17,6 +17,7 @@ import { QueuesModule } from './components/queues/queues.module';
 import { PrivateNameTagModule } from './components/private-name-tag/private-name-tag.module';
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
 import { ExportCsvModule } from './components/export-csv/export-csv.module';
+import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
 
 @Module({
   imports: [
@@ -38,6 +39,12 @@ import { ExportCsvModule } from './components/export-csv/export-csv.module';
     }),
     PasswordAuthModule,
     QueuesModule,
+    GoogleRecaptchaModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) =>
+        configService.get('googleRecaptchaOptions'),
+      inject: [ConfigService],
+    }),
   ],
   providers: [ServiceUtil, MetricService],
 })
