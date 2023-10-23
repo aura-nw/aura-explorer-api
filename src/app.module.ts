@@ -17,7 +17,6 @@ import { QueuesModule } from './components/queues/queues.module';
 import { PrivateNameTagModule } from './components/private-name-tag/private-name-tag.module';
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
 import { ExportCsvModule } from './components/export-csv/export-csv.module';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
 
 @Module({
@@ -40,13 +39,6 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptch
     }),
     PasswordAuthModule,
     QueuesModule,
-    ThrottlerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        config.get('rateLimiter.csvExport'),
-      ],
-    }),
     GoogleRecaptchaModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) =>
