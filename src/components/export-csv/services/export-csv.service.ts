@@ -44,18 +44,24 @@ export class ExportCsvService {
     userId = null,
   ) {
     this.logger.log(ctx, `${this.exportTransactionDataToCSV.name} was called!`);
-
-    switch (payload.dataType) {
-      case TYPE_EXPORT.ExecutedTxs:
-        return this.executed(payload);
-      case TYPE_EXPORT.AuraTxs:
-        return this.coinTransfer(payload, userId);
-      case TYPE_EXPORT.FtsTxs:
-        return this.tokenTransfer(payload, userId);
-      case TYPE_EXPORT.NftTxs:
-        return this.nftTransfer(payload, userId);
-      default:
-        break;
+    try {
+      switch (payload.dataType) {
+        case TYPE_EXPORT.ExecutedTxs:
+          return this.executed(payload);
+        case TYPE_EXPORT.AuraTxs:
+          return this.coinTransfer(payload, userId);
+        case TYPE_EXPORT.FtsTxs:
+          return this.tokenTransfer(payload, userId);
+        case TYPE_EXPORT.NftTxs:
+          return this.nftTransfer(payload, userId);
+        default:
+          break;
+      }
+    } catch (err) {
+      this.logger.error(
+        ctx,
+        `Error export executed ${err.message} ${err.stack}`,
+      );
     }
   }
 
@@ -92,10 +98,10 @@ export class ExportCsvService {
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig.chain_info.currencies[0],
+      envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     const fields = TX_HEADER.EXECUTED;
@@ -149,10 +155,10 @@ export class ExportCsvService {
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig.chain_info.currencies[0],
+      envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     let lstPrivateName;
@@ -244,10 +250,10 @@ export class ExportCsvService {
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig.chain_info.currencies[0],
+      envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     let lstPrivateName;
@@ -332,10 +338,10 @@ export class ExportCsvService {
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig.chain_info.currencies[0],
+      envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     let lstPrivateName;
