@@ -104,7 +104,7 @@ export default () => ({
   googleRecaptchaOptions: {
     secretKey: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
     response: (req) => {
-      return req.headers.Recaptcha;
+      return req.headers.recaptcha;
     },
   },
 });
