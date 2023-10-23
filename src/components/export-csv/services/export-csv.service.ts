@@ -62,7 +62,6 @@ export class ExportCsvService {
         ctx,
         `Error export executed ${err.message} ${err.stack}`,
       );
-      throw err;
     }
   }
 
