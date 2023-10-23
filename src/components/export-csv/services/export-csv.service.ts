@@ -102,7 +102,7 @@ export class ExportCsvService {
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     const fields = TX_HEADER.EXECUTED;
@@ -159,7 +159,7 @@ export class ExportCsvService {
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     let lstPrivateName;
@@ -254,7 +254,7 @@ export class ExportCsvService {
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     let lstPrivateName;
@@ -342,7 +342,7 @@ export class ExportCsvService {
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig.coins,
+      envConfig?.chainConfig?.coins,
     );
 
     let lstPrivateName;
