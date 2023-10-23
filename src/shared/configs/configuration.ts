@@ -101,10 +101,4 @@ export default () => ({
   keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
   ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
-  rateLimiter: {
-    csvExport: {
-      limit: Number(process.env.LIMITER_CSV_EXPORT) || 10,
-      ttl: Number(process.env.LIMITER_CSV_EXPORT_TTL) || 300000,
-    },
-  },
 });
