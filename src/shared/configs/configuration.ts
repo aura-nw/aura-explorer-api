@@ -84,4 +84,10 @@ export default () => ({
   },
   addressPrefix: process.env.ADDRESS_PREFIX,
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
+  googleRecaptchaOptions: {
+    secretKey: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+    response: (req) => {
+      return req.headers.recaptcha;
+    },
+  },
 });
