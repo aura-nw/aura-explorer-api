@@ -162,6 +162,15 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    CW4973_MEDIA_INFO: `query CW4973MediaInfo($owner: String) {
+      ${process.env.INDEXER_V2_DB} {
+        cw721_token(where: {owner: {_eq: $owner}, cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}}) {
+          token_id
+          owner
+          media_info
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -180,6 +189,7 @@ export const INDEXER_API_V2 = {
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
+    CW4973_MEDIA_INFO: 'CW4973MediaInfo',
   },
 };
 
