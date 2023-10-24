@@ -17,13 +17,11 @@ import {
 
 import { AppModule } from './app.module';
 import { useContainer } from 'class-validator';
-import { NestExpressApplication } from '@nestjs/platform-express';
 const logger = new Logger('Main');
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create(AppModule);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.use(cookieParser());
-  app.set('trust proxy', true);
 
   // settings
   const configService = app.get(ConfigService);
