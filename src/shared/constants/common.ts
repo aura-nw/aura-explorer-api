@@ -510,6 +510,7 @@ export const QUEUES = {
       NOTIFICATION_COIN_TRANSFER: 'notification_coin_transfer',
       NOTIFICATION_TOKEN_TRANSFER: 'notification_token_transfer',
       NOTIFICATION_NFT_TRANSFER: 'notification_nft_transfer',
+      RESET_NOTIFICATION: 'reset_notification',
     },
   },
 };

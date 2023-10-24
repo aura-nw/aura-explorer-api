@@ -284,8 +284,8 @@ export class NotificationUtil {
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
 
-    const coinInfo = envConfig.chain_info.currencies[0];
-    const coinConfig = envConfig.coins;
+    const coinInfo = envConfig?.chainConfig?.chain_info?.currencies[0];
+    const coinConfig = envConfig?.chainConfig?.coins;
     const listTx = [];
     data?.forEach((tx) => {
       tx.events.forEach((evt) => {

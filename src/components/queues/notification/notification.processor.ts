@@ -90,6 +90,14 @@ export class NotificationProcessor {
       },
     );
 
+    this.queue.add(
+      QUEUES.NOTIFICATION.JOBS.RESET_NOTIFICATION,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
+      },
+    );
+
     this.chainDB = configService.get('indexerV2.chainDB');
   }
 
@@ -144,8 +152,9 @@ export class NotificationProcessor {
 
         const privateNameTags = await this.privateNameTagRepository.find();
         const publicNameTags = await this.publicNameTagRepository.find();
-        const notificationTokens =
-          await this.notificationTokenRepository.find();
+        const notificationTokens = await this.notificationTokenRepository.find({
+          where: { status: NOTIFICATION.STATUS.ACTIVE },
+        });
 
         const notifications =
           await this.notificationUtil.processExecutedNotification(
@@ -210,8 +219,9 @@ export class NotificationProcessor {
       if (response?.coin_transfer.length > 0) {
         const privateNameTags = await this.privateNameTagRepository.find();
         const publicNameTags = await this.publicNameTagRepository.find();
-        const notificationTokens =
-          await this.notificationTokenRepository.find();
+        const notificationTokens = await this.notificationTokenRepository.find({
+          where: { status: NOTIFICATION.STATUS.ACTIVE },
+        });
 
         const listTx = await this.notificationUtil.convertDataCoinTransfer(
           response?.coin_transfer,
@@ -322,8 +332,9 @@ export class NotificationProcessor {
       if (response?.token_transfer.length > 0) {
         const privateNameTags = await this.privateNameTagRepository.find();
         const publicNameTags = await this.publicNameTagRepository.find();
-        const notificationTokens =
-          await this.notificationTokenRepository.find();
+        const notificationTokens = await this.notificationTokenRepository.find({
+          where: { status: NOTIFICATION.STATUS.ACTIVE },
+        });
 
         const notifyFromTx = this.notificationUtil.getTxNotifyFrom(
           response?.token_transfer,
@@ -429,8 +440,9 @@ export class NotificationProcessor {
       if (response?.nft_transfer.length > 0) {
         const privateNameTags = await this.privateNameTagRepository.find();
         const publicNameTags = await this.publicNameTagRepository.find();
-        const notificationTokens =
-          await this.notificationTokenRepository.find();
+        const notificationTokens = await this.notificationTokenRepository.find({
+          where: { status: NOTIFICATION.STATUS.ACTIVE },
+        });
 
         const notifyFromTx = this.notificationUtil.getTxNotifyFrom(
           response?.nft_transfer,
@@ -494,6 +506,25 @@ export class NotificationProcessor {
       }
     } catch (err) {
       this.logger.error(`notificationNftTransfer has error: ${err.stack}`);
+    }
+  }
+
+  @Process(QUEUES.NOTIFICATION.JOBS.RESET_NOTIFICATION)
+  async resetNotification() {
+    try {
+      const userActivities = await this.userActivityRepository.find({
+        where: {
+          type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+        },
+      });
+
+      userActivities?.forEach((item) => {
+        item.total = 0;
+      });
+
+      await this.userActivityRepository.save(userActivities);
+    } catch (err) {
+      this.logger.error(`resetNotification has error: ${err.stack}`);
     }
   }
 

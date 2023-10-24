@@ -18,6 +18,7 @@ import {
   MESSAGES,
   MSGS_ACTIVE_USER,
   MSGS_USER,
+  NOTIFICATION,
   PROVIDER,
   QUEUES,
   SITE,
@@ -38,6 +39,9 @@ import { Queue } from 'bull';
 import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
 import { secondsToDate } from '../../shared/utils/service.util';
+import { NotificationTokenDto } from './dtos/notification-token.dto';
+import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
+import { NotificationToken } from '../../shared/entities/notification-token.entity';
 const VERIFICATION_TOKEN_LENGTH = 20;
 const RESET_PASSWORD_TOKEN_LENGTH = 21;
 const RANDOM_BYTES_LENGTH = 20;
@@ -52,6 +56,7 @@ export class UserService {
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
     private configService: ConfigService,
+    private notificationTokenRepository: NotificationTokenRepository,
   ) {}
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
@@ -457,5 +462,42 @@ export class UserService {
         message: MESSAGES.ERROR.NEED_TO_BE_LOGGED_IN_AGAIN.MESSAGE,
       });
     }
+  }
+
+  async registerNotificationToken(
+    userId: number,
+    token: NotificationTokenDto,
+  ): Promise<NotificationToken> {
+    const userActivities = await this.userActivityRepository.findOne({
+      where: {
+        user: { id: userId },
+        type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+      },
+    });
+
+    if (userActivities?.total >= NOTIFICATION.LIMIT) {
+      return;
+    }
+    if (!userActivities) {
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
+
+      const activity = new UserActivity();
+      activity.type = USER_ACTIVITIES.DAILY_NOTIFICATIONS;
+      activity.user = user;
+      activity.total = 0;
+      await this.userActivityRepository.save(activity);
+    }
+    await this.notificationTokenRepository.update(
+      { user_id: userId, status: NOTIFICATION.STATUS.ACTIVE },
+      { status: NOTIFICATION.STATUS.INACTIVE },
+    );
+    const notification_token = await this.notificationTokenRepository.save({
+      user_id: userId,
+      notification_token: token.token,
+      status: NOTIFICATION.STATUS.ACTIVE,
+    });
+    return notification_token;
   }
 }
