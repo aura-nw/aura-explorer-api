@@ -9,7 +9,7 @@ import { PrivateNameTag } from '../../../../shared/entities/private-name-tag.ent
 import { PublicNameTag } from '../../../../shared/entities/public-name-tag.entity';
 import { NotificationDto } from '../dtos/notification.dtos';
 import { TransactionHelper } from '../../../../shared/helpers/transaction.helper';
-import { NOTIFICATION_TITLE } from '../../../../shared';
+import { NOTIFICATION } from '../../../../shared';
 import { EncryptionService } from '../../../encryption/encryption.service';
 
 @Injectable()
@@ -47,14 +47,19 @@ export class NotificationUtil {
               listPublicNameTag,
             );
 
-            const notification = new NotificationDto();
-            notification.title = NOTIFICATION_TITLE.EXECUTED;
-            notification.token = listNotificationToken?.find(
+            const fcmToken = listNotificationToken?.find(
               (item) => item.user_id === element.userId,
             )?.notification_token;
-            notification.txHash = tx.hash;
-            notification.body = `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`;
-            lstNotification.push(notification);
+
+            if (fcmToken) {
+              const notification = new NotificationDto();
+              notification.title = NOTIFICATION.TITLE.EXECUTED;
+              notification.token = fcmToken;
+              notification.userId = element.userId;
+              notification.txHash = tx.hash;
+              notification.body = `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`;
+              lstNotification.push(notification);
+            }
           });
         });
       });
@@ -87,22 +92,27 @@ export class NotificationUtil {
           listPublicNameTag,
         );
 
-        const notification = new NotificationDto();
-        notification.token = listNotificationToken?.find(
+        const fcmToken = listNotificationToken?.find(
           (item) => item.user_id === element.userId,
         )?.notification_token;
-        notification.title =
-          element.address === tx.to
-            ? NOTIFICATION_TITLE.COIN_RECEIVED
-            : NOTIFICATION_TITLE.COIN_SENT;
-        notification.image = tx.image;
-        notification.txHash = tx.tx_hash;
-        notification.body = `${listTransfer} ${
-          tx.activities.length > 3 ? 'and more ' : ''
-        }${element.address === tx.to ? 'received' : 'sent'} by ${
-          element.address
-        }${nameTagPhase}`;
-        lstNotification.push(notification);
+
+        if (fcmToken) {
+          const notification = new NotificationDto();
+          notification.token = fcmToken;
+          notification.userId = element.userId;
+          notification.title =
+            element.address === tx.to
+              ? NOTIFICATION.TITLE.COIN_RECEIVED
+              : NOTIFICATION.TITLE.COIN_SENT;
+          notification.image = tx.image;
+          notification.txHash = tx.tx_hash;
+          notification.body = `${listTransfer} ${
+            tx.activities.length > 3 ? 'and more ' : ''
+          }${element.address === tx.to ? 'received' : 'sent'} by ${
+            element.address
+          }${nameTagPhase}`;
+          lstNotification.push(notification);
+        }
       });
     });
     return lstNotification;
@@ -139,23 +149,28 @@ export class NotificationUtil {
           listPublicNameTag,
         );
 
-        const notification = new NotificationDto();
-        notification.token = listNotificationToken?.find(
+        const fcmToken = listNotificationToken?.find(
           (item) => item.user_id === element.userId,
         )?.notification_token;
-        notification.title =
-          element.address === tx.to
-            ? NOTIFICATION_TITLE.TOKEN_RECEIVED
-            : NOTIFICATION_TITLE.TOKEN_SENT;
-        notification.image =
-          tx.activities[0].cw20_contract?.marketing_info?.logo;
-        notification.txHash = tx.tx_hash;
-        notification.body = `${listTokenId} ${
-          tx.activities.length > 2 ? 'and more ' : ''
-        }${element.address === tx.to ? 'received' : 'sent'} by ${
-          element.address
-        }${nameTagPhase}`;
-        lstNotification.push(notification);
+
+        if (fcmToken) {
+          const notification = new NotificationDto();
+          notification.token = fcmToken;
+          notification.userId = element.userId;
+          notification.title =
+            element.address === tx.to
+              ? NOTIFICATION.TITLE.TOKEN_RECEIVED
+              : NOTIFICATION.TITLE.TOKEN_SENT;
+          notification.image =
+            tx.activities[0].cw20_contract?.marketing_info?.logo;
+          notification.txHash = tx.tx_hash;
+          notification.body = `${listTokenId} ${
+            tx.activities.length > 2 ? 'and more ' : ''
+          }${element.address === tx.to ? 'received' : 'sent'} by ${
+            element.address
+          }${nameTagPhase}`;
+          lstNotification.push(notification);
+        }
       });
     });
 
@@ -187,23 +202,28 @@ export class NotificationUtil {
           listPublicNameTag,
         );
 
-        const notification = new NotificationDto();
-        notification.token = listNotificationToken?.find(
+        const fcmToken = listNotificationToken?.find(
           (item) => item.user_id === element.userId,
         )?.notification_token;
-        notification.title =
-          element.address === tx.to
-            ? NOTIFICATION_TITLE.NFT_RECEIVED
-            : NOTIFICATION_TITLE.NFT_SENT;
-        notification.image =
-          tx.activities[0].cw721_token?.media_info?.offchain?.image?.url;
-        notification.txHash = tx.tx_hash;
-        notification.body = `NFT id ${listTokenId} ${
-          tx.activities.length > 2 ? 'and more ' : ''
-        }${element.address === tx.to ? 'received' : 'sent'} by ${
-          element.address
-        }${nameTagPhase}`;
-        lstNotification.push(notification);
+
+        if (fcmToken) {
+          const notification = new NotificationDto();
+          notification.token = fcmToken;
+          notification.userId = element.userId;
+          notification.title =
+            element.address === tx.to
+              ? NOTIFICATION.TITLE.NFT_RECEIVED
+              : NOTIFICATION.TITLE.NFT_SENT;
+          notification.image =
+            tx.activities[0].cw721_token?.media_info?.offchain?.image?.url;
+          notification.txHash = tx.tx_hash;
+          notification.body = `NFT id ${listTokenId} ${
+            tx.activities.length > 2 ? 'and more ' : ''
+          }${element.address === tx.to ? 'received' : 'sent'} by ${
+            element.address
+          }${nameTagPhase}`;
+          lstNotification.push(notification);
+        }
       });
     });
     return lstNotification;

@@ -474,6 +474,7 @@ export const REGEX_PARTERN = {
 export enum USER_ACTIVITIES {
   SEND_MAIL_VERIFY = 'SEND_MAIL_VERIFY',
   SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+  DAILY_NOTIFICATIONS = 'DAILY_NOTIFICATIONS',
 }
 
 export const MSGS_ACTIVE_USER = {
@@ -658,12 +659,19 @@ export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
 
-export const NOTIFICATION_TITLE = {
-  EXECUTED: 'Executed',
-  TOKEN_SENT: 'Token Sent',
-  TOKEN_RECEIVED: 'Token Received',
-  NFT_SENT: 'NFT Sent',
-  NFT_RECEIVED: 'Token Received',
-  COIN_SENT: 'Coin Sent',
-  COIN_RECEIVED: 'Coin Received',
+export const NOTIFICATION = {
+  TITLE: {
+    EXECUTED: 'Executed',
+    TOKEN_SENT: 'Token Sent',
+    TOKEN_RECEIVED: 'Token Received',
+    NFT_SENT: 'NFT Sent',
+    NFT_RECEIVED: 'Token Received',
+    COIN_SENT: 'Coin Sent',
+    COIN_RECEIVED: 'Coin Received',
+  },
+  STATUS: {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+  },
+  LIMIT: 100,
 };

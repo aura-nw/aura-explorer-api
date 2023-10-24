@@ -13,6 +13,7 @@ import { NotificationTokenRepository } from './repositories/notification-token.r
 import { EncryptionService } from '../../encryption/encryption.service';
 import { NotificationUtil } from './utils/notification.util';
 import { CipherKey } from '../../../shared/entities/cipher-key.entity';
+import { UserActivity } from '../../../shared/entities/user-activity.entity';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CipherKey } from '../../../shared/entities/cipher-key.entity';
       SyncPointRepository,
       SyncStatus,
       CipherKey,
+      UserActivity,
     ]),
     BullModule.registerQueueAsync({
       name: QUEUES.NOTIFICATION.QUEUE_NAME,

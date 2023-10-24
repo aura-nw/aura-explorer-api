@@ -5,4 +5,5 @@ export class NotificationDto {
   image: string;
   txHash: string;
   type: string;
+  userId: number;
 }

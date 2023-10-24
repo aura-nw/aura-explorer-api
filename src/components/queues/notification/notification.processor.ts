@@ -1,5 +1,11 @@
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { INDEXER_API_V2, QUEUES, SYNC_POINT_TYPE } from '../../../shared';
+import {
+  INDEXER_API_V2,
+  NOTIFICATION,
+  QUEUES,
+  SYNC_POINT_TYPE,
+  USER_ACTIVITIES,
+} from '../../../shared';
 import { Logger } from '@nestjs/common';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +20,9 @@ import { PublicNameTagRepository } from '../../public-name-tag/repositories/publ
 import { NotificationTokenRepository } from './repositories/notification-token.repository';
 import { NotificationUtil } from './utils/notification.util';
 import { NotificationDto } from './dtos/notification.dtos';
+import { UserActivity } from '../../../shared/entities/user-activity.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -30,7 +39,8 @@ export class NotificationProcessor {
     private privateNameTagRepository: PrivateNameTagRepository,
     private publicNameTagRepository: PublicNameTagRepository,
     private notificationTokenRepository: NotificationTokenRepository,
-
+    @InjectRepository(UserActivity)
+    private userActivityRepository: Repository<UserActivity>,
     @InjectQueue(QUEUES.NOTIFICATION.QUEUE_NAME) private readonly queue: Queue,
   ) {
     this.logger.log(
@@ -155,6 +165,7 @@ export class NotificationProcessor {
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.executed[0].height,
         });
+        await this.blockLimitNotification(notifications);
       }
     } catch (err) {
       this.logger.error(`notificationExecuted has error: ${err.stack}`);
@@ -257,6 +268,7 @@ export class NotificationProcessor {
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.coin_transfer[0].height,
         });
+        await this.blockLimitNotification(notifications);
       }
     } catch (err) {
       this.logger.error(`notificationCoinTransfer has error: ${err.stack}`);
@@ -371,6 +383,8 @@ export class NotificationProcessor {
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.token_transfer[0].height,
         });
+
+        await this.blockLimitNotification(notifications);
       }
     } catch (err) {
       this.logger.error(`notificationTokenTransfer has error: ${err.stack}`);
@@ -475,6 +489,8 @@ export class NotificationProcessor {
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.nft_transfer[0].height,
         });
+
+        await this.blockLimitNotification(notifications);
       }
     } catch (err) {
       this.logger.error(`notificationNftTransfer has error: ${err.stack}`);
@@ -496,5 +512,36 @@ export class NotificationProcessor {
         },
       })
       .catch((error) => this.logger.error('cannot-send-notfitication', error));
+  }
+
+  private async blockLimitNotification(notifiactions: NotificationDto[]) {
+    const counts = {};
+    for (const element of notifiactions) {
+      if (counts.hasOwnProperty(element.userId)) {
+        counts[element.userId]++;
+      } else {
+        counts[element.userId] = 1;
+      }
+    }
+
+    for (const [userId, count] of Object.entries(counts)) {
+      const userActivities = await this.userActivityRepository.findOne({
+        where: {
+          user: { id: Number(userId) },
+          type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+        },
+      });
+      const total = userActivities.total + Number(count) || 0;
+      await this.userActivityRepository.update(userActivities.id, {
+        total: total,
+      });
+
+      if (total >= NOTIFICATION.LIMIT) {
+        this.notificationTokenRepository.update(
+          { user_id: Number(userId), status: NOTIFICATION.STATUS.ACTIVE },
+          { status: NOTIFICATION.STATUS.INACTIVE },
+        );
+      }
+    }
   }
 }
