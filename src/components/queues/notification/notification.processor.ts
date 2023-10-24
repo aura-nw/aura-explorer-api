@@ -111,15 +111,7 @@ export class NotificationProcessor {
       });
 
       if (!currentTxHeight) {
-        const data = await lastValueFrom(
-          this.httpService.get(
-            `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
-          ),
-        ).then((rs) => rs.data);
-        await this.syncPointRepos.save({
-          type: SYNC_POINT_TYPE.EXECUTED_HEIGHT,
-          point: data?.total_blocks,
-        });
+        await this.updateBlockNotification(SYNC_POINT_TYPE.EXECUTED_HEIGHT);
         return;
       }
 
@@ -191,15 +183,9 @@ export class NotificationProcessor {
       });
 
       if (!currentTxHeight) {
-        const data = await lastValueFrom(
-          this.httpService.get(
-            `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
-          ),
-        ).then((rs) => rs.data);
-        await this.syncPointRepos.save({
-          type: SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
-          point: data?.total_blocks,
-        });
+        await this.updateBlockNotification(
+          SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+        );
         return;
       }
 
@@ -279,6 +265,8 @@ export class NotificationProcessor {
           point: response?.coin_transfer[0].height,
         });
         await this.blockLimitNotification(notifications);
+      } else {
+        this.updateBlockNotification(SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT);
       }
     } catch (err) {
       this.logger.error(`notificationCoinTransfer has error: ${err.stack}`);
@@ -295,15 +283,9 @@ export class NotificationProcessor {
       });
 
       if (!currentTxHeight) {
-        const data = await lastValueFrom(
-          this.httpService.get(
-            `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
-          ),
-        ).then((rs) => rs.data);
-        await this.syncPointRepos.save({
-          type: SYNC_POINT_TYPE.TOKEN_TRANSFER_HEIGHT,
-          point: data?.total_blocks,
-        });
+        await this.updateBlockNotification(
+          SYNC_POINT_TYPE.TOKEN_TRANSFER_HEIGHT,
+        );
         return;
       }
 
@@ -412,15 +394,7 @@ export class NotificationProcessor {
       });
 
       if (!currentTxHeight) {
-        const data = await lastValueFrom(
-          this.httpService.get(
-            `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
-          ),
-        ).then((rs) => rs.data);
-        await this.syncPointRepos.save({
-          type: SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT,
-          point: data?.total_blocks,
-        });
+        await this.updateBlockNotification(SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT);
         return;
       }
 
@@ -574,5 +548,17 @@ export class NotificationProcessor {
         );
       }
     }
+  }
+
+  private async updateBlockNotification(type) {
+    const data = await lastValueFrom(
+      this.httpService.get(
+        `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
+      ),
+    ).then((rs) => rs.data);
+    await this.syncPointRepos.save({
+      type: type,
+      point: data?.total_blocks,
+    });
   }
 }
