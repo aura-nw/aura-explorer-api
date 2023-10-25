@@ -266,7 +266,10 @@ export class NotificationProcessor {
         });
         await this.blockLimitNotification(notifications);
       } else {
-        this.updateBlockNotification(SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT);
+        this.updateBlockNotification(
+          SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+          currentTxHeight,
+        );
       }
     } catch (err) {
       this.logger.error(`notificationCoinTransfer has error: ${err.stack}`);
@@ -550,15 +553,21 @@ export class NotificationProcessor {
     }
   }
 
-  private async updateBlockNotification(type) {
+  private async updateBlockNotification(type, syncPoint = null) {
     const data = await lastValueFrom(
       this.httpService.get(
         `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
       ),
     ).then((rs) => rs.data);
-    await this.syncPointRepos.save({
-      type: type,
-      point: data?.total_blocks,
-    });
+    if (syncPoint) {
+      await this.syncPointRepos.update(syncPoint.id, {
+        point: data?.total_blocks,
+      });
+    } else {
+      await this.syncPointRepos.save({
+        type: type,
+        point: data?.total_blocks,
+      });
+    }
   }
 }
