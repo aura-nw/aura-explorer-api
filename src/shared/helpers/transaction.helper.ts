@@ -90,9 +90,7 @@ export class TransactionHelper {
                 ?.value?.split(',');
               arrAmount?.forEach((rawAmount) => {
                 const value = rawAmount?.match(/\d+/g);
-                const amountTemp = this.balanceOf(
-                  value?.length > 0 ? value[0] : 0,
-                );
+                const amountTemp = value?.length > 0 ? value[0] : 0;
                 let amount;
                 let denom = coinInfo.coinDenom;
                 let denomOrigin;
@@ -321,7 +319,8 @@ export class TransactionHelper {
     if (value.indexOf('ibc') >= 0) {
       try {
         if (!value.startsWith('ibc')) {
-          const temp = value?.match(/\d+/g)[0];
+          const match = value?.match(/\d+/g);
+          const temp = match?.length > 0 ? match[0] : 0;
           value = value?.replace(temp, '');
         }
       } catch {}
