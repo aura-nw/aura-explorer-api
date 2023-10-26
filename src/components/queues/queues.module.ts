@@ -26,7 +26,7 @@ import { CW4973QueueModule } from './cw4973/cw4973.module';
     }),
     SendMailModule,
     TokenModule,
-    CW4973QueueModule,
+    // CW4973QueueModule,
   ],
 })
 export class QueuesModule {}

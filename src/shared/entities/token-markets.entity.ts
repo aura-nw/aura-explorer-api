@@ -5,7 +5,6 @@ import { BaseEntityIncrementId } from './base/base.entity';
 @Unique(['contract_address'])
 export class TokenMarkets extends BaseEntityIncrementId {
   @Column({ name: 'contract_address' })
-  @Index()
   contract_address: string;
 
   @Column({ name: 'coin_id' })
