@@ -14,6 +14,7 @@ import { EncryptionService } from '../../encryption/encryption.service';
 import { NotificationUtil } from './utils/notification.util';
 import { CipherKey } from '../../../shared/entities/cipher-key.entity';
 import { UserActivity } from '../../../shared/entities/user-activity.entity';
+import { NotificationRepository } from './repositories/notification.repository';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UserActivity } from '../../../shared/entities/user-activity.entity';
       PrivateNameTagRepository,
       PublicNameTagRepository,
       NotificationTokenRepository,
+      NotificationRepository,
       SyncPointRepository,
       SyncStatus,
       CipherKey,

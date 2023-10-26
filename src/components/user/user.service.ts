@@ -475,9 +475,6 @@ export class UserService {
       },
     });
 
-    if (userActivities?.total >= NOTIFICATION.LIMIT) {
-      return;
-    }
     if (!userActivities) {
       const user = await this.usersRepository.findOne({
         where: { id: userId },
@@ -496,7 +493,10 @@ export class UserService {
     const notification_token = await this.notificationTokenRepository.save({
       user_id: userId,
       notification_token: token.token,
-      status: NOTIFICATION.STATUS.ACTIVE,
+      status:
+        userActivities?.total >= NOTIFICATION.LIMIT
+          ? NOTIFICATION.STATUS.INACTIVE
+          : NOTIFICATION.STATUS.ACTIVE,
     });
     return notification_token;
   }

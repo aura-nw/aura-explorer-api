@@ -76,7 +76,6 @@ export class PrivateNameTagController {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { data, count, countFavorite } =
       await this.nameTagService.getNameTags(ctx, request);
-    await this.nameTagService.getNameTags(ctx, request);
     return { data, meta: { count, countFavorite } };
   }
 

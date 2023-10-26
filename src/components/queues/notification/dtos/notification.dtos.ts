@@ -3,7 +3,7 @@ export class NotificationDto {
   body: string;
   token: string;
   image: string;
-  txHash: string;
+  tx_hash: string;
   type: string;
-  userId: number;
+  user_id: number;
 }

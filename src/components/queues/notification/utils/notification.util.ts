@@ -55,8 +55,9 @@ export class NotificationUtil {
               const notification = new NotificationDto();
               notification.title = NOTIFICATION.TITLE.EXECUTED;
               notification.token = fcmToken;
-              notification.userId = element.userId;
-              notification.txHash = tx.hash;
+              notification.user_id = element.userId;
+              notification.tx_hash = tx.hash;
+              notification.type = NOTIFICATION.TYPE.EXCEUTED;
               notification.body = `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`;
               lstNotification.push(notification);
             }
@@ -99,13 +100,14 @@ export class NotificationUtil {
         if (fcmToken) {
           const notification = new NotificationDto();
           notification.token = fcmToken;
-          notification.userId = element.userId;
+          notification.user_id = element.userId;
           notification.title =
             element.address === tx.to
               ? NOTIFICATION.TITLE.COIN_RECEIVED
               : NOTIFICATION.TITLE.COIN_SENT;
           notification.image = tx.image;
-          notification.txHash = tx.tx_hash;
+          notification.tx_hash = tx.tx_hash;
+          notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
           notification.body = `${listTransfer} ${
             tx.activities.length > 3 ? 'and more ' : ''
           }${element.address === tx.to ? 'received' : 'sent'} by ${
@@ -156,14 +158,15 @@ export class NotificationUtil {
         if (fcmToken) {
           const notification = new NotificationDto();
           notification.token = fcmToken;
-          notification.userId = element.userId;
+          notification.user_id = element.userId;
+          notification.type = NOTIFICATION.TYPE.TOKEN_TRANSFER;
           notification.title =
             element.address === tx.to
               ? NOTIFICATION.TITLE.TOKEN_RECEIVED
               : NOTIFICATION.TITLE.TOKEN_SENT;
           notification.image =
             tx.activities[0].cw20_contract?.marketing_info?.logo;
-          notification.txHash = tx.tx_hash;
+          notification.tx_hash = tx.tx_hash;
           notification.body = `${listTokenId} ${
             tx.activities.length > 2 ? 'and more ' : ''
           }${element.address === tx.to ? 'received' : 'sent'} by ${
@@ -209,14 +212,15 @@ export class NotificationUtil {
         if (fcmToken) {
           const notification = new NotificationDto();
           notification.token = fcmToken;
-          notification.userId = element.userId;
+          notification.user_id = element.userId;
           notification.title =
             element.address === tx.to
               ? NOTIFICATION.TITLE.NFT_RECEIVED
               : NOTIFICATION.TITLE.NFT_SENT;
           notification.image =
             tx.activities[0].cw721_token?.media_info?.offchain?.image?.url;
-          notification.txHash = tx.tx_hash;
+          notification.tx_hash = tx.tx_hash;
+          notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
           notification.body = `NFT id ${listTokenId} ${
             tx.activities.length > 2 ? 'and more ' : ''
           }${element.address === tx.to ? 'received' : 'sent'} by ${

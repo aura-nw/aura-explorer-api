@@ -661,6 +661,12 @@ export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
 
 export const NOTIFICATION = {
+  TYPE: {
+    EXCEUTED: 'EXCEUTED',
+    COIN_TRANSFER: 'COIN_TRANSFER',
+    TOKEN_TRANSFER: 'TOKEN_TRANSFER',
+    NFT_TRANSFER: 'NFT_TRANSFER',
+  },
   TITLE: {
     EXECUTED: 'Executed',
     TOKEN_SENT: 'Token Sent',

@@ -23,6 +23,7 @@ import { NotificationDto } from './dtos/notification.dtos';
 import { UserActivity } from '../../../shared/entities/user-activity.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { NotificationRepository } from './repositories/notification.repository';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -39,6 +40,7 @@ export class NotificationProcessor {
     private privateNameTagRepository: PrivateNameTagRepository,
     private publicNameTagRepository: PublicNameTagRepository,
     private notificationTokenRepository: NotificationTokenRepository,
+    private notificationReposiotry: NotificationRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
     @InjectQueue(QUEUES.NOTIFICATION.QUEUE_NAME) private readonly queue: Queue,
@@ -162,6 +164,7 @@ export class NotificationProcessor {
             this.sendNotification(notification),
           );
           await Promise.all(firebaseMessagingPromises);
+          await this.notificationReposiotry.save(notifications);
         }
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.executed[0].height,
@@ -260,6 +263,7 @@ export class NotificationProcessor {
             this.sendNotification(notification),
           );
           await Promise.all(firebaseMessagingPromises);
+          await this.notificationReposiotry.save(notifications);
         }
         await this.syncPointRepos.update(currentTxHeight.id, {
           point: response?.coin_transfer[0].height,
@@ -374,6 +378,7 @@ export class NotificationProcessor {
             this.sendNotification(notification),
           );
           await Promise.all(firebaseMessagingPromises);
+          await this.notificationReposiotry.save(notifications);
         }
 
         await this.syncPointRepos.update(currentTxHeight.id, {
@@ -473,6 +478,7 @@ export class NotificationProcessor {
             this.sendNotification(notification),
           );
           await Promise.all(firebaseMessagingPromises);
+          await this.notificationReposiotry.save(notifications);
         }
 
         await this.syncPointRepos.update(currentTxHeight.id, {
@@ -515,7 +521,7 @@ export class NotificationProcessor {
         },
         token: notification.token,
         data: {
-          txHash: notification.txHash,
+          txHash: notification.tx_hash,
           image: notification.image || '',
         },
       })
@@ -525,10 +531,10 @@ export class NotificationProcessor {
   private async blockLimitNotification(notifiactions: NotificationDto[]) {
     const counts = {};
     for (const element of notifiactions) {
-      if (counts.hasOwnProperty(element.userId)) {
-        counts[element.userId]++;
+      if (counts.hasOwnProperty(element.user_id)) {
+        counts[element.user_id]++;
       } else {
-        counts[element.userId] = 1;
+        counts[element.user_id] = 1;
       }
     }
 
@@ -545,10 +551,15 @@ export class NotificationProcessor {
       });
 
       if (total >= NOTIFICATION.LIMIT) {
-        this.notificationTokenRepository.update(
-          { user_id: Number(userId), status: NOTIFICATION.STATUS.ACTIVE },
-          { status: NOTIFICATION.STATUS.INACTIVE },
-        );
+        const token = await this.notificationTokenRepository.findOne({
+          where: {
+            user_id: Number(userId),
+            status: NOTIFICATION.STATUS.ACTIVE,
+          },
+        });
+        this.notificationTokenRepository.update(token.id, {
+          status: NOTIFICATION.STATUS.INACTIVE,
+        });
       }
     }
   }
