@@ -1,7 +1,7 @@
 {
-  "name": "aura-explorer-api",
+  "name": "mutilchain-explorer-api",
   "version": "0.0.1",
-  "description": "API service for Aura Explorer",
+  "description": "API service for Cosmos chains",
   "author": "aura.network",
   "private": true,
   "license": "MIT",

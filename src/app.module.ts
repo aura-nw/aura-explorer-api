@@ -16,8 +16,8 @@ import { PasswordAuthModule } from './auth/password/password-auth.module';
 import { QueuesModule } from './components/queues/queues.module';
 import { PrivateNameTagModule } from './components/private-name-tag/private-name-tag.module';
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
-import { ExportCsvModule } from './components/export-csv/export-csv.module';
-import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
+// import { ExportCsvModule } from './components/export-csv/export-csv.module';
+// import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
 
 @Module({
   imports: [
@@ -32,19 +32,19 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptch
     SoulboundTokenModule,
     PrivateNameTagModule,
     PublicNameTagModule,
-    ExportCsvModule,
+    // ExportCsvModule,
     MailModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     PasswordAuthModule,
     QueuesModule,
-    GoogleRecaptchaModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) =>
-        configService.get('googleRecaptchaOptions'),
-      inject: [ConfigService],
-    }),
+    // GoogleRecaptchaModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: (configService: ConfigService) =>
+    //     configService.get('googleRecaptchaOptions'),
+    //   inject: [ConfigService],
+    // }),
   ],
   providers: [ServiceUtil, MetricService],
 })
