@@ -587,3 +587,8 @@ export const TX_HEADER = {
 export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
+
+export const WATCH_LIST = {
+  NOTE_MAX_LENGTH: 200,
+  TYPE: NAME_TAG_TYPE,
+};
