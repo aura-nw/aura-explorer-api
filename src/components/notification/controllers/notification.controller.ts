@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -46,7 +47,7 @@ import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
 })
 export class NotificationController {
   constructor(
-    private readonly nameTagService: NotificationService,
+    private readonly notificationService: NotificationService,
     private readonly logger: AkcLogger,
   ) {
     this.logger.setContext(NotificationController.name);
@@ -65,27 +66,35 @@ export class NotificationController {
     @Query() param: NotificationParamsDto,
   ): Promise<BaseApiResponse<Notification[]>> {
     this.logger.log(ctx, `${this.getNotifications.name} was called!`);
-    const { result, count } = await this.nameTagService.getNotifications(
+    const { result, count } = await this.notificationService.getNotifications(
       ctx,
       param,
     );
     return { data: result, meta: { count } };
   }
 
-  @Get('notification/:userId')
+  @Put('notification/read/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get list private name tag' })
+  @ApiOperation({ summary: 'Update Private name tag' })
   @ApiResponse({ status: HttpStatus.OK })
-  @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: GetNotificationResult })
-  async countNotification(
+  async readNotification(
     @ReqContext() ctx: RequestContext,
-    @Query() param: NotificationParamsDto,
-  ): Promise<BaseApiResponse<Notification[]>> {
-    this.logger.log(ctx, `${this.getNotifications.name} was called!`);
-    const data = await this.nameTagService.getNotifications(ctx, userId);
-    return { data, meta: { count: data?.length } };
+    @Param('id') id: number,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.readNotification.name} was called!`);
+    return await this.notificationService.readNotification(ctx, id);
+  }
+
+  @Put('notification/read-all')
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update Private name tag' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async readAllNotification(@ReqContext() ctx: RequestContext): Promise<any> {
+    this.logger.log(ctx, `${this.readAllNotification.name} was called!`);
+    return await this.notificationService.readAllNotification(ctx);
   }
 }

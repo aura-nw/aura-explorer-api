@@ -12,7 +12,7 @@ export class NotificationRepository extends Repository<Notification> {
    * @param is_read
    * @returns
    */
-  async getNotifications(user_id: number, is_read: boolean) {
+  async getNotifications(user_id: number, unread: boolean) {
     this._logger.log(
       `============== ${this.getNotifications.name} was called! ==============`,
     );
@@ -30,7 +30,7 @@ export class NotificationRepository extends Repository<Notification> {
       return { result, count };
     };
 
-    if (is_read === false || is_read.toString() === 'false') {
+    if (unread === true || unread.toString() === 'true') {
       builder.andWhere('noti.is_read = 0');
     }
 

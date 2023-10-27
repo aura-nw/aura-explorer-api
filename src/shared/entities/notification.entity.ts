@@ -26,6 +26,6 @@ export class Notification extends BaseEntityIncrementId {
   @Column()
   user_id: number;
 
-  @Column({ name: 'is_notify', default: false })
+  @Column({ default: false })
   is_read: boolean;
 }

@@ -551,15 +551,12 @@ export class NotificationProcessor {
       });
 
       if (total >= NOTIFICATION.LIMIT) {
-        const token = await this.notificationTokenRepository.findOne({
-          where: {
-            user_id: Number(userId),
-            status: NOTIFICATION.STATUS.ACTIVE,
+        this.notificationTokenRepository.update(
+          { user_id: Number(userId), status: NOTIFICATION.STATUS.ACTIVE },
+          {
+            status: NOTIFICATION.STATUS.INACTIVE,
           },
-        });
-        this.notificationTokenRepository.update(token.id, {
-          status: NOTIFICATION.STATUS.INACTIVE,
-        });
+        );
       }
     }
   }

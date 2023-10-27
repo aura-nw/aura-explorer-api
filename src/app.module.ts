@@ -18,6 +18,7 @@ import { PrivateNameTagModule } from './components/private-name-tag/private-name
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
 import { ExportCsvModule } from './components/export-csv/export-csv.module';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
+import { NotificationModule } from './components/notification/notification.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptch
     Cw20TokenModule,
     SoulboundTokenModule,
     PrivateNameTagModule,
+    NotificationModule,
     PublicNameTagModule,
     ExportCsvModule,
     MailModule,

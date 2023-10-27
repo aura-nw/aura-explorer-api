@@ -14,8 +14,21 @@ export class NotificationService {
     this.logger.log(ctx, `${this.getNotifications.name} was called!`);
 
     return await this.notificationRepository.getNotifications(
-      param.userId,
-      param.isRead,
+      ctx.user.id,
+      param.unread,
+    );
+  }
+
+  async readNotification(ctx: RequestContext, id: number) {
+    this.logger.log(ctx, `${this.readNotification.name} was called!`);
+    return await this.notificationRepository.update(id, { is_read: true });
+  }
+
+  async readAllNotification(ctx: RequestContext) {
+    this.logger.log(ctx, `${this.readNotification.name} was called!`);
+    return await this.notificationRepository.update(
+      { user_id: ctx?.user?.id, is_read: false },
+      { is_read: true },
     );
   }
 }
