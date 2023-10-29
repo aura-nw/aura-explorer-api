@@ -591,4 +591,19 @@ export const LIMIT_PRIVATE_NAME_TAG = 500;
 export const WATCH_LIST = {
   NOTE_MAX_LENGTH: 200,
   TYPE: NAME_TAG_TYPE,
+  SETTINGS_EXAMPLE: {
+    transactionExecuted: true,
+    tokenSent: true,
+    tokenReceived: true,
+    nftSent: true,
+    nftReceived: true,
+    nativeCoinSent: {
+      turned: true,
+      inactiveAutoRestake: true,
+    },
+    nativeCoinReceived: {
+      turned: true,
+      inactiveAutoRestake: true,
+    },
+  },
 };

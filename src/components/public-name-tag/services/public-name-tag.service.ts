@@ -11,7 +11,7 @@ import { StorePublicNameTagParamsDto } from '../dtos/store-public-name-tag-param
 import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { Not } from 'typeorm';
-import { ServiceUtil } from '../../../shared/utils/service.util';
+import { ServiceUtil, isValidBench32Address } from '../../../shared/utils/service.util';
 import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
 
 @Injectable()
@@ -118,9 +118,7 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = await this.serviceUtil.isValidBech32Address(
-        req.address,
-      );
+      const validFormat = await isValidBench32Address(req.address);
 
       if (!validFormat) {
         return {

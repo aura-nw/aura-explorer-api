@@ -107,4 +107,7 @@ export default () => ({
       return req.headers.recaptcha;
     },
   },
+  watchList: {
+    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 100,
+  },
 });
