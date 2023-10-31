@@ -60,7 +60,14 @@ export class NotificationUtil {
               notification.user_id = element.user.id;
               notification.tx_hash = tx.hash;
               notification.type = NOTIFICATION.TYPE.EXCEUTED;
-              notification.body = `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`;
+              notification.body = {
+                content: `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`,
+                data: {
+                  type: type,
+                  sender: msg.sender,
+                  nameTag: nameTagPhase,
+                },
+              };
               lstNotification.push(notification);
             }
           });
@@ -127,11 +134,21 @@ export class NotificationUtil {
             notification.image = tx.image;
             notification.tx_hash = tx.tx_hash;
             notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
-            notification.body = `${listTransfer} ${
-              tx.activities.length > 3 ? 'and more ' : ''
-            }${element.address === tx.to ? 'received' : 'sent'} by ${
-              element.address
-            }${nameTagPhase}`;
+            notification.body = {
+              content: `${listTransfer} ${
+                tx.activities.length > 3 ? 'and more ' : ''
+              }${element.address === tx.to ? 'received' : 'sent'} by ${
+                element.address
+              }${nameTagPhase}`,
+              data: {
+                transfer: listTransfer,
+                num: tx.activities.length,
+                from: tx.from,
+                to: tx.to,
+                address: element.address,
+                nameTag: nameTagPhase,
+              },
+            };
             lstNotification.push(notification);
           }
         }
@@ -187,11 +204,21 @@ export class NotificationUtil {
           notification.image =
             tx.activities[0].cw20_contract?.marketing_info?.logo;
           notification.tx_hash = tx.tx_hash;
-          notification.body = `${listTokenId} ${
-            tx.activities.length > 2 ? 'and more ' : ''
-          }${element.address === tx.to ? 'received' : 'sent'} by ${
-            element.address
-          }${nameTagPhase}`;
+          notification.body = {
+            content: `${listTokenId} ${
+              tx.activities.length > 2 ? 'and more ' : ''
+            }${element.address === tx.to ? 'received' : 'sent'} by ${
+              element.address
+            }${nameTagPhase}`,
+            data: {
+              tokens: listTokenId,
+              num: tx.activities.length,
+              from: tx.from,
+              to: tx.to,
+              address: element.address,
+              nameTag: nameTagPhase,
+            },
+          };
           lstNotification.push(notification);
         }
       });
@@ -241,11 +268,21 @@ export class NotificationUtil {
             tx.activities[0].cw721_token?.media_info?.offchain?.image?.url;
           notification.tx_hash = tx.tx_hash;
           notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
-          notification.body = `NFT id ${listTokenId} ${
-            tx.activities.length > 2 ? 'and more ' : ''
-          }${element.address === tx.to ? 'received' : 'sent'} by ${
-            element.address
-          }${nameTagPhase}`;
+          notification.body = {
+            content: `NFT id ${listTokenId} ${
+              tx.activities.length > 2 ? 'and more ' : ''
+            }${element.address === tx.to ? 'received' : 'sent'} by ${
+              element.address
+            }${nameTagPhase}`,
+            data: {
+              tokens: listTokenId,
+              num: tx.activities.length,
+              from: tx.from,
+              to: tx.to,
+              address: element.address,
+              nameTag: nameTagPhase,
+            },
+          };
           lstNotification.push(notification);
         }
       });

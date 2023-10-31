@@ -435,6 +435,7 @@ export class NotificationProcessor {
         item.total = 0;
       });
 
+      // Reset quota limit.
       await this.userActivityRepository.save(userActivities);
 
       // Clean transaction over 30 days.
@@ -452,7 +453,7 @@ export class NotificationProcessor {
       .send({
         notification: {
           title: notification.title,
-          body: notification.body,
+          body: notification.body['content'],
         },
         token: notification.token,
         data: {

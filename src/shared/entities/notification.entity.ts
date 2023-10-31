@@ -6,8 +6,8 @@ export class Notification extends BaseEntityIncrementId {
   @Column()
   title: string;
 
-  @Column({ type: 'text' })
-  body: string;
+  @Column({ type: 'json', nullable: true })
+  body: JSON;
 
   @Column()
   token: string;

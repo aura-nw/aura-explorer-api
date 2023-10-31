@@ -1,6 +1,6 @@
 export class NotificationDto {
   title: string;
-  body: string;
+  body: any;
   token: string;
   image: string;
   tx_hash: string;
