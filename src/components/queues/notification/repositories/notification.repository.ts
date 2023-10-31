@@ -36,4 +36,13 @@ export class NotificationRepository extends Repository<Notification> {
 
     return await _finalizeResult();
   }
+
+  async cleanUp(numOfDay: number) {
+    const result = await this.createQueryBuilder()
+      .delete()
+      .where('`timestamp` < (NOW() - INTERVAL :numOfDay DAY)', { numOfDay })
+      .execute();
+
+    return result.affected;
+  }
 }

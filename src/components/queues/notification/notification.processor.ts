@@ -436,6 +436,11 @@ export class NotificationProcessor {
       });
 
       await this.userActivityRepository.save(userActivities);
+
+      // Clean transaction over 30 days.
+      await this.notificationReposiotry.cleanUp(
+        NOTIFICATION.CLEAN_TRANSACTION_DAYS,
+      );
     } catch (err) {
       this.logger.error(`resetNotification has error: ${err.stack}`);
     }
