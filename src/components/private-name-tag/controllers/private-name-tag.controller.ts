@@ -74,9 +74,10 @@ export class PrivateNameTagController {
     @Query() request: PrivateNameTagParamsDto,
   ): Promise<BaseApiResponse<GetPrivateNameTagAdminResult[]>> {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { data, count } = await this.nameTagService.getNameTags(ctx, request);
+    const { data, count, countFavorite } =
+      await this.nameTagService.getNameTags(ctx, request);
     await this.nameTagService.getNameTags(ctx, request);
-    return { data, meta: { count } };
+    return { data, meta: { count, countFavorite } };
   }
 
   @Get('user/private-name-tag/:id')
