@@ -226,6 +226,15 @@ export const INDEXER_API_V2 = {
       }
     }
     `,
+    CW4973_MEDIA_INFO: `query CW4973MediaInfo($owner: String) {
+      ${process.env.INDEXER_V2_DB} {
+        cw721_token(where: {owner: {_eq: $owner}, cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}}) {
+          token_id
+          owner
+          media_info
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -248,6 +257,7 @@ export const INDEXER_API_V2 = {
     COIN_TRANSFER_NOTIFICATION: 'CoinTransferNotification',
     TOKEN_TRANSFER_NOTIFICATION: 'TokenTransferNotification',
     NFT_TRANSFER_NOTIFICATION: 'NftTransferNotification',
+    CW4973_MEDIA_INFO: 'CW4973MediaInfo',
   },
 };
 
@@ -681,4 +691,9 @@ export const NOTIFICATION = {
     INACTIVE: 'INACTIVE',
   },
   LIMIT: 100,
+};
+
+export const WATCH_LIST = {
+  NOTE_MAX_LENGTH: 200,
+  TYPE: NAME_TAG_TYPE,
 };
