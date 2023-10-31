@@ -474,12 +474,10 @@ export class UserService {
         type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
       },
     });
-
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
     if (!userActivities) {
-      const user = await this.usersRepository.findOne({
-        where: { id: userId },
-      });
-
       const activity = new UserActivity();
       activity.type = USER_ACTIVITIES.DAILY_NOTIFICATIONS;
       activity.user = user;
@@ -487,16 +485,13 @@ export class UserService {
       await this.userActivityRepository.save(activity);
     }
     await this.notificationTokenRepository.update(
-      { user_id: userId, status: NOTIFICATION.STATUS.ACTIVE },
+      { user: { id: userId }, status: NOTIFICATION.STATUS.ACTIVE },
       { status: NOTIFICATION.STATUS.INACTIVE },
     );
     const notification_token = await this.notificationTokenRepository.save({
-      user_id: userId,
+      user: user,
       notification_token: token.token,
-      status:
-        userActivities?.total >= NOTIFICATION.LIMIT
-          ? NOTIFICATION.STATUS.INACTIVE
-          : NOTIFICATION.STATUS.ACTIVE,
+      status: NOTIFICATION.STATUS.ACTIVE,
     });
     return notification_token;
   }

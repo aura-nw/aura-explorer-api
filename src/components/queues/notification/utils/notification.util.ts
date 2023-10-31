@@ -11,6 +11,8 @@ import { NotificationDto } from '../dtos/notification.dtos';
 import { TransactionHelper } from '../../../../shared/helpers/transaction.helper';
 import { NOTIFICATION } from '../../../../shared';
 import { EncryptionService } from '../../../encryption/encryption.service';
+import { WatchList } from 'src/shared/entities/watch-list.entity';
+import { TRANSACTION_TYPE_ENUM } from 'src/shared/constants/transaction';
 
 @Injectable()
 export class NotificationUtil {
@@ -24,7 +26,7 @@ export class NotificationUtil {
 
   async processExecutedNotification(
     response,
-    watchList,
+    watchList: WatchList[],
     listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
@@ -42,20 +44,20 @@ export class NotificationUtil {
             );
             const nameTagPhase = await this.getNameTag(
               element.address,
-              element.userId,
+              element.user.id,
               listPrivateNameTag,
               listPublicNameTag,
             );
 
             const fcmToken = listNotificationToken?.find(
-              (item) => item.user_id === element.userId,
+              (item) => item.user.id === element.user.id,
             )?.notification_token;
 
             if (fcmToken) {
               const notification = new NotificationDto();
               notification.title = NOTIFICATION.TITLE.EXECUTED;
               notification.token = fcmToken;
-              notification.user_id = element.userId;
+              notification.user_id = element.user.id;
               notification.tx_hash = tx.hash;
               notification.type = NOTIFICATION.TYPE.EXCEUTED;
               notification.body = `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`;
@@ -70,7 +72,7 @@ export class NotificationUtil {
 
   async processCoinTransferNotification(
     data,
-    watchList,
+    watchList: WatchList[],
     listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
@@ -86,34 +88,52 @@ export class NotificationUtil {
         (item) => item.address === tx.from || item.address === tx.to,
       );
       listWatch?.forEach(async (element) => {
-        const nameTagPhase = await this.getNameTag(
-          element.address,
-          element.userId,
-          listPrivateNameTag,
-          listPublicNameTag,
-        );
+        // Check is restake transaction
+        const isRestakeTx =
+          tx?.tx_msg?.type === TRANSACTION_TYPE_ENUM.ExecuteAuthz &&
+          tx?.tx_msg?.content?.msgs?.length > 0 &&
+          'type_url' in tx?.tx_msg?.content?.msgs[0];
 
-        const fcmToken = listNotificationToken?.find(
-          (item) => item.user_id === element.userId,
-        )?.notification_token;
+        const receivedRestakeNotification =
+          element.address === tx.to &&
+          element.settings['nativeCoinReceived'].inactiveAutoRestake &&
+          isRestakeTx;
 
-        if (fcmToken) {
-          const notification = new NotificationDto();
-          notification.token = fcmToken;
-          notification.user_id = element.userId;
-          notification.title =
-            element.address === tx.to
-              ? NOTIFICATION.TITLE.COIN_RECEIVED
-              : NOTIFICATION.TITLE.COIN_SENT;
-          notification.image = tx.image;
-          notification.tx_hash = tx.tx_hash;
-          notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
-          notification.body = `${listTransfer} ${
-            tx.activities.length > 3 ? 'and more ' : ''
-          }${element.address === tx.to ? 'received' : 'sent'} by ${
-            element.address
-          }${nameTagPhase}`;
-          lstNotification.push(notification);
+        const sentRestakeNotification =
+          element.address === tx.from &&
+          element.settings['nativeCoinSent'].inactiveAutoRestake &&
+          isRestakeTx;
+
+        if (!sentRestakeNotification && !receivedRestakeNotification) {
+          const nameTagPhase = await this.getNameTag(
+            element.address,
+            element.user.id,
+            listPrivateNameTag,
+            listPublicNameTag,
+          );
+
+          const fcmToken = listNotificationToken?.find(
+            (item) => item.user.id === element.user.id,
+          )?.notification_token;
+
+          if (fcmToken) {
+            const notification = new NotificationDto();
+            notification.token = fcmToken;
+            notification.user_id = element.user.id;
+            notification.title =
+              element.address === tx.to
+                ? NOTIFICATION.TITLE.COIN_RECEIVED
+                : NOTIFICATION.TITLE.COIN_SENT;
+            notification.image = tx.image;
+            notification.tx_hash = tx.tx_hash;
+            notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
+            notification.body = `${listTransfer} ${
+              tx.activities.length > 3 ? 'and more ' : ''
+            }${element.address === tx.to ? 'received' : 'sent'} by ${
+              element.address
+            }${nameTagPhase}`;
+            lstNotification.push(notification);
+          }
         }
       });
     });
@@ -122,7 +142,7 @@ export class NotificationUtil {
 
   async processTokenTransferNotification(
     data,
-    watchList,
+    watchList: WatchList[],
     listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
@@ -146,19 +166,19 @@ export class NotificationUtil {
       listWatch?.forEach(async (element) => {
         const nameTagPhase = await this.getNameTag(
           element.address,
-          element.userId,
+          element.user.id,
           listPrivateNameTag,
           listPublicNameTag,
         );
 
         const fcmToken = listNotificationToken?.find(
-          (item) => item.user_id === element.userId,
+          (item) => item.user.id === element.user.id,
         )?.notification_token;
 
         if (fcmToken) {
           const notification = new NotificationDto();
           notification.token = fcmToken;
-          notification.user_id = element.userId;
+          notification.user_id = element.user.id;
           notification.type = NOTIFICATION.TYPE.TOKEN_TRANSFER;
           notification.title =
             element.address === tx.to
@@ -182,7 +202,7 @@ export class NotificationUtil {
 
   async processNftTransferNotification(
     data,
-    watchList,
+    watchList: WatchList[],
     listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
@@ -200,19 +220,19 @@ export class NotificationUtil {
       listWatch?.forEach(async (element) => {
         const nameTagPhase = await this.getNameTag(
           element.address,
-          element.userId,
+          element.user.id,
           listPrivateNameTag,
           listPublicNameTag,
         );
 
         const fcmToken = listNotificationToken?.find(
-          (item) => item.user_id === element.userId,
+          (item) => item.user.id === element.user.id,
         )?.notification_token;
 
         if (fcmToken) {
           const notification = new NotificationDto();
           notification.token = fcmToken;
-          notification.user_id = element.userId;
+          notification.user_id = element.user.id;
           notification.title =
             element.address === tx.to
               ? NOTIFICATION.TITLE.NFT_RECEIVED
@@ -233,7 +253,7 @@ export class NotificationUtil {
     return lstNotification;
   }
 
-  getTxNotifyFrom(notifcations) {
+  getTxNotifySent(notifcations) {
     return Array.from(
       new Set(
         notifcations?.map((s) => {
@@ -258,7 +278,7 @@ export class NotificationUtil {
       });
   }
 
-  getTxNotifyTo(notifcations) {
+  getTxNotifyReceived(notifcations) {
     return Array.from(
       new Set(
         notifcations?.map((s) => {
@@ -329,6 +349,10 @@ export class NotificationUtil {
           }
           listTx.push({
             tx_hash: tx.hash,
+            tx_msg:
+              tx.transaction_messages.length > 0
+                ? tx.transaction_messages[0]
+                : null,
             from: fromAddress,
             to: toAddress,
             amount,
