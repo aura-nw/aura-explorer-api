@@ -54,7 +54,7 @@
     "cache-manager": "^3.6.0",
     "cache-manager-redis-store": "^2.0.0",
     "class-transformer": "^0.4.0",
-    "class-validator": "^0.13.1",
+    "class-validator": "^0.14.0",
     "cookie-parser": "^1.4.6",
     "google-auth-library": "^8.8.0",
     "handlebars": "^4.7.7",
