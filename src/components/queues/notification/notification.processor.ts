@@ -1,4 +1,12 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import {
+  InjectQueue,
+  OnQueueActive,
+  OnQueueCompleted,
+  OnQueueError,
+  OnQueueFailed,
+  Process,
+  Processor,
+} from '@nestjs/bull';
 import {
   INDEXER_API_V2,
   NOTIFICATION,
@@ -9,7 +17,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bull';
+import { Job, Queue } from 'bull';
 import { CronExpression } from '@nestjs/schedule';
 import { SyncPointRepository } from '../../sync-point/repositories/sync-point.repository';
 import { lastValueFrom } from 'rxjs';
@@ -26,6 +34,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from 'src/shared/entities/watch-list.entity';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
+import { options } from 'joi';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -121,7 +130,10 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({ tracking: true });
+      const watchList = await this.watchListRepository.find({
+        where: { tracking: true },
+        relations: ['user'],
+      });
       if (watchList?.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.EXECUTED_NOTIFICATION,
@@ -181,7 +193,10 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({ tracking: true });
+      const watchList = await this.watchListRepository.find({
+        where: { tracking: true },
+        relations: ['user'],
+      });
       if (watchList?.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
@@ -197,7 +212,7 @@ export class NotificationProcessor {
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
         )?.data[this.chainDB];
 
-        if (response?.coin_transfer.length > 0) {
+        if (response?.coin_transfer?.length > 0) {
           // Convert data coin transfer
           const listTx = await this.notificationUtil.convertDataCoinTransfer(
             response?.coin_transfer,
@@ -217,7 +232,7 @@ export class NotificationProcessor {
               notifyReceived,
               watchList?.filter(
                 (item) =>
-                  !!item.settings && item.settings['nativeCoinReceived'].turned,
+                  !!item.settings && item.settings['nativeCoinReceived'].turnOn,
               ),
               notificationTokens,
               privateNameTags,
@@ -230,7 +245,7 @@ export class NotificationProcessor {
               notifySent,
               watchList?.filter(
                 (item) =>
-                  !!item.settings && item.settings['nativeCoinSent'].turned,
+                  !!item.settings && item.settings['nativeCoinSent'].turnOn,
               ),
               notificationTokens,
               privateNameTags,
@@ -272,7 +287,10 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({ tracking: true });
+      const watchList = await this.watchListRepository.find({
+        where: { tracking: true },
+        relations: ['user'],
+      });
 
       if (watchList?.length > 0) {
         const graphQlQuery = {
@@ -297,7 +315,7 @@ export class NotificationProcessor {
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
         )?.data[this.chainDB];
 
-        if (response?.token_transfer.length > 0) {
+        if (response?.token_transfer?.length > 0) {
           // Pre-Process
           const {
             notificationTokens,
@@ -359,7 +377,10 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({ tracking: true });
+      const watchList = await this.watchListRepository.find({
+        where: { tracking: true },
+        relations: ['user'],
+      });
       if (watchList?.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.NFT_TRANSFER_NOTIFICATION,
@@ -375,7 +396,7 @@ export class NotificationProcessor {
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
         )?.data[this.chainDB];
 
-        if (response?.nft_transfer.length > 0) {
+        if (response?.nft_transfer?.length > 0) {
           // Pre-Process
           const {
             notificationTokens,
@@ -445,6 +466,29 @@ export class NotificationProcessor {
     } catch (err) {
       this.logger.error(`resetNotification has error: ${err.stack}`);
     }
+  }
+
+  @OnQueueActive()
+  onActive(job: Job) {
+    this.logger.log(`Processing job ${job.id} of type ${job.name}...`);
+  }
+
+  @OnQueueCompleted()
+  async onComplete(job: Job) {
+    this.logger.log(`Completed job ${job.id} of type ${job.name}`);
+  }
+
+  @OnQueueError()
+  onError(job: Job, error: Error) {
+    this.logger.error(`Job: ${job}`);
+    this.logger.error(`Error job ${job.id} of type ${job.name}`);
+    this.logger.error(`Error: ${error}`);
+  }
+
+  @OnQueueFailed()
+  async onFailed(job: Job, error: Error) {
+    this.logger.error(`Failed job ${job.id} of type ${job.name}`);
+    this.logger.error(`Error: ${error}`);
   }
 
   private async sendNotification(notification: NotificationDto) {
@@ -520,6 +564,7 @@ export class NotificationProcessor {
     const publicNameTags = await this.publicNameTagRepository.find();
     const notificationTokens = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },
+      relations: ['user'],
     });
 
     return {

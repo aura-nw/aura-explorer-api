@@ -136,13 +136,13 @@ export class NotificationUtil {
             notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
             notification.body = {
               content: `${listTransfer} ${
-                tx.activities.length > 3 ? 'and more ' : ''
+                tx.activities?.length > 3 ? 'and more ' : ''
               }${element.address === tx.to ? 'received' : 'sent'} by ${
                 element.address
               }${nameTagPhase}`,
               data: {
                 transfer: listTransfer,
-                num: tx.activities.length,
+                num: tx.activities?.length,
                 from: tx.from,
                 to: tx.to,
                 address: element.address,
@@ -206,13 +206,13 @@ export class NotificationUtil {
           notification.tx_hash = tx.tx_hash;
           notification.body = {
             content: `${listTokenId} ${
-              tx.activities.length > 2 ? 'and more ' : ''
+              tx.activities?.length > 2 ? 'and more ' : ''
             }${element.address === tx.to ? 'received' : 'sent'} by ${
               element.address
             }${nameTagPhase}`,
             data: {
               tokens: listTokenId,
-              num: tx.activities.length,
+              num: tx.activities?.length,
               from: tx.from,
               to: tx.to,
               address: element.address,
@@ -270,13 +270,13 @@ export class NotificationUtil {
           notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
           notification.body = {
             content: `NFT id ${listTokenId} ${
-              tx.activities.length > 2 ? 'and more ' : ''
+              tx.activities?.length > 2 ? 'and more ' : ''
             }${element.address === tx.to ? 'received' : 'sent'} by ${
               element.address
             }${nameTagPhase}`,
             data: {
               tokens: listTokenId,
-              num: tx.activities.length,
+              num: tx.activities?.length || 0,
               from: tx.from,
               to: tx.to,
               address: element.address,
@@ -387,7 +387,7 @@ export class NotificationUtil {
           listTx.push({
             tx_hash: tx.hash,
             tx_msg:
-              tx.transaction_messages.length > 0
+              tx.transaction_messages?.length > 0
                 ? tx.transaction_messages[0]
                 : null,
             from: fromAddress,
@@ -424,6 +424,6 @@ export class NotificationUtil {
       nameTagPhase.push(publicNameTag);
     }
 
-    return nameTagPhase.length > 0 ? `(${nameTagPhase.join(' / ')})` : '';
+    return nameTagPhase?.length > 0 ? `(${nameTagPhase.join(' / ')})` : '';
   }
 }

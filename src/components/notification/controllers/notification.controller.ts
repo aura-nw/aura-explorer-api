@@ -31,11 +31,13 @@ import { Roles } from '../../../auth/role/roles.decorator';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { GetNotificationResult } from '../dtos/get-notification.dto';
 import { RoleGuard } from '../../../auth/role/roles.guard';
-import { Notification } from '../../../shared/entities/notification.entity';
 import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
 
 @Controller()
 @ApiTags('notification')
+@UseGuards(JwtAuthGuard, RoleGuard)
+@Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+@ApiBearerAuth()
 @ApiUnauthorizedResponse({
   description: MESSAGES.ERROR.NOT_PERMISSION,
 })
@@ -53,18 +55,14 @@ export class NotificationController {
     this.logger.setContext(NotificationController.name);
   }
 
-  @Get('notification/:userId')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get list private name tag' })
-  @ApiResponse({ status: HttpStatus.OK })
+  @Get('notification')
+  @ApiOperation({ summary: 'Get list Notifications' })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: GetNotificationResult })
   async getNotifications(
     @ReqContext() ctx: RequestContext,
     @Query() param: NotificationParamsDto,
-  ): Promise<BaseApiResponse<Notification[]>> {
+  ): Promise<BaseApiResponse<GetNotificationResult[]>> {
     this.logger.log(ctx, `${this.getNotifications.name} was called!`);
     const { result, count } = await this.notificationService.getNotifications(
       ctx,
@@ -74,10 +72,7 @@ export class NotificationController {
   }
 
   @Put('notification/read/:id')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update Private name tag' })
+  @ApiOperation({ summary: 'Update notifications' })
   @ApiResponse({ status: HttpStatus.OK })
   async readNotification(
     @ReqContext() ctx: RequestContext,
@@ -88,10 +83,7 @@ export class NotificationController {
   }
 
   @Put('notification/read-all')
-  @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update Private name tag' })
+  @ApiOperation({ summary: 'Update all as read notifications' })
   @ApiResponse({ status: HttpStatus.OK })
   async readAllNotification(@ReqContext() ctx: RequestContext): Promise<any> {
     this.logger.log(ctx, `${this.readAllNotification.name} was called!`);

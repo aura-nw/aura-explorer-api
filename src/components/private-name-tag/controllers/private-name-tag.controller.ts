@@ -66,7 +66,6 @@ export class PrivateNameTagController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list private name tag' })
-  @ApiResponse({ status: HttpStatus.OK })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: GetPrivateNameTagAdminResult })
   async getNameTags(

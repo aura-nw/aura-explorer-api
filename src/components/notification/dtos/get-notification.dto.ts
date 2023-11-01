@@ -7,8 +7,13 @@ export class NotificationAttributes {
   @ApiProperty({ example: 'notification title' })
   title: string;
 
-  @ApiProperty({ example: 'notification body' })
-  body: string;
+  @ApiProperty({
+    example: {
+      content: 'notification content',
+      data: { adress: 'address', from: 'from', to: 'to' },
+    },
+  })
+  body: JSON;
 
   @ApiProperty({ example: 'a2233aasyudddxtxulsnvkysdfffasapzr48sj7q0kpzl7zl' })
   token: string;
