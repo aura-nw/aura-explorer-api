@@ -440,7 +440,7 @@ export class NotificationProcessor {
 
       // Clean transaction over 30 days.
       await this.notificationReposiotry.cleanUp(
-        NOTIFICATION.CLEAN_TRANSACTION_DAYS,
+        this.configService.get('clean_notification_days'),
       );
     } catch (err) {
       this.logger.error(`resetNotification has error: ${err.stack}`);

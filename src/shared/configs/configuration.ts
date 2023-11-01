@@ -107,4 +107,5 @@ export default () => ({
       return req.headers.recaptcha;
     },
   },
+  clean_notification_days: process.env.CLEAN_NOTIFICATION_DAYS || 30,
 });

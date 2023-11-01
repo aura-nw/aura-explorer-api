@@ -691,7 +691,6 @@ export const NOTIFICATION = {
     INACTIVE: 'INACTIVE',
   },
   LIMIT: 100,
-  CLEAN_TRANSACTION_DAYS: 30,
 };
 
 export const WATCH_LIST = {
