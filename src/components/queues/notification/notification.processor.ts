@@ -34,6 +34,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from 'src/shared/entities/watch-list.entity';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
+import { EncryptionService } from 'src/components/encryption/encryption.service';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -50,6 +51,7 @@ export class NotificationProcessor {
     private privateNameTagRepository: PrivateNameTagRepository,
     private publicNameTagRepository: PublicNameTagRepository,
     private notificationTokenRepository: NotificationTokenRepository,
+    private encryptionService: EncryptionService,
     private notificationReposiotry: NotificationRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
@@ -559,7 +561,13 @@ export class NotificationProcessor {
   }
 
   private async preProcessNotification(response: any = null) {
-    const privateNameTags = await this.privateNameTagRepository.find();
+    const result = await this.privateNameTagRepository.find();
+    const privateNameTags = await Promise.all(
+      result.map(async (item) => {
+        item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+        return item;
+      }),
+    );
     const publicNameTags = await this.publicNameTagRepository.find();
     const notificationTokens = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },

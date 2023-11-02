@@ -10,17 +10,13 @@ import { PublicNameTag } from '../../../../shared/entities/public-name-tag.entit
 import { NotificationDto } from '../dtos/notification.dtos';
 import { TransactionHelper } from '../../../../shared/helpers/transaction.helper';
 import { NOTIFICATION } from '../../../../shared';
-import { EncryptionService } from '../../../encryption/encryption.service';
 import { WatchList } from 'src/shared/entities/watch-list.entity';
 import { TRANSACTION_TYPE_ENUM } from 'src/shared/constants/transaction';
 
 @Injectable()
 export class NotificationUtil {
   private config;
-  constructor(
-    private httpService: HttpService,
-    private encryptionService: EncryptionService,
-  ) {
+  constructor(private httpService: HttpService) {
     this.config = appConfig.default();
   }
 
@@ -417,8 +413,7 @@ export class NotificationUtil {
 
     const nameTagPhase = [];
     if (privateNameTag) {
-      const decrypt = await this.encryptionService.decrypt(privateNameTag);
-      nameTagPhase.push(decrypt);
+      nameTagPhase.push(privateNameTag);
     }
     if (publicNameTag) {
       nameTagPhase.push(publicNameTag);
