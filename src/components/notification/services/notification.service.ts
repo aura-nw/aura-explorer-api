@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { AkcLogger, RequestContext } from '../../../shared';
+import { AkcLogger, RequestContext, USER_ACTIVITIES } from '../../../shared';
 import { NotificationRepository } from '../../queues/notification/repositories/notification.repository';
 import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
-import { UpdateResult } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserActivity } from 'src/shared/entities/user-activity.entity';
 
 @Injectable()
 export class NotificationService {
   constructor(
     private readonly logger: AkcLogger,
     private notificationRepository: NotificationRepository,
+    @InjectRepository(UserActivity)
+    private userActivityRepository: Repository<UserActivity>,
   ) {}
 
   async getNotifications(ctx: RequestContext, param: NotificationParamsDto) {
@@ -34,5 +38,18 @@ export class NotificationService {
       { user_id: ctx?.user?.id, is_read: false },
       { is_read: true },
     );
+  }
+
+  async getDailyQuotaNotification(ctx: RequestContext) {
+    this.logger.log(ctx, `${this.getDailyQuotaNotification.name} was called!`);
+
+    const userActivities = await this.userActivityRepository.findOne({
+      where: {
+        user: { id: ctx?.user?.id },
+        type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+      },
+    });
+
+    return userActivities?.total;
   }
 }

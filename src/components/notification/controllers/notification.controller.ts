@@ -72,6 +72,17 @@ export class NotificationController {
     return { data: result, meta: { count } };
   }
 
+  @Get('quota-notifications')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get daily quota notifications' })
+  @ApiResponse({ status: HttpStatus.OK })
+  async getDailyQuotaNotification(
+    @ReqContext() ctx: RequestContext,
+  ): Promise<number> {
+    return await this.notificationService.getDailyQuotaNotification(ctx);
+  }
+
   @Put('notification/read/:id')
   @ApiOperation({ summary: 'Update notifications' })
   @ApiResponse({ status: HttpStatus.OK })
