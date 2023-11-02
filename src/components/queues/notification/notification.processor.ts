@@ -34,7 +34,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from 'src/shared/entities/watch-list.entity';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
-import { options } from 'joi';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
