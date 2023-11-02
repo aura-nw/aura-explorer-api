@@ -11,6 +11,7 @@ import {
   UseGuards,
   HttpStatus,
   HttpCode,
+  Query,
 } from '@nestjs/common';
 import { WatchListService } from '../watch-list.service';
 import { CreateWatchListDto } from '../dto/create-watch-list.dto';
@@ -22,6 +23,7 @@ import {
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -62,10 +64,16 @@ export class WatchListController {
     description: 'Return all watch list.',
     type: SwaggerBaseApiResponse(WatchListDetailResponse),
   })
+  @ApiQuery({
+    name: 'keyword',
+    description: 'Search by address, public/ private name  tag.',
+    required: false,
+  })
   async findAll(
     @ReqContext() ctx: RequestContext,
+    @Query('keyword') keyword?: string,
   ): Promise<BaseApiResponse<WatchListDetailResponse[]>> {
-    return await this.watchListService.findAll(ctx);
+    return await this.watchListService.findAll(ctx, keyword);
   }
 
   @Post()
