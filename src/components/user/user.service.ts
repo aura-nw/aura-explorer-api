@@ -488,11 +488,11 @@ export class UserService {
       { user: { id: userId }, status: NOTIFICATION.STATUS.ACTIVE },
       { status: NOTIFICATION.STATUS.INACTIVE },
     );
-    const notification_token = await this.notificationTokenRepository.save({
+    const notificationToken = await this.notificationTokenRepository.save({
       user: user,
       notification_token: token.token,
       status: NOTIFICATION.STATUS.ACTIVE,
     });
-    return notification_token;
+    return notificationToken;
   }
 }

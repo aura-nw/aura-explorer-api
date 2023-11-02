@@ -40,7 +40,7 @@ export class NotificationRepository extends Repository<Notification> {
   async cleanUp(numOfDay: number) {
     const result = await this.createQueryBuilder()
       .delete()
-      .where('`timestamp` < (NOW() - INTERVAL :numOfDay DAY)', { numOfDay })
+      .where('`created_at` < (NOW() - INTERVAL :numOfDay DAY)', { numOfDay })
       .execute();
 
     return result.affected;

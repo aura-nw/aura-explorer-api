@@ -32,6 +32,7 @@ import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
 import { GetNotificationResult } from '../dtos/get-notification.dto';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
+import { UpdateResult } from 'typeorm';
 
 @Controller()
 @ApiTags('notification')
@@ -77,7 +78,7 @@ export class NotificationController {
   async readNotification(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,
-  ): Promise<any> {
+  ): Promise<UpdateResult> {
     this.logger.log(ctx, `${this.readNotification.name} was called!`);
     return await this.notificationService.readNotification(ctx, id);
   }
@@ -85,7 +86,9 @@ export class NotificationController {
   @Put('notification/read-all')
   @ApiOperation({ summary: 'Update all as read notifications' })
   @ApiResponse({ status: HttpStatus.OK })
-  async readAllNotification(@ReqContext() ctx: RequestContext): Promise<any> {
+  async readAllNotification(
+    @ReqContext() ctx: RequestContext,
+  ): Promise<UpdateResult> {
     this.logger.log(ctx, `${this.readAllNotification.name} was called!`);
     return await this.notificationService.readAllNotification(ctx);
   }
