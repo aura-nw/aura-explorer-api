@@ -696,4 +696,26 @@ export const NOTIFICATION = {
 export const WATCH_LIST = {
   NOTE_MAX_LENGTH: 200,
   TYPE: NAME_TAG_TYPE,
+  SETTINGS_EXAMPLE: {
+    transactionExecuted: true,
+    tokenSent: true,
+    tokenReceived: true,
+    nftSent: true,
+    nftReceived: true,
+    nativeCoinSent: {
+      turnOn: true,
+      inactiveAutoRestake: true,
+    },
+    nativeCoinReceived: {
+      turnOn: true,
+      inactiveAutoRestake: true,
+    },
+  },
+  ERROR_MSGS: {
+    ERR_UNIQUE_ADDRESS: 'This address has already been added to watch list.',
+    ERR_ADDRESS_NOT_FOUND: 'Address not found.',
+    ERR_LIMIT_ADDRESS: `You have reached out of ${
+      process.env.WATCH_LIST_LIMIT_ADDRESS || 10
+    } max limitation of address.`,
+  },
 };

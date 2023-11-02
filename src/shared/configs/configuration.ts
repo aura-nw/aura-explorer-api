@@ -108,4 +108,7 @@ export default () => ({
     },
   },
   clean_notification_days: process.env.CLEAN_NOTIFICATION_DAYS || 30,
+  watchList: {
+    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 10,
+  },
 });

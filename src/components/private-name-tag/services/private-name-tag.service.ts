@@ -17,7 +17,10 @@ import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-p
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
-import { ServiceUtil } from '../../../shared/utils/service.util';
+import {
+  ServiceUtil,
+  isValidBench32Address,
+} from '../../../shared/utils/service.util';
 import { Not } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
 
@@ -165,9 +168,7 @@ export class PrivateNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = await this.serviceUtil.isValidBech32Address(
-        req.address,
-      );
+      const validFormat = await isValidBench32Address(req.address);
 
       if (!validFormat) {
         return {
