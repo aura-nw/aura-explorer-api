@@ -138,7 +138,7 @@ export class NotificationProcessor {
         where: { tracking: true },
         relations: ['user'],
       });
-      if (watchList?.length > 0) {
+      if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.EXECUTED_NOTIFICATION,
           variables: {
@@ -201,7 +201,7 @@ export class NotificationProcessor {
         where: { tracking: true },
         relations: ['user'],
       });
-      if (watchList?.length > 0) {
+      if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
           variables: {
@@ -296,7 +296,7 @@ export class NotificationProcessor {
         relations: ['user'],
       });
 
-      if (watchList?.length > 0) {
+      if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.TOKEN_TRANSFER_NOTIFICATION,
           variables: {
@@ -385,7 +385,7 @@ export class NotificationProcessor {
         where: { tracking: true },
         relations: ['user'],
       });
-      if (watchList?.length > 0) {
+      if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.NFT_TRANSFER_NOTIFICATION,
           variables: {

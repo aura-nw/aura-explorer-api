@@ -286,10 +286,10 @@ export class NotificationUtil {
     return lstNotification;
   }
 
-  getTxNotifySent(notifcations) {
+  getTxNotifySent(notifications) {
     return Array.from(
       new Set(
-        notifcations?.map((s) => {
+        notifications?.map((s) => {
           return JSON.stringify({ tx_hash: s.tx_hash, from: s.from });
         }),
       ),
@@ -304,17 +304,17 @@ export class NotificationUtil {
           tx_hash: data.tx_hash,
           from: data.from,
           to: null,
-          activities: notifcations?.filter((s) => {
+          activities: notifications?.filter((s) => {
             return s.tx_hash === data.tx_hash && s.from === data.from;
           }),
         };
       });
   }
 
-  getTxNotifyReceived(notifcations) {
+  getTxNotifyReceived(notifications) {
     return Array.from(
       new Set(
-        notifcations?.map((s) => {
+        notifications?.map((s) => {
           return JSON.stringify({ tx_hash: s.tx_hash, to: s.to });
         }),
       ),
@@ -329,7 +329,7 @@ export class NotificationUtil {
           tx_hash: data.tx_hash,
           to: data.to,
           from: null,
-          activities: notifcations?.filter((s) => {
+          activities: notifications?.filter((s) => {
             return s.tx_hash === data.tx_hash && s.to === data.to;
           }),
         };

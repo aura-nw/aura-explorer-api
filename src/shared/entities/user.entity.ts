@@ -49,7 +49,7 @@ export class User extends BaseEntityIncrementId {
       cascade: ['remove'],
     },
   )
-  notificationToken: NotificationToken[];
+  notificationTokens: NotificationToken[];
 
   @Column({ nullable: true, name: 'last_required_login' })
   lastRequiredLogin: Date;
