@@ -5,7 +5,7 @@ import { User } from './user.entity';
 
 @Entity('notification_token')
 export class NotificationToken extends BaseEntityIncrementId {
-  @ManyToOne(() => User, (user) => user.watchLists)
+  @ManyToOne(() => User, (user) => user.notificationToken)
   @JoinColumn({
     name: 'user_id',
   })

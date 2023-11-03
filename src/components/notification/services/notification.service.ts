@@ -29,13 +29,16 @@ export class NotificationService {
     id: number,
   ): Promise<UpdateResult> {
     this.logger.log(ctx, `${this.readNotification.name} was called!`);
-    return await this.notificationRepository.update(id, { is_read: true });
+    return await this.notificationRepository.update(id, {
+      user_id: ctx.user.id,
+      is_read: true,
+    });
   }
 
   async readAllNotification(ctx: RequestContext): Promise<UpdateResult> {
     this.logger.log(ctx, `${this.readNotification.name} was called!`);
     return await this.notificationRepository.update(
-      { user_id: ctx?.user?.id, is_read: false },
+      { user_id: ctx.user.id, is_read: false },
       { is_read: true },
     );
   }
@@ -45,11 +48,11 @@ export class NotificationService {
 
     const userActivities = await this.userActivityRepository.findOne({
       where: {
-        user: { id: ctx?.user?.id },
+        user: { id: ctx.user.id },
         type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
       },
     });
 
-    return userActivities?.total;
+    return userActivities?.total || 0;
   }
 }

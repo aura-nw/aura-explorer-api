@@ -32,15 +32,16 @@ import { UserActivity } from '../../../shared/entities/user-activity.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationRepository } from './repositories/notification.repository';
-import { WatchList } from 'src/shared/entities/watch-list.entity';
-import { SyncPoint } from 'src/shared/entities/sync-point.entity';
-import { EncryptionService } from 'src/components/encryption/encryption.service';
+import { WatchList } from '../../../shared/entities/watch-list.entity';
+import { SyncPoint } from '../../../shared/entities/sync-point.entity';
+import { EncryptionService } from '../../../components/encryption/encryption.service';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
   private readonly logger = new Logger(NotificationProcessor.name);
   private indexerChainId;
   private chainDB;
+  private notificationConfig;
 
   constructor(
     private serviceUtil: ServiceUtil,
@@ -60,15 +61,17 @@ export class NotificationProcessor {
     @InjectQueue(QUEUES.NOTIFICATION.QUEUE_NAME) private readonly queue: Queue,
   ) {
     this.logger.log(
-      '============== Constructor CW4973Processor Service ==============',
+      '============== Constructor NotificationProcesso Service ==============',
     );
+    this.notificationConfig = this.configService.get('notification');
     firebaseAdmin.initializeApp({
       credential: firebaseAdmin.credential.cert({
-        projectId: process.env.FCM_PROJECT_ID,
-        privateKey: Buffer.from(process.env.FCM_PRIVATE_KEY, 'base64').toString(
-          'ascii',
-        ),
-        clientEmail: process.env.FCM_CLIENT_EMAIL,
+        projectId: this.notificationConfig.fcmProjectId,
+        privateKey: Buffer.from(
+          this.notificationConfig.fcmPrivateKey,
+          'base64',
+        ).toString('ascii'),
+        clientEmail: this.notificationConfig.fcmClientEmail,
       }),
     });
 
@@ -78,7 +81,7 @@ export class NotificationProcessor {
       QUEUES.NOTIFICATION.JOBS.NOTIFICATION_EXECUTED,
       {},
       {
-        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+        repeat: { cron: CronExpression.EVERY_30_SECONDS },
       },
     );
 
@@ -86,7 +89,7 @@ export class NotificationProcessor {
       QUEUES.NOTIFICATION.JOBS.NOTIFICATION_COIN_TRANSFER,
       {},
       {
-        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+        repeat: { cron: CronExpression.EVERY_30_SECONDS },
       },
     );
 
@@ -94,7 +97,7 @@ export class NotificationProcessor {
       QUEUES.NOTIFICATION.JOBS.NOTIFICATION_NFT_TRANSFER,
       {},
       {
-        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+        repeat: { cron: CronExpression.EVERY_30_SECONDS },
       },
     );
 
@@ -102,7 +105,7 @@ export class NotificationProcessor {
       QUEUES.NOTIFICATION.JOBS.NOTIFICATION_TOKEN_TRANSFER,
       {},
       {
-        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+        repeat: { cron: CronExpression.EVERY_30_SECONDS },
       },
     );
 
@@ -462,7 +465,7 @@ export class NotificationProcessor {
 
       // Clean transaction over 30 days.
       await this.notificationReposiotry.cleanUp(
-        this.configService.get('clean_notification_days'),
+        this.notificationConfig.cleanNotificationDays,
       );
     } catch (err) {
       this.logger.error(`resetNotification has error: ${err.stack}`);
