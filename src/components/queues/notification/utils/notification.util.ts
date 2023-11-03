@@ -28,48 +28,44 @@ export class NotificationUtil {
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: NotificationDto[] = [];
-    if (response?.executed?.length > 0) {
-      response?.executed?.forEach((tx) => {
-        tx.transaction_messages.forEach((msg) => {
-          const listWatch = watchList.filter(
-            (item) => item.address === msg.sender,
+    response?.forEach((tx) => {
+      tx.transaction_messages.forEach((msg) => {
+        const listWatch = watchList.filter(
+          (item) => item.address === msg.sender,
+        );
+        listWatch?.forEach(async (element) => {
+          const type = TransactionHelper.getTypeTxMsg(tx.transaction_messages);
+          const nameTagPhase = await this.getNameTag(
+            element.address,
+            element.user.id,
+            listPrivateNameTag,
+            listPublicNameTag,
           );
-          listWatch?.forEach(async (element) => {
-            const type = TransactionHelper.getTypeTxMsg(
-              tx.transaction_messages,
-            );
-            const nameTagPhase = await this.getNameTag(
-              element.address,
-              element.user.id,
-              listPrivateNameTag,
-              listPublicNameTag,
-            );
 
-            const fcmToken = listNotificationToken?.find(
-              (item) => item.user.id === element.user.id,
-            )?.notification_token;
+          const fcmToken = listNotificationToken?.find(
+            (item) => item.user.id === element.user.id,
+          )?.notification_token;
 
-            if (fcmToken) {
-              const notification = new NotificationDto();
-              notification.title = NOTIFICATION.TITLE.EXECUTED;
-              notification.token = fcmToken;
-              notification.user_id = element.user.id;
-              notification.tx_hash = tx.hash;
-              notification.type = NOTIFICATION.TYPE.EXCEUTED;
-              notification.body = {
-                content: `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`,
-                data: {
-                  type: type,
-                  sender: msg.sender,
-                  nameTag: nameTagPhase,
-                },
-              };
-              lstNotification.push(notification);
-            }
-          });
+          if (fcmToken) {
+            const notification = new NotificationDto();
+            notification.title = NOTIFICATION.TITLE.EXECUTED;
+            notification.token = fcmToken;
+            notification.user_id = element.user.id;
+            notification.tx_hash = tx.hash;
+            notification.type = NOTIFICATION.TYPE.EXCEUTED;
+            notification.body = {
+              content: `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`,
+              data: {
+                type: type,
+                sender: msg.sender,
+                nameTag: nameTagPhase,
+              },
+            };
+            lstNotification.push(notification);
+          }
         });
       });
-    }
+    });
     return lstNotification;
   }
 
@@ -97,17 +93,17 @@ export class NotificationUtil {
           tx?.tx_msg?.content?.msgs?.length > 0 &&
           'type_url' in tx?.tx_msg?.content?.msgs[0];
 
-        const receivedRestakeNotification =
+        const unReceivedRestake =
           element.address === tx.to &&
           element.settings['nativeCoinReceived'].inactiveAutoRestake &&
           isRestakeTx;
 
-        const sentRestakeNotification =
+        const unSentRestake =
           element.address === tx.from &&
           element.settings['nativeCoinSent'].inactiveAutoRestake &&
           isRestakeTx;
 
-        if (!sentRestakeNotification && !receivedRestakeNotification) {
+        if (!unSentRestake && !unReceivedRestake) {
           const nameTagPhase = await this.getNameTag(
             element.address,
             element.user.id,

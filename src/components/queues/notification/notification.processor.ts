@@ -158,8 +158,8 @@ export class NotificationProcessor {
           // Get executed notification
           const notifications =
             await this.notificationUtil.processExecutedNotification(
-              response,
-              watchList?.filter(
+              response.executed,
+              watchList.filter(
                 (item) =>
                   !!item.settings && item.settings['transactionExecuted'],
               ),
@@ -234,7 +234,7 @@ export class NotificationProcessor {
           const coinTransferReceived =
             await this.notificationUtil.processCoinTransferNotification(
               notifyReceived,
-              watchList?.filter(
+              watchList.filter(
                 (item) =>
                   !!item.settings && item.settings['nativeCoinReceived'].turnOn,
               ),
@@ -247,7 +247,7 @@ export class NotificationProcessor {
           const coinTransferSent =
             await this.notificationUtil.processCoinTransferNotification(
               notifySent,
-              watchList?.filter(
+              watchList.filter(
                 (item) =>
                   !!item.settings && item.settings['nativeCoinSent'].turnOn,
               ),
@@ -333,7 +333,7 @@ export class NotificationProcessor {
           const nftTransferSent =
             await this.notificationUtil.processTokenTransferNotification(
               notifySent,
-              watchList?.filter(
+              watchList.filter(
                 (item) => !!item.settings && item.settings['tokenSent'].turned,
               ),
               notificationTokens,
@@ -345,7 +345,7 @@ export class NotificationProcessor {
           const nftTransferReceived =
             await this.notificationUtil.processTokenTransferNotification(
               notifyReceived,
-              watchList?.filter(
+              watchList.filter(
                 (item) =>
                   !!item.settings && item.settings['tokenReceived'].turned,
               ),
@@ -414,7 +414,7 @@ export class NotificationProcessor {
           const nftTransferSent =
             await this.notificationUtil.processNftTransferNotification(
               notifySent,
-              watchList?.filter(
+              watchList.filter(
                 (item) => !!item.settings && item.settings['nftSent'],
               ),
               notificationTokens,
@@ -426,7 +426,7 @@ export class NotificationProcessor {
           const nftTransferReceived =
             await this.notificationUtil.processNftTransferNotification(
               notifyReceived,
-              watchList?.filter(
+              watchList.filter(
                 (item) => !!item.settings && item.settings['nftReceived'],
               ),
               notificationTokens,
