@@ -7,4 +7,10 @@ export class WatchListDetailResponse extends PartialType(CreateWatchListDto) {
 
   @ApiProperty()
   groupTracking: number;
+
+  @ApiProperty()
+  privateNameTag: string;
+
+  @ApiProperty()
+  publicNameTag: string;
 }

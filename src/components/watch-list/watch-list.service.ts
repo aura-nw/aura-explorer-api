@@ -11,17 +11,26 @@ import { Repository } from 'typeorm/repository/Repository';
 import { WatchList } from '../../shared/entities/watch-list.entity';
 import { UserService } from '../user/user.service';
 import { DeleteResult } from 'typeorm/query-builder/result/DeleteResult';
-import { Not } from 'typeorm';
+import { In, Not } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { BaseApiResponse, WATCH_LIST } from '../../shared/';
 import { WatchListDetailResponse } from './dto/watch-list-detail.response';
+import { isValidBench32Address } from 'src/shared/utils/service.util';
+import { PublicNameTag } from '../../shared/entities/public-name-tag.entity';
+import { EncryptionService } from '../encryption/encryption.service';
+import { PrivateNameTag } from '../../shared/entities/private-name-tag.entity';
 
 @Injectable()
 export class WatchListService {
   constructor(
     @InjectRepository(WatchList)
     private readonly watchListRepository: Repository<WatchList>,
+    @InjectRepository(PublicNameTag)
+    private readonly publicNameTagRepository: Repository<PublicNameTag>,
+    @InjectRepository(PrivateNameTag)
+    private readonly privateNameTagRepository: Repository<PrivateNameTag>,
     private userService: UserService,
+    private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
   ) {}
   async create(
@@ -56,15 +65,52 @@ export class WatchListService {
 
   async findAll(
     ctx: RequestContext,
+    keyword: string,
   ): Promise<BaseApiResponse<WatchListDetailResponse[]>> {
+    // Filter by keyword
+    if (keyword) {
+      return await this.filterWatchList(ctx, keyword);
+    }
+
     const watchList = (await this.watchListRepository.find({
       where: { user: { id: ctx.user.id } },
-      order: { favorite: 'DESC' },
+      order: { favorite: 'DESC', created_at: 'DESC' },
     })) as any as WatchListDetailResponse[];
+
+    // Mapping name tag.
+    const addresses = watchList?.map((addr) => addr.address);
+
+    const publicNameTags = await this.publicNameTagRepository.find({
+      where: { address: In(addresses) },
+    });
+
+    const privateNameTags = await this.privateNameTagRepository.find({
+      where: { address: In(addresses), createdBy: ctx.user.id },
+    });
+
+    const decodedPrivateTags = await Promise.all(
+      privateNameTags.map(async (privateNameTag) => {
+        privateNameTag.nameTag = await this.encryptionService.decrypt(
+          privateNameTag.nameTag,
+        );
+
+        return privateNameTag;
+      }),
+    );
 
     watchList?.forEach((address) => {
       address.groupTracking = this.countTrueValues(address.settings);
+      address.publicNameTag =
+        publicNameTags?.find(
+          (publicTag) => publicTag.address === address.address,
+        )?.name_tag || null;
+
+      address.privateNameTag =
+        decodedPrivateTags?.find(
+          (privateTag) => privateTag.address === address.address,
+        )?.nameTag || null;
     });
+
     return {
       data: watchList,
       meta: { count: watchList.length },
@@ -127,6 +173,98 @@ export class WatchListService {
       );
 
     return this.watchListRepository.delete(watchListToDelete.id);
+  }
+
+  private async filterWatchList(
+    ctx: RequestContext,
+    keyword: string,
+  ): Promise<BaseApiResponse<WatchListDetailResponse[]>> {
+    if (await isValidBench32Address(keyword)) {
+      // Find in watch list.
+      let foundedPublicNameTag = null;
+      let foundPrivateNameTag = null;
+
+      const foundedWatchList = (await this.watchListRepository.findOne({
+        where: { address: keyword, user: { id: ctx.user.id } },
+      })) as any as WatchListDetailResponse;
+
+      if (foundedWatchList) {
+        // Find in public tag.
+        foundedPublicNameTag = await this.publicNameTagRepository.findOne({
+          where: { address: keyword },
+        });
+
+        // Find in private tag.
+        foundPrivateNameTag = await this.privateNameTagRepository.findOne({
+          where: { address: keyword, createdBy: ctx.user.id },
+        });
+
+        // Mapping tags.
+        foundedWatchList.publicNameTag = foundedPublicNameTag?.name_tag || null;
+        foundedWatchList.privateNameTag = foundPrivateNameTag
+          ? await this.encryptionService.decrypt(foundPrivateNameTag.nameTag)
+          : null;
+
+        // Calculate group tracking
+        foundedWatchList.groupTracking = this.countTrueValues(
+          foundedWatchList.settings,
+        );
+      }
+
+      return {
+        data: [foundedWatchList],
+        meta: { count: foundedWatchList ? 1 : 0 },
+      };
+    } else {
+      const keywordEncrypted = await this.encryptionService.encrypt(keyword);
+
+      const foundedPublicNameTag = await this.publicNameTagRepository.findOne({
+        where: { name_tag: keyword },
+      });
+
+      const foundedPrivateNameTag = await this.privateNameTagRepository.findOne(
+        {
+          where: { createdBy: ctx.user.id, nameTag: keywordEncrypted },
+        },
+      );
+
+      // Filter watch list by name tags.
+      const foundedWatchList = (await this.watchListRepository.find({
+        where: {
+          address: In([
+            foundedPublicNameTag?.address,
+            foundedPrivateNameTag?.address,
+          ]),
+          user: { id: ctx.user.id },
+        },
+        order: { favorite: 'DESC', created_at: 'DESC' },
+      })) as any as WatchListDetailResponse[];
+
+      // Mapping name tags
+      foundedWatchList?.forEach(async (address) => {
+        if (address.address === foundedPublicNameTag?.address) {
+          address.publicNameTag = foundedPublicNameTag.name_tag;
+        } else {
+          address.publicNameTag = null;
+        }
+
+        if (address.address === foundedPrivateNameTag?.address) {
+          address.privateNameTag = await this.encryptionService.decrypt(
+            foundedPrivateNameTag.nameTag,
+          );
+        } else {
+          address.privateNameTag = null;
+        }
+
+        // Calculate group tracking.
+        address.groupTracking = this.countTrueValues(address.settings);
+      });
+
+      return {
+        data: foundedWatchList,
+        meta: { count: foundedWatchList.length },
+      };
+    }
   }
 
   private countTrueValues(obj): number {
