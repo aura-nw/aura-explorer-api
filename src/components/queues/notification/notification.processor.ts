@@ -607,7 +607,9 @@ export class NotificationProcessor {
         return item;
       }),
     );
-    const publicNameTags = await this.publicNameTagRepository.find();
+    const publicNameTags = await this.publicNameTagRepository.find({
+      where: { address: In(listAddress) },
+    });
     const notificationTokens = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },
       relations: ['user'],
