@@ -29,7 +29,7 @@ import { NotificationTokenRepository } from './repositories/notification-token.r
 import { NotificationUtil } from './utils/notification.util';
 import { NotificationDto } from './dtos/notification.dtos';
 import { UserActivity } from '../../../shared/entities/user-activity.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
@@ -151,9 +151,18 @@ export class NotificationProcessor {
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
         )?.data[this.chainDB];
         if (response?.executed?.length > 0) {
+          // get list address
+          let listAddress = [];
+          response.executed.forEach((element) => {
+            const address = element.transaction_messages?.map(
+              (msg) => msg.sender,
+            );
+            listAddress = [...listAddress, ...address];
+          });
+
           // Pre-Process
           const { notificationTokens, privateNameTags, publicNameTags } =
-            await this.preProcessNotification();
+            await this.preProcessNotification(null, listAddress);
 
           // Get executed notification
           const notifications =
@@ -219,8 +228,15 @@ export class NotificationProcessor {
         if (response?.coin_transfer?.length > 0) {
           // Convert data coin transfer
           const listTx = await this.notificationUtil.convertDataCoinTransfer(
-            response?.coin_transfer,
+            response.coin_transfer,
           );
+
+          // Get list address
+          const listAddress = [
+            ...listTx.map((element) => element.from),
+            ...listTx.map((element) => element.to),
+          ];
+
           // Pre-Process
           const {
             notificationTokens,
@@ -228,7 +244,7 @@ export class NotificationProcessor {
             publicNameTags,
             notifyReceived,
             notifySent,
-          } = await this.preProcessNotification(listTx);
+          } = await this.preProcessNotification(listTx, listAddress);
 
           // Get received native coin notification
           const coinTransferReceived =
@@ -320,6 +336,12 @@ export class NotificationProcessor {
         )?.data[this.chainDB];
 
         if (response?.token_transfer?.length > 0) {
+          // Get list address
+          const listAddress = [
+            ...response.token_transfer.map((element) => element.from),
+            ...response.token_transfer.map((element) => element.to),
+          ];
+
           // Pre-Process
           const {
             notificationTokens,
@@ -327,7 +349,10 @@ export class NotificationProcessor {
             publicNameTags,
             notifyReceived,
             notifySent,
-          } = await this.preProcessNotification(response?.token_transfer);
+          } = await this.preProcessNotification(
+            response.token_transfer,
+            listAddress,
+          );
 
           // Get received token notification
           const nftTransferSent =
@@ -401,6 +426,12 @@ export class NotificationProcessor {
         )?.data[this.chainDB];
 
         if (response?.nft_transfer?.length > 0) {
+          // Get list address
+          const listAddress = [
+            ...response.nft_transfer.map((element) => element.from),
+            ...response.nft_transfer.map((element) => element.to),
+          ];
+
           // Pre-Process
           const {
             notificationTokens,
@@ -408,7 +439,10 @@ export class NotificationProcessor {
             publicNameTags,
             notifyReceived,
             notifySent,
-          } = await this.preProcessNotification(response?.nft_transfer);
+          } = await this.preProcessNotification(
+            response.nft_transfer,
+            listAddress,
+          );
 
           // Get sent nft notification
           const nftTransferSent =
@@ -563,8 +597,10 @@ export class NotificationProcessor {
     }
   }
 
-  private async preProcessNotification(response: any = null) {
-    const result = await this.privateNameTagRepository.find();
+  private async preProcessNotification(response: any, listAddress: string[]) {
+    const result = await this.privateNameTagRepository.find({
+      where: { address: In(listAddress) },
+    });
     const privateNameTags = await Promise.all(
       result.map(async (item) => {
         item.nameTag = await this.encryptionService.decrypt(item.nameTag);
