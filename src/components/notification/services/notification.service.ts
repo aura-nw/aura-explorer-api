@@ -36,7 +36,7 @@ export class NotificationService {
   }
 
   async readAllNotification(ctx: RequestContext): Promise<UpdateResult> {
-    this.logger.log(ctx, `${this.readNotification.name} was called!`);
+    this.logger.log(ctx, `${this.readAllNotification.name} was called!`);
     return await this.notificationRepository.update(
       { user_id: ctx.user.id, is_read: false },
       { is_read: true },

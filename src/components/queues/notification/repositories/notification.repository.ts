@@ -30,7 +30,7 @@ export class NotificationRepository extends Repository<Notification> {
       return { result, count };
     };
 
-    if (unread === true || unread.toString() === 'true') {
+    if (unread?.toString() === 'true') {
       builder.andWhere('noti.is_read = 0');
     }
 
