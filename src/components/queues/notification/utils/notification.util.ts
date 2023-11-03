@@ -52,7 +52,7 @@ export class NotificationUtil {
             notification.token = fcmToken;
             notification.user_id = element.user.id;
             notification.tx_hash = tx.hash;
-            notification.type = NOTIFICATION.TYPE.EXCEUTED;
+            notification.type = NOTIFICATION.TYPE.EXECUTED;
             notification.body = {
               content: `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`,
               data: {

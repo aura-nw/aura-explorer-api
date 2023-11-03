@@ -53,7 +53,7 @@ export class NotificationProcessor {
     private publicNameTagRepository: PublicNameTagRepository,
     private notificationTokenRepository: NotificationTokenRepository,
     private encryptionService: EncryptionService,
-    private notificationReposiotry: NotificationRepository,
+    private notificationRepository: NotificationRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
     @InjectRepository(WatchList)
@@ -61,7 +61,7 @@ export class NotificationProcessor {
     @InjectQueue(QUEUES.NOTIFICATION.QUEUE_NAME) private readonly queue: Queue,
   ) {
     this.logger.log(
-      '============== Constructor NotificationProcesso Service ==============',
+      '============== Constructor NotificationProcessor Service ==============',
     );
     this.notificationConfig = this.configService.get('notification');
     firebaseAdmin.initializeApp({
@@ -464,7 +464,7 @@ export class NotificationProcessor {
       await this.userActivityRepository.save(userActivities);
 
       // Clean transaction over 30 days.
-      await this.notificationReposiotry.cleanUp(
+      await this.notificationRepository.cleanUp(
         this.notificationConfig.cleanNotificationDays,
       );
     } catch (err) {
@@ -509,12 +509,12 @@ export class NotificationProcessor {
           image: notification.image || '',
         },
       })
-      .catch((error) => this.logger.error('cannot-send-notfitication', error));
+      .catch((error) => this.logger.error('cannot-send-notification', error));
   }
 
-  private async blockLimitNotification(notifiactions: NotificationDto[]) {
+  private async blockLimitNotification(notifications: NotificationDto[]) {
     const counts = {};
-    for (const element of notifiactions) {
+    for (const element of notifications) {
       if (counts.hasOwnProperty(element.user_id)) {
         counts[element.user_id]++;
       } else {
@@ -595,14 +595,14 @@ export class NotificationProcessor {
     currentTxHeight: SyncPoint,
     response: any,
   ) {
-    // Push notifcation to firebase
+    // Push notification to firebase
     if (notifications?.length > 0) {
       const firebaseMessagingPromises = notifications.map((notification) =>
         this.sendNotification(notification),
       );
       await Promise.all(firebaseMessagingPromises);
       // Store notification to DB
-      await this.notificationReposiotry.save(notifications);
+      await this.notificationRepository.save(notifications);
     }
     // Update sync point nft transfer
     await this.syncPointRepos.update(currentTxHeight.id, {

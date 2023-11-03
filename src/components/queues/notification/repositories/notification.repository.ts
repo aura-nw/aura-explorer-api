@@ -7,7 +7,7 @@ export class NotificationRepository extends Repository<Notification> {
   private readonly _logger = new Logger(NotificationRepository.name);
 
   /**
-   * Get list notificaion
+   * Get list notifications
    * @param user_id
    * @param is_read
    * @returns
