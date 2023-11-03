@@ -108,6 +108,6 @@ export default () => ({
     },
   },
   watchList: {
-    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 10,
+    limitAddress: Number(process.env.WATCH_LIST_LIMIT_ADDRESS) || 10,
   },
 });
