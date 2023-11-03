@@ -74,7 +74,7 @@ export class WatchListService {
 
     const watchList = (await this.watchListRepository.find({
       where: { user: { id: ctx.user.id } },
-      order: { favorite: 'DESC', created_at: 'DESC' },
+      order: { favorite: 'DESC', updated_at: 'DESC' },
     })) as any as WatchListDetailResponse[];
 
     // Mapping name tag.
@@ -237,7 +237,7 @@ export class WatchListService {
           ]),
           user: { id: ctx.user.id },
         },
-        order: { favorite: 'DESC', created_at: 'DESC' },
+        order: { favorite: 'DESC', updated_at: 'DESC' },
       })) as any as WatchListDetailResponse[];
 
       // Mapping name tags
