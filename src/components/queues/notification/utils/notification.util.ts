@@ -285,51 +285,45 @@ export class NotificationUtil {
   getTxNotifySent(notifications) {
     return Array.from(
       new Set(
-        notifications?.map((s) => {
-          return JSON.stringify({ tx_hash: s.tx_hash, from: s.from });
-        }),
-      ),
-    )
-      .filter((item: string) => {
-        const data = JSON.parse(item);
-        return !!data.from;
-      })
-      .map((item: string) => {
-        const data = JSON.parse(item);
-        return {
-          tx_hash: data.tx_hash,
-          from: data.from,
-          to: null,
-          activities: notifications?.filter((s) => {
-            return s.tx_hash === data.tx_hash && s.from === data.from;
+        notifications
+          ?.filter((item) => !!item.from)
+          .map((s) => {
+            return JSON.stringify({ tx_hash: s.tx_hash, from: s.from });
           }),
-        };
-      });
+      ),
+    ).map((item: string) => {
+      const data = JSON.parse(item);
+      return {
+        tx_hash: data.tx_hash,
+        from: data.from,
+        to: null,
+        activities: notifications?.filter((s) => {
+          return s.tx_hash === data.tx_hash && s.from === data.from;
+        }),
+      };
+    });
   }
 
   getTxNotifyReceived(notifications) {
     return Array.from(
       new Set(
-        notifications?.map((s) => {
-          return JSON.stringify({ tx_hash: s.tx_hash, to: s.to });
-        }),
-      ),
-    )
-      .filter((item: string) => {
-        const data = JSON.parse(item);
-        return !!data.to;
-      })
-      .map((item: string) => {
-        const data = JSON.parse(item);
-        return {
-          tx_hash: data.tx_hash,
-          to: data.to,
-          from: null,
-          activities: notifications?.filter((s) => {
-            return s.tx_hash === data.tx_hash && s.to === data.to;
+        notifications
+          ?.filter((item) => !!item.to)
+          .map((s) => {
+            return JSON.stringify({ tx_hash: s.tx_hash, to: s.to });
           }),
-        };
-      });
+      ),
+    ).map((item: string) => {
+      const data = JSON.parse(item);
+      return {
+        tx_hash: data.tx_hash,
+        to: data.to,
+        from: null,
+        activities: notifications?.filter((s) => {
+          return s.tx_hash === data.tx_hash && s.to === data.to;
+        }),
+      };
+    });
   }
 
   async convertDataCoinTransfer(data) {
