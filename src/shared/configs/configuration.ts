@@ -107,6 +107,12 @@ export default () => ({
       return req.headers.recaptcha;
     },
   },
+  notification: {
+    cleanNotificationDays: process.env.CLEAN_NOTIFICATION_DAYS || 30,
+    fcmProjectId: process.env.FCM_PROJECT_ID,
+    fcmPrivateKey: process.env.FCM_PRIVATE_KEY,
+    fcmClientEmail: process.env.FCM_CLIENT_EMAIL,
+  },
   watchList: {
     limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 10,
   },

@@ -162,6 +162,70 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
+      ${process.env.INDEXER_V2_DB} {
+        executed: transaction(where: {height: {_gt: $heightGT, _lt: $heightLT}}, order_by: {height: desc}, limit: 100) {
+          height
+          hash
+          transaction_messages {
+            type
+            content
+            sender
+          }
+        }
+      }
+    }
+    `,
+    COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int, $heightLT: Int, $compositeKeyIn: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        coin_transfer: transaction(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gt: $heightGT}}, events: {tx_msg_index: {_is_null: false}, type: {_eq: "transfer"}}}, order_by: {height: desc}, limit: 100) {
+          height
+          hash
+          events(where: {type: {_eq: "transfer"}, tx_msg_index: {_is_null: false}}) {
+            event_attributes {
+              composite_key
+              value
+            }
+          }
+        }
+      }
+    }
+    `,
+    TOKEN_TRANSFER_NOTIFICATION: `query TokenTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW20: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        token_transfer: cw20_activity(where: {height: {_gt: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}, order_by: {height: desc}, limit: 100) {
+          height
+          tx_hash
+          action
+          amount
+          from
+          to
+          cw20_contract {
+            symbol
+            decimal
+            marketing_info
+            name
+          }
+        }
+      }
+    }
+    `,
+    NFT_TRANSFER_NOTIFICATION: `query NftTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW721: [String!] = null) {
+      ${process.env.INDEXER_V2_DB} {
+        nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gt: $heightGT, _lt: $heightLT}}, order_by: {height: desc}, limit: 100) {
+          tx_hash
+          height
+          action
+          from
+          to
+          cw721_token {
+            token_id
+            media_info
+          }
+        }
+      }
+    }
+    `,
     CW4973_MEDIA_INFO: `query CW4973MediaInfo($owner: String) {
       ${process.env.INDEXER_V2_DB} {
         cw721_token(where: {owner: {_eq: $owner}, cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}}) {
@@ -189,6 +253,10 @@ export const INDEXER_API_V2 = {
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
+    EXECUTED_NOTIFICATION: 'ExecutedNotification',
+    COIN_TRANSFER_NOTIFICATION: 'CoinTransferNotification',
+    TOKEN_TRANSFER_NOTIFICATION: 'TokenTransferNotification',
+    NFT_TRANSFER_NOTIFICATION: 'NftTransferNotification',
     CW4973_MEDIA_INFO: 'CW4973MediaInfo',
   },
 };
@@ -445,6 +513,16 @@ export const QUEUES = {
       SYNC_4973_STATUS: 'cw4973-status',
     },
   },
+  NOTIFICATION: {
+    QUEUE_NAME: 'notification',
+    JOBS: {
+      NOTIFICATION_EXECUTED: 'notification_executed',
+      NOTIFICATION_COIN_TRANSFER: 'notification_coin_transfer',
+      NOTIFICATION_TOKEN_TRANSFER: 'notification_token_transfer',
+      NOTIFICATION_NFT_TRANSFER: 'notification_nft_transfer',
+      RESET_NOTIFICATION: 'reset_notification',
+    },
+  },
 };
 
 export const SYNC_SERVICE_QUEUES = {
@@ -466,6 +544,10 @@ export enum TOKEN_COIN {
 
 export enum SYNC_POINT_TYPE {
   CW4973_BLOCK_HEIGHT = 'CW4973_BLOCK_HEIGHT',
+  EXECUTED_HEIGHT = 'EXECUTED_BLOCK_HEIGHT',
+  COIN_TRANSFER_HEIGHT = 'COIN_TRANSFER_HEIGHT',
+  TOKEN_TRANSFER_HEIGHT = 'TOKEN_TRANSFER_HEIGHT',
+  NFT_TRANSFER_HEIGHT = 'NFT_TRANSFER_HEIGHT',
 }
 
 export const TX_HEADER = {
@@ -587,6 +669,29 @@ export const TX_HEADER = {
 export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
+
+export const NOTIFICATION = {
+  TYPE: {
+    EXECUTED: 'EXECUTED',
+    COIN_TRANSFER: 'COIN_TRANSFER',
+    TOKEN_TRANSFER: 'TOKEN_TRANSFER',
+    NFT_TRANSFER: 'NFT_TRANSFER',
+  },
+  TITLE: {
+    EXECUTED: 'Executed',
+    TOKEN_SENT: 'Token Sent',
+    TOKEN_RECEIVED: 'Token Received',
+    NFT_SENT: 'NFT Sent',
+    NFT_RECEIVED: 'Token Received',
+    COIN_SENT: 'Coin Sent',
+    COIN_RECEIVED: 'Coin Received',
+  },
+  STATUS: {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE',
+  },
+  LIMIT: 100,
+};
 
 export const WATCH_LIST = {
   NOTE_MAX_LENGTH: 200,
