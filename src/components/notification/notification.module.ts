@@ -7,7 +7,7 @@ import { NotificationRepository } from '../queues/notification/repositories/noti
 import { NotificationService } from './services/notification.service';
 import { NotificationController } from './controllers/notification.controller';
 import { UserModule } from '../user/user.module';
-import { UserActivity } from 'src/shared/entities/user-activity.entity';
+import { UserActivity } from '../../shared/entities/user-activity.entity';
 
 @Module({
   imports: [

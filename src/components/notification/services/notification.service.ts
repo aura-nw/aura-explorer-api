@@ -4,7 +4,7 @@ import { NotificationRepository } from '../../queues/notification/repositories/n
 import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
 import { Repository, UpdateResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserActivity } from 'src/shared/entities/user-activity.entity';
+import { UserActivity } from '../../../shared/entities/user-activity.entity';
 
 @Injectable()
 export class NotificationService {

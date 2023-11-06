@@ -280,7 +280,7 @@ export class NotificationProcessor {
           );
         } else {
           // Update sync point coin transfer height
-          this.updateBlockNotification(
+          await this.updateBlockNotification(
             SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
             currentTxHeight,
           );
@@ -359,7 +359,7 @@ export class NotificationProcessor {
             await this.notificationUtil.processTokenTransferNotification(
               notifySent,
               watchList.filter(
-                (item) => !!item.settings && item.settings['tokenSent'].turned,
+                (item) => !!item.settings && item.settings['tokenSent'].turnOn,
               ),
               notificationTokens,
               privateNameTags,
@@ -372,7 +372,7 @@ export class NotificationProcessor {
               notifyReceived,
               watchList.filter(
                 (item) =>
-                  !!item.settings && item.settings['tokenReceived'].turned,
+                  !!item.settings && item.settings['tokenReceived'].turnOn,
               ),
               notificationTokens,
               privateNameTags,

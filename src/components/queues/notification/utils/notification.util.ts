@@ -10,8 +10,8 @@ import { PublicNameTag } from '../../../../shared/entities/public-name-tag.entit
 import { NotificationDto } from '../dtos/notification.dtos';
 import { TransactionHelper } from '../../../../shared/helpers/transaction.helper';
 import { NOTIFICATION } from '../../../../shared';
-import { WatchList } from 'src/shared/entities/watch-list.entity';
-import { TRANSACTION_TYPE_ENUM } from 'src/shared/constants/transaction';
+import { WatchList } from '../../../../shared/entities/watch-list.entity';
+import { TRANSACTION_TYPE_ENUM } from '../../../../shared/constants/transaction';
 
 @Injectable()
 export class NotificationUtil {
