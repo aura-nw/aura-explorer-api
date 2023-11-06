@@ -138,6 +138,11 @@ export class ServiceUtil {
   }
 }
 
+export function secondsToDate(seconds: number): Date {
+  const secondsToMilliseconds = 1000;
+  return new Date(seconds * secondsToMilliseconds);
+}
+
 export async function isValidBench32Address(address: string): Promise<any> {
   const prefix = AURA_INFO.ADDRESS_PREFIX;
 
