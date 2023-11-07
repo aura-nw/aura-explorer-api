@@ -169,7 +169,7 @@ export class NotificationUtil {
               item.cw20_contract.decimal || 6,
             )} ${item.cw20_contract.symbol}`,
         )
-        .join(',');
+        .join(', ');
 
       const listWatch = watchList.filter(
         (item) => item.address === tx.from || item.address === tx.to,
@@ -234,7 +234,7 @@ export class NotificationUtil {
       const listTokenId = tx.activities
         ?.slice(0, 2)
         ?.map((item) => item.cw721_token.token_id)
-        .join(',');
+        .join(', ');
 
       const listWatch = watchList.filter(
         (item) => item.address === tx.from || item.address === tx.to,

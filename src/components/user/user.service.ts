@@ -484,15 +484,22 @@ export class UserService {
       activity.total = 0;
       await this.userActivityRepository.save(activity);
     }
-    await this.notificationTokenRepository.update(
-      { user: { id: userId }, status: NOTIFICATION.STATUS.ACTIVE },
-      { status: NOTIFICATION.STATUS.INACTIVE },
-    );
-    const notificationToken = await this.notificationTokenRepository.save({
-      user: user,
-      notification_token: token.token,
-      status: NOTIFICATION.STATUS.ACTIVE,
+
+    const notificationToken = await this.notificationTokenRepository.findOne({
+      where: { user: { id: userId } },
     });
-    return notificationToken;
+    if (notificationToken) {
+      notificationToken.notification_token = token.token;
+      await this.notificationTokenRepository.update(notificationToken.id, {
+        notification_token: token.token,
+      });
+      return notificationToken;
+    } else {
+      return await this.notificationTokenRepository.save({
+        user: user,
+        notification_token: token.token,
+        status: NOTIFICATION.STATUS.ACTIVE,
+      });
+    }
   }
 }

@@ -29,7 +29,7 @@ import { NotificationTokenRepository } from './repositories/notification-token.r
 import { NotificationUtil } from './utils/notification.util';
 import { NotificationDto } from './dtos/notification.dtos';
 import { UserActivity } from '../../../shared/entities/user-activity.entity';
-import { In, Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
@@ -134,10 +134,8 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({
-        where: { tracking: true },
-        relations: ['user'],
-      });
+      // Get watch list
+      const watchList = await this.queryWatchList();
       if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.EXECUTED_NOTIFICATION,
@@ -206,10 +204,8 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({
-        where: { tracking: true },
-        relations: ['user'],
-      });
+      // Get watch list
+      const watchList = await this.queryWatchList();
       if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
@@ -307,11 +303,8 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({
-        where: { tracking: true },
-        relations: ['user'],
-      });
-
+      // Get watch list
+      const watchList = await this.queryWatchList();
       if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.TOKEN_TRANSFER_NOTIFICATION,
@@ -405,10 +398,8 @@ export class NotificationProcessor {
         return;
       }
 
-      const watchList = await this.watchListRepository.find({
-        where: { tracking: true },
-        relations: ['user'],
-      });
+      // Get watch list
+      const watchList = await this.queryWatchList();
       if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.NFT_TRANSFER_NOTIFICATION,
@@ -647,5 +638,23 @@ export class NotificationProcessor {
     });
     // Process limit when 100 notification per day
     await this.blockLimitNotification(notifications);
+  }
+
+  private async queryWatchList() {
+    const watchList = await this.watchListRepository.find({
+      where: {
+        tracking: true,
+      },
+      relations: ['user', 'user.userActivities'],
+    });
+
+    const watchListFilter = watchList.filter((item) => {
+      const dailyNotification = item.user.userActivities.find(
+        (activity) => activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+      );
+      return dailyNotification?.total >= NOTIFICATION.LIMIT ? false : true;
+    });
+
+    return watchListFilter;
   }
 }
