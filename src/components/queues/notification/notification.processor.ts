@@ -359,7 +359,7 @@ export class NotificationProcessor {
             await this.notificationUtil.processTokenTransferNotification(
               notifySent,
               watchList.filter(
-                (item) => !!item.settings && item.settings['tokenSent'].turnOn,
+                (item) => !!item.settings && item.settings['tokenSent'],
               ),
               notificationTokens,
               privateNameTags,
@@ -371,8 +371,7 @@ export class NotificationProcessor {
             await this.notificationUtil.processTokenTransferNotification(
               notifyReceived,
               watchList.filter(
-                (item) =>
-                  !!item.settings && item.settings['tokenReceived'].turnOn,
+                (item) => !!item.settings && item.settings['tokenReceived'],
               ),
               notificationTokens,
               privateNameTags,

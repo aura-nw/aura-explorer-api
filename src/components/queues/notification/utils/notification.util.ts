@@ -78,6 +78,7 @@ export class NotificationUtil {
   ) {
     const lstNotification: NotificationDto[] = [];
     data?.forEach((tx) => {
+      // Filter amount, symbol pair number more than 3 display the first 3 pairs
       const listTransfer = tx.activities
         ?.slice(0, 3)
         ?.map((item) => `${item.amount} ${item.denom}`)
@@ -158,6 +159,7 @@ export class NotificationUtil {
   ) {
     const lstNotification: NotificationDto[] = [];
     data?.forEach((tx) => {
+      // Filter amount, symbol pair number more than 3 display the first 3 pairs
       const listTokenId = tx.activities
         ?.slice(0, 3)
         ?.map(
@@ -228,6 +230,7 @@ export class NotificationUtil {
   ) {
     const lstNotification: NotificationDto[] = [];
     data?.forEach((tx) => {
+      // Filter NFT more than 2 display the first 2 NFT
       const listTokenId = tx.activities
         ?.slice(0, 2)
         ?.map((item) => item.cw721_token.token_id)
