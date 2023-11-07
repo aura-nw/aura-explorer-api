@@ -5,9 +5,9 @@ import {
 } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
-  AURA_INFO,
   AkcLogger,
   LENGTH,
+  NAME_TAG_TYPE,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
@@ -170,7 +170,13 @@ export class PrivateNameTagService {
     if (isCreate) {
       const validFormat = await isValidBench32Address(req.address);
 
-      if (!validFormat) {
+      if (
+        !validFormat ||
+        (req.address.length === LENGTH.CONTRACT_ADDRESS &&
+          req.type !== NAME_TAG_TYPE.CONTRACT) ||
+        (req.address.length === LENGTH.ACCOUNT_ADDRESS &&
+          req.type !== NAME_TAG_TYPE.ACCOUNT)
+      ) {
         return {
           code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
           message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
