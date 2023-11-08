@@ -659,7 +659,7 @@ export const NOTIFICATION = {
     TOKEN_SENT: 'Token Sent',
     TOKEN_RECEIVED: 'Token Received',
     NFT_SENT: 'NFT Sent',
-    NFT_RECEIVED: 'Token Received',
+    NFT_RECEIVED: 'NFT Received',
     COIN_SENT: 'Coin Sent',
     COIN_RECEIVED: 'Coin Received',
   },

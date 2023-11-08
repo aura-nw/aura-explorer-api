@@ -65,11 +65,9 @@ export class NotificationController {
     @Query() param: NotificationParamsDto,
   ): Promise<BaseApiResponse<GetNotificationResult[]>> {
     this.logger.log(ctx, `${this.getNotifications.name} was called!`);
-    const { result, count } = await this.notificationService.getNotifications(
-      ctx,
-      param,
-    );
-    return { data: result, meta: { count } };
+    const { result, count, countUnread } =
+      await this.notificationService.getNotifications(ctx, param);
+    return { data: result, meta: { count, countUnread } };
   }
 
   @Get('quota-notifications')
