@@ -20,7 +20,7 @@ export class NotificationService {
 
     return await this.notificationRepository.getNotifications(
       ctx.user.id,
-      param.unread,
+      param,
     );
   }
 
