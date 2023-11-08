@@ -69,26 +69,26 @@ export class ServiceUtil {
       return null;
     }
   }
+}
 
-  async isValidBech32Address(address: string): Promise<any> {
-    const prefix = AURA_INFO.ADDRESS_PREFIX;
+export async function isValidBench32Address(address: string): Promise<any> {
+  const prefix = AURA_INFO.ADDRESS_PREFIX;
 
-    if (!address) {
-      return false;
+  if (!address) {
+    return false;
+  }
+
+  try {
+    const { prefix: decodedPrefix } = bech32.decode(address);
+
+    if (prefix !== decodedPrefix) {
+      throw new Error(
+        `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
+      );
     }
 
-    try {
-      const { prefix: decodedPrefix } = bech32.decode(address);
-
-      if (prefix !== decodedPrefix) {
-        throw new Error(
-          `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
-        );
-      }
-
-      return true;
-    } catch (error) {
-      return false;
-    }
+    return true;
+  } catch (error) {
+    return false;
   }
 }

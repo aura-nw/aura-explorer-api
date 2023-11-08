@@ -18,6 +18,7 @@ import { PrivateNameTagModule } from './components/private-name-tag/private-name
 import { PublicNameTagModule } from './components/public-name-tag/public-name-tag.module';
 import { ExportCsvModule } from './components/export-csv/export-csv.module';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
+import { WatchListModule } from './components/watch-list/watch-list.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptch
     PublicNameTagModule,
     ExportCsvModule,
     MailModule,
+    WatchListModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),

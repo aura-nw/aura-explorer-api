@@ -398,6 +398,7 @@ export const REGEX_PARTERN = {
 export enum USER_ACTIVITIES {
   SEND_MAIL_VERIFY = 'SEND_MAIL_VERIFY',
   SEND_MAIL_RESET_PASSWORD = 'SEND_MAIL_RESET_PASSWORD',
+  DAILY_NOTIFICATIONS = 'DAILY_NOTIFICATIONS',
 }
 
 export const MSGS_ACTIVE_USER = {
@@ -556,3 +557,30 @@ export const TX_HEADER = {
 export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
+
+export const WATCH_LIST = {
+  NOTE_MAX_LENGTH: 200,
+  TYPE: NAME_TAG_TYPE,
+  SETTINGS_EXAMPLE: {
+    transactionExecuted: true,
+    tokenSent: true,
+    tokenReceived: true,
+    nftSent: true,
+    nftReceived: true,
+    nativeCoinSent: {
+      turnOn: true,
+      inactiveAutoRestake: true,
+    },
+    nativeCoinReceived: {
+      turnOn: true,
+      inactiveAutoRestake: true,
+    },
+  },
+  ERROR_MSGS: {
+    ERR_UNIQUE_ADDRESS: 'This address has already been added to watch list.',
+    ERR_ADDRESS_NOT_FOUND: 'Address not found.',
+    ERR_LIMIT_ADDRESS: `You have reached out of ${
+      process.env.WATCH_LIST_LIMIT_ADDRESS || 10
+    } max limitation of address.`,
+  },
+};
