@@ -1,10 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as appConfig from '../../shared/configs/configuration';
-import { KMS } from 'aws-sdk';
+import { KMS } from '@aws-sdk/client-kms';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { Repository } from 'typeorm';
-import { PlaintextType } from 'aws-sdk/clients/kms';
+type PlaintextType = Buffer | Uint8Array | Blob | string;
 
 @Injectable()
 export class EncryptionService implements OnModuleInit {
@@ -19,8 +19,10 @@ export class EncryptionService implements OnModuleInit {
     this.config = appConfig.default();
 
     this.kms = new KMS({
-      accessKeyId: this.config.kms.accessKeyId,
-      secretAccessKey: this.config.kms.secretAccessKey,
+      credentials: {
+        accessKeyId: this.config.kms.accessKeyId,
+        secretAccessKey: this.config.kms.secretAccessKey,
+      },
       region: this.config.kms.region,
       apiVersion: this.config.kms.apiVersion,
     });
@@ -37,12 +39,13 @@ export class EncryptionService implements OnModuleInit {
     if (key) {
       return;
     }
-    const { CiphertextBlob } = await this.kms
-      .generateDataKey({ KeyId, KeySpec })
-      .promise();
+    const { CiphertextBlob } = await this.kms.generateDataKey({
+      KeyId,
+      KeySpec,
+    });
 
     const cipherKey = new CipherKey();
-    cipherKey.cipher_text = CiphertextBlob.toString('hex');
+    cipherKey.cipher_text = CiphertextBlob.toString();
     await this.cipherKeyRepository.save(cipherKey);
   }
 
@@ -55,7 +58,7 @@ export class EncryptionService implements OnModuleInit {
     }
 
     const CiphertextBlob = Buffer.from(cipherKey.cipher_text, 'hex');
-    const key = await this.kms.decrypt({ CiphertextBlob }).promise();
+    const key = await this.kms.decrypt({ CiphertextBlob });
     return key.Plaintext;
   }
 
