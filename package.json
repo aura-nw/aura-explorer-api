@@ -19,9 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "migration:generate": "node_modules/.bin/typeorm migration:generate -n",
-    "migration:run": "node_modules/.bin/typeorm migration:run",
-    "migration:revert": "node_modules/.bin/typeorm migration:revert"
+    "migration:generate": "rm -rf dist && nest build && node_modules/.bin/typeorm migration:generate -n",
+    "migration:run": "rm -rf dist && nest build && node_modules/.bin/typeorm migration:run",
+    "migration:revert": "rm -rf dist && nest build && node_modules/.bin/typeorm migration:revert"
   },
   "dependencies": {
     "@aws-crypto/client-node": "^4.0.0",

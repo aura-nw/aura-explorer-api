@@ -14,6 +14,9 @@ export class UserActivity extends BaseEntityIncrementId {
   @Column({ nullable: true, name: 'last_send_mail_attempt' })
   lastSendMailAttempt: Date;
 
+  @Column({ default: 0, nullable: true })
+  total: number;
+
   @ManyToOne(() => User, (user) => user.userActivities)
   @JoinColumn({
     name: 'user_id',
