@@ -1,6 +1,7 @@
 import { EntityRepository, Repository } from 'typeorm';
 import { Notification } from '../../../../shared/entities/notification.entity';
 import { Logger } from '@nestjs/common';
+import { NotificationParamsDto } from '../../../notification/dtos/get-notification-param.dto';
 
 @EntityRepository(Notification)
 export class NotificationRepository extends Repository<Notification> {
@@ -12,7 +13,7 @@ export class NotificationRepository extends Repository<Notification> {
    * @param is_read
    * @returns
    */
-  async getNotifications(user_id: number, unread: boolean) {
+  async getNotifications(user_id: number, param: NotificationParamsDto) {
     this._logger.log(
       `============== ${this.getNotifications.name} was called! ==============`,
     );
@@ -22,15 +23,23 @@ export class NotificationRepository extends Repository<Notification> {
 
     const _finalizeResult = async () => {
       const result = await builder
+        .limit(param.limit)
+        .offset(param.offset)
         .orderBy('noti.created_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();
+      const countUnread = await this.count({
+        where: {
+          is_read: false,
+          user_id: user_id,
+        },
+      });
 
-      return { result, count };
+      return { result, count, countUnread };
     };
 
-    if (unread?.toString() === 'true') {
+    if (param.unread?.toString() === 'true') {
       builder.andWhere('noti.is_read = 0');
     }
 
