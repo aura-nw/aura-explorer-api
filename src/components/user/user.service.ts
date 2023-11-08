@@ -489,12 +489,14 @@ export class UserService {
       where: { user: { id: userId } },
     });
     if (notificationToken) {
+      // Update fcm token with available notification token
       notificationToken.notification_token = token.token;
       await this.notificationTokenRepository.update(notificationToken.id, {
         notification_token: token.token,
       });
       return notificationToken;
     } else {
+      // Save new fcm token at the first time
       return await this.notificationTokenRepository.save({
         user: user,
         notification_token: token.token,
