@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DeepPartial,
+  DeleteResult,
   EntityNotFoundError,
   FindOneOptions,
   Repository,
@@ -503,5 +504,16 @@ export class UserService {
         status: NOTIFICATION.STATUS.ACTIVE,
       });
     }
+  }
+
+  async deleteNotificationToken(
+    userId: number,
+    token: NotificationTokenDto,
+  ): Promise<DeleteResult> {
+    const notificationToken = await this.notificationTokenRepository.findOne({
+      where: { user: { id: userId }, notification_token: token },
+    });
+
+    return await this.notificationTokenRepository.delete(notificationToken?.id);
   }
 }
