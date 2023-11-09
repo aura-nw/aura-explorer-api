@@ -14,7 +14,7 @@ export class NotificationParamsDto {
   })
   @Transform(({ value }) => parseInt(value, 0), { toClassOnly: true })
   @Min(PAGE_REQUEST.MIN)
-  @Max(PAGE_REQUEST.MAX)
+  @Max(PAGE_REQUEST.MAX_500)
   limit: number;
 
   @ApiProperty({ default: 0 })
