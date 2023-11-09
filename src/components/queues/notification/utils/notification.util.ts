@@ -259,8 +259,11 @@ export class NotificationUtil {
             element.address === tx.to
               ? NOTIFICATION.TITLE.NFT_RECEIVED
               : NOTIFICATION.TITLE.NFT_SENT;
-          notification.image =
-            tx.activities[0].cw721_token?.media_info?.offchain?.image?.url;
+          const media = tx.activities[0].cw721_token?.media_info?.offchain;
+          notification.image = JSON.stringify({
+            image: media?.image?.url || media?.animation?.url,
+            type: media?.image?.content_type || media?.animation?.content_type,
+          });
           notification.tx_hash = tx.tx_hash;
           notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
           notification.body = {
