@@ -35,7 +35,7 @@ import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
 import { SyncPoint } from '../../../shared/entities/sync-point.entity';
 import { EncryptionService } from '../../../components/encryption/encryption.service';
-import { NotificationToken } from 'src/shared/entities/notification-token.entity';
+import { NotificationToken } from '../../../shared/entities/notification-token.entity';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
