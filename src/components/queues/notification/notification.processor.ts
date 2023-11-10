@@ -272,7 +272,7 @@ export class NotificationProcessor {
             [...coinTransferSent, ...coinTransferReceived],
             notificationTokens,
             currentTxHeight,
-            response?.coin_transfer[0],
+            response?.coin_transfer[0]?.transaction,
           );
         } else {
           // Update sync point coin transfer height
