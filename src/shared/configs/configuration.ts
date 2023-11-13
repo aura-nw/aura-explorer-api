@@ -109,6 +109,7 @@ export default () => ({
   },
   notification: {
     cleanNotificationDays: process.env.CLEAN_NOTIFICATION_DAYS || 30,
+    limitNotifications: process.env.LIMIT_NOTIFICATIONS || 100,
     fcmProjectId: process.env.FCM_PROJECT_ID,
     fcmPrivateKey: process.env.FCM_PRIVATE_KEY,
     fcmClientEmail: process.env.FCM_CLIENT_EMAIL,
