@@ -50,10 +50,10 @@ export class TokenProcessor {
     // );
 
     // Connect influxdb
-    this.connectInfluxdb();
+    // this.connectInfluxdb();
   }
 
-  @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_PRICE)
+  // @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_PRICE)
   async syncAuraTokenPrice(): Promise<void> {
     try {
       const geckoTerminal = this.appParams.geckoterminal;
@@ -99,7 +99,7 @@ export class TokenProcessor {
     }
   }
 
-  @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
+  // @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
   async syncCW20TokenPrice(): Promise<void> {
     const numberCW20Tokens =
       await this.tokenMarketsRepository.countCw20TokensHavingCoinId();
