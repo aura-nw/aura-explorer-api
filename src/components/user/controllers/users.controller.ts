@@ -183,11 +183,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @HttpCode(HttpStatus.OK)
-  @Delete('delete-notification-token')
+  @Delete('delete-notification-token/:token')
   async deleteNotificationToken(
     @Req() req,
-    @Body() body: NotificationTokenDto,
+    @Param('token') token: string,
   ): Promise<DeleteResult> {
-    return await this.userService.deleteNotificationToken(req.user.id, body);
+    return await this.userService.deleteNotificationToken(req.user.id, token);
   }
 }
