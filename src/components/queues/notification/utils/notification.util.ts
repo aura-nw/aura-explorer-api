@@ -171,7 +171,7 @@ export class NotificationUtil {
             ? NOTIFICATION.TITLE.TOKEN_RECEIVED
             : NOTIFICATION.TITLE.TOKEN_SENT;
         notification.image =
-          tx.activities[0].cw20_contract?.marketing_info?.logo?.url;
+          tx.activities[0].cw20_contract?.marketing_info?.logo?.url || '';
         notification.tx_hash = tx.tx_hash;
         notification.body = {
           content: `${listTokenId} ${
