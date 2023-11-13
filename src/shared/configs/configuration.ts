@@ -82,6 +82,7 @@ export default () => ({
     apiVersion: process.env.KMS_API_VERSION,
     alias: process.env.KMS_ALIAS,
   },
+
   addressPrefix: process.env.ADDRESS_PREFIX,
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
   googleRecaptchaOptions: {
@@ -90,7 +91,14 @@ export default () => ({
       return req.headers.recaptcha;
     },
   },
-  watchList: {
-    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 10,
+  notification: {
+    cleanNotificationDays: process.env.CLEAN_NOTIFICATION_DAYS || 30,
+    fcmProjectId: process.env.FCM_PROJECT_ID,
+    fcmPrivateKey: process.env.FCM_PRIVATE_KEY,
+    fcmClientEmail: process.env.FCM_CLIENT_EMAIL,
   },
+  watchList: {
+    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
+  },
+  ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
 });
