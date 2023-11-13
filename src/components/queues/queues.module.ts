@@ -18,8 +18,6 @@ import { NotificationModule } from './notification/notification.module';
           backoff: {
             type: 'exponential',
             delay: 1000,
-            removeOnFail: config.get('keepJobCount'),
-            removeOnComplete: { count: config.get('keepJobCount') },
           },
           removeOnFail: config.get('keepJobCount'),
           removeOnComplete: { count: config.get('keepJobCount') },
@@ -28,8 +26,8 @@ import { NotificationModule } from './notification/notification.module';
       inject: [ConfigService],
     }),
     SendMailModule,
-    TokenModule,
-    CW4973QueueModule,
+    // TokenModule,
+    // CW4973QueueModule,
     NotificationModule,
   ],
 })
