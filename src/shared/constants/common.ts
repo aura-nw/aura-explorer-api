@@ -694,7 +694,6 @@ export const NOTIFICATION = {
     ACTIVE: 'ACTIVE',
     INACTIVE: 'INACTIVE',
   },
-  LIMIT: 100,
 };
 
 export const WATCH_LIST = {

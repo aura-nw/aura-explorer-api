@@ -551,12 +551,13 @@ export class NotificationProcessor {
           type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
         },
       });
-      const total = userActivities.total + Number(count) || 0;
+      const currentTotal = userActivities?.total || 0;
+      const total = currentTotal + Number(count) || 0;
       await this.userActivityRepository.update(userActivities.id, {
         total: total,
       });
 
-      if (total >= NOTIFICATION.LIMIT) {
+      if (total >= this.notificationConfig.limitNotifications) {
         this.watchListRepository.update(
           { user: { id: Number(userId) } },
           {
@@ -608,7 +609,10 @@ export class NotificationProcessor {
       const dailyNotification = item.user?.userActivities?.find(
         (activity) => activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS,
       );
-      return dailyNotification?.total >= NOTIFICATION.LIMIT ? false : true;
+      return dailyNotification?.total >=
+        this.notificationConfig.limitNotifications
+        ? false
+        : true;
     });
 
     return {
@@ -666,7 +670,10 @@ export class NotificationProcessor {
       const dailyNotification = item.user?.userActivities?.find(
         (activity) => activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS,
       );
-      return dailyNotification?.total >= NOTIFICATION.LIMIT ? false : true;
+      return dailyNotification?.total >=
+        this.notificationConfig.limitNotifications
+        ? false
+        : true;
     });
 
     return watchListFilter;
