@@ -443,6 +443,10 @@ export const MESSAGES = {
     BANNED: 'You have been banned.',
     BAD_REQUEST: 'Bad request.',
     SOME_THING_WRONG: 'Something went wrong.',
+    NEED_TO_BE_LOGGED_IN_AGAIN: {
+      CODE: 'E001',
+      MESSAGE: 'You need to log in again using new password.',
+    },
   },
 };
 
@@ -696,7 +700,7 @@ export const WATCH_LIST = {
     ERR_UNIQUE_ADDRESS: 'This address has already been added to watch list.',
     ERR_ADDRESS_NOT_FOUND: 'Address not found.',
     ERR_LIMIT_ADDRESS: `You have reached out of ${
-      process.env.WATCH_LIST_LIMIT_ADDRESS || 10
+      process.env.WATCH_LIST_LIMIT_ADDRESS || 20
     } max limitation of address.`,
   },
 };
