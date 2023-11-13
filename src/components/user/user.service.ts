@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   DeepPartial,
+  DeleteResult,
   EntityNotFoundError,
   FindOneOptions,
   Repository,
@@ -18,6 +19,7 @@ import {
   MESSAGES,
   MSGS_ACTIVE_USER,
   MSGS_USER,
+  NOTIFICATION,
   PROVIDER,
   QUEUES,
   SITE,
@@ -38,6 +40,10 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { ResetPasswordDto } from '../../auth/password/dtos/reset-password.dto';
 import { ChangePasswordDto } from './dtos/change-password.dto';
+import { secondsToDate } from '../../shared/utils/service.util';
+import { NotificationTokenDto } from './dtos/notification-token.dto';
+import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
+import { NotificationToken } from '../../shared/entities/notification-token.entity';
 const VERIFICATION_TOKEN_LENGTH = 20;
 const RESET_PASSWORD_TOKEN_LENGTH = 21;
 const RANDOM_BYTES_LENGTH = 20;
@@ -52,6 +58,7 @@ export class UserService {
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
     private configService: ConfigService,
+    private notificationTokenRepository: NotificationTokenRepository,
   ) {}
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
@@ -443,5 +450,61 @@ export class UserService {
     } catch {
       throw new BadRequestException(MESSAGES.ERROR.SOME_THING_WRONG);
     }
+  }
+
+  checkLastRequiredLogin(user: User, jwtIat: number): void {
+    if (user.lastRequiredLogin > secondsToDate(jwtIat)) {
+      throw new UnauthorizedException({
+        code: MESSAGES.ERROR.NEED_TO_BE_LOGGED_IN_AGAIN.CODE,
+        message: MESSAGES.ERROR.NEED_TO_BE_LOGGED_IN_AGAIN.MESSAGE,
+      });
+    }
+  }
+
+  async registerNotificationToken(
+    userId: number,
+    token: NotificationTokenDto,
+  ): Promise<NotificationToken> {
+    const userActivities = await this.userActivityRepository.findOne({
+      where: {
+        user: { id: userId },
+        type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+      },
+    });
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+    if (!userActivities) {
+      const activity = new UserActivity();
+      activity.type = USER_ACTIVITIES.DAILY_NOTIFICATIONS;
+      activity.user = user;
+      activity.total = 0;
+      await this.userActivityRepository.save(activity);
+    }
+
+    const notificationToken = await this.notificationTokenRepository.findOne({
+      where: { user: { id: userId }, notification_token: token.token },
+    });
+    if (!notificationToken) {
+      // Save new fcm token at the first time
+      return await this.notificationTokenRepository.save({
+        user: user,
+        notification_token: token.token,
+        status: NOTIFICATION.STATUS.ACTIVE,
+      });
+    } else {
+      return notificationToken;
+    }
+  }
+
+  async deleteNotificationToken(
+    userId: number,
+    token: NotificationTokenDto,
+  ): Promise<DeleteResult> {
+    const notificationToken = await this.notificationTokenRepository.findOne({
+      where: { user: { id: userId }, notification_token: token },
+    });
+
+    return await this.notificationTokenRepository.delete(notificationToken?.id);
   }
 }

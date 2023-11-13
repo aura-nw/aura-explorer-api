@@ -38,6 +38,9 @@ import { User } from '../../../../src/shared/entities/user.entity';
 import { UserDto } from '../dtos/user.dto';
 import { CreateUserWithPasswordDto } from '../../../auth/password/dtos/create-user-with-password.dto';
 import { ChangePasswordDto } from '../dtos/change-password.dto';
+import { NotificationTokenDto } from '../dtos/notification-token.dto';
+import { NotificationToken } from '../../../shared/entities/notification-token.entity';
+import { DeleteResult } from 'typeorm';
 
 @ApiTags('users')
 @Controller('users')
@@ -162,5 +165,29 @@ export class UsersController {
   @Post('change-password')
   async changePassword(@Req() req, @Body() body: ChangePasswordDto) {
     await this.userService.changePassword(req.user.id, body);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  @HttpCode(HttpStatus.OK)
+  @Post('register-notification-token')
+  async registerNotificationToken(
+    @Req() req,
+    @Body() body: NotificationTokenDto,
+  ): Promise<NotificationToken> {
+    return await this.userService.registerNotificationToken(req.user.id, body);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
+  @HttpCode(HttpStatus.OK)
+  @Delete('delete-notification-token')
+  async deleteNotificationToken(
+    @Req() req,
+    @Body() body: NotificationTokenDto,
+  ): Promise<DeleteResult> {
+    return await this.userService.deleteNotificationToken(req.user.id, body);
   }
 }

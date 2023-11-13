@@ -5,7 +5,8 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO } from '../constants';
+import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
+import { sha256 } from 'js-sha256';
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
@@ -69,6 +70,77 @@ export class ServiceUtil {
       return null;
     }
   }
+
+  /**
+   * Create token Id
+   * @param chainID
+   * @param active
+   * @param passive
+   * @param uri
+   * @returns
+   */
+  createTokenId(
+    chainID: string,
+    active: string,
+    passive: string,
+    uri: string,
+  ): string {
+    try {
+      const message: string = this.createMessageToSign(
+        chainID,
+        active,
+        passive,
+        uri,
+      );
+      return sha256(message);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  private createMessageToSign(
+    chainID: string,
+    active: string,
+    passive: string,
+    uri: string,
+  ) {
+    const message =
+      CW4973_CONTRACT.AGREEMENT + chainID + active + passive + uri;
+    const doc: any = {
+      account_number: '0',
+      chain_id: '',
+      fee: {
+        amount: [],
+        gas: '0',
+      },
+      memo: '',
+      msgs: [
+        {
+          type: 'sign/MsgSignData',
+          value: {
+            data: Buffer.from(message, 'utf8').toString('base64'),
+            signer: String(passive),
+          },
+        },
+      ],
+      sequence: '0',
+    };
+    return JSON.stringify(doc);
+  }
+
+  transform(value: string): string {
+    const ipfsUrl = this.configService.get('ipfsUrl');
+    if (!value.includes(DEFAULT_IPFS)) {
+      return ipfsUrl + value.replace('://', '/');
+    } else {
+      return value.replace(DEFAULT_IPFS, ipfsUrl);
+    }
+  }
+}
+
+export function secondsToDate(seconds: number): Date {
+  const secondsToMilliseconds = 1000;
+  return new Date(seconds * secondsToMilliseconds);
 }
 
 export async function isValidBench32Address(address: string): Promise<any> {
