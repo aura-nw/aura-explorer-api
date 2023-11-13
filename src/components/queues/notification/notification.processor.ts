@@ -35,6 +35,7 @@ import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
 import { SyncPoint } from '../../../shared/entities/sync-point.entity';
 import { EncryptionService } from '../../../components/encryption/encryption.service';
+import { NotificationToken } from '../../../shared/entities/notification-token.entity';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -170,7 +171,6 @@ export class NotificationProcessor {
                 (item) =>
                   !!item.settings && item.settings['transactionExecuted'],
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -178,6 +178,7 @@ export class NotificationProcessor {
           // Process notification and push to firebase
           await this.processNotification(
             notifications,
+            notificationTokens,
             currentTxHeight,
             response?.executed[0],
           );
@@ -250,7 +251,6 @@ export class NotificationProcessor {
                 (item) =>
                   !!item.settings && item.settings['nativeCoinReceived'].turnOn,
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -263,7 +263,6 @@ export class NotificationProcessor {
                 (item) =>
                   !!item.settings && item.settings['nativeCoinSent'].turnOn,
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -271,8 +270,9 @@ export class NotificationProcessor {
           // Process notification and push to firebase
           await this.processNotification(
             [...coinTransferSent, ...coinTransferReceived],
+            notificationTokens,
             currentTxHeight,
-            response?.coin_transfer[0],
+            response?.coin_transfer[0]?.transaction,
           );
         } else {
           // Update sync point coin transfer height
@@ -354,7 +354,6 @@ export class NotificationProcessor {
               watchList.filter(
                 (item) => !!item.settings && item.settings['tokenSent'],
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -366,7 +365,6 @@ export class NotificationProcessor {
               watchList.filter(
                 (item) => !!item.settings && item.settings['tokenReceived'],
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -374,6 +372,7 @@ export class NotificationProcessor {
           // Process notification and push to firebase
           await this.processNotification(
             [...nftTransferReceived, ...nftTransferSent],
+            notificationTokens,
             currentTxHeight,
             response?.token_transfer[0],
           );
@@ -441,7 +440,6 @@ export class NotificationProcessor {
               watchList.filter(
                 (item) => !!item.settings && item.settings['nftSent'],
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -453,7 +451,6 @@ export class NotificationProcessor {
               watchList.filter(
                 (item) => !!item.settings && item.settings['nftReceived'],
               ),
-              notificationTokens,
               privateNameTags,
               publicNameTags,
             );
@@ -461,6 +458,7 @@ export class NotificationProcessor {
           // Process notification and push to firebase
           await this.processNotification(
             [...nftTransferSent, ...nftTransferReceived],
+            notificationTokens,
             currentTxHeight,
             response?.nft_transfer[0],
           );
@@ -519,7 +517,7 @@ export class NotificationProcessor {
     this.logger.error(`Error: ${error}`);
   }
 
-  private async sendNotification(notification: NotificationDto) {
+  private async sendNotification(notification: NotificationDto, token: string) {
     return firebaseAdmin
       .messaging()
       .send({
@@ -527,7 +525,7 @@ export class NotificationProcessor {
           title: notification.title,
           body: notification.body['content'],
         },
-        token: notification.token,
+        token: token,
         data: {
           txHash: notification.tx_hash,
           image: notification.image || '',
@@ -600,9 +598,17 @@ export class NotificationProcessor {
     const publicNameTags = await this.publicNameTagRepository.find({
       where: { address: In(listAddress) },
     });
-    const notificationTokens = await this.notificationTokenRepository.find({
+    const fcmToken = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },
-      relations: ['user'],
+      relations: ['user', 'user.userActivities'],
+    });
+
+    // Filter fcm token less than 100 notification per days.
+    const notificationTokens = fcmToken.filter((item) => {
+      const dailyNotification = item.user?.userActivities?.find(
+        (activity) => activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+      );
+      return dailyNotification?.total >= NOTIFICATION.LIMIT ? false : true;
     });
 
     return {
@@ -620,14 +626,20 @@ export class NotificationProcessor {
 
   private async processNotification(
     notifications: NotificationDto[],
+    notificationTokens: NotificationToken[],
     currentTxHeight: SyncPoint,
     response: any,
   ) {
     // Push notification to firebase
     if (notifications?.length > 0) {
-      const firebaseMessagingPromises = notifications.map((notification) =>
-        this.sendNotification(notification),
-      );
+      const firebaseMessagingPromises = notifications.map((notification) => {
+        const fcmTokens = notificationTokens
+          ?.filter((item) => item.user.id === notification.user_id)
+          .map((item) => item.notification_token);
+        fcmTokens.forEach((token) => {
+          this.sendNotification(notification, token);
+        });
+      });
       await Promise.all(firebaseMessagingPromises);
       // Store notification to DB
       await this.notificationRepository.save(notifications);

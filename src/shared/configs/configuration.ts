@@ -98,7 +98,7 @@ export default () => ({
     fcmClientEmail: process.env.FCM_CLIENT_EMAIL,
   },
   watchList: {
-    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 10,
+    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
   },
   ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
 });

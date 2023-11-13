@@ -4,7 +4,6 @@ import { lastValueFrom } from 'rxjs';
 import * as appConfig from '../../../../shared/configs/configuration';
 
 import { HttpService } from '@nestjs/axios';
-import { NotificationToken } from '../../../../shared/entities/notification-token.entity';
 import { PrivateNameTag } from '../../../../shared/entities/private-name-tag.entity';
 import { PublicNameTag } from '../../../../shared/entities/public-name-tag.entity';
 import { NotificationDto } from '../dtos/notification.dtos';
@@ -23,17 +22,16 @@ export class NotificationUtil {
   async processExecutedNotification(
     response,
     watchList: WatchList[],
-    listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: NotificationDto[] = [];
     response?.forEach((tx) => {
-      tx.transaction_messages.forEach((msg) => {
-        const listWatch = watchList.filter(
-          (item) => item.address === msg.sender,
+      watchList?.forEach(async (element) => {
+        const findAddressNotify = tx.transaction_messages?.find(
+          (msg) => msg.sender === element.address,
         );
-        listWatch?.forEach(async (element) => {
+        if (findAddressNotify) {
           const type = TransactionHelper.getTypeTxMsg(tx.transaction_messages);
           const nameTagPhase = await this.getNameTag(
             element.address,
@@ -41,29 +39,21 @@ export class NotificationUtil {
             listPrivateNameTag,
             listPublicNameTag,
           );
-
-          const fcmToken = listNotificationToken?.find(
-            (item) => item.user.id === element.user.id,
-          )?.notification_token;
-
-          if (fcmToken) {
-            const notification = new NotificationDto();
-            notification.title = NOTIFICATION.TITLE.EXECUTED;
-            notification.token = fcmToken;
-            notification.user_id = element.user.id;
-            notification.tx_hash = tx.hash;
-            notification.type = NOTIFICATION.TYPE.EXECUTED;
-            notification.body = {
-              content: `New ${type} transaction initiated by ${msg.sender} ${nameTagPhase}`,
-              data: {
-                type: type,
-                sender: msg.sender,
-                nameTag: nameTagPhase,
-              },
-            };
-            lstNotification.push(notification);
-          }
-        });
+          const notification = new NotificationDto();
+          notification.title = NOTIFICATION.TITLE.EXECUTED;
+          notification.user_id = element.user.id;
+          notification.tx_hash = tx.hash;
+          notification.type = NOTIFICATION.TYPE.EXECUTED;
+          notification.body = {
+            content: `New ${type} transaction initiated by ${element.address} ${nameTagPhase}`,
+            data: {
+              type: type,
+              sender: element.address,
+              nameTag: nameTagPhase,
+            },
+          };
+          lstNotification.push(notification);
+        }
       });
     });
     return lstNotification;
@@ -72,7 +62,6 @@ export class NotificationUtil {
   async processCoinTransferNotification(
     data,
     watchList: WatchList[],
-    listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
   ) {
@@ -112,38 +101,31 @@ export class NotificationUtil {
             listPublicNameTag,
           );
 
-          const fcmToken = listNotificationToken?.find(
-            (item) => item.user.id === element.user.id,
-          )?.notification_token;
-
-          if (fcmToken) {
-            const notification = new NotificationDto();
-            notification.token = fcmToken;
-            notification.user_id = element.user.id;
-            notification.title =
-              element.address === tx.to
-                ? NOTIFICATION.TITLE.COIN_RECEIVED
-                : NOTIFICATION.TITLE.COIN_SENT;
-            notification.image = tx.image;
-            notification.tx_hash = tx.tx_hash;
-            notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
-            notification.body = {
-              content: `${listTransfer} ${
-                tx.activities?.length > 3 ? 'and more ' : ''
-              }${element.address === tx.to ? 'received' : 'sent'} by ${
-                element.address
-              }${nameTagPhase}`,
-              data: {
-                transfer: listTransfer,
-                num: tx.activities?.length,
-                from: tx.from,
-                to: tx.to,
-                address: element.address,
-                nameTag: nameTagPhase,
-              },
-            };
-            lstNotification.push(notification);
-          }
+          const notification = new NotificationDto();
+          notification.user_id = element.user.id;
+          notification.title =
+            element.address === tx.to
+              ? NOTIFICATION.TITLE.COIN_RECEIVED
+              : NOTIFICATION.TITLE.COIN_SENT;
+          notification.image = tx.image;
+          notification.tx_hash = tx.tx_hash;
+          notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
+          notification.body = {
+            content: `${listTransfer} ${
+              tx.activities?.length > 3 ? 'and more ' : ''
+            }${element.address === tx.to ? 'received' : 'sent'} by ${
+              element.address
+            }${nameTagPhase}`,
+            data: {
+              transfer: listTransfer,
+              num: tx.activities?.length,
+              from: tx.from,
+              to: tx.to,
+              address: element.address,
+              nameTag: nameTagPhase,
+            },
+          };
+          lstNotification.push(notification);
         }
       });
     });
@@ -153,7 +135,6 @@ export class NotificationUtil {
   async processTokenTransferNotification(
     data,
     watchList: WatchList[],
-    listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
   ) {
@@ -182,39 +163,32 @@ export class NotificationUtil {
           listPublicNameTag,
         );
 
-        const fcmToken = listNotificationToken?.find(
-          (item) => item.user.id === element.user.id,
-        )?.notification_token;
-
-        if (fcmToken) {
-          const notification = new NotificationDto();
-          notification.token = fcmToken;
-          notification.user_id = element.user.id;
-          notification.type = NOTIFICATION.TYPE.TOKEN_TRANSFER;
-          notification.title =
-            element.address === tx.to
-              ? NOTIFICATION.TITLE.TOKEN_RECEIVED
-              : NOTIFICATION.TITLE.TOKEN_SENT;
-          notification.image =
-            tx.activities[0].cw20_contract?.marketing_info?.logo;
-          notification.tx_hash = tx.tx_hash;
-          notification.body = {
-            content: `${listTokenId} ${
-              tx.activities?.length > 2 ? 'and more ' : ''
-            }${element.address === tx.to ? 'received' : 'sent'} by ${
-              element.address
-            }${nameTagPhase}`,
-            data: {
-              tokens: listTokenId,
-              num: tx.activities?.length,
-              from: tx.from,
-              to: tx.to,
-              address: element.address,
-              nameTag: nameTagPhase,
-            },
-          };
-          lstNotification.push(notification);
-        }
+        const notification = new NotificationDto();
+        notification.user_id = element.user.id;
+        notification.type = NOTIFICATION.TYPE.TOKEN_TRANSFER;
+        notification.title =
+          element.address === tx.to
+            ? NOTIFICATION.TITLE.TOKEN_RECEIVED
+            : NOTIFICATION.TITLE.TOKEN_SENT;
+        notification.image =
+          tx.activities[0].cw20_contract?.marketing_info?.logo;
+        notification.tx_hash = tx.tx_hash;
+        notification.body = {
+          content: `${listTokenId} ${
+            tx.activities?.length > 2 ? 'and more ' : ''
+          }${element.address === tx.to ? 'received' : 'sent'} by ${
+            element.address
+          }${nameTagPhase}`,
+          data: {
+            tokens: listTokenId,
+            num: tx.activities?.length,
+            from: tx.from,
+            to: tx.to,
+            address: element.address,
+            nameTag: nameTagPhase,
+          },
+        };
+        lstNotification.push(notification);
       });
     });
 
@@ -224,7 +198,6 @@ export class NotificationUtil {
   async processNftTransferNotification(
     data,
     watchList: WatchList[],
-    listNotificationToken: NotificationToken[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
   ) {
@@ -247,42 +220,35 @@ export class NotificationUtil {
           listPublicNameTag,
         );
 
-        const fcmToken = listNotificationToken?.find(
-          (item) => item.user.id === element.user.id,
-        )?.notification_token;
-
-        if (fcmToken) {
-          const notification = new NotificationDto();
-          notification.token = fcmToken;
-          notification.user_id = element.user.id;
-          notification.title =
-            element.address === tx.to
-              ? NOTIFICATION.TITLE.NFT_RECEIVED
-              : NOTIFICATION.TITLE.NFT_SENT;
-          const media = tx.activities[0].cw721_token?.media_info?.offchain;
-          notification.image = JSON.stringify({
-            image: media?.image?.url || media?.animation?.url,
-            type: media?.image?.content_type || media?.animation?.content_type,
-          });
-          notification.tx_hash = tx.tx_hash;
-          notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
-          notification.body = {
-            content: `NFT id ${listTokenId} ${
-              tx.activities?.length > 2 ? 'and more ' : ''
-            }${element.address === tx.to ? 'received' : 'sent'} by ${
-              element.address
-            }${nameTagPhase}`,
-            data: {
-              tokens: listTokenId,
-              num: tx.activities?.length || 0,
-              from: tx.from,
-              to: tx.to,
-              address: element.address,
-              nameTag: nameTagPhase,
-            },
-          };
-          lstNotification.push(notification);
-        }
+        const notification = new NotificationDto();
+        notification.user_id = element.user.id;
+        notification.title =
+          element.address === tx.to
+            ? NOTIFICATION.TITLE.NFT_RECEIVED
+            : NOTIFICATION.TITLE.NFT_SENT;
+        const media = tx.activities[0].cw721_token?.media_info?.offchain;
+        notification.image = JSON.stringify({
+          image: media?.image?.url || media?.animation?.url,
+          type: media?.image?.content_type || media?.animation?.content_type,
+        });
+        notification.tx_hash = tx.tx_hash;
+        notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
+        notification.body = {
+          content: `NFT id ${listTokenId} ${
+            tx.activities?.length > 2 ? 'and more ' : ''
+          }${element.address === tx.to ? 'received' : 'sent'} by ${
+            element.address
+          }${nameTagPhase}`,
+          data: {
+            tokens: listTokenId,
+            num: tx.activities?.length || 0,
+            from: tx.from,
+            to: tx.to,
+            address: element.address,
+            nameTag: nameTagPhase,
+          },
+        };
+        lstNotification.push(notification);
       });
     });
     return lstNotification;
@@ -340,54 +306,52 @@ export class NotificationUtil {
     const coinInfo = envConfig?.chainConfig?.chain_info?.currencies[0];
     const coinConfig = envConfig?.chainConfig?.coins;
     const listTx = [];
-    data?.forEach((tx) => {
-      tx.events.forEach((evt) => {
-        const toAddress = evt.event_attributes.find(
-          (k) => k.composite_key === 'transfer.recipient',
-        )?.value;
-        const fromAddress = evt.event_attributes.find(
-          (k) => k.composite_key === 'transfer.sender',
-        )?.value;
+    data?.forEach((evt) => {
+      const toAddress = evt.event_attributes.find(
+        (k) => k.composite_key === 'transfer.recipient',
+      )?.value;
+      const fromAddress = evt.event_attributes.find(
+        (k) => k.composite_key === 'transfer.sender',
+      )?.value;
 
-        const arrAmount = evt.event_attributes
-          ?.find((k) => k.composite_key === 'transfer.amount')
-          ?.value?.split(', ');
+      const arrAmount = evt.event_attributes
+        ?.find((k) => k.composite_key === 'transfer.amount')
+        ?.value?.split(', ');
 
-        arrAmount?.forEach((rawAmount) => {
-          const value = rawAmount?.match(/\d+/g);
-          const amountTemp = value?.length > 0 ? value[0] : 0;
-          let amount;
-          let image = '';
-          let denom = coinInfo.coinDenom;
-          if (rawAmount?.indexOf('ibc') > -1) {
-            const dataIBC = TransactionHelper.getDataIBC(rawAmount, coinConfig);
-            amount = TransactionHelper.balanceOf(
-              Number(amountTemp) || 0,
-              dataIBC['decimal'] || 6,
-            );
-            image = dataIBC['logo'] || '';
-            denom =
-              dataIBC['display'].indexOf('ibc') === -1
-                ? 'ibc/' + dataIBC['display']
-                : dataIBC['display'];
-          } else {
-            amount = TransactionHelper.balanceOf(
-              Number(amountTemp) || 0,
-              coinInfo.coinDecimals,
-            );
-          }
-          listTx.push({
-            tx_hash: tx.hash,
-            tx_msg:
-              tx.transaction_messages?.length > 0
-                ? tx.transaction_messages[0]
-                : null,
-            from: fromAddress,
-            to: toAddress,
-            amount,
-            image,
-            denom,
-          });
+      arrAmount?.forEach((rawAmount) => {
+        const value = rawAmount?.match(/\d+/g);
+        const amountTemp = value?.length > 0 ? value[0] : 0;
+        let amount;
+        let image = '';
+        let denom = coinInfo.coinDenom;
+        if (rawAmount?.indexOf('ibc') > -1) {
+          const dataIBC = TransactionHelper.getDataIBC(rawAmount, coinConfig);
+          amount = TransactionHelper.balanceOf(
+            Number(amountTemp) || 0,
+            dataIBC['decimal'] || 6,
+          );
+          image = dataIBC['logo'] || '';
+          denom =
+            dataIBC['display'].indexOf('ibc') === -1
+              ? 'ibc/' + dataIBC['display']
+              : dataIBC['display'];
+        } else {
+          amount = TransactionHelper.balanceOf(
+            Number(amountTemp) || 0,
+            coinInfo.coinDecimals,
+          );
+        }
+        listTx.push({
+          tx_hash: evt.transaction.hash,
+          tx_msg:
+            evt.transaction.transaction_messages?.length > 0
+              ? evt.transaction.transaction_messages[0]
+              : null,
+          from: fromAddress,
+          to: toAddress,
+          amount,
+          image,
+          denom,
         });
       });
     });

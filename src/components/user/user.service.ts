@@ -483,22 +483,17 @@ export class UserService {
     }
 
     const notificationToken = await this.notificationTokenRepository.findOne({
-      where: { user: { id: userId } },
+      where: { user: { id: userId }, notification_token: token.token },
     });
-    if (notificationToken) {
-      // Update fcm token with available notification token
-      notificationToken.notification_token = token.token;
-      await this.notificationTokenRepository.update(notificationToken.id, {
-        notification_token: token.token,
-      });
-      return notificationToken;
-    } else {
+    if (!notificationToken) {
       // Save new fcm token at the first time
       return await this.notificationTokenRepository.save({
         user: user,
         notification_token: token.token,
         status: NOTIFICATION.STATUS.ACTIVE,
       });
+    } else {
+      return notificationToken;
     }
   }
 
