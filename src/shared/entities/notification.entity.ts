@@ -9,9 +9,6 @@ export class Notification extends BaseEntityIncrementId {
   @Column({ type: 'json', nullable: true })
   body: JSON;
 
-  @Column()
-  token: string;
-
   @Column({
     nullable: true,
   })
