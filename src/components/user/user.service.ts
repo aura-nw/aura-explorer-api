@@ -503,7 +503,7 @@ export class UserService {
 
   async deleteNotificationToken(
     userId: number,
-    token: NotificationTokenDto,
+    token: string,
   ): Promise<DeleteResult> {
     const notificationToken = await this.notificationTokenRepository.findOne({
       where: { user: { id: userId }, notification_token: token },
