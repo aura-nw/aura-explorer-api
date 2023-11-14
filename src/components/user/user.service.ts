@@ -485,19 +485,20 @@ export class UserService {
       activity.total = 0;
       await this.userActivityRepository.save(activity);
     }
-
-    const notificationToken = await this.notificationTokenRepository.findOne({
-      where: { user: { id: userId }, notification_token: token.token },
-    });
-    if (!notificationToken) {
-      // Save new fcm token at the first time
-      return await this.notificationTokenRepository.save({
-        user: user,
-        notification_token: token.token,
-        status: NOTIFICATION.STATUS.ACTIVE,
+    if (token?.token) {
+      const notificationToken = await this.notificationTokenRepository.findOne({
+        where: { user: { id: userId }, notification_token: token.token },
       });
-    } else {
-      return notificationToken;
+      if (!notificationToken) {
+        // Save new fcm token at the first time
+        return await this.notificationTokenRepository.save({
+          user: user,
+          notification_token: token.token,
+          status: NOTIFICATION.STATUS.ACTIVE,
+        });
+      } else {
+        return notificationToken;
+      }
     }
   }
 
