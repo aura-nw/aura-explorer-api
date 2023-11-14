@@ -33,6 +33,7 @@ import { GetNotificationResult } from '../dtos/get-notification.dto';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
 import { UpdateResult } from 'typeorm';
+import { UserActivity } from 'src/shared/entities/user-activity.entity';
 
 @Controller()
 @ApiTags('notification')
@@ -77,7 +78,7 @@ export class NotificationController {
   @ApiResponse({ status: HttpStatus.OK })
   async getDailyQuotaNotification(
     @ReqContext() ctx: RequestContext,
-  ): Promise<number> {
+  ): Promise<UserActivity> {
     return await this.notificationService.getDailyQuotaNotification(ctx);
   }
 

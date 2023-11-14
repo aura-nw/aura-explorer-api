@@ -551,19 +551,21 @@ export class NotificationProcessor {
           type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
         },
       });
-      const currentTotal = userActivities?.total || 0;
-      const total = currentTotal + Number(count) || 0;
-      await this.userActivityRepository.update(userActivities.id, {
-        total: total,
-      });
+      if (userActivities) {
+        const currentTotal = userActivities.total || 0;
+        const total = currentTotal + Number(count) || 0;
+        await this.userActivityRepository.update(userActivities.id, {
+          total: total,
+        });
 
-      if (total >= this.notificationConfig.limitNotifications) {
-        this.watchListRepository.update(
-          { user: { id: Number(userId) } },
-          {
-            tracking: false,
-          },
-        );
+        if (total >= this.notificationConfig.limitNotifications) {
+          this.watchListRepository.update(
+            { user: { id: Number(userId) } },
+            {
+              tracking: false,
+            },
+          );
+        }
       }
     }
   }
