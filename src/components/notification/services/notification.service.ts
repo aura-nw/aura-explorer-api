@@ -43,7 +43,7 @@ export class NotificationService {
     );
   }
 
-  async getDailyQuotaNotification(ctx: RequestContext) {
+  async getDailyQuotaNotification(ctx: RequestContext): Promise<UserActivity> {
     this.logger.log(ctx, `${this.getDailyQuotaNotification.name} was called!`);
 
     const userActivities = await this.userActivityRepository.findOne({
@@ -53,6 +53,6 @@ export class NotificationService {
       },
     });
 
-    return userActivities?.total || 0;
+    return userActivities;
   }
 }
