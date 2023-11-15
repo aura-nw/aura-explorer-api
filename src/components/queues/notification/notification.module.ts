@@ -16,6 +16,7 @@ import { CipherKey } from '../../../shared/entities/cipher-key.entity';
 import { UserActivity } from '../../../shared/entities/user-activity.entity';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
+import { User } from '../../../shared/entities/user.entity';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { WatchList } from '../../../shared/entities/watch-list.entity';
       SyncStatus,
       CipherKey,
       UserActivity,
+      User,
       WatchList,
     ]),
     BullModule.registerQueueAsync({

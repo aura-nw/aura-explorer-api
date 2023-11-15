@@ -36,6 +36,7 @@ import { WatchList } from '../../../shared/entities/watch-list.entity';
 import { SyncPoint } from '../../../shared/entities/sync-point.entity';
 import { EncryptionService } from '../../../components/encryption/encryption.service';
 import { NotificationToken } from '../../../shared/entities/notification-token.entity';
+import { User } from '../../../shared/entities/user.entity';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
@@ -57,6 +58,8 @@ export class NotificationProcessor {
     private notificationRepository: NotificationRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
     @InjectRepository(WatchList)
     private watchListRepository: Repository<WatchList>,
     @InjectQueue(QUEUES.NOTIFICATION.QUEUE_NAME) private readonly queue: Queue,
@@ -273,12 +276,6 @@ export class NotificationProcessor {
             notificationTokens,
             currentTxHeight,
             response?.coin_transfer[0]?.transaction,
-          );
-        } else {
-          // Update sync point coin transfer height
-          await this.updateBlockNotification(
-            SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
-            currentTxHeight,
           );
         }
       }
@@ -566,6 +563,15 @@ export class NotificationProcessor {
             },
           );
         }
+      } else {
+        const user = await this.usersRepository.findOne({
+          where: { id: userId },
+        });
+        const activity = new UserActivity();
+        activity.type = USER_ACTIVITIES.DAILY_NOTIFICATIONS;
+        activity.user = user;
+        activity.total = 1;
+        await this.userActivityRepository.save(activity);
       }
     }
   }
