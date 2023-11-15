@@ -43,6 +43,7 @@ export class NotificationUtil {
           notification.title = NOTIFICATION.TITLE.EXECUTED;
           notification.user_id = element.user.id;
           notification.tx_hash = tx.hash;
+          notification.height = tx.height;
           notification.type = NOTIFICATION.TYPE.EXECUTED;
           notification.body = {
             content: `New ${type} transaction initiated by ${element.address} ${nameTagPhase}`,
@@ -110,6 +111,7 @@ export class NotificationUtil {
           notification.image = tx.image;
           notification.tx_hash = tx.tx_hash;
           notification.type = NOTIFICATION.TYPE.COIN_TRANSFER;
+          notification.height = tx.activities[0]?.height;
           notification.body = {
             content: `${listTransfer} ${
               tx.activities?.length > 3 ? 'and more ' : ''
@@ -172,6 +174,7 @@ export class NotificationUtil {
             : NOTIFICATION.TITLE.TOKEN_SENT;
         notification.image =
           tx.activities[0].cw20_contract?.marketing_info?.logo?.url;
+        notification.height = tx.activities[0]?.height;
         notification.tx_hash = tx.tx_hash;
         notification.body = {
           content: `${listTokenId} ${
@@ -232,6 +235,7 @@ export class NotificationUtil {
           type: media?.image?.content_type || media?.animation?.content_type,
         });
         notification.tx_hash = tx.tx_hash;
+        notification.height = tx.activities[0]?.height;
         notification.type = NOTIFICATION.TYPE.NFT_TRANSFER;
         notification.body = {
           content: `NFT id ${listTokenId} ${
@@ -343,6 +347,7 @@ export class NotificationUtil {
         }
         listTx.push({
           tx_hash: evt.transaction.hash,
+          height: evt.transaction.height,
           tx_msg:
             evt.transaction.transaction_messages?.length > 0
               ? evt.transaction.transaction_messages[0]

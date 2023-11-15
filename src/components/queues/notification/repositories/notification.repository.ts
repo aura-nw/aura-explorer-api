@@ -25,7 +25,8 @@ export class NotificationRepository extends Repository<Notification> {
       const result = await builder
         .limit(param.limit)
         .offset(param.offset)
-        .orderBy('noti.created_at', 'DESC')
+        .orderBy('noti.height', 'DESC')
+        .addOrderBy('noti.created_at', 'DESC')
         .getRawMany();
 
       const count = await builder.getCount();

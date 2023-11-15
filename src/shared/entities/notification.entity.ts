@@ -17,6 +17,11 @@ export class Notification extends BaseEntityIncrementId {
   @Column()
   tx_hash: string;
 
+  @Column({
+    nullable: true,
+  })
+  height: number;
+
   @Column()
   type: string;
 

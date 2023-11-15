@@ -6,4 +6,5 @@ export class NotificationDto {
   tx_hash: string;
   type: string;
   user_id: number;
+  height: number;
 }
