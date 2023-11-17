@@ -8,11 +8,12 @@ import { IsUniqueConstraint } from './validators/validate-unique';
 import { MatchPasswordConstraint } from './validators/validate-match-password';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
 import { SendMailModule } from '../queues/send-mail/send-mail.module';
+import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([UserActivity]),
+    TypeOrmModule.forFeature([UserActivity, NotificationTokenRepository]),
     SendMailModule,
   ],
   providers: [

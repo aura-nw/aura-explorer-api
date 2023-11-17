@@ -82,6 +82,23 @@ export default () => ({
     apiVersion: process.env.KMS_API_VERSION,
     alias: process.env.KMS_ALIAS,
   },
+  priceHostSync: process.env.PRICE_HOST_SYNC || 'COINGECKO',
+  priceTimeSync: process.env.PRICE_TIME_SYNC || '0 */3 * * * *',
+  geckoterminal: {
+    api: process.env.GECKOTERMINAL_API,
+    pool: process.env.GECKOTERMINAL_POOL || 'bsc',
+    coinAddress:
+      process.env.COIN_ADDRESS || '0x9f1a332c0657ce3f90666ad38dbe2e92793abf5c',
+  },
+  coingecko: {
+    api: process.env.COINGECKO_API,
+    maxRequest: Number(process.env.MAX_REQUEST) || 250,
+  },
+  coinMarketCap: {
+    api: process.env.COIN_MARKET_CAP_API_EP,
+    apiKey: process.env.COIN_MARKET_CAP_API_KEY,
+  },
+  keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
   addressPrefix: process.env.ADDRESS_PREFIX,
   limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
   googleRecaptchaOptions: {
@@ -90,4 +107,15 @@ export default () => ({
       return req.headers.recaptcha;
     },
   },
+  notification: {
+    cleanNotificationDays: process.env.CLEAN_NOTIFICATION_DAYS || 30,
+    limitNotifications: process.env.LIMIT_NOTIFICATIONS || 100,
+    fcmProjectId: process.env.FCM_PROJECT_ID,
+    fcmPrivateKey: process.env.FCM_PRIVATE_KEY,
+    fcmClientEmail: process.env.FCM_CLIENT_EMAIL,
+  },
+  watchList: {
+    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
+  },
+  ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
 });
