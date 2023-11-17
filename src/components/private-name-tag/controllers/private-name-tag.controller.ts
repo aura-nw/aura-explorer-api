@@ -66,7 +66,6 @@ export class PrivateNameTagController {
   @Roles(USER_ROLE.ADMIN, USER_ROLE.USER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get list private name tag' })
-  @ApiResponse({ status: HttpStatus.OK })
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: GetPrivateNameTagAdminResult })
   async getNameTags(
@@ -76,7 +75,6 @@ export class PrivateNameTagController {
     this.logger.log(ctx, `${this.getNameTags.name} was called!`);
     const { data, count, countFavorite } =
       await this.nameTagService.getNameTags(ctx, request);
-    await this.nameTagService.getNameTags(ctx, request);
     return { data, meta: { count, countFavorite } };
   }
 
