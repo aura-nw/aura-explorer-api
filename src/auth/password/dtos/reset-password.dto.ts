@@ -2,10 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, Matches } from 'class-validator';
 import { MatchPassword } from '../../../components/user/validators/validate-match-password';
 import { REGEX_PARTERN } from '../../../shared';
+import { Transform } from 'class-transformer';
 
 export class ResetPasswordDto {
   @ApiProperty()
   @IsNotEmpty()
+  @Transform(({ value }) => value.toLowerCase())
   email: string;
 
   @ApiProperty()

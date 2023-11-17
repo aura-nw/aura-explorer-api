@@ -4,7 +4,12 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '../../components/user/user.service';
 import { ConfigService } from '@nestjs/config';
 
-export type JwtPayload = { sub: number; email: string };
+type JwtPayloadDecoded = {
+  sub: number;
+  email: string;
+  iat: number;
+  exp: number;
+};
 
 @Injectable()
 export class JwtAuthStrategy extends PassportStrategy(Strategy) {
@@ -19,10 +24,12 @@ export class JwtAuthStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayloadDecoded) {
     const user = await this.userService.findOneById(payload.sub);
 
     this.userService.checkRole(user);
+
+    this.userService.checkLastRequiredLogin(user, payload.iat);
 
     return { id: payload.sub, email: payload.email };
   }
