@@ -164,7 +164,7 @@ export const INDEXER_API_V2 = {
     }`,
     EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
       ${process.env.INDEXER_V2_DB} {
-        executed: transaction(where: {height: {_gt: $heightGT, _lt: $heightLT}}, order_by: {height: desc}, limit: 100) {
+        executed: transaction(where: {height: {_gt: $heightGT, _lt: $heightLT}, code: {_eq: 0}}, order_by: {height: desc}, limit: 100) {
           height
           hash
           transaction_messages {
