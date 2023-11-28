@@ -2,6 +2,9 @@ import { Injectable, Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { ConfigService } from '@nestjs/config';
 import { SendMailModule } from './send-mail/send-mail.module';
+import { TokenModule } from './token/token.module';
+import { CW4973QueueModule } from './cw4973/cw4973.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Injectable()
 @Module({
@@ -16,11 +19,16 @@ import { SendMailModule } from './send-mail/send-mail.module';
             type: 'exponential',
             delay: 1000,
           },
+          removeOnFail: config.get('keepJobCount'),
+          removeOnComplete: { count: config.get('keepJobCount') },
         },
       }),
       inject: [ConfigService],
     }),
     SendMailModule,
+    // TokenModule,
+    // CW4973QueueModule,
+    NotificationModule,
   ],
 })
 export class QueuesModule {}

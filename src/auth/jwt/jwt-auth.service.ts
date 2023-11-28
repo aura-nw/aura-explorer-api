@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '../../shared/entities/user.entity';
-import { JwtPayload } from './jwt-auth.strategy';
 import * as appConfig from '../../shared/configs/configuration';
 import { UserService } from '../../components/user/user.service';
+
+type JwtPayload = { sub: number; email: string };
 
 export type Tokens = { accessToken: string; refreshToken: string };
 
@@ -44,6 +45,8 @@ export class JwtAuthService {
     if (!user) {
       throw new UnauthorizedException('User not found in DB.');
     }
+
+    this.userService.checkLastRequiredLogin(user, refreshTokenDecoded.iat);
 
     const newToken = this.login(user);
 

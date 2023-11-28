@@ -2,6 +2,8 @@ import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { PROVIDER, USER_ROLE } from '../constants/common';
 import { UserActivity } from './user-activity.entity';
+import { WatchList } from './watch-list.entity';
+import { NotificationToken } from './notification-token.entity';
 
 @Entity('user')
 @Unique(['email'])
@@ -34,4 +36,21 @@ export class User extends BaseEntityIncrementId {
     cascade: true,
   })
   userActivities: UserActivity[];
+
+  @OneToMany(() => WatchList, (watchList) => watchList.user, {
+    cascade: ['remove'],
+  })
+  watchLists: WatchList[];
+
+  @OneToMany(
+    () => NotificationToken,
+    (notificationToken) => notificationToken.user,
+    {
+      cascade: ['remove'],
+    },
+  )
+  notificationTokens: NotificationToken[];
+
+  @Column({ nullable: true, name: 'last_required_login' })
+  lastRequiredLogin: Date;
 }
