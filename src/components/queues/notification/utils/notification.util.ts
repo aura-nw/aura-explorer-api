@@ -308,22 +308,28 @@ export class NotificationUtil {
     ).then((rs) => rs.data);
 
     const coinConfig = envConfig?.chainConfig?.coins;
+    const coinInfo = envConfig?.chainConfig?.chain_info?.currencies[0];
     const listTx = [];
-    data?.forEach((evt) => {
-      evt.coin_transfer?.forEach((coin) => {
+    data?.forEach((tx) => {
+      tx.coin_transfers?.forEach((coin) => {
         const dataIBC = coinConfig.find((k) => k.denom === coin.denom) || {};
+        const denom =
+          dataIBC['display']?.indexOf('ibc') === -1
+            ? 'ibc/' + dataIBC['display']
+            : dataIBC['display'];
+
         listTx.push({
-          tx_hash: evt.transaction.hash,
-          height: evt.transaction.height,
+          tx_hash: tx.hash,
+          height: tx.height,
           tx_msg:
-            evt.transaction.transaction_messages?.length > 0
-              ? evt.transaction.transaction_messages[0]
+            tx.transaction_messages?.length > 0
+              ? tx.transaction_messages[0]
               : null,
           from: coin.from,
           to: coin.to,
           amount: coin.amount,
           image: dataIBC['logo'] || '',
-          denom: coin.denom,
+          denom: denom || coinInfo.coinDenom,
         });
       });
     });

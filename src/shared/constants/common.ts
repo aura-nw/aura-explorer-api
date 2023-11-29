@@ -176,23 +176,20 @@ export const INDEXER_API_V2 = {
       }
     }
     `,
-    COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int, $heightLT: Int, $compositeKeyIn: [String!] = null) {
+    COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int = null, $heightLT: Int = null) {
       ${process.env.INDEXER_V2_DB} {
-        coin_transfer: event(where: {event_attribute_index: {composite_key: {_in: $compositeKeyIn}, block_height: {_lt: $heightLT, _gt: $heightGT}}, tx_msg_index: {_is_null: false}}, limit: 100, order_by: {block_height: desc}) {
-          transaction(where: {coin_transfer: {_or: [{from: {_eq: $from}}, {to: {_eq: $to}}], block_height: {_lt: $height_lt, _gt: $height_gt}, message: {type: {_in: $msg_types}}}, code: {_eq: 0}, timestamp: {_lte: $end_time, _gte: $start_time}}, limit: 100, order_by: {height: desc}) {
-            hash
-            height
-            transaction_messages {
-              type
-              content
-            }
-            coin_transfer(where: {_or: [{from: {_eq: $from}}, {to: {_eq: $to}}]}) {
-              from
-              to
-              amount
-              denom
-              block_height
-            }
+        coin_transfer: transaction(where: {coin_transfers: {block_height: {_lt: $heightLT, _gt: $heightGT}}}, limit: 100, order_by: {height: desc}) {
+          hash
+          height
+          transaction_messages {
+            type
+            content
+          }
+          coin_transfers {
+            from
+            to
+            amount
+            denom
           }
         }
       }
