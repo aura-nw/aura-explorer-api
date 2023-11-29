@@ -5,6 +5,7 @@ import { Expose } from 'class-transformer';
 
 export class UpdateIbcDto extends PartialType(CreateIbcDto) {
   @Expose()
+  @ApiProperty()
   id: number;
 
   @Expose()

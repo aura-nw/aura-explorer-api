@@ -10,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -217,7 +218,7 @@ export class Cw20TokenController {
     return await this.cw20TokenService.create(createIbcDto, IbcResponseDto);
   }
 
-  @Patch('admin/ibc/:id')
+  @Put('admin/ibc/:id')
   @ApiUnauthorizedResponse({
     description: MESSAGES.ERROR.NOT_PERMISSION,
   })
