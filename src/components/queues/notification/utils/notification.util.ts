@@ -307,44 +307,11 @@ export class NotificationUtil {
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
 
-    const coinInfo = envConfig?.chainConfig?.chain_info?.currencies[0];
     const coinConfig = envConfig?.chainConfig?.coins;
     const listTx = [];
     data?.forEach((evt) => {
-      const toAddress = evt.event_attributes.find(
-        (k) => k.composite_key === 'transfer.recipient',
-      )?.value;
-      const fromAddress = evt.event_attributes.find(
-        (k) => k.composite_key === 'transfer.sender',
-      )?.value;
-
-      const arrAmount = evt.event_attributes
-        ?.find((k) => k.composite_key === 'transfer.amount')
-        ?.value?.split(', ');
-
-      arrAmount?.forEach((rawAmount) => {
-        const value = rawAmount?.match(/\d+/g);
-        const amountTemp = value?.length > 0 ? value[0] : 0;
-        let amount;
-        let image = '';
-        let denom = coinInfo.coinDenom;
-        if (rawAmount?.indexOf('ibc') > -1) {
-          const dataIBC = TransactionHelper.getDataIBC(rawAmount, coinConfig);
-          amount = TransactionHelper.balanceOf(
-            Number(amountTemp) || 0,
-            dataIBC['decimal'] || 6,
-          );
-          image = dataIBC['logo'] || '';
-          denom =
-            dataIBC['display'].indexOf('ibc') === -1
-              ? 'ibc/' + dataIBC['display']
-              : dataIBC['display'];
-        } else {
-          amount = TransactionHelper.balanceOf(
-            Number(amountTemp) || 0,
-            coinInfo.coinDecimals,
-          );
-        }
+      evt.coin_transfer?.forEach((coin) => {
+        const dataIBC = coinConfig.find((k) => k.denom === coin.denom) || {};
         listTx.push({
           tx_hash: evt.transaction.hash,
           height: evt.transaction.height,
@@ -352,11 +319,11 @@ export class NotificationUtil {
             evt.transaction.transaction_messages?.length > 0
               ? evt.transaction.transaction_messages[0]
               : null,
-          from: fromAddress,
-          to: toAddress,
-          amount,
-          image,
-          denom,
+          from: coin.from,
+          to: coin.to,
+          amount: coin.amount,
+          image: dataIBC['logo'] || '',
+          denom: coin.denom,
         });
       });
     });
