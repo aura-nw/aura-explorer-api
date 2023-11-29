@@ -186,6 +186,10 @@ export class Cw20TokenService {
           { denom: query.contractAddress },
         ],
       });
+    } else if (query.onlyIbc === 'true') {
+      return await this.tokenMarketsRepository.find({
+        where: { denom: Not(IsNull()) },
+      });
     } else {
       return await this.tokenMarketsRepository.find();
     }

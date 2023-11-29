@@ -11,6 +11,7 @@ import { AccountService } from '../account/services/account.service';
 import { TokenMarketsRepository } from './repositories/token-markets.repository';
 import { UserModule } from '../user/user.module';
 import { IsUniqueConstraint } from './validators/is-unique.validator';
+import { IsUniqueManyColumnConstraint } from './validators/is-unique-many-column.validator';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { IsUniqueConstraint } from './validators/is-unique.validator';
     RedisUtil,
     AccountService,
     IsUniqueConstraint,
+    IsUniqueManyColumnConstraint,
   ],
   controllers: [Cw20TokenController],
   exports: [Cw20TokenService],
