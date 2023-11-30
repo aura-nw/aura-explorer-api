@@ -327,7 +327,10 @@ export class NotificationUtil {
               : null,
           from: coin.from,
           to: coin.to,
-          amount: coin.amount,
+          amount: TransactionHelper.balanceOf(
+            Number(coin.amount) || 0,
+            dataIBC['decimal'] || coinInfo.coinDecimals,
+          ),
           image: dataIBC['logo'] || '',
           denom: denom || coinInfo.coinDenom,
         });

@@ -274,7 +274,7 @@ export class NotificationProcessor {
             [...coinTransferSent, ...coinTransferReceived],
             notificationTokens,
             currentTxHeight,
-            response?.coin_transfer[0]?.transaction,
+            response?.coin_transfer[0],
           );
         }
       }
