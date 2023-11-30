@@ -8,7 +8,6 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   Post,
   Put,
   Query,
@@ -46,6 +45,15 @@ import { CreateIbcDto } from '../dtos/create-ibc.dto';
 import { UpdateIbcDto } from '../dtos/update-ibc.dto';
 import { IbcResponseDto } from '../dtos/ibc-response.dto';
 
+@ApiUnauthorizedResponse({
+  description: MESSAGES.ERROR.NOT_PERMISSION,
+})
+@ApiForbiddenResponse({
+  description: MESSAGES.ERROR.NOT_PERMISSION,
+})
+@ApiBadRequestResponse({
+  description: MESSAGES.ERROR.BAD_REQUEST,
+})
 @ApiTags('cw20-tokens')
 @Controller()
 export class Cw20TokenController {
@@ -124,15 +132,6 @@ export class Cw20TokenController {
   }
 
   @Post('admin/cw20-tokens')
-  @ApiUnauthorizedResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiForbiddenResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiBadRequestResponse({
-    description: MESSAGES.ERROR.BAD_REQUEST,
-  })
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
@@ -149,16 +148,7 @@ export class Cw20TokenController {
     );
   }
 
-  @Patch('admin/cw20-tokens/:id')
-  @ApiUnauthorizedResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiForbiddenResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiBadRequestResponse({
-    description: MESSAGES.ERROR.BAD_REQUEST,
-  })
+  @Put('admin/cw20-tokens/:id')
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
@@ -178,15 +168,6 @@ export class Cw20TokenController {
   }
 
   @Delete('admin/tokens-market/:id')
-  @ApiUnauthorizedResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiForbiddenResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiBadRequestResponse({
-    description: MESSAGES.ERROR.BAD_REQUEST,
-  })
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
@@ -196,15 +177,6 @@ export class Cw20TokenController {
   }
 
   @Post('admin/ibc')
-  @ApiUnauthorizedResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiForbiddenResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiBadRequestResponse({
-    description: MESSAGES.ERROR.BAD_REQUEST,
-  })
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
@@ -219,15 +191,6 @@ export class Cw20TokenController {
   }
 
   @Put('admin/ibc/:id')
-  @ApiUnauthorizedResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiForbiddenResponse({
-    description: MESSAGES.ERROR.NOT_PERMISSION,
-  })
-  @ApiBadRequestResponse({
-    description: MESSAGES.ERROR.BAD_REQUEST,
-  })
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(USER_ROLE.ADMIN)
   @ApiBearerAuth()
