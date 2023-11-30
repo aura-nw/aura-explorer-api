@@ -215,7 +215,6 @@ export class NotificationProcessor {
           query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
           variables: {
             heightGT: currentTxHeight.point,
-            compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
           },
           operationName:
             INDEXER_API_V2.OPERATION_NAME.COIN_TRANSFER_NOTIFICATION,
@@ -275,7 +274,7 @@ export class NotificationProcessor {
             [...coinTransferSent, ...coinTransferReceived],
             notificationTokens,
             currentTxHeight,
-            response?.coin_transfer[0]?.transaction,
+            response?.coin_transfer[0],
           );
         }
       }
