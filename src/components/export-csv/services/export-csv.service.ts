@@ -127,8 +127,8 @@ export class ExportCsvService {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
-        address: payload.address,
+        from: payload.address,
+        to: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
