@@ -7,4 +7,11 @@ export class Cw20TokenMarketParamsDto {
     default: '',
   })
   contractAddress: string;
+
+  @ApiPropertyOptional({
+    description: `Optional get ibc token or all.`,
+    type: Boolean,
+    default: false,
+  })
+  onlyIbc: string;
 }
