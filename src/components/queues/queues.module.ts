@@ -26,8 +26,8 @@ import { NotificationModule } from './notification/notification.module';
       inject: [ConfigService],
     }),
     SendMailModule,
-    // TokenModule,
-    // CW4973QueueModule,
+    TokenModule,
+    CW4973QueueModule,
     NotificationModule,
   ],
 })
