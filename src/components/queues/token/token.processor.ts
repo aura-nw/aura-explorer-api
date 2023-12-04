@@ -3,24 +3,20 @@ import { TokenMarketsRepository } from '../../cw20-token/repositories/token-mark
 import { Logger } from '@nestjs/common';
 import { Queue } from 'bull';
 import {
-  AURA_INFO,
   COINGECKO_API,
   COIN_MARKET_CAP,
   COIN_MARKET_CAP_API,
-  GECKOTERMINAL_API,
   QUEUES,
   TokenMarkets,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
-import { InfluxDBClient } from '../../metric/services/influxdb-client';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { In } from 'typeorm';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor {
   private readonly logger = new Logger(TokenProcessor.name);
-  private influxDbClient: InfluxDBClient;
   private appParams: any;
 
   constructor(
@@ -32,74 +28,16 @@ export class TokenProcessor {
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
-
-    // this.tokenQueue.add(
-    //   QUEUES.TOKEN.JOB_SYNC_TOKEN_PRICE,
-    //   {},
-    //   {
-    //     repeat: { cron: this.appParams.priceTimeSync },
-    //   },
-    // );
-
-    // this.tokenQueue.add(
-    //   QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
-    //   {},
-    //   {
-    //     repeat: { cron: this.appParams.priceTimeSync },
-    //   },
-    // );
-
-    // Connect influxdb
-    // this.connectInfluxdb();
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
+      {},
+      {
+        repeat: { cron: this.appParams.priceTimeSync },
+      },
+    );
   }
 
-  // @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_PRICE)
-  async syncAuraTokenPrice(): Promise<void> {
-    try {
-      const geckoTerminal = this.appParams.geckoterminal;
-
-      const token = await this.tokenMarketsRepository.findOne({
-        where: {
-          coin_id: AURA_INFO.COIN_ID,
-        },
-      });
-
-      const para = `${util.format(
-        GECKOTERMINAL_API.GET_TOKEN_PRICE,
-        geckoTerminal.pool,
-        geckoTerminal.coinAddress,
-      )}`;
-
-      const response = await this.serviceUtil.getDataAPI(
-        geckoTerminal.api,
-        para,
-        '',
-      );
-      if (response?.data?.attributes && token) {
-        const attributes = response.data.attributes;
-        token.current_price = attributes?.base_token_price_usd;
-        token.fully_diluted_valuation = attributes?.fdv_usd;
-        token.market_cap = attributes?.market_cap_usd;
-        token.price_change_percentage_24h =
-          attributes?.price_change_percentage.h24;
-        token.total_volume = attributes?.volume_usd.h24;
-
-        await this.tokenMarketsRepository.save(token);
-
-        const coinMarkets: TokenMarkets[] = [];
-        coinMarkets.push(token);
-        this.logger.log(`============== Write data to Influxdb ==============`);
-        await this.influxDbClient.writeBlockTokenPriceAndVolume(coinMarkets);
-        this.logger.log(
-          `============== Write data to Influxdb  successfully ==============`,
-        );
-      }
-    } catch (err) {
-      this.logger.error(`sync-aura-token has error: ${err.message}`, err.stack);
-    }
-  }
-
-  // @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
+  @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
   async syncCW20TokenPrice(): Promise<void> {
     const numberCW20Tokens =
       await this.tokenMarketsRepository.countCw20TokensHavingCoinId();
@@ -121,28 +59,6 @@ export class TokenProcessor {
     }
   }
 
-  connectInfluxdb() {
-    this.logger.log(
-      `============== call connectInfluxdb method ==============`,
-    );
-    try {
-      this.influxDbClient = new InfluxDBClient(
-        this.appParams.influxdb.bucket,
-        this.appParams.influxdb.org,
-        this.appParams.influxdb.url,
-        this.appParams.influxdb.token,
-      );
-      if (this.influxDbClient) {
-        this.influxDbClient.initWriteApi();
-      }
-    } catch (err) {
-      this.logger.log(
-        `call connectInfluxdb method has error: ${err.message}`,
-        err.stack,
-      );
-    }
-  }
-
   async handleSyncPriceVolume(listTokens: string[]): Promise<void> {
     try {
       if (this.appParams.priceHostSync === COIN_MARKET_CAP) {
@@ -152,11 +68,6 @@ export class TokenProcessor {
       }
     } catch (err) {
       this.logger.log(`sync-price-volume has error: ${err.message}`, err.stack);
-      // Reconnect influxDb
-      const errorCode = err?.code || '';
-      if (errorCode === 'ECONNREFUSED' || errorCode === 'ETIMEDOUT') {
-        this.connectInfluxdb();
-      }
     }
   }
 
@@ -202,12 +113,6 @@ export class TokenProcessor {
     }
     if (coinMarkets.length > 0) {
       await this.tokenMarketsRepository.save(coinMarkets);
-
-      this.logger.log(`============== Write data to Influxdb ==============`);
-      await this.influxDbClient.writeBlockTokenPriceAndVolume(coinMarkets);
-      this.logger.log(
-        `============== Write data to Influxdb  successfully ==============`,
-      );
     }
   }
 
@@ -244,12 +149,6 @@ export class TokenProcessor {
     }
     if (coinMarkets.length > 0) {
       await this.tokenMarketsRepository.save(coinMarkets);
-
-      this.logger.log(`============== Write data to Influxdb ==============`);
-      await this.influxDbClient.writeBlockTokenPriceAndVolume(coinMarkets);
-      this.logger.log(
-        `============== Write data to Influxdb  successfully ==============`,
-      );
     }
   }
 

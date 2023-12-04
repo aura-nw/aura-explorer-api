@@ -15,12 +15,6 @@ export default () => ({
     rpc: process.env.RPC,
     api: process.env.API,
   },
-  influxdb: {
-    token: process.env.INFLUXDB_TOKEN,
-    url: process.env.INFLUXDB_URL,
-    bucket: process.env.INFLUXDB_BUCKET,
-    org: process.env.INFLUXDB_ORG,
-  },
   cacheManagement: {
     useRedis: process.env.USE_REDIS,
     ttl: process.env.TTL,
@@ -84,12 +78,6 @@ export default () => ({
   },
   priceHostSync: process.env.PRICE_HOST_SYNC || 'COINGECKO',
   priceTimeSync: process.env.PRICE_TIME_SYNC || '0 */3 * * * *',
-  geckoterminal: {
-    api: process.env.GECKOTERMINAL_API,
-    pool: process.env.GECKOTERMINAL_POOL || 'bsc',
-    coinAddress:
-      process.env.COIN_ADDRESS || '0x9f1a332c0657ce3f90666ad38dbe2e92793abf5c',
-  },
   coingecko: {
     api: process.env.COINGECKO_API,
     maxRequest: Number(process.env.MAX_REQUEST) || 250,
