@@ -17,11 +17,6 @@ export * from './dtos/pagination-params.dto';
 export * from './auth/auth-token-output.dto';
 export * from './auth/constants/role.constant';
 
-export * from './entities/block.entity';
-export * from './entities/transaction.entity';
 export * from './entities/sync-status.entity';
-export * from './entities/validator.entity';
-export * from './entities/delegation.entity';
-export * from './entities/missed-block.entity';
 export * from './entities/token-markets.entity';
 export * from './entities/soulbound-token.entity';
