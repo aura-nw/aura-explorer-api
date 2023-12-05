@@ -112,8 +112,8 @@ export enum CodeTransaction {
 
 export enum TYPE_EXPORT {
   ExecutedTxs = 'executed',
-  AuraTxs = 'coin-transfer',
-  FtsTxs = 'token-transfer',
+  AuraTxs = 'native-transfer',
+  FtsTxs = 'cw20-transfer',
   NftTxs = 'nft-transfer',
 }
 
