@@ -70,10 +70,17 @@ export class TransactionHelper {
           element.coin_transfers?.forEach((coin) => {
             const dataIBC =
               coinConfig.find((k) => k.denom === coin.denom) || {};
-            const denom =
+            // Get denom ibc in config
+            const denomIBC =
               dataIBC['display']?.indexOf('ibc') === -1
                 ? 'ibc/' + dataIBC['display']
                 : dataIBC['display'];
+            // Get denom ibc not find in config or denom is native
+            const denom =
+              coin.denom?.indexOf('ibc') === -1
+                ? coinInfo.coinDenom
+                : coin.denom;
+
             if (coin.to === currentAddress || coin.from === currentAddress) {
               const { type, action } = this.getTypeTx(element);
               const result = {
@@ -84,9 +91,10 @@ export class TransactionHelper {
                   Number(coin.amount) || 0,
                   dataIBC['decimal'] || coinInfo.coinDecimals,
                 ),
-                denom: denom || coinInfo.coinDenom,
+                denom: denomIBC || denom,
                 action,
-                denomOrigin: dataIBC['denom'],
+                denomOrigin:
+                  coin.denom?.indexOf('ibc') === -1 ? '' : coin.denom,
                 amountTemp: coin.amount,
                 decimal: dataIBC['decimal'] || coinInfo.coinDecimals,
               };
