@@ -122,7 +122,7 @@ export class ExportCsvService {
   }
 
   private async coinTransfer(payload: ExportCsvParamDto, userId) {
-    const fileName = `export-account-coin-transfer-${payload.address}.csv`;
+    const fileName = `export-account-native-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
       variables: {
@@ -208,7 +208,7 @@ export class ExportCsvService {
   }
 
   private async tokenTransfer(payload: ExportCsvParamDto, userId) {
-    const fileName = `export-account-token-transfer-${payload.address}.csv`;
+    const fileName = `export-account-cw20-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
       variables: {
