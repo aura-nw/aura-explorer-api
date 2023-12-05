@@ -402,6 +402,12 @@ export class ExportCsvService {
       const response = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
       )?.data[this.chainDB];
+
+      // break loop when horoscope return no data
+      if (!response) {
+        break;
+      }
+
       if (response?.transaction.length < QUERY_LIMIT_RECORD) {
         next = false;
       } else {
