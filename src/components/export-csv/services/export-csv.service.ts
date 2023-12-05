@@ -122,13 +122,13 @@ export class ExportCsvService {
   }
 
   private async coinTransfer(payload: ExportCsvParamDto, userId) {
-    const fileName = `export-account-coin-transfer-${payload.address}.csv`;
+    const fileName = `export-account-native-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        compositeKeyIn: ['transfer.sender', 'transfer.recipient'],
-        address: payload.address,
+        from: payload.address,
+        to: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -208,7 +208,7 @@ export class ExportCsvService {
   }
 
   private async tokenTransfer(payload: ExportCsvParamDto, userId) {
-    const fileName = `export-account-token-transfer-${payload.address}.csv`;
+    const fileName = `export-account-cw20-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
       variables: {
@@ -402,6 +402,12 @@ export class ExportCsvService {
       const response = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
       )?.data[this.chainDB];
+
+      // break loop when horoscope return no data
+      if (!response) {
+        break;
+      }
+
       if (response?.transaction.length < QUERY_LIMIT_RECORD) {
         next = false;
       } else {
