@@ -67,64 +67,38 @@ export class TransactionHelper {
           break;
         case TYPE_EXPORT.AuraTxs:
           const arrTemp = [];
-          element?.events?.forEach((data) => {
-            toAddress = data.event_attributes.find(
-              (k) => k.composite_key === 'transfer.recipient',
-            )?.value;
-            fromAddress = data.event_attributes.find(
-              (k) => k.composite_key === 'transfer.sender',
-            )?.value;
-            if (
-              toAddress === currentAddress ||
-              fromAddress === currentAddress
-            ) {
+          element.coin_transfers?.forEach((coin) => {
+            const dataIBC =
+              coinConfig.find((k) => k.denom === coin.denom) || {};
+            // Get denom ibc in config
+            const denomIBC =
+              dataIBC['display']?.indexOf('ibc') === -1
+                ? 'ibc/' + dataIBC['display']
+                : dataIBC['display'];
+            // Get denom ibc not find in config or denom is native
+            const denom =
+              coin.denom?.indexOf('ibc') === -1
+                ? coinInfo.coinDenom
+                : coin.denom;
+
+            if (coin.to === currentAddress || coin.from === currentAddress) {
               const { type, action } = this.getTypeTx(element);
-              toAddress = data.event_attributes?.find(
-                (k) => k.composite_key === 'transfer.recipient',
-              )?.value;
-              fromAddress = data.event_attributes?.find(
-                (k) => k.composite_key === 'transfer.sender',
-              )?.value;
-              const arrAmount = data.event_attributes
-                ?.find((k) => k.composite_key === 'transfer.amount')
-                ?.value?.split(',');
-              arrAmount?.forEach((rawAmount) => {
-                const value = rawAmount?.match(/\d+/g);
-                const amountTemp = value?.length > 0 ? value[0] : 0;
-                let amount;
-                let denom = coinInfo.coinDenom;
-                let denomOrigin;
-                const decimal = coinInfo.coinDecimals;
-                if (rawAmount?.indexOf('ibc') > -1) {
-                  const dataIBC = this.getDataIBC(rawAmount, coinConfig);
-                  amount = this.balanceOf(
-                    Number(amountTemp) || 0,
-                    dataIBC['decimal'] || 6,
-                  );
-                  denom =
-                    dataIBC['display'].indexOf('ibc') === -1
-                      ? 'ibc/' + dataIBC['display']
-                      : dataIBC['display'];
-                  denomOrigin = dataIBC['denom'];
-                } else {
-                  amount = this.balanceOf(
-                    Number(amountTemp) || 0,
-                    coinInfo.coinDecimals,
-                  );
-                }
-                const result = {
-                  type,
-                  toAddress,
-                  fromAddress,
-                  amount,
-                  denom,
-                  action,
-                  denomOrigin,
-                  amountTemp,
-                  decimal,
-                };
-                arrTemp.push(result);
-              });
+              const result = {
+                type,
+                toAddress: coin.to,
+                fromAddress: coin.from,
+                amount: this.balanceOf(
+                  Number(coin.amount) || 0,
+                  dataIBC['decimal'] || coinInfo.coinDecimals,
+                ),
+                denom: denomIBC || denom,
+                action,
+                denomOrigin:
+                  coin.denom?.indexOf('ibc') === -1 ? '' : coin.denom,
+                amountTemp: coin.amount,
+                decimal: dataIBC['decimal'] || coinInfo.coinDecimals,
+              };
+              arrTemp.push(result);
             }
           });
           arrEvent = arrTemp;
