@@ -20,8 +20,10 @@ export class TransactionHelper {
   ) {
     const txs = _.get(data, 'transaction')?.map((element) => {
       const code = _.get(element, 'code');
-      const tx_hash = _.get(element, 'hash');
-      const lstTypeTemp = _.get(element, 'transaction_messages');
+      const tx_hash = _.get(element, 'hash') || _.get(element, 'tx.hash');
+      const lstTypeTemp =
+        _.get(element, 'transaction_messages') ||
+        _.get(element, 'tx.transaction_messages');
       let type;
       if (lstTypeTemp) {
         if (lstTypeTemp[0]['type'] === TRANSACTION_TYPE_ENUM.GetReward) {
@@ -51,7 +53,8 @@ export class TransactionHelper {
         coinInfo.coinDecimals,
       ).toFixed(coinInfo.coinDecimals);
       const height = _.get(element, 'height');
-      const timestamp = _.get(element, 'timestamp');
+      const timestamp =
+        _.get(element, 'timestamp') || _.get(element, 'tx.timestamp');
       const limit = 5;
       let fromAddress;
       let toAddress;
@@ -104,43 +107,22 @@ export class TransactionHelper {
           arrEvent = arrTemp;
           break;
         case TYPE_EXPORT.FtsTxs:
-          arrEvent = _.get(element, 'events')?.map((item) => {
-            const { type, action } = this.getTypeTx(element);
-            const fromAddress =
-              _.get(item, 'smart_contract_events[0].cw20_activities[0].from') ||
-              NULL_ADDRESS;
-            const toAddress =
-              _.get(item, 'smart_contract_events[0].cw20_activities[0].to') ||
-              NULL_ADDRESS;
-            const denom = _.get(
-              item,
-              'smart_contract_events[0].smart_contract.cw20_contract.symbol',
-            );
-            const amountTemp = _.get(
-              item,
-              'smart_contract_events[0].cw20_activities[0].amount',
-            );
-            const decimal = _.get(
-              item,
-              'smart_contract_events[0].smart_contract.cw20_contract.decimal',
-            );
-            const amount = this.balanceOf(amountTemp || 0, +decimal);
-            const contractAddress = _.get(
-              item,
-              'smart_contract_events[0].smart_contract.address',
-            );
-            return {
-              type,
-              fromAddress,
-              toAddress,
-              amount,
-              denom,
-              contractAddress,
-              action,
-              amountTemp,
-              decimal,
-            };
-          });
+          const typeAndAction = this.getTypeTx(element.tx);
+          const decimal = element.cw20_contract?.decimal;
+
+          arrEvent = [
+            {
+              type: typeAndAction.type,
+              fromAddress: element.from || NULL_ADDRESS,
+              toAddress: element.to || NULL_ADDRESS,
+              amount: this.balanceOf(element.amount || 0, +decimal),
+              denom: element.cw20_contract?.symbol,
+              contractAddress: element.cw20_contract?.smart_contract?.address,
+              action: typeAndAction.action,
+              amountTemp: element.amount,
+              decimal: element.cw20_contract?.decimal,
+            },
+          ];
           break;
         case TYPE_EXPORT.NftTxs:
           arrEvent = _.get(element, 'events')?.map((item) => {
