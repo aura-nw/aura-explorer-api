@@ -120,45 +120,22 @@ export class TransactionHelper {
               contractAddress: element.cw20_contract?.smart_contract?.address,
               action: typeAndAction.action,
               amountTemp: element.amount,
-              decimal: element.cw20_contract?.decimal,
+              decimal,
             },
           ];
           break;
         case TYPE_EXPORT.NftTxs:
-          arrEvent = _.get(element, 'events')?.map((item) => {
-            const { type, action } = this.getTypeTx(element);
-            const fromAddress =
-              _.get(item, 'smart_contract_events[0].cw721_activity.from') ||
-              NULL_ADDRESS;
-            let toAddress =
-              _.get(item, 'smart_contract_events[0].cw721_activity.to') ||
-              _.get(
-                item,
-                'smart_contract_events[0].cw721_activity.cw721_contract.smart_contract.address',
-              ) ||
-              NULL_ADDRESS;
-            if (action === 'burn') {
-              toAddress = NULL_ADDRESS;
-            }
+          const nftTypeAndAction = this.getTypeTx(element.tx);
 
-            const contractAddress = _.get(
-              item,
-              'smart_contract_events[0].cw721_activity.cw721_contract.smart_contract.address',
-            );
-            const tokenId = _.get(
-              item,
-              'smart_contract_events[0].cw721_activity.cw721_token.token_id',
-            );
-            const eventAttr = element.event_attribute_index;
-            return {
-              type,
-              fromAddress,
-              toAddress,
-              tokenId,
-              contractAddress,
-              eventAttr,
-            };
-          });
+          arrEvent = [
+            {
+              type: nftTypeAndAction.type,
+              fromAddress: element.from || NULL_ADDRESS,
+              toAddress: element.to || NULL_ADDRESS,
+              tokenId: element.cw721_token.token_id,
+              contractAddress: element.cw721_contract?.smart_contract?.address,
+            },
+          ];
           break;
       }
 
@@ -174,7 +151,6 @@ export class TransactionHelper {
         tokenId = arrEvent[0]?.tokenId;
         contractAddress = arrEvent[0]?.contractAddress;
         action = arrEvent[0]?.action;
-        eventAttr = arrEvent[0]?.eventAttr;
       }
 
       return {
@@ -194,7 +170,6 @@ export class TransactionHelper {
         arrEvent,
         limit,
         action,
-        eventAttr,
         lstTypeTemp,
         lstType,
       };
