@@ -325,7 +325,6 @@ export class ExportCsvService {
         endTime:
           payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
         actionIn: ['mint', 'burn', 'transfer_nft', 'send_nft'],
-        neqCw4973: 'crates.io:cw4973',
       },
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
     };

@@ -3,6 +3,7 @@ import { BaseEntityIncrementId } from './base/base.entity';
 
 @Entity('token_markets')
 @Unique(['contract_address'])
+@Index(['chain_id', 'denom'], { unique: true })
 export class TokenMarkets extends BaseEntityIncrementId {
   @Column({ name: 'contract_address' })
   @Index()
@@ -10,10 +11,6 @@ export class TokenMarkets extends BaseEntityIncrementId {
 
   @Column({ name: 'coin_id' })
   coin_id: string;
-
-  @Column({ name: 'code_id' })
-  @Index({ unique: false })
-  code_id: number;
 
   @Column()
   symbol: string;
@@ -108,4 +105,7 @@ export class TokenMarkets extends BaseEntityIncrementId {
 
   @Column({ name: 'decimal', default: 0 })
   decimal: number;
+
+  @Column({ name: 'chain_id', nullable: true })
+  chain_id: string;
 }
