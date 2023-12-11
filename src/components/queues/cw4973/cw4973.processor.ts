@@ -51,18 +51,18 @@ export class CW4973Processor {
     );
     this.indexerChainId = this.configService.get('indexer.chainId');
 
-    // this.cw4973Queue.add(
-    //   QUEUES.CW4973.JOBS.SYNC_4973_STATUS,
-    //   {},
-    //   {
-    //     repeat: { cron: CronExpression.EVERY_10_SECONDS },
-    //   },
-    // );
+    this.cw4973Queue.add(
+      QUEUES.CW4973.JOBS.SYNC_4973_STATUS,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_10_SECONDS },
+      },
+    );
 
     this.chainDB = configService.get('indexerV2.chainDB');
   }
 
-  // @Process(QUEUES.CW4973.JOBS.SYNC_4973_STATUS)
+  @Process(QUEUES.CW4973.JOBS.SYNC_4973_STATUS)
   async handleJobSyncCw4973Status() {
     const currentCw4973Height = await this.syncPointRepos.findOne({
       where: {
