@@ -20,6 +20,8 @@ import {
 import { ExportCsvParamDto } from '../dtos/export-csv-param.dto';
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { EncryptionService } from '../../encryption/encryption.service';
+import { IsNull, Not } from 'typeorm';
+import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 
 @Injectable()
 export class ExportCsvService {
@@ -32,6 +34,7 @@ export class ExportCsvService {
     private httpService: HttpService,
     private privateNameTagRepository: PrivateNameTagRepository,
     private encryptionService: EncryptionService,
+    private tokenMarketsRepository: TokenMarketsRepository,
   ) {
     this.logger.setContext(ExportCsvService.name);
     this.config = appConfig.default();
@@ -96,12 +99,16 @@ export class ExportCsvService {
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
 
+    const coinConfig = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()) },
+    });
+
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig?.coins,
+      coinConfig,
     );
 
     const fields = TX_HEADER.EXECUTED;
@@ -153,12 +160,16 @@ export class ExportCsvService {
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
 
+    const coinConfig = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()) },
+    });
+
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig?.coins,
+      coinConfig,
     );
 
     let lstPrivateName;
@@ -248,12 +259,16 @@ export class ExportCsvService {
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
 
+    const coinConfig = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()) },
+    });
+
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig?.coins,
+      coinConfig,
     );
 
     let lstPrivateName;
@@ -335,12 +350,16 @@ export class ExportCsvService {
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
 
+    const coinConfig = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()) },
+    });
+
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       envConfig?.chainConfig?.chain_info?.currencies[0],
       payload.dataType,
       payload.address,
-      envConfig?.chainConfig?.coins,
+      coinConfig,
     );
 
     let lstPrivateName;
