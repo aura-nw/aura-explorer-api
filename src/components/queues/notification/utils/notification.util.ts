@@ -321,9 +321,9 @@ export class NotificationUtil {
         const dataIBC = coinConfig.find((k) => k.denom === coin.denom) || {};
         // Get denom ibc in config
         const denomIBC =
-          dataIBC['display']?.indexOf('ibc') === -1
-            ? 'ibc/' + dataIBC['display']
-            : dataIBC['display'];
+          dataIBC['symbol']?.indexOf('ibc') === -1
+            ? 'ibc/' + dataIBC['symbol']
+            : dataIBC['symbol'];
         // Get denom ibc not find in config or denom is native
         const denom =
           coin.denom?.indexOf('ibc') === -1 ? coinInfo.coinDenom : coin.denom;
