@@ -62,7 +62,6 @@ export class TransactionHelper {
       let tokenId;
       let contractAddress;
       let action;
-      let eventAttr;
 
       switch (modeQuery) {
         case TYPE_EXPORT.ExecutedTxs:

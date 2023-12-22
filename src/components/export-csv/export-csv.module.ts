@@ -10,6 +10,7 @@ import { PrivateNameTagRepository } from '../private-name-tag/repositories/priva
 import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { UserModule } from '../user/user.module';
+import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
 
 @Module({
   imports: [
@@ -17,7 +18,11 @@ import { UserModule } from '../user/user.module';
     HttpModule,
     ConfigModule,
     UserModule,
-    TypeOrmModule.forFeature([PrivateNameTagRepository, CipherKey]),
+    TypeOrmModule.forFeature([
+      PrivateNameTagRepository,
+      CipherKey,
+      TokenMarketsRepository,
+    ]),
   ],
   providers: [ExportCsvService, EncryptionService, ServiceUtil],
   controllers: [ExportCsvController],
