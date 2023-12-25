@@ -17,6 +17,7 @@ import { UserActivity } from '../../../shared/entities/user-activity.entity';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
 import { User } from '../../../shared/entities/user.entity';
+import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { User } from '../../../shared/entities/user.entity';
       PublicNameTagRepository,
       NotificationTokenRepository,
       NotificationRepository,
+      TokenMarketsRepository,
       SyncPointRepository,
       SyncStatus,
       CipherKey,
