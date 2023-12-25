@@ -62,7 +62,6 @@ export class TransactionHelper {
       let tokenId;
       let contractAddress;
       let action;
-      let eventAttr;
 
       switch (modeQuery) {
         case TYPE_EXPORT.ExecutedTxs:
@@ -75,9 +74,9 @@ export class TransactionHelper {
               coinConfig.find((k) => k.denom === coin.denom) || {};
             // Get denom ibc in config
             const denomIBC =
-              dataIBC['display']?.indexOf('ibc') === -1
-                ? 'ibc/' + dataIBC['display']
-                : dataIBC['display'];
+              dataIBC['symbol']?.indexOf('ibc') === -1
+                ? 'ibc/' + dataIBC['symbol']
+                : dataIBC['symbol'];
             // Get denom ibc not find in config or denom is native
             const denom =
               coin.denom?.indexOf('ibc') === -1
@@ -241,28 +240,6 @@ export class TransactionHelper {
     if (value?.length > 5) {
       result += ', ...';
     }
-    return result;
-  }
-
-  static getDataIBC(value, coinConfig) {
-    let result = {};
-    let temp;
-    if (value.indexOf('ibc') >= 0) {
-      try {
-        if (!value.startsWith('ibc')) {
-          const match = value?.match(/\d+/g);
-          const temp = match?.length > 0 ? match[0] : 0;
-          value = value?.replace(temp, '');
-        }
-      } catch {}
-      result = { display: value, decimals: 6 };
-      temp = value.slice(value.indexOf('ibc'));
-      result = coinConfig.find((k) => k.denom === temp) || {};
-      result['display'] = result['display'] || value;
-    } else {
-      result = { display: temp, decimals: 6 };
-    }
-    result['denom'] = result['denom'] || temp;
     return result;
   }
 }

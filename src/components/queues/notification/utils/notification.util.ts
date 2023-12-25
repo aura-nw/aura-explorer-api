@@ -11,11 +11,16 @@ import { TransactionHelper } from '../../../../shared/helpers/transaction.helper
 import { NOTIFICATION } from '../../../../shared';
 import { WatchList } from '../../../../shared/entities/watch-list.entity';
 import { TRANSACTION_TYPE_ENUM } from '../../../../shared/constants/transaction';
+import { TokenMarketsRepository } from '../../../cw20-token/repositories/token-markets.repository';
+import { IsNull, Not } from 'typeorm';
 
 @Injectable()
 export class NotificationUtil {
   private config;
-  constructor(private httpService: HttpService) {
+  constructor(
+    private httpService: HttpService,
+    private tokenMarketsRepository: TokenMarketsRepository,
+  ) {
     this.config = appConfig.default();
   }
 
@@ -306,17 +311,22 @@ export class NotificationUtil {
     const envConfig = await lastValueFrom(
       this.httpService.get(this.config.configUrl),
     ).then((rs) => rs.data);
-
-    const coinConfig = envConfig?.chainConfig?.coins;
+    const coinConfig = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()) },
+    });
     const coinInfo = envConfig?.chainConfig?.chain_info?.currencies[0];
     const listTx = [];
     data?.forEach((tx) => {
       tx.coin_transfers?.forEach((coin) => {
         const dataIBC = coinConfig.find((k) => k.denom === coin.denom) || {};
+        // Get denom ibc in config
+        const denomIBC =
+          dataIBC['symbol']?.indexOf('ibc') === -1
+            ? 'ibc/' + dataIBC['symbol']
+            : dataIBC['symbol'];
+        // Get denom ibc not find in config or denom is native
         const denom =
-          dataIBC['display']?.indexOf('ibc') === -1
-            ? 'ibc/' + dataIBC['display']
-            : dataIBC['display'];
+          coin.denom?.indexOf('ibc') === -1 ? coinInfo.coinDenom : coin.denom;
 
         listTx.push({
           tx_hash: tx.hash,
@@ -332,7 +342,7 @@ export class NotificationUtil {
             dataIBC['decimal'] || coinInfo.coinDecimals,
           ),
           image: dataIBC['logo'] || '',
-          denom: denom || coinInfo.coinDenom,
+          denom: denomIBC || denom,
         });
       });
     });
