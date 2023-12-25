@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsValidBench32Address } from '../../watch-list/validators/validate-address';
 import { IsUnique } from '../validators/is-unique.validator';
+import { IsObject, IsOptional, IsUrl } from 'class-validator';
 
 export class CreateCw20TokenDto {
   @ApiProperty()
@@ -27,9 +28,6 @@ export class CreateCw20TokenDto {
   verify_text: string;
 
   @ApiProperty()
-  denom: string;
-
-  @ApiProperty()
   description: string;
 
   @ApiProperty()
@@ -37,4 +35,21 @@ export class CreateCw20TokenDto {
 
   @ApiProperty()
   chain_id: string;
+
+  @ApiPropertyOptional()
+  @IsUrl()
+  @IsOptional()
+  official_site: string;
+
+  @ApiPropertyOptional({
+    example: {
+      github: 'https://github.com/...',
+      twitter: 'https://twitter.com/...',
+      facebook: 'https://facebook.com/...',
+      email: 'example@aura.network',
+    },
+  })
+  @IsOptional()
+  @IsObject()
+  social_profiles: JSON;
 }
