@@ -1,6 +1,6 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
-import { QUEUES, SharedModule, SyncStatus } from '../../../shared';
+import { QUEUES, SharedModule } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
@@ -29,7 +29,6 @@ import { User } from '../../../shared/entities/user.entity';
       NotificationTokenRepository,
       NotificationRepository,
       SyncPointRepository,
-      SyncStatus,
       CipherKey,
       UserActivity,
       User,
