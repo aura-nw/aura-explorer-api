@@ -8,7 +8,6 @@ import { AccountModule } from './components/account/account.module';
 import { ServiceUtil } from './shared/utils/service.util';
 import { ContractModule } from './components/contract/contract.module';
 import { Cw20TokenModule } from './components/cw20-token/cw20-token.module';
-import { MetricService } from './components/metric/services/metric.service';
 import { SoulboundTokenModule } from './components/soulbound-token/soulbound-token.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './components/mail/mail.module';
@@ -50,6 +49,6 @@ import { WatchListModule } from './components/watch-list/watch-list.module';
       inject: [ConfigService],
     }),
   ],
-  providers: [ServiceUtil, MetricService],
+  providers: [ServiceUtil],
 })
 export class AppModule {}

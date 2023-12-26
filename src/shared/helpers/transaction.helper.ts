@@ -20,8 +20,10 @@ export class TransactionHelper {
   ) {
     const txs = _.get(data, 'transaction')?.map((element) => {
       const code = _.get(element, 'code');
-      const tx_hash = _.get(element, 'hash');
-      const lstTypeTemp = _.get(element, 'transaction_messages');
+      const tx_hash = _.get(element, 'hash') || _.get(element, 'tx.hash');
+      const lstTypeTemp =
+        _.get(element, 'transaction_messages') ||
+        _.get(element, 'tx.transaction_messages');
       let type;
       if (lstTypeTemp) {
         if (lstTypeTemp[0]['type'] === TRANSACTION_TYPE_ENUM.GetReward) {
@@ -51,7 +53,8 @@ export class TransactionHelper {
         coinInfo.coinDecimals,
       ).toFixed(coinInfo.coinDecimals);
       const height = _.get(element, 'height');
-      const timestamp = _.get(element, 'timestamp');
+      const timestamp =
+        _.get(element, 'timestamp') || _.get(element, 'tx.timestamp');
       const limit = 5;
       let fromAddress;
       let toAddress;
@@ -59,7 +62,6 @@ export class TransactionHelper {
       let tokenId;
       let contractAddress;
       let action;
-      let eventAttr;
 
       switch (modeQuery) {
         case TYPE_EXPORT.ExecutedTxs:
@@ -72,9 +74,9 @@ export class TransactionHelper {
               coinConfig.find((k) => k.denom === coin.denom) || {};
             // Get denom ibc in config
             const denomIBC =
-              dataIBC['display']?.indexOf('ibc') === -1
-                ? 'ibc/' + dataIBC['display']
-                : dataIBC['display'];
+              dataIBC['symbol']?.indexOf('ibc') === -1
+                ? 'ibc/' + dataIBC['symbol']
+                : dataIBC['symbol'];
             // Get denom ibc not find in config or denom is native
             const denom =
               coin.denom?.indexOf('ibc') === -1
@@ -104,79 +106,35 @@ export class TransactionHelper {
           arrEvent = arrTemp;
           break;
         case TYPE_EXPORT.FtsTxs:
-          arrEvent = _.get(element, 'events')?.map((item) => {
-            const { type, action } = this.getTypeTx(element);
-            const fromAddress =
-              _.get(item, 'smart_contract_events[0].cw20_activities[0].from') ||
-              NULL_ADDRESS;
-            const toAddress =
-              _.get(item, 'smart_contract_events[0].cw20_activities[0].to') ||
-              NULL_ADDRESS;
-            const denom = _.get(
-              item,
-              'smart_contract_events[0].smart_contract.cw20_contract.symbol',
-            );
-            const amountTemp = _.get(
-              item,
-              'smart_contract_events[0].cw20_activities[0].amount',
-            );
-            const decimal = _.get(
-              item,
-              'smart_contract_events[0].smart_contract.cw20_contract.decimal',
-            );
-            const amount = this.balanceOf(amountTemp || 0, +decimal);
-            const contractAddress = _.get(
-              item,
-              'smart_contract_events[0].smart_contract.address',
-            );
-            return {
-              type,
-              fromAddress,
-              toAddress,
-              amount,
-              denom,
-              contractAddress,
-              action,
-              amountTemp,
+          const typeAndAction = this.getTypeTx(element.tx);
+          const decimal = element.cw20_contract?.decimal;
+
+          arrEvent = [
+            {
+              type: typeAndAction.type,
+              fromAddress: element.from || NULL_ADDRESS,
+              toAddress: element.to || NULL_ADDRESS,
+              amount: this.balanceOf(element.amount || 0, +decimal),
+              denom: element.cw20_contract?.symbol,
+              contractAddress: element.cw20_contract?.smart_contract?.address,
+              action: typeAndAction.action,
+              amountTemp: element.amount,
               decimal,
-            };
-          });
+            },
+          ];
           break;
         case TYPE_EXPORT.NftTxs:
-          arrEvent = _.get(element, 'events')?.map((item) => {
-            const { type, action } = this.getTypeTx(element);
-            const fromAddress =
-              _.get(item, 'smart_contract_events[0].cw721_activity.from') ||
-              NULL_ADDRESS;
-            let toAddress =
-              _.get(item, 'smart_contract_events[0].cw721_activity.to') ||
-              _.get(
-                item,
-                'smart_contract_events[0].cw721_activity.cw721_contract.smart_contract.address',
-              ) ||
-              NULL_ADDRESS;
-            if (action === 'burn') {
-              toAddress = NULL_ADDRESS;
-            }
+          const nftTypeAndAction = this.getTypeTx(element.tx);
 
-            const contractAddress = _.get(
-              item,
-              'smart_contract_events[0].cw721_activity.cw721_contract.smart_contract.address',
-            );
-            const tokenId = _.get(
-              item,
-              'smart_contract_events[0].cw721_activity.cw721_token.token_id',
-            );
-            const eventAttr = element.event_attribute_index;
-            return {
-              type,
-              fromAddress,
-              toAddress,
-              tokenId,
-              contractAddress,
-              eventAttr,
-            };
-          });
+          arrEvent = [
+            {
+              type: nftTypeAndAction.type,
+              fromAddress: element.from || NULL_ADDRESS,
+              toAddress: element.to || NULL_ADDRESS,
+              tokenId: element.cw721_token.token_id,
+              contractAddress: element.cw721_contract?.smart_contract?.address,
+            },
+          ];
           break;
       }
 
@@ -192,7 +150,6 @@ export class TransactionHelper {
         tokenId = arrEvent[0]?.tokenId;
         contractAddress = arrEvent[0]?.contractAddress;
         action = arrEvent[0]?.action;
-        eventAttr = arrEvent[0]?.eventAttr;
       }
 
       return {
@@ -212,7 +169,6 @@ export class TransactionHelper {
         arrEvent,
         limit,
         action,
-        eventAttr,
         lstTypeTemp,
         lstType,
       };
@@ -284,28 +240,6 @@ export class TransactionHelper {
     if (value?.length > 5) {
       result += ', ...';
     }
-    return result;
-  }
-
-  static getDataIBC(value, coinConfig) {
-    let result = {};
-    let temp;
-    if (value.indexOf('ibc') >= 0) {
-      try {
-        if (!value.startsWith('ibc')) {
-          const match = value?.match(/\d+/g);
-          const temp = match?.length > 0 ? match[0] : 0;
-          value = value?.replace(temp, '');
-        }
-      } catch {}
-      result = { display: value, decimals: 6 };
-      temp = value.slice(value.indexOf('ibc'));
-      result = coinConfig.find((k) => k.denom === temp) || {};
-      result['display'] = result['display'] || value;
-    } else {
-      result = { display: temp, decimals: 6 };
-    }
-    result['denom'] = result['denom'] || temp;
     return result;
   }
 }
