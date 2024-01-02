@@ -5,7 +5,8 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO } from '../constants';
+import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
+import { sha256 } from 'js-sha256';
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
@@ -35,6 +36,26 @@ export class ServiceUtil {
         (rs) => rs.data,
       );
       return data;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  /**
+   * getDataAPIWithHeader
+   * @param api
+   * @param params
+   * @param ctx
+   * @returns
+   */
+  async getDataAPIWithHeader(api, params, headersRequest) {
+    try {
+      return lastValueFrom(
+        this.httpService.get(api + params, {
+          timeout: 30000,
+          headers: headersRequest,
+        }),
+      ).then((rs) => rs.data);
     } catch (err) {
       return null;
     }
@@ -70,25 +91,69 @@ export class ServiceUtil {
     }
   }
 
-  async isValidBech32Address(address: string): Promise<any> {
-    const prefix = AURA_INFO.ADDRESS_PREFIX;
-
-    if (!address) {
-      return false;
-    }
-
+  /**
+   * Create token Id
+   * @param chainID
+   * @param active
+   * @param passive
+   * @param uri
+   * @returns
+   */
+  createTokenId(
+    chainID: string,
+    active: string,
+    passive: string,
+    uri: string,
+  ): string {
     try {
-      const { prefix: decodedPrefix } = bech32.decode(address);
+      const message: string = this.createMessageToSign(
+        chainID,
+        active,
+        passive,
+        uri,
+      );
+      return sha256(message);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
-      if (prefix !== decodedPrefix) {
-        throw new Error(
-          `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
-        );
-      }
+  private createMessageToSign(
+    chainID: string,
+    active: string,
+    passive: string,
+    uri: string,
+  ) {
+    const message =
+      CW4973_CONTRACT.AGREEMENT + chainID + active + passive + uri;
+    const doc: any = {
+      account_number: '0',
+      chain_id: '',
+      fee: {
+        amount: [],
+        gas: '0',
+      },
+      memo: '',
+      msgs: [
+        {
+          type: 'sign/MsgSignData',
+          value: {
+            data: Buffer.from(message, 'utf8').toString('base64'),
+            signer: String(passive),
+          },
+        },
+      ],
+      sequence: '0',
+    };
+    return JSON.stringify(doc);
+  }
 
-      return true;
-    } catch (error) {
-      return false;
+  transform(value: string): string {
+    const ipfsUrl = this.configService.get('ipfsUrl');
+    if (!value.includes(DEFAULT_IPFS)) {
+      return ipfsUrl + value.replace('://', '/');
+    } else {
+      return value.replace(DEFAULT_IPFS, ipfsUrl);
     }
   }
 }
@@ -96,4 +161,26 @@ export class ServiceUtil {
 export function secondsToDate(seconds: number): Date {
   const secondsToMilliseconds = 1000;
   return new Date(seconds * secondsToMilliseconds);
+}
+
+export async function isValidBench32Address(address: string): Promise<any> {
+  const prefix = AURA_INFO.ADDRESS_PREFIX;
+
+  if (!address) {
+    return false;
+  }
+
+  try {
+    const { prefix: decodedPrefix } = bech32.decode(address);
+
+    if (prefix !== decodedPrefix) {
+      throw new Error(
+        `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
+      );
+    }
+
+    return true;
+  } catch (error) {
+    return false;
+  }
 }

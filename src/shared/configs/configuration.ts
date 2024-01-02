@@ -15,12 +15,6 @@ export default () => ({
     rpc: process.env.RPC,
     api: process.env.API,
   },
-  influxdb: {
-    token: process.env.INFLUXDB_TOKEN,
-    url: process.env.INFLUXDB_URL,
-    bucket: process.env.INFLUXDB_BUCKET,
-    org: process.env.INFLUXDB_ORG,
-  },
   cacheManagement: {
     useRedis: process.env.USE_REDIS,
     ttl: process.env.TTL,
@@ -37,7 +31,6 @@ export default () => ({
       channel: process.env.REDIS_ABT_CHANNEL,
     },
   },
-  threads: process.env.THREADS,
   indexer: {
     url: process.env.INDEXER_URL,
     chainId: process.env.INDEXER_CHAIN_ID,
@@ -75,5 +68,41 @@ export default () => ({
   appDomain: process.env.APP_DOMAIN,
   bcryptSalt: process.env.BCRYPT_SALT || 8,
   auraScanUrl: process.env.AURA_SCAN_URL,
-  addressPrefix: process.env.ADDRESS_PREFIX,
+  kms: {
+    kdf: process.env.KMS_KDF,
+    accessKeyId: process.env.KMS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.KMS_SECRET_ACCESS_KEY,
+    region: process.env.KMS_REGION,
+    apiVersion: process.env.KMS_API_VERSION,
+    alias: process.env.KMS_ALIAS,
+  },
+  priceHostSync: process.env.PRICE_HOST_SYNC || 'COINGECKO',
+  priceTimeSync: process.env.PRICE_TIME_SYNC || '0 */3 * * * *',
+  coingecko: {
+    api: process.env.COINGECKO_API,
+    maxRequest: Number(process.env.MAX_REQUEST) || 250,
+  },
+  coinMarketCap: {
+    api: process.env.COIN_MARKET_CAP_API_EP,
+    apiKey: process.env.COIN_MARKET_CAP_API_KEY,
+  },
+  keepJobCount: Number(process.env.KEEP_JOB_COUNT) || 10,
+  ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
+  limitedPrivateNameTag: process.env.LIMITED_PRIVATE_NAME_TAG || 10,
+  googleRecaptchaOptions: {
+    secretKey: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+    response: (req) => {
+      return req.headers.recaptcha;
+    },
+  },
+  notification: {
+    cleanNotificationDays: process.env.CLEAN_NOTIFICATION_DAYS || 30,
+    limitNotifications: process.env.LIMIT_NOTIFICATIONS || 100,
+    fcmProjectId: process.env.FCM_PROJECT_ID,
+    fcmPrivateKey: process.env.FCM_PRIVATE_KEY,
+    fcmClientEmail: process.env.FCM_CLIENT_EMAIL,
+  },
+  watchList: {
+    limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
+  },
 });
