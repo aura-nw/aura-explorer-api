@@ -18,7 +18,9 @@ import { Module } from '@nestjs/common';
           },
         },
         defaults: {
-          from: `"Team AuraScan" <${config.get('mail.sender')}>`,
+          from: `"Team ${config.get('chainInfo.name')}Scan" <${config.get(
+            'mail.sender',
+          )}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),
