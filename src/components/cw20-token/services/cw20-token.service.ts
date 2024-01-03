@@ -1,18 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
-import * as util from 'util';
-import { AccountService } from '../../../components/account/services/account.service';
-import {
-  AkcLogger,
-  AURA_INFO,
-  INDEXER_API_V2,
-  RequestContext,
-  TOKEN_COIN,
-  TokenMarkets,
-} from '../../../shared';
-import * as appConfig from '../../../shared/configs/configuration';
-import { ServiceUtil } from '../../../shared/utils/service.util';
-import { AssetDto } from '../dtos/asset.dto';
+import { AkcLogger, RequestContext, TokenMarkets } from '../../../shared';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
 import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 import { CreateCw20TokenDto } from '../dtos/create-cw20-token.dto';
@@ -25,26 +13,11 @@ import { UpdateIbcDto } from '../dtos/update-ibc.dto';
 
 @Injectable()
 export class Cw20TokenService {
-  private appParams;
-  private denom;
-  private minimalDenom;
-  private decimals;
-  private precisionDiv;
-  private chainDB;
-
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
-    private serviceUtil: ServiceUtil,
-    private accountService: AccountService,
   ) {
     this.logger.setContext(Cw20TokenService.name);
-    this.appParams = appConfig.default();
-    this.denom = this.appParams.chainInfo.coinDenom;
-    this.minimalDenom = this.appParams.chainInfo.coinMinimalDenom;
-    this.decimals = this.appParams.chainInfo.coinDecimals;
-    this.precisionDiv = this.appParams.chainInfo.precisionDiv;
-    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getTokenMarket(

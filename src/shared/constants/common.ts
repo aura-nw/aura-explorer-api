@@ -275,10 +275,10 @@ export const INDEXER_API_V2 = {
 };
 
 export enum AURA_INFO {
-  ADDRESS_PREFIX = 'aura',
-  COIN_ID = 'aura-network',
-  IMAGE = 'https://nft-ipfs.s3.amazonaws.com/assets/imgs/icons/color/aura.svg',
-  NAME = 'Aura',
+  ADDRESS_PREFIX = 'sei',
+  COIN_ID = 'sei-network',
+  IMAGE = 'https://raw.githubusercontent.com/chainapsis/keplr-chain-registry/main/images/arctic/chain.png',
+  NAME = 'Sei',
 }
 
 export enum LENGTH {
@@ -386,7 +386,7 @@ export const ADMIN_ERROR_MAP = {
   },
   INVALID_FORMAT: {
     Code: 'E003',
-    Message: 'Invalid aura address format',
+    Message: 'Invalid sei address format',
   },
   INVALID_NAME_TAG: {
     Code: 'E004',

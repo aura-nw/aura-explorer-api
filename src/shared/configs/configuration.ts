@@ -45,6 +45,7 @@ export default () => ({
     coinMinimalDenom: process.env.COIN_MINIMAL_DENOM,
     coinDecimals: Number(process.env.COIN_DECIMALS),
     precisionDiv: Math.pow(10, Number(process.env.COIN_DECIMALS)),
+    name: process.env.chainName || 'Sei',
   },
   configUrl: process.env.CONFIG_URL,
   googleOAuth: {

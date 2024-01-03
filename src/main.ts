@@ -33,7 +33,7 @@ async function bootstrap() {
 
   // Swagger setup
   const options = new DocumentBuilder()
-    .setTitle('Aura Explorer API service')
+    .setTitle(`${configService.get('chainInfo').name} Explorer API service`)
     .setDescription('API Swagger')
     .setVersion('1.0')
     .addBearerAuth()
@@ -63,7 +63,7 @@ async function bootstrap() {
     serverAdapter,
     options: {
       uiConfig: {
-        boardTitle: 'AuraScan Board',
+        boardTitle: `${configService.get('chainInfo').name}Scan Board`,
         miscLinks: [{ text: 'API Docs', url: '/doc' }],
       },
     },

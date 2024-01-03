@@ -28,7 +28,9 @@ export class MailService {
     try {
       await this.mailerService.sendMail({
         to: user.email,
-        subject: 'Verify your email with Aurascan.',
+        subject: `Verify your email with ${
+          this.configService.get('chainInfo').name
+        }scan.`,
         template: './verification',
         context: { url: verifyEmailUrl },
         attachments: [
@@ -54,7 +56,9 @@ export class MailService {
     try {
       await this.mailerService.sendMail({
         to: user.email,
-        subject: 'Aurascan account recovery.',
+        subject: `${
+          this.configService.get('chainInfo').name
+        }scan account recovery.`,
         template: './recovery-password',
         context: { url: resetPasswordUrl },
         attachments: [
