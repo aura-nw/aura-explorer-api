@@ -282,8 +282,8 @@ export enum AURA_INFO {
 }
 
 export enum LENGTH {
-  CONTRACT_ADDRESS = 63,
-  ACCOUNT_ADDRESS = 43,
+  CONTRACT_ADDRESS = 62,
+  ACCOUNT_ADDRESS = 42,
 }
 
 export const ERROR_MAP = {
