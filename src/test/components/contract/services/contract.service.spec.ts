@@ -15,7 +15,6 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { VerifyCodeIdParamsDto } from '../../../../components/contract/dtos/verify-code-id-params.dto';
 import * as appConfig from '../../../../shared/configs/configuration';
 import { of } from 'rxjs';
-import { BadRequestException } from '@nestjs/common';
 
 describe('ContractService', () => {
   let contractService: ContractService;
