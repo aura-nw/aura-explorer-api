@@ -108,4 +108,10 @@ export class TokenMarkets extends BaseEntityIncrementId {
 
   @Column({ name: 'chain_id', nullable: true })
   chain_id: string;
+
+  @Column({ name: 'official_site', nullable: true })
+  official_site: string;
+
+  @Column({ name: 'social_profiles', nullable: true, type: 'json' })
+  social_profiles: JSON;
 }
