@@ -8,26 +8,10 @@ git clone "https://${PERSONAL_ACCESS_TOKEN}@${REPO_MANIFEST_URL}"
 cd ./${REPO_MANIFEST_NAME}
 git checkout ${REPO_MANIFEST_BRANCH} && git pull
 
-if [ ${GITHUB_REF_NAME} = "main" ]
+if [ ${GITHUB_REF_NAME} = "multichain/sei" ]
 then
-  echo 'This is main branch'
-  cd ${REPO_MANIFEST_ENV_MAIN}
-elif [ ${GITHUB_REF_NAME} = "develop" ]
-then
-  echo 'This is dev branch'
-  cd ${REPO_MANIFEST_ENV_DEV}
-elif [ ${GITHUB_REF_NAME} = "euphoria" ]
-then
-  echo 'This is euphoria branch'
-  cd ${REPO_MANIFEST_ENV_EUPHORIA}
-elif [ ${GITHUB_REF_NAME} = "serenity" ]
-then
-  echo 'This is serenity branch'
-  cd ${REPO_MANIFEST_ENV_SERENITY}
-elif [ ${GITHUB_REF_NAME} = "halo" ]
-then
-  echo 'This is halo branch'
-  cd ${REPO_MANIFEST_ENV_HALO}
+  echo 'This is TEST branch'
+  cd ${REPO_MANIFEST_ENV_TEST}
 else
   exit
 fi
