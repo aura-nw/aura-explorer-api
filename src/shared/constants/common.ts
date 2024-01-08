@@ -248,6 +248,22 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    LIST_ACCOUNT: `query ListAccount($listAddress: [String!]) {
+      ${process.env.INDEXER_V2_DB} {
+        account(where: {address: {_in: $listAddress}}) {
+          address
+          balances
+          spendable_balances
+        }
+      }
+    }`,
+    LIST_VALIDATOR: `query ListValidator($listAddress: [String!]) {
+      ${process.env.INDEXER_V2_DB} {
+        validator(where: {account_address: {_in: $listAddress}}) {
+          operator_address
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -271,6 +287,8 @@ export const INDEXER_API_V2 = {
     TOKEN_TRANSFER_NOTIFICATION: 'TokenTransferNotification',
     NFT_TRANSFER_NOTIFICATION: 'NftTransferNotification',
     CW4973_MEDIA_INFO: 'CW4973MediaInfo',
+    LIST_ACCOUNT: 'ListAccount',
+    LIST_VALIDATOR: 'ListValidator',
   },
 };
 
