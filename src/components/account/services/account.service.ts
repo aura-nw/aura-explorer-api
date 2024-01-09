@@ -73,10 +73,10 @@ export class AccountService {
         ]);
 
       const accountData = account?.data[this.chainDB]['account'];
-      const data = accountData[0];
+      const data = accountData?.length > 0 ? accountData[0] : null;
       const validatorData = validators?.data[this.chainDB]['validator'];
       if (!data) {
-        return accountData;
+        return { address, amount: 0 };
       }
 
       // get balance
