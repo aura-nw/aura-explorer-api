@@ -73,10 +73,10 @@ export class AccountService {
         ]);
 
       const accountData = account?.data[this.chainDB]['account'];
-      const data = accountData[0];
+      const data = accountData?.length > 0 ? accountData[0] : null;
       const validatorData = validators?.data[this.chainDB]['validator'];
       if (!data) {
-        return accountData;
+        return { address, amount: 0 };
       }
 
       // get balance
@@ -166,7 +166,7 @@ export class AccountService {
 
       // get commission
       let commission = '0';
-      if (validatorData) {
+      if (validatorData?.length > 0) {
         const paramsCommission = `cosmos/distribution/v1beta1/validators/${validatorData[0].operator_address}/commission`;
         const commissionData = await this.serviceUtil.getDataAPI(
           this.api,
