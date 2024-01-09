@@ -1,18 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IsNull, Not } from 'typeorm';
-import * as util from 'util';
-import { AccountService } from '../../../components/account/services/account.service';
-import {
-  AkcLogger,
-  AURA_INFO,
-  INDEXER_API_V2,
-  RequestContext,
-  TOKEN_COIN,
-  TokenMarkets,
-} from '../../../shared';
+import { AkcLogger, RequestContext, TokenMarkets } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
-import { ServiceUtil } from '../../../shared/utils/service.util';
-import { AssetDto } from '../dtos/asset.dto';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
 import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 import { CreateCw20TokenDto } from '../dtos/create-cw20-token.dto';
@@ -35,8 +23,6 @@ export class Cw20TokenService {
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
-    private serviceUtil: ServiceUtil,
-    private accountService: AccountService,
   ) {
     this.logger.setContext(Cw20TokenService.name);
     this.appParams = appConfig.default();
@@ -60,9 +46,7 @@ export class Cw20TokenService {
         ],
       });
     } else if (query.onlyIbc === 'true') {
-      return await this.tokenMarketsRepository.find({
-        where: { denom: Not(IsNull()) },
-      });
+      return await this.tokenMarketsRepository.getIbcTokenWithStatistics();
     } else {
       return await this.tokenMarketsRepository.find();
     }
