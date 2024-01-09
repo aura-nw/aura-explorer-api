@@ -164,17 +164,13 @@ export class AccountService {
       });
     }
 
-    // get validator by delegation address
-    const validator = validatorData?.filter(
-      (e) => e.account_address === address,
-    );
     // get commission
     let commission = '0';
-    if (validator?.length > 0) {
-      const paramsCommisstion = `cosmos/distribution/v1beta1/validators/${validator[0].operator_address}/commission`;
+    if (validatorData) {
+      const paramsCommission = `cosmos/distribution/v1beta1/validators/${validatorData[0].operator_address}/commission`;
       const commissionData = await this.serviceUtil.getDataAPI(
         this.api,
-        paramsCommisstion,
+        paramsCommission,
         ctx,
       );
       if (

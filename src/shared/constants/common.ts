@@ -250,7 +250,7 @@ export const INDEXER_API_V2 = {
     }`,
     LIST_VALIDATOR: `query ListValidator($address: String) {
       ${process.env.INDEXER_V2_DB} {
-        validator(where: {account_address: {eq: $address}}) {
+        validator(where: {account_address: {_eq: $address}}) {
           operator_address
         }
       }
