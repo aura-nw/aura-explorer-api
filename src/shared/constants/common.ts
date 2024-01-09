@@ -252,6 +252,13 @@ export const INDEXER_API_V2 = {
     }`,
     BASE_QUERY: `query BaseQuery {
       ${INDEXER_V2_DB} { %s } }`,
+    LIST_VALIDATOR: `query ListValidator($address: String) {
+      ${process.env.INDEXER_V2_DB} {
+        validator(where: {account_address: {_eq: $address}}) {
+          operator_address
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -276,6 +283,7 @@ export const INDEXER_API_V2 = {
     NFT_TRANSFER_NOTIFICATION: 'NftTransferNotification',
     CW4973_MEDIA_INFO: 'CW4973MediaInfo',
     BASE_QUERY: 'BaseQuery',
+    LIST_VALIDATOR: 'ListValidator',
   },
 };
 
