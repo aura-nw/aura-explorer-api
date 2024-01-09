@@ -2,8 +2,9 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  Get,
   HttpStatus,
-  Post,
+  Param,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -15,7 +16,6 @@ import {
 } from '../../../shared';
 import { AccountOutput } from '../dtos/account-output.dto';
 import { AccountService } from '../services/account.service';
-import { AccountRequestDto } from '../dtos/account-request.dto';
 
 @ApiTags('account')
 @Controller('account')
@@ -27,7 +27,7 @@ export class AccountController {
     this.logger.setContext(AccountController.name);
   }
 
-  @Post('/balance')
+  @Get('/:address')
   @ApiOperation({ summary: 'Get total balance by address' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -36,13 +36,13 @@ export class AccountController {
   @UseInterceptors(ClassSerializerInterceptor)
   async getTotalBalanceByAddress(
     @ReqContext() ctx: RequestContext,
-    @Body() req: AccountRequestDto,
+    @Param('address') address: string,
   ): Promise<any> {
     this.logger.log(ctx, `${this.getTotalBalanceByAddress.name} was called!`);
 
     const account = await this.accountService.getTotalBalanceByAddress(
       ctx,
-      req.address,
+      address,
     );
 
     return { data: account };
