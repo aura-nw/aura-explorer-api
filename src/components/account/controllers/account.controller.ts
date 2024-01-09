@@ -27,7 +27,7 @@ export class AccountController {
     this.logger.setContext(AccountController.name);
   }
 
-  @Get('/:address')
+  @Get(':address')
   @ApiOperation({ summary: 'Get total balance by address' })
   @ApiResponse({
     status: HttpStatus.OK,
