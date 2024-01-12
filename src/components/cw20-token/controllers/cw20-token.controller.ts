@@ -64,58 +64,6 @@ export class Cw20TokenController {
     this.logger.setContext(Cw20TokenController.name);
   }
 
-  @Get('cw20-tokens/get-by-owner/:owner')
-  @ApiOperation({ summary: 'Get list cw20 tokens by owner' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  @UseInterceptors(CacheInterceptor)
-  async getCw20TokensByOwner(
-    @ReqContext() ctx: RequestContext,
-    @Param('owner') owner: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getCw20TokensByOwner.name} was called!`);
-    const { tokens, count } = await this.cw20TokenService.getCw20TokensByOwner(
-      ctx,
-      owner,
-    );
-
-    return { data: tokens, meta: { count } };
-  }
-
-  @Get('cw20-tokens/price/:id')
-  @ApiOperation({ summary: 'Get price of cw20/cw721 token by id' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getPriceById(
-    @ReqContext() ctx: RequestContext,
-    @Param('id') id: string,
-  ): Promise<any> {
-    this.logger.log(ctx, `${this.getPriceById.name} was called!`);
-    const price = await this.cw20TokenService.getPriceById(ctx, id);
-
-    return { data: price, meta: {} };
-  }
-
-  @Get('cw20-tokens/total-asset/:accountAddress')
-  @ApiOperation({ summary: 'Get total asset of coins and tokens' })
-  @ApiResponse({ status: HttpStatus.OK })
-  @UseInterceptors(ClassSerializerInterceptor)
-  async getTotalAssetByAccountAddress(
-    @ReqContext() ctx: RequestContext,
-    @Param('accountAddress') accountAddress: string,
-  ): Promise<any> {
-    this.logger.log(
-      ctx,
-      `${this.getTotalAssetByAccountAddress.name} was called!`,
-    );
-    const price = await this.cw20TokenService.getTotalAssetByAccountAddress(
-      ctx,
-      accountAddress,
-    );
-
-    return { data: price, meta: {} };
-  }
-
   @Get('cw20-tokens/token-market')
   @ApiOperation({
     summary: 'Get token market of cw20 token by contract address',
@@ -127,7 +75,7 @@ export class Cw20TokenController {
     @ReqContext() ctx: RequestContext,
     @Query() query: Cw20TokenMarketParamsDto,
   ): Promise<TokenMarkets[]> {
-    this.logger.log(ctx, `${this.getPriceById.name} was called!`);
+    this.logger.log(ctx, `${this.getTokenMarket.name} was called!`);
     return await this.cw20TokenService.getTokenMarket(ctx, query);
   }
 

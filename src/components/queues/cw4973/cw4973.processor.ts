@@ -21,7 +21,6 @@ import {
   SOULBOUND_TOKEN_STATUS,
   SYNC_POINT_TYPE,
   SoulboundToken,
-  SyncStatus,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ConfigService } from '@nestjs/config';
@@ -42,8 +41,6 @@ export class CW4973Processor {
     private httpService: HttpService,
     private soulboundTokenRepos: SoulboundTokenRepository,
     private syncPointRepos: SyncPointRepository,
-    @InjectRepository(SyncStatus)
-    private syncStatusRepos: Repository<SyncStatus>,
     @InjectQueue(QUEUES.CW4973.QUEUE_NAME) private readonly cw4973Queue: Queue,
   ) {
     this.logger.log(
@@ -71,12 +68,9 @@ export class CW4973Processor {
     });
 
     if (!currentCw4973Height) {
-      const continueHeight =
-        (await this.syncStatusRepos.findOne())?.current_block || 0;
-
       await this.syncPointRepos.save({
         type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
-        point: continueHeight,
+        point: 0,
       });
 
       return;
