@@ -1,38 +1,60 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
+import {
+  InjectQueue,
+  OnQueueError,
+  OnQueueFailed,
+  Process,
+  Processor,
+} from '@nestjs/bull';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { Logger } from '@nestjs/common';
-import { Queue } from 'bull';
+import { Job, Queue } from 'bull';
 import {
   COINGECKO_API,
   COIN_MARKET_CAP,
   COIN_MARKET_CAP_API,
+  INDEXER_API_V2,
   QUEUES,
   TokenMarkets,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { In } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
+import { CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor {
   private readonly logger = new Logger(TokenProcessor.name);
   private appParams: any;
+  private chainDB;
 
   constructor(
     private serviceUtil: ServiceUtil,
     private tokenMarketsRepository: TokenMarketsRepository,
+    @InjectRepository(TokenHolderStatistic)
+    private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
     @InjectQueue(QUEUES.TOKEN.QUEUE_NAME) private readonly tokenQueue: Queue,
   ) {
     this.logger.log(
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
+    this.chainDB = this.appParams.indexerV2.chainDB;
+
     this.tokenQueue.add(
       QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
       {},
       {
         repeat: { cron: this.appParams.priceTimeSync },
+      },
+    );
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
       },
     );
   }
@@ -193,5 +215,63 @@ export class TokenProcessor {
       Number(data.fully_diluted_valuation?.toFixed(6)) || 0;
 
     return coinInfo;
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
+  async syncTokenHolder(): Promise<void> {
+    let subQuery = '';
+
+    const tokenMarkets = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()) },
+    });
+
+    if (tokenMarkets.length > 0) {
+      for (const [index, denom] of tokenMarkets.entries()) {
+        subQuery =
+          subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${denom.denom}"}}) {
+                            aggregate {
+                              count
+                            }
+                          }`);
+      }
+
+      const query = util.format(INDEXER_API_V2.GRAPH_QL.BASE_QUERY, subQuery);
+
+      const graphqlQueryTotalHolder = {
+        query,
+        operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
+        variables: {},
+      };
+
+      const totalHolders = (
+        await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
+      )?.data[this.chainDB];
+
+      const totalHolderStatistics = [];
+      for (const [index, tokenMarket] of tokenMarkets.entries()) {
+        const totalHolder =
+          totalHolders[`total_holder_${index}`].aggregate.count;
+
+        const newTokenHolderStatistic = new TokenHolderStatistic();
+        newTokenHolderStatistic.totalHolder = totalHolder;
+        newTokenHolderStatistic.tokenMarket = tokenMarket;
+
+        totalHolderStatistics.push(newTokenHolderStatistic);
+      }
+
+      await this.tokenHolderStatisticRepo.save(totalHolderStatistics);
+    }
+  }
+
+  @OnQueueError()
+  onError(job: Job, error: Error) {
+    this.logger.error(`Error job ${job.id} of type ${job.name}`);
+    this.logger.error(`Error: ${error}`);
+  }
+
+  @OnQueueFailed()
+  async onFailed(job: Job, error: Error) {
+    this.logger.error(`Failed job ${job.id} of type ${job.name}`);
+    this.logger.error(`Error: ${error}`);
   }
 }
