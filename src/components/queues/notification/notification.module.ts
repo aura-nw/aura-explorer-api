@@ -1,6 +1,6 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
-import { QUEUES, SharedModule, SyncStatus } from '../../../shared';
+import { QUEUES, SharedModule } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
@@ -31,7 +31,6 @@ import { TokenMarketsRepository } from '../../cw20-token/repositories/token-mark
       NotificationRepository,
       TokenMarketsRepository,
       SyncPointRepository,
-      SyncStatus,
       CipherKey,
       UserActivity,
       User,

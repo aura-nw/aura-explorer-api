@@ -1,5 +1,6 @@
-import { Column, Entity, Index, Unique } from 'typeorm';
+import { Column, Entity, Index, OneToMany, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
+import { TokenHolderStatistic } from './token-holder-statistic.entity';
 
 @Entity('token_markets')
 @Unique(['contract_address'])
@@ -114,4 +115,13 @@ export class TokenMarkets extends BaseEntityIncrementId {
 
   @Column({ name: 'social_profiles', nullable: true, type: 'json' })
   social_profiles: JSON;
+
+  @OneToMany(
+    () => TokenHolderStatistic,
+    (tokenHolderStatistic) => tokenHolderStatistic.tokenMarket,
+    {
+      cascade: ['remove'],
+    },
+  )
+  tokenHolderStatistics: TokenHolderStatistic[];
 }
