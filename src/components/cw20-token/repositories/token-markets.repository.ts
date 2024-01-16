@@ -49,7 +49,7 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
       .leftJoinAndSelect(
         'tokenMarket.tokenHolderStatistics',
         'tokenHolderStatistics',
-        'tokenHolderStatistics.created_at > DATE(NOW() - INTERVAL :days DAY)',
+        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
         { days },
       )
       .where('denom is not null')
