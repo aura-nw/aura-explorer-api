@@ -7,13 +7,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 
 @Module({
   imports: [
     SharedModule,
     ConfigModule,
     HttpModule,
-    TypeOrmModule.forFeature([TokenMarketsRepository]),
+    TypeOrmModule.forFeature([TokenMarketsRepository, TokenHolderStatistic]),
     BullModule.registerQueueAsync({
       name: QUEUES.TOKEN.QUEUE_NAME,
     }),
