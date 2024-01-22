@@ -6,6 +6,7 @@ import {
   AkcLogger,
   INDEXER_API_V2,
   LIMIT_HOLDER_ADDRESS,
+  RPC_QUERY_URL,
   RequestContext,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
@@ -236,7 +237,7 @@ export class AccountService {
     try {
       if (address.length > LIMIT_HOLDER_ADDRESS) {
         throw new BadRequestException(
-          'You have reached out of 5 max limitation of address.',
+          `You have reached out of ${LIMIT_HOLDER_ADDRESS} max limitation of address.`,
         );
       }
 
@@ -392,7 +393,7 @@ export class AccountService {
   async queryDelegatorDelegationsRequests(delegatorAddr: string) {
     try {
       const response = await this.serviceUtil.queryComosRPC(
-        '/cosmos.staking.v1beta1.Query/DelegatorDelegations',
+        RPC_QUERY_URL.DELEGATOR_DELEGATIONS,
         QueryDelegatorDelegationsRequest.encode({
           delegatorAddr,
         }).finish(),
@@ -402,7 +403,11 @@ export class AccountService {
         Buffer.from(value, 'base64'),
       ).delegationResponses;
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        null,
+        `Class ${AccountService.name} call ${this.queryDelegatorDelegationsRequests.name} error ${err?.code} method error: ${err?.stack}`,
+      );
+      throw new BadRequestException(err);
     }
   }
 
@@ -419,7 +424,7 @@ export class AccountService {
   async queryDelegatorUnbondingDelegationsRequests(delegatorAddr: string) {
     try {
       const response = await this.serviceUtil.queryComosRPC(
-        '/cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations',
+        RPC_QUERY_URL.DELEGATOR_UNBONDING_DELEGATIONS,
         QueryDelegatorUnbondingDelegationsRequest.encode({
           delegatorAddr,
         }).finish(),
@@ -429,14 +434,18 @@ export class AccountService {
         Buffer.from(value, 'base64'),
       ).unbondingResponses;
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        null,
+        `Class ${AccountService.name} call ${this.queryDelegatorUnbondingDelegationsRequests.name} error ${err?.code} method error: ${err?.stack}`,
+      );
+      throw new BadRequestException(err);
     }
   }
 
   async queryDelegationTotalRewardsRequests(delegatorAddress: string) {
     try {
       const response = await this.serviceUtil.queryComosRPC(
-        '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
+        RPC_QUERY_URL.DELEGATION_TOTAL_REWARDS,
         QueryDelegationTotalRewardsRequest.encode({
           delegatorAddress,
         }).finish(),
@@ -446,14 +455,18 @@ export class AccountService {
         Buffer.from(value, 'base64'),
       ).total;
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        null,
+        `Class ${AccountService.name} call ${this.queryDelegationTotalRewardsRequests.name} error ${err?.code} method error: ${err?.stack}`,
+      );
+      throw new BadRequestException(err);
     }
   }
 
   async queryValidatorCommissionRequests(validatorAddress: string) {
     try {
       const response = await this.serviceUtil.queryComosRPC(
-        '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+        RPC_QUERY_URL.VALIDATOR_COMMISSION,
         QueryValidatorCommissionRequest.encode({
           validatorAddress,
         }).finish(),
@@ -463,7 +476,11 @@ export class AccountService {
         Buffer.from(value, 'base64'),
       ).commission?.commission;
     } catch (err) {
-      console.log(err);
+      this.logger.error(
+        null,
+        `Class ${AccountService.name} call ${this.queryValidatorCommissionRequests.name} error ${err?.code} method error: ${err?.stack}`,
+      );
+      throw new BadRequestException(err);
     }
   }
 }

@@ -177,8 +177,12 @@ export class ServiceUtil {
         },
       };
       return await this.batchClient.execute(request);
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      this.logger.error(
+        null,
+        `Error while querying ${path} from RPC! ${error}`,
+      );
+      return null;
     }
   }
 }

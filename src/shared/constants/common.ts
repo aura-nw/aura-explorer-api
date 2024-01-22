@@ -757,3 +757,13 @@ export const WATCH_LIST = {
     } max limitation of address.`,
   },
 };
+
+export const RPC_QUERY_URL = {
+  DELEGATOR_DELEGATIONS: '/cosmos.staking.v1beta1.Query/DelegatorDelegations',
+  DELEGATOR_UNBONDING_DELEGATIONS:
+    '/cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations',
+  DELEGATION_TOTAL_REWARDS:
+    '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
+  VALIDATOR_COMMISSION:
+    '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+};
