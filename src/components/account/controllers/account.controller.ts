@@ -1,4 +1,5 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -27,23 +28,23 @@ export class AccountController {
   }
 
   @Get(':address')
-  @ApiOperation({ summary: 'Get account detail by address' })
+  @ApiOperation({ summary: 'Get total balance by address' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SwaggerBaseApiResponse(AccountOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  async getAccountDetailByAddress(
+  async getTotalBalanceByAddress(
     @ReqContext() ctx: RequestContext,
     @Param('address') address: string,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getAccountDetailByAddress.name} was called!`);
+    this.logger.log(ctx, `${this.getTotalBalanceByAddress.name} was called!`);
 
-    const account = await this.accountService.getAccountDetailByAddress(
+    const account = await this.accountService.getTotalBalanceByAddress(
       ctx,
       address,
     );
 
-    return { data: account, meta: {} };
+    return { data: account };
   }
 }

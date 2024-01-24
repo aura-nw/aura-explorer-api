@@ -1,6 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import {
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 import { IsUniqueManyColumn } from '../validators/is-unique-many-column.validator';
 
 @Expose()
@@ -36,4 +42,21 @@ export class CreateIbcDto {
 
   @ApiProperty()
   verify_text: string;
+
+  @ApiPropertyOptional()
+  @IsUrl()
+  @IsOptional()
+  official_site: string;
+
+  @ApiPropertyOptional({
+    example: {
+      github: 'https://github.com/...',
+      twitter: 'https://twitter.com/...',
+      facebook: 'https://facebook.com/...',
+      email: 'example@aura.network',
+    },
+  })
+  @IsOptional()
+  @IsObject()
+  social_profiles: any;
 }
