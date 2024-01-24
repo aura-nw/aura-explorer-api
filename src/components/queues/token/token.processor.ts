@@ -162,11 +162,11 @@ export class TokenProcessor {
     if (response) {
       for (let index = 0; index < response.length; index++) {
         const data = response[index];
-        let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.id);
-        if (tokenInfo) {
-          tokenInfo = this.updateTokenMarketsData(tokenInfo, data);
-          coinMarkets.push(tokenInfo);
-        }
+        const tokenInfo = tokenInfos?.filter((f) => f.coin_id === data.id);
+        tokenInfo?.forEach((item) => {
+          const tokenInfoUpdated = this.updateTokenMarketsData(item, data);
+          coinMarkets.push(tokenInfoUpdated);
+        });
       }
     }
     if (coinMarkets.length > 0) {
