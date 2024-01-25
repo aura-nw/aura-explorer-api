@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { NAME_TAG_TYPE } from '../../../shared';
 import { IsOptional, MaxLength } from 'class-validator';
 
 export class UpdatePublicNameTagParamsDto {

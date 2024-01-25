@@ -15,7 +15,12 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
    * @param offset
    * @returns
    */
-  async getPublicNameTags(keyword: string, limit: number, offset: number) {
+  async getPublicNameTags(
+    keyword: string,
+    limit: number,
+    offset: number,
+    chainId: string,
+  ) {
     this._logger.log(
       `============== ${this.getPublicNameTags.name} was called! ==============`,
     );
@@ -29,7 +34,9 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
         user.email,
         enterprise_url as enterpriseUrl`,
       )
-      .leftJoin(User, 'user', 'user.id = public_name_tag.updated_by');
+      .leftJoin('public_name_tag.explorer', 'explorer')
+      .leftJoin(User, 'user', 'user.id = public_name_tag.updated_by')
+      .where('explorer.chain_id = :chainId', { chainId });
 
     const _finalizeResult = async () => {
       const result = await builder
@@ -60,6 +67,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
   async getNameTagMainSite(
     limit: number,
     nextKey: number,
+    chainId: string,
   ): Promise<PublicNameTag[]> {
     limit = Number(limit) || PAGE_REQUEST.MAX_500;
 
@@ -67,8 +75,15 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
       limit = PAGE_REQUEST.MAX_500;
     }
 
-    let qb = this.createQueryBuilder()
-      .select(['id', 'address', 'name_tag', 'enterprise_url as enterpriseUrl'])
+    let qb = this.createQueryBuilder('publicNameTag')
+      .select([
+        'publicNameTag.id as id',
+        'address',
+        'name_tag',
+        'enterprise_url as enterpriseUrl',
+      ])
+      .leftJoin('publicNameTag.explorer', 'explorer')
+      .where('explorer.chain_id = :chainId', { chainId })
       .limit(Number(limit) || PAGE_REQUEST.MAX_500);
 
     if (nextKey) {

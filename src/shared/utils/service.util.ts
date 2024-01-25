@@ -192,12 +192,15 @@ export function secondsToDate(seconds: number): Date {
   return new Date(seconds * secondsToMilliseconds);
 }
 
-export async function isValidBench32Address(address: string): Promise<any> {
-  const prefix = AURA_INFO.ADDRESS_PREFIX;
-
+export async function isValidBench32Address(
+  address: string,
+  prefix?: string,
+): Promise<any> {
   if (!address) {
     return false;
   }
+
+  if (!prefix) prefix = AURA_INFO.ADDRESS_PREFIX;
 
   try {
     const { prefix: decodedPrefix } = bech32.decode(address);
