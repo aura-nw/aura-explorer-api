@@ -20,7 +20,6 @@ import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { In, IsNull, Not, Repository } from 'typeorm';
-import { CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
@@ -58,12 +57,13 @@ export class TokenProcessor implements OnModuleInit {
     );
 
     const explorer = await this.explorerRepository.find({});
-    explorer?.forEach((item) => {
+    explorer?.forEach((item, index) => {
       this.tokenQueue.add(
         QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
         { explorer: item },
         {
-          repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
+          // Each time run job 1 minute apart.
+          repeat: { cron: `${index} 0 * * *` },
         },
       );
     });
