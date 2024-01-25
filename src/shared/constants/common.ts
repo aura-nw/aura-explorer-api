@@ -251,7 +251,7 @@ export const INDEXER_API_V2 = {
       }
     }`,
     BASE_QUERY: `query BaseQuery {
-      ${INDEXER_V2_DB} { %s } }`,
+      %s { %s } }`,
     LIST_VALIDATOR: `query ListValidator($address: [String!] = null) {
       ${INDEXER_V2_DB} {
         validator(where: {account_address: {_in: $address}}) {
@@ -542,7 +542,8 @@ export const QUEUES = {
     QUEUE_NAME: 'token-price-queue',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
-    JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
+    JOB_AURA_SYNC_TOKEN_HOLDER: 'sync-aura-token-holder',
+    JOB_SEI_SYNC_TOKEN_HOLDER: 'sync-sei-token-holder',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',
@@ -766,4 +767,9 @@ export const RPC_QUERY_URL = {
     '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+};
+
+export const EXPLORER = {
+  AURA: 1,
+  SEI: 2,
 };

@@ -12,6 +12,7 @@ import {
   COINGECKO_API,
   COIN_MARKET_CAP,
   COIN_MARKET_CAP_API,
+  EXPLORER,
   INDEXER_API_V2,
   QUEUES,
   TokenMarkets,
@@ -28,7 +29,8 @@ import { TokenHolderStatistic } from '../../../shared/entities/token-holder-stat
 export class TokenProcessor {
   private readonly logger = new Logger(TokenProcessor.name);
   private appParams: any;
-  private chainDB;
+  private auraChainDB;
+  private seiChainDB;
 
   constructor(
     private serviceUtil: ServiceUtil,
@@ -41,7 +43,8 @@ export class TokenProcessor {
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
-    this.chainDB = this.appParams.indexerV2.chainDB;
+    this.auraChainDB = this.appParams.indexerV2.chainDB;
+    this.seiChainDB = this.appParams.sei.indexerV2.chainDB;
 
     this.tokenQueue.add(
       QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
@@ -51,7 +54,14 @@ export class TokenProcessor {
       },
     );
     this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
+      QUEUES.TOKEN.JOB_AURA_SYNC_TOKEN_HOLDER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
+      },
+    );
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SEI_SYNC_TOKEN_HOLDER,
       {},
       {
         repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
@@ -217,15 +227,27 @@ export class TokenProcessor {
     return coinInfo;
   }
 
-  @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
-  async syncTokenHolder(): Promise<void> {
-    let subQuery = '';
-
+  @Process(QUEUES.TOKEN.JOB_AURA_SYNC_TOKEN_HOLDER)
+  async syncAuraTokenHolder(): Promise<void> {
     const tokenMarkets = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+      where: { denom: Not(IsNull()), explorer: { id: EXPLORER.AURA } },
     });
 
+    await this.processSyncTokenHolder(tokenMarkets, this.auraChainDB);
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SEI_SYNC_TOKEN_HOLDER)
+  async syncSeiTokenHolder(): Promise<void> {
+    const tokenMarkets = await this.tokenMarketsRepository.find({
+      where: { denom: Not(IsNull()), explorer: { id: EXPLORER.SEI } },
+    });
+
+    await this.processSyncTokenHolder(tokenMarkets, this.seiChainDB);
+  }
+
+  private async processSyncTokenHolder(tokenMarkets, chainDB) {
     if (tokenMarkets.length > 0) {
+      let subQuery = '';
       for (const [index, denom] of tokenMarkets.entries()) {
         subQuery =
           subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${denom.denom}"}}) {
@@ -235,7 +257,11 @@ export class TokenProcessor {
                           }`);
       }
 
-      const query = util.format(INDEXER_API_V2.GRAPH_QL.BASE_QUERY, subQuery);
+      const query = util.format(
+        INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
+        chainDB,
+        subQuery,
+      );
 
       const graphqlQueryTotalHolder = {
         query,
@@ -245,7 +271,7 @@ export class TokenProcessor {
 
       const totalHolders = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-      )?.data[this.chainDB];
+      )?.data[chainDB];
 
       const totalHolderStatistics = [];
       for (const [index, tokenMarket] of tokenMarkets.entries()) {
