@@ -10,6 +10,12 @@ export class Explorer extends BaseEntityIncrementId {
   @Column()
   name: string;
 
+  @Column({ name: 'address_prefix' })
+  addressPrefix: string;
+
+  @Column({ name: 'chain_db' })
+  chainDb: string;
+
   @OneToMany(() => TokenMarkets, (token) => token.explorer, {
     cascade: ['remove'],
   })

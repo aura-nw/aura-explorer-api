@@ -229,7 +229,7 @@ export class TokenProcessor implements OnModuleInit {
 
   @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
   async syncAuraTokenHolder(job: Job): Promise<void> {
-    const explorer = job.data.explorer;
+    const explorer: Explorer = job.data.explorer;
     const tokenMarkets = await this.tokenMarketsRepository.find({
       where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
     });
@@ -246,7 +246,7 @@ export class TokenProcessor implements OnModuleInit {
 
     const query = util.format(
       INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-      explorer.chainDB,
+      explorer.chainDb,
       subQuery,
     );
 
@@ -258,7 +258,7 @@ export class TokenProcessor implements OnModuleInit {
 
     const totalHolders = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-    )?.data[explorer.chainDB];
+    )?.data[explorer.chainDb];
 
     const totalHolderStatistics = [];
     for (const [index, tokenMarket] of tokenMarkets.entries()) {
