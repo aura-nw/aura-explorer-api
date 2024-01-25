@@ -6,13 +6,12 @@ import {
   Processor,
 } from '@nestjs/bull';
 import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
-import { Logger } from '@nestjs/common';
+import { Logger, OnModuleInit } from '@nestjs/common';
 import { Job, Queue } from 'bull';
 import {
   COINGECKO_API,
   COIN_MARKET_CAP,
   COIN_MARKET_CAP_API,
-  EXPLORER,
   INDEXER_API_V2,
   QUEUES,
   TokenMarkets,
@@ -24,28 +23,32 @@ import { In, IsNull, Not, Repository } from 'typeorm';
 import { CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
-export class TokenProcessor {
+export class TokenProcessor implements OnModuleInit {
   private readonly logger = new Logger(TokenProcessor.name);
   private appParams: any;
-  private auraChainDB;
-  private seiChainDB;
 
   constructor(
     private serviceUtil: ServiceUtil,
     private tokenMarketsRepository: TokenMarketsRepository,
     @InjectRepository(TokenHolderStatistic)
     private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
+    @InjectRepository(Explorer)
+    private readonly explorerRepository: Repository<Explorer>,
     @InjectQueue(QUEUES.TOKEN.QUEUE_NAME) private readonly tokenQueue: Queue,
   ) {
     this.logger.log(
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
-    this.auraChainDB = this.appParams.indexerV2.chainDB;
-    this.seiChainDB = this.appParams.sei.indexerV2.chainDB;
+  }
 
+  async onModuleInit() {
+    this.logger.log(
+      '============== On Module Init Token Price Processor Service ==============',
+    );
     this.tokenQueue.add(
       QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
       {},
@@ -53,20 +56,17 @@ export class TokenProcessor {
         repeat: { cron: this.appParams.priceTimeSync },
       },
     );
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_AURA_SYNC_TOKEN_HOLDER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
-      },
-    );
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_SEI_SYNC_TOKEN_HOLDER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
-      },
-    );
+
+    const explorer = await this.explorerRepository.find({});
+    explorer?.forEach((item) => {
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
+        { explorer: item },
+        {
+          repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
+        },
+      );
+    });
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
@@ -227,66 +227,51 @@ export class TokenProcessor {
     return coinInfo;
   }
 
-  @Process(QUEUES.TOKEN.JOB_AURA_SYNC_TOKEN_HOLDER)
-  async syncAuraTokenHolder(): Promise<void> {
+  @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
+  async syncAuraTokenHolder(job: Job): Promise<void> {
+    const explorer = job.data.explorer;
     const tokenMarkets = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()), explorer: { id: EXPLORER.AURA } },
+      where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
     });
 
-    await this.processSyncTokenHolder(tokenMarkets, this.auraChainDB);
-  }
-
-  @Process(QUEUES.TOKEN.JOB_SEI_SYNC_TOKEN_HOLDER)
-  async syncSeiTokenHolder(): Promise<void> {
-    const tokenMarkets = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()), explorer: { id: EXPLORER.SEI } },
-    });
-
-    await this.processSyncTokenHolder(tokenMarkets, this.seiChainDB);
-  }
-
-  private async processSyncTokenHolder(tokenMarkets, chainDB) {
-    if (tokenMarkets.length > 0) {
-      let subQuery = '';
-      for (const [index, denom] of tokenMarkets.entries()) {
-        subQuery =
-          subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${denom.denom}"}}) {
+    let subQuery = '';
+    for (const [index, denom] of tokenMarkets.entries()) {
+      subQuery =
+        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${denom.denom}"}}) {
                             aggregate {
                               count
                             }
                           }`);
-      }
-
-      const query = util.format(
-        INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-        chainDB,
-        subQuery,
-      );
-
-      const graphqlQueryTotalHolder = {
-        query,
-        operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
-        variables: {},
-      };
-
-      const totalHolders = (
-        await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-      )?.data[chainDB];
-
-      const totalHolderStatistics = [];
-      for (const [index, tokenMarket] of tokenMarkets.entries()) {
-        const totalHolder =
-          totalHolders[`total_holder_${index}`].aggregate.count;
-
-        const newTokenHolderStatistic = new TokenHolderStatistic();
-        newTokenHolderStatistic.totalHolder = totalHolder;
-        newTokenHolderStatistic.tokenMarket = tokenMarket;
-
-        totalHolderStatistics.push(newTokenHolderStatistic);
-      }
-
-      await this.tokenHolderStatisticRepo.save(totalHolderStatistics);
     }
+
+    const query = util.format(
+      INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
+      explorer.chainDB,
+      subQuery,
+    );
+
+    const graphqlQueryTotalHolder = {
+      query,
+      operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
+      variables: {},
+    };
+
+    const totalHolders = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
+    )?.data[explorer.chainDB];
+
+    const totalHolderStatistics = [];
+    for (const [index, tokenMarket] of tokenMarkets.entries()) {
+      const totalHolder = totalHolders[`total_holder_${index}`].aggregate.count;
+
+      const newTokenHolderStatistic = new TokenHolderStatistic();
+      newTokenHolderStatistic.totalHolder = totalHolder;
+      newTokenHolderStatistic.tokenMarket = tokenMarket;
+
+      totalHolderStatistics.push(newTokenHolderStatistic);
+    }
+
+    await this.tokenHolderStatisticRepo.save(totalHolderStatistics);
   }
 
   @OnQueueError()

@@ -542,8 +542,7 @@ export const QUEUES = {
     QUEUE_NAME: 'token-price-queue',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
-    JOB_AURA_SYNC_TOKEN_HOLDER: 'sync-aura-token-holder',
-    JOB_SEI_SYNC_TOKEN_HOLDER: 'sync-sei-token-holder',
+    JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',

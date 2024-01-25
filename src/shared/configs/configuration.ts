@@ -105,21 +105,4 @@ export default () => ({
   watchList: {
     limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
   },
-
-  sei: {
-    node: {
-      rpc: process.env.SEI_PRC,
-      api: process.env.SEI_API,
-    },
-    indexerV2: {
-      chainDB: process.env.SEI_INDEXER_V2_DB,
-    },
-    chainInfo: {
-      coinDenom: process.env.SEI_COIN_DENOM,
-      coinMinimalDenom: process.env.SEI_COIN_MINIMAL_DENOM,
-      coinDecimals: Number(process.env.SEI_COIN_DECIMALS),
-      precisionDiv: Math.pow(10, Number(process.env.SEI_COIN_DECIMALS)),
-    },
-    configUrl: process.env.SEI_CONFIG_URL,
-  },
 });
