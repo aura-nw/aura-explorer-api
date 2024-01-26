@@ -5,6 +5,10 @@ require('dotenv').config();
 
 const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
 
+export const REQUEST_CHAIN_ID_HEADER = 'chain-id';
+
+export const DEFAULT_CHAIN_ID_HEADER = process.env.INDEXER_CHAIN_ID;
+
 export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
 
 export const FORWARDED_FOR_TOKEN_HEADER = 'x-forwarded-for';
@@ -261,12 +265,12 @@ export const INDEXER_API_V2 = {
       }
     }`,
     LIST_ACCOUNT: `query ListAccount($address: [String!] = null) {
-      ${INDEXER_V2_DB} { 
-        account(where: {address: {_in: $address}}) { 
+      ${INDEXER_V2_DB} {
+        account(where: {address: {_in: $address}}) {
           spendable_balances
           balances
-          address 
-        } 
+          address
+        }
       }
     }`,
   },
@@ -410,7 +414,7 @@ export const ADMIN_ERROR_MAP = {
   },
   INVALID_FORMAT: {
     Code: 'E003',
-    Message: 'Invalid aura address format',
+    Message: `Invalid %s address format`,
   },
   INVALID_NAME_TAG: {
     Code: 'E004',
