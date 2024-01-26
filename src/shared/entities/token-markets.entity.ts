@@ -1,6 +1,15 @@
-import { Column, Entity, Index, OneToMany, Unique } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  Unique,
+} from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { TokenHolderStatistic } from './token-holder-statistic.entity';
+import { Explorer } from './explorer.entity';
 
 @Entity('token_markets')
 @Unique(['contract_address'])
@@ -124,4 +133,10 @@ export class TokenMarkets extends BaseEntityIncrementId {
     },
   )
   tokenHolderStatistics: TokenHolderStatistic[];
+
+  @ManyToOne(() => Explorer, (explorer) => explorer.tokenMarkets)
+  @JoinColumn({
+    name: 'explorer_id',
+  })
+  explorer: Explorer;
 }
