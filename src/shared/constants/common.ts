@@ -7,7 +7,7 @@ const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
 
 export const REQUEST_CHAIN_ID_HEADER = 'chain-id';
 
-export const DEFAULT_CHAIN_ID_HEADER = 'aura-testnet-2';
+export const DEFAULT_CHAIN_ID_HEADER = process.env.INDEXER_CHAIN_ID;
 
 export const REQUEST_ID_TOKEN_HEADER = 'x-request-id';
 
