@@ -767,8 +767,3 @@ export const RPC_QUERY_URL = {
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
 };
-
-export const EXPLORER = {
-  AURA: 1,
-  SEI: 2,
-};
