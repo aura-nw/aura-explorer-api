@@ -16,8 +16,6 @@ export class Explorer extends BaseEntityIncrementId {
   @Column({ name: 'chain_db' })
   chainDb: string;
 
-  @OneToMany(() => PublicNameTag, (publicNameTag) => publicNameTag.explorer, {
-    cascade: ['remove'],
-  })
+  @OneToMany(() => PublicNameTag, (publicNameTag) => publicNameTag.explorer)
   publicNameTags: PublicNameTag[];
 }
