@@ -200,22 +200,30 @@ export class PublicNameTagService {
     nextKey: number;
     chainId: string;
   }): Promise<GetPublicNameTagResult> {
-    const nameTags = await this.nameTagRepository.getNameTagMainSite(
-      Number(req.limit),
-      Number(req.nextKey),
-      req.chainId,
-    );
+    try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: req.chainId,
+      });
 
-    const nextKey = nameTags.slice(-1)[0]?.id;
+      const nameTags = await this.nameTagRepository.getNameTagMainSite(
+        Number(req.limit),
+        Number(req.nextKey),
+        explorer.id,
+      );
 
-    const data = {
-      data: {
-        nameTags: nameTags,
-        count: Number(nameTags.length),
-        nextKey: nextKey || null,
-      },
-    };
+      const nextKey = nameTags.slice(-1)[0]?.id;
 
-    return data;
+      const data = {
+        data: {
+          nameTags: nameTags,
+          count: Number(nameTags.length),
+          nextKey: nextKey || null,
+        },
+      };
+
+      return data;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }

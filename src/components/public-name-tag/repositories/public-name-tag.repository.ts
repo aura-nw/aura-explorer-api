@@ -66,7 +66,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
   async getNameTagMainSite(
     limit: number,
     nextKey: number,
-    chainId: string,
+    explorerId: number,
   ): Promise<PublicNameTag[]> {
     limit = Number(limit) || PAGE_REQUEST.MAX_500;
 
@@ -82,7 +82,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
         'enterprise_url as enterpriseUrl',
       ])
       .leftJoin('publicNameTag.explorer', 'explorer')
-      .where('explorer.chain_id = :chainId', { chainId })
+      .where('explorer_id = :explorerId', { explorerId })
       .limit(Number(limit) || PAGE_REQUEST.MAX_500);
 
     if (nextKey) {
