@@ -16,8 +16,6 @@ export class Explorer extends BaseEntityIncrementId {
   @Column({ name: 'chain_db' })
   chainDb: string;
 
-  @OneToMany(() => TokenMarkets, (token) => token.explorer, {
-    cascade: ['remove'],
-  })
+  @OneToMany(() => TokenMarkets, (token) => token.explorer)
   tokenMarkets: TokenMarkets[];
 }
