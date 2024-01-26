@@ -14,4 +14,7 @@ export class UpdatePublicNameTagParamsDto {
     default: null,
   })
   enterpriseUrl: string;
+
+  @ApiProperty({ default: '' })
+  address: string;
 }

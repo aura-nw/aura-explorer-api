@@ -26,18 +26,25 @@ export class PublicNameTagService {
     private nameTagRepository: PublicNameTagRepository,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
-  ) { }
+  ) {}
 
   async getPublicNameTags(ctx: RequestContext, req: PublicNameTagParamsDto) {
     this.logger.log(ctx, `${this.getPublicNameTags.name} was called!`);
-    const { result, count } = await this.nameTagRepository.getPublicNameTags(
-      req.keyword,
-      req.limit,
-      req.offset,
-      ctx.chainId,
-    );
+    try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
+      const { result, count } = await this.nameTagRepository.getPublicNameTags(
+        req.keyword,
+        req.limit,
+        req.offset,
+        explorer.id,
+      );
 
-    return { result, count };
+      return { result, count };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   async getPublicNameTagsDetail(ctx: RequestContext, id: number) {
@@ -119,6 +126,10 @@ export class PublicNameTagService {
   }
 
   private async validate(ctx: any, req: any, isCreate = true) {
+    const explorer = await this.explorerRepository.findOne({
+      chainId: ctx.chainId,
+    });
+
     if (!req.nameTag.match(REGEX_PARTERN.NAME_TAG)) {
       return {
         code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
@@ -134,10 +145,6 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
-      const explorer = await this.explorerRepository.findOne({
-        chainId: ctx.chainId,
-      });
-
       const validFormat = await isValidBench32Address(
         req.address,
         explorer?.addressPrefix,
@@ -174,6 +181,7 @@ export class PublicNameTagService {
       where: {
         name_tag: req.nameTag,
         address: Not(req.address),
+        explorer: { id: explorer.id },
       },
     });
 

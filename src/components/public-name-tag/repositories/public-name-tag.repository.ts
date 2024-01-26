@@ -19,7 +19,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
     keyword: string,
     limit: number,
     offset: number,
-    chainId: string,
+    explorerID: number,
   ) {
     this._logger.log(
       `============== ${this.getPublicNameTags.name} was called! ==============`,
@@ -34,9 +34,8 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
         user.email,
         enterprise_url as enterpriseUrl`,
       )
-      .leftJoin('public_name_tag.explorer', 'explorer')
       .leftJoin(User, 'user', 'user.id = public_name_tag.updated_by')
-      .where('explorer.chain_id = :chainId', { chainId });
+      .where('explorer_id = :explorerID', { explorerID });
 
     const _finalizeResult = async () => {
       const result = await builder
