@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   AkcLogger,
@@ -12,30 +12,39 @@ import { PublicNameTagRepository } from '../repositories/public-name-tag.reposit
 import { StorePublicNameTagParamsDto } from '../dtos/store-public-name-tag-params.dto';
 import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
-import { Not } from 'typeorm';
-import {
-  ServiceUtil,
-  isValidBench32Address,
-} from '../../../shared/utils/service.util';
+import { Not, Repository } from 'typeorm';
+import { isValidBench32Address } from '../../../shared/utils/service.util';
 import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
+import { Explorer } from '../../../shared/entities/explorer.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as util from 'util';
 
 @Injectable()
 export class PublicNameTagService {
   constructor(
     private readonly logger: AkcLogger,
     private nameTagRepository: PublicNameTagRepository,
-    private serviceUtil: ServiceUtil,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {}
 
   async getPublicNameTags(ctx: RequestContext, req: PublicNameTagParamsDto) {
     this.logger.log(ctx, `${this.getPublicNameTags.name} was called!`);
-    const { result, count } = await this.nameTagRepository.getPublicNameTags(
-      req.keyword,
-      req.limit,
-      req.offset,
-    );
+    try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
+      const { result, count } = await this.nameTagRepository.getPublicNameTags(
+        req.keyword,
+        req.limit,
+        req.offset,
+        explorer.id,
+      );
 
-    return { result, count };
+      return { result, count };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   async getPublicNameTagsDetail(ctx: RequestContext, id: number) {
@@ -49,17 +58,24 @@ export class PublicNameTagService {
     req: StorePublicNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.createPublicNameTag.name} was called!`);
-    const errorMsg = await this.validate(req);
+    const errorMsg = await this.validate(ctx, req);
     if (errorMsg) {
       return errorMsg;
     }
-    const entity = new PublicNameTag();
-    entity.address = req.address;
-    entity.type = req.type;
-    entity.name_tag = req.nameTag;
-    entity.updated_by = userId;
-    entity.enterpriseUrl = req.enterpriseUrl;
+
     try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
+
+      const entity = new PublicNameTag();
+      entity.address = req.address;
+      entity.type = req.type;
+      entity.name_tag = req.nameTag;
+      entity.updated_by = userId;
+      entity.enterpriseUrl = req.enterpriseUrl;
+      entity.explorer = explorer;
+
       const result = await this.nameTagRepository.save(entity);
       return { data: result, meta: {} };
     } catch (err) {
@@ -67,6 +83,7 @@ export class PublicNameTagService {
         ctx,
         `Class ${PublicNameTagService.name} call ${this.createPublicNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
+      throw new BadRequestException(err.message);
     }
   }
 
@@ -76,7 +93,7 @@ export class PublicNameTagService {
     req: UpdatePublicNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updatePublicNameTag.name} was called!`);
-    const errorMsg = await this.validate(req, false);
+    const errorMsg = await this.validate(ctx, req, false);
     if (errorMsg) {
       return errorMsg;
     }
@@ -92,6 +109,7 @@ export class PublicNameTagService {
         ctx,
         `Class ${PublicNameTagService.name} call ${this.updatePublicNameTag.name} error ${err?.code} method error: ${err?.stack}`,
       );
+      throw new BadRequestException(err.message);
     }
   }
 
@@ -107,7 +125,11 @@ export class PublicNameTagService {
     }
   }
 
-  private async validate(req: any, isCreate = true) {
+  private async validate(ctx: any, req: any, isCreate = true) {
+    const explorer = await this.explorerRepository.findOne({
+      chainId: ctx.chainId,
+    });
+
     if (!req.nameTag.match(REGEX_PARTERN.NAME_TAG)) {
       return {
         code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
@@ -123,7 +145,10 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = await isValidBench32Address(req.address);
+      const validFormat = await isValidBench32Address(
+        req.address,
+        explorer?.addressPrefix,
+      );
 
       if (
         !validFormat ||
@@ -134,7 +159,10 @@ export class PublicNameTagService {
       ) {
         return {
           code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-          message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
+          message: util.format(
+            ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
+            explorer.addressPrefix,
+          ),
         };
       }
       // check duplicate address
@@ -153,6 +181,7 @@ export class PublicNameTagService {
       where: {
         name_tag: req.nameTag,
         address: Not(req.address),
+        explorer: { id: explorer.id },
       },
     });
 
@@ -169,22 +198,32 @@ export class PublicNameTagService {
   async getNameTagMainSite(req: {
     limit: number;
     nextKey: number;
+    chainId: string;
   }): Promise<GetPublicNameTagResult> {
-    const nameTags = await this.nameTagRepository.getNameTagMainSite(
-      Number(req.limit),
-      Number(req.nextKey),
-    );
+    try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: req.chainId,
+      });
 
-    const nextKey = nameTags.slice(-1)[0]?.id;
+      const nameTags = await this.nameTagRepository.getNameTagMainSite(
+        Number(req.limit),
+        Number(req.nextKey),
+        explorer.id,
+      );
 
-    const data = {
-      data: {
-        nameTags: nameTags,
-        count: Number(nameTags.length),
-        nextKey: nextKey || null,
-      },
-    };
+      const nextKey = nameTags.slice(-1)[0]?.id;
 
-    return data;
+      const data = {
+        data: {
+          nameTags: nameTags,
+          count: Number(nameTags.length),
+          nextKey: nextKey || null,
+        },
+      };
+
+      return data;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }
