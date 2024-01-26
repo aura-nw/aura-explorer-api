@@ -13,7 +13,7 @@ export class addPublicNameTagToExplorer1706172325111
       `ALTER TABLE \`public_name_tag\`
       ADD CONSTRAINT \`FK_0292f6ab7ced48369f4dfb6e763\`
       FOREIGN KEY (\`explorer_id\`)
-      REFERENCES \`explorer\`(\`id\`) ON DELETE CASCADE`,
+      REFERENCES \`explorer\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     // Update current data explorer_id to 1 (aura network)
     await queryRunner.query('UPDATE public_name_tag SET explorer_id = 1');
