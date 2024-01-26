@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { PublicNameTag } from './public-name-tag.entity';
+import { TokenMarkets } from './token-markets.entity';
 
 @Entity('explorer')
 export class Explorer extends BaseEntityIncrementId {
@@ -18,4 +19,7 @@ export class Explorer extends BaseEntityIncrementId {
 
   @OneToMany(() => PublicNameTag, (publicNameTag) => publicNameTag.explorer)
   publicNameTags: PublicNameTag[];
+
+  @OneToMany(() => TokenMarkets, (token) => token.explorer)
+  tokenMarkets: TokenMarkets[];
 }

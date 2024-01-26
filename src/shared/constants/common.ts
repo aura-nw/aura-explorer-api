@@ -255,7 +255,7 @@ export const INDEXER_API_V2 = {
       }
     }`,
     BASE_QUERY: `query BaseQuery {
-      ${INDEXER_V2_DB} { %s } }`,
+      %s { %s } }`,
     LIST_VALIDATOR: `query ListValidator($address: [String!] = null) {
       ${INDEXER_V2_DB} {
         validator(where: {account_address: {_in: $address}}) {
