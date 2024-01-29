@@ -11,6 +11,7 @@ import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { UserModule } from '../user/user.module';
 import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets
       PrivateNameTagRepository,
       CipherKey,
       TokenMarketsRepository,
+      Explorer,
     ]),
   ],
   providers: [ExportCsvService, EncryptionService, ServiceUtil],
