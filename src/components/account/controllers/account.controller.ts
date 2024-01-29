@@ -47,4 +47,25 @@ export class AccountController {
 
     return { data: account };
   }
+
+  @Get('/list/:address')
+  @ApiOperation({ summary: 'Get total balance by address' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: SwaggerBaseApiResponse(AccountOutput),
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  async getTotalBalanceByListAddress(
+    @ReqContext() ctx: RequestContext,
+    @Param('address') listAddress: string,
+  ): Promise<any> {
+    this.logger.log(ctx, `${this.getTotalBalanceByAddress.name} was called!`);
+    const address = listAddress.split(',');
+    const account = await this.accountService.getTotalBalanceByListAddress(
+      ctx,
+      address,
+    );
+
+    return { data: account };
+  }
 }
