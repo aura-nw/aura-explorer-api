@@ -15,6 +15,12 @@ export default () => ({
     rpc: process.env.RPC,
     api: process.env.API,
   },
+  sei: {
+    node: {
+      rpc: process.env.SEI_RPC,
+      api: process.env.SEI_API,
+    },
+  },
   cacheManagement: {
     useRedis: process.env.USE_REDIS,
     ttl: process.env.TTL,

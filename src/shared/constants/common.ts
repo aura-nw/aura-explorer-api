@@ -257,7 +257,7 @@ export const INDEXER_API_V2 = {
     BASE_QUERY: `query BaseQuery {
       %s { %s } }`,
     LIST_VALIDATOR: `query ListValidator($address: [String!] = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         validator(where: {account_address: {_in: $address}}) {
           account_address
           operator_address
@@ -265,7 +265,7 @@ export const INDEXER_API_V2 = {
       }
     }`,
     LIST_ACCOUNT: `query ListAccount($address: [String!] = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         account(where: {address: {_in: $address}}) {
           spendable_balances
           balances
@@ -770,4 +770,9 @@ export const RPC_QUERY_URL = {
     '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+};
+
+export const EXPLORER_CHAIN_ID = {
+  AURA: 'aura-testnet-2',
+  SEI: 'pacific-1',
 };

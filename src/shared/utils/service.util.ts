@@ -5,7 +5,12 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
+import {
+  AURA_INFO,
+  CW4973_CONTRACT,
+  DEFAULT_IPFS,
+  EXPLORER_CHAIN_ID,
+} from '../constants';
 import { sha256 } from 'js-sha256';
 import { HttpBatchClient } from '@cosmjs/tendermint-rpc';
 import { toHex } from '@cosmjs/encoding';
@@ -15,6 +20,7 @@ import { JsonRpcRequest } from '@cosmjs/json-rpc';
 export class ServiceUtil {
   private readonly indexerV2;
   private batchClient: HttpBatchClient;
+  private batchClientSei: HttpBatchClient;
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
@@ -25,6 +31,13 @@ export class ServiceUtil {
       batchSizeLimit: 100,
       dispatchInterval: 100, // millisec
     });
+    this.batchClientSei = new HttpBatchClient(
+      this.configService.get('sei.node.rpc'),
+      {
+        batchSizeLimit: 100,
+        dispatchInterval: 100, // millisec
+      },
+    );
   }
 
   /**
@@ -165,7 +178,11 @@ export class ServiceUtil {
     }
   }
 
-  async queryComosRPC(path: string, data: Uint8Array) {
+  async queryComosRPC(
+    path: string,
+    data: Uint8Array,
+    explorer = EXPLORER_CHAIN_ID.AURA,
+  ) {
     try {
       const request: JsonRpcRequest = {
         jsonrpc: '2.0',
@@ -176,7 +193,9 @@ export class ServiceUtil {
           data: toHex(data),
         },
       };
-      return await this.batchClient.execute(request);
+      return explorer === EXPLORER_CHAIN_ID.AURA
+        ? await this.batchClient.execute(request)
+        : await this.batchClientSei.execute(request);
     } catch (error) {
       this.logger.error(
         null,

@@ -7,9 +7,16 @@ import { SharedModule } from '../../shared/shared.module';
 
 import { AccountController } from './controllers/account.controller';
 import { AccountService } from './services/account.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
-  imports: [SharedModule, HttpModule, ConfigModule],
+  imports: [
+    SharedModule,
+    HttpModule,
+    ConfigModule,
+    TypeOrmModule.forFeature([Explorer]),
+  ],
   providers: [AccountService, ServiceUtil],
   controllers: [AccountController],
   exports: [AccountService],

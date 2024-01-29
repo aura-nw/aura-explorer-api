@@ -17,6 +17,12 @@ export class Explorer extends BaseEntityIncrementId {
   @Column({ name: 'chain_db' })
   chainDb: string;
 
+  @Column({ name: 'minimal_denom' })
+  minimalDenom: string;
+
+  @Column({ name: 'decimal' })
+  decimal: number;
+
   @OneToMany(() => PublicNameTag, (publicNameTag) => publicNameTag.explorer)
   publicNameTags: PublicNameTag[];
 
