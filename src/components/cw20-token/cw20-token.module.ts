@@ -12,11 +12,12 @@ import { TokenMarketsRepository } from './repositories/token-markets.repository'
 import { UserModule } from '../user/user.module';
 import { IsUniqueConstraint } from './validators/is-unique.validator';
 import { IsUniqueManyColumnConstraint } from './validators/is-unique-many-column.validator';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([TokenMarkets, TokenMarketsRepository]),
+    TypeOrmModule.forFeature([TokenMarkets, TokenMarketsRepository, Explorer]),
     ConfigModule,
     HttpModule,
     UserModule,
