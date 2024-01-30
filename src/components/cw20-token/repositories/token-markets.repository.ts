@@ -41,10 +41,14 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
   /**
    * Retrieves IBC token with statistics for a specified number of days.
    *
+   * @param {exploreId} int - chain id
    * @param {number} days - The number of days to retrieve token statistics for. Defaults to 2.
    * @return {Promise<TokenMarkets[]>} - A Promise that resolves to an array of token market data.
    */
-  async getIbcTokenWithStatistics(days = 2): Promise<TokenMarkets[]> {
+  async getIbcTokenWithStatistics(
+    exploreId,
+    days = 2,
+  ): Promise<TokenMarkets[]> {
     return this.createQueryBuilder('tokenMarket')
       .leftJoinAndSelect(
         'tokenMarket.tokenHolderStatistics',
@@ -53,6 +57,7 @@ export class TokenMarketsRepository extends Repository<TokenMarkets> {
         { days },
       )
       .where('denom is not null')
+      .andWhere('explorer_id = :exploreId', { exploreId })
       .getMany();
   }
 }

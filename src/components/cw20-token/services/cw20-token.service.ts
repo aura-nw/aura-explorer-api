@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AkcLogger, RequestContext, TokenMarkets } from '../../../shared';
-import * as appConfig from '../../../shared/configs/configuration';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
 import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 import { CreateCw20TokenDto } from '../dtos/create-cw20-token.dto';
@@ -10,27 +9,19 @@ import { plainToClass } from 'class-transformer';
 import { Cw20TokenResponseDto } from '../dtos/cw20-token-response.dto';
 import { IbcResponseDto } from '../dtos/ibc-response.dto';
 import { UpdateIbcDto } from '../dtos/update-ibc.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class Cw20TokenService {
-  private appParams;
-  private denom;
-  private minimalDenom;
-  private decimals;
-  private precisionDiv;
-  private chainDB;
-
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {
     this.logger.setContext(Cw20TokenService.name);
-    this.appParams = appConfig.default();
-    this.denom = this.appParams.chainInfo.coinDenom;
-    this.minimalDenom = this.appParams.chainInfo.coinMinimalDenom;
-    this.decimals = this.appParams.chainInfo.coinDecimals;
-    this.precisionDiv = this.appParams.chainInfo.precisionDiv;
-    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async getTokenMarket(
@@ -38,17 +29,28 @@ export class Cw20TokenService {
     query: Cw20TokenMarketParamsDto,
   ): Promise<TokenMarkets[]> {
     this.logger.log(ctx, `${this.getTokenMarket.name} was called!`);
+    const explorer = await this.explorerRepository.findOne({
+      chainId: ctx.chainId,
+    });
+
     if (query.contractAddress) {
       return await this.tokenMarketsRepository.find({
         where: [
-          { contract_address: query.contractAddress },
-          { denom: query.contractAddress },
+          {
+            contract_address: query.contractAddress,
+            explorer: { id: explorer.id },
+          },
+          { denom: query.contractAddress, explorer: { id: explorer.id } },
         ],
       });
     } else if (query.onlyIbc === 'true') {
-      return await this.tokenMarketsRepository.getIbcTokenWithStatistics();
+      return await this.tokenMarketsRepository.getIbcTokenWithStatistics(
+        explorer.id,
+      );
     } else {
-      return await this.tokenMarketsRepository.find();
+      return await this.tokenMarketsRepository.find({
+        where: { explorer: { id: explorer.id } },
+      });
     }
   }
 
