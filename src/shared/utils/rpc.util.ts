@@ -1,4 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { AkcLogger } from '../logger/logger.service';
 import { ConfigService } from '@nestjs/config';
 import { AURA_INFO } from '../constants';
@@ -21,23 +25,31 @@ export class RpcUtil implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const explorer = await this.explorerRepository.find({});
-    explorer?.forEach((item) => {
-      this.listBatch.push({
-        chainId: item.chainId,
-        batchClient: new HttpBatchClient(
-          this.configService.get(
-            item.name === AURA_INFO.NAME
-              ? 'RPC'
-              : `${item.name.toUpperCase()}_RPC`,
+    try {
+      const explorer = await this.explorerRepository.find({});
+      explorer?.forEach((item) => {
+        this.listBatch.push({
+          chainId: item.chainId,
+          batchClient: new HttpBatchClient(
+            this.configService.get(
+              item.name === AURA_INFO.NAME
+                ? 'RPC'
+                : `${item.name.toUpperCase()}_RPC`,
+            ),
+            {
+              batchSizeLimit: 100,
+              dispatchInterval: 100, // millisec
+            },
           ),
-          {
-            batchSizeLimit: 100,
-            dispatchInterval: 100, // millisec
-          },
-        ),
+        });
       });
-    });
+    } catch (error) {
+      this.logger.error(
+        null,
+        `Error while create instance batchClient from RPC! ${error}`,
+      );
+      throw new InternalServerErrorException(error);
+    }
   }
 
   async queryComosRPC(path: string, data: Uint8Array, chainId: string) {
@@ -58,7 +70,7 @@ export class RpcUtil implements OnModuleInit {
         null,
         `Error while querying ${path} from RPC! ${error}`,
       );
-      return null;
+      throw new InternalServerErrorException(error);
     }
   }
 }
