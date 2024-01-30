@@ -97,17 +97,15 @@ export class PrivateNameTagService {
       entity.createdBy = ctx.user.id;
       entity.explorer = explorer;
 
-      try {
-        const result = await this.privateNameTagRepository.save(entity);
-        return { data: result, meta: {} };
-      } catch (err) {
-        this.logger.error(
-          ctx,
-          `Class ${PrivateNameTagService.name} call ${this.createNameTag.name} error ${err?.code} method error: ${err?.stack}`,
-        );
-        throw new BadRequestException(err);
-      }
-    } catch (error) {}
+      const result = await this.privateNameTagRepository.save(entity);
+      return { data: result, meta: {} };
+    } catch (err) {
+      this.logger.error(
+        ctx,
+        `Class ${PrivateNameTagService.name} call ${this.createNameTag.name} error ${err?.code} method error: ${err?.stack}`,
+      );
+      throw new BadRequestException(err);
+    }
   }
 
   async updateNameTag(
