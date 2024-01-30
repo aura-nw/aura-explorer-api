@@ -26,15 +26,15 @@ export class RpcUtil implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      const explorer = await this.explorerRepository.find({});
+      const explorer = await this.explorerRepository.find();
       explorer?.forEach((item) => {
         this.listBatch.push({
           chainId: item.chainId,
           batchClient: new HttpBatchClient(
             this.configService.get(
-              item.name === AURA_INFO.NAME
+              item.addressPrefix === AURA_INFO.ADDRESS_PREFIX
                 ? 'RPC'
-                : `${item.name.toUpperCase()}_RPC`,
+                : `${item.addressPrefix.toUpperCase()}_RPC`,
             ),
             {
               batchSizeLimit: 100,
