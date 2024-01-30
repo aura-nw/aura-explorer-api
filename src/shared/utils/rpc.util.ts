@@ -48,7 +48,6 @@ export class RpcUtil implements OnModuleInit {
         null,
         `Error while create instance batchClient from RPC! ${error}`,
       );
-      throw new InternalServerErrorException(error);
     }
   }
 
