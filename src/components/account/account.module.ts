@@ -9,6 +9,7 @@ import { AccountController } from './controllers/account.controller';
 import { AccountService } from './services/account.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { RpcUtil } from 'src/shared/utils/rpc.util';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
     ConfigModule,
     TypeOrmModule.forFeature([Explorer]),
   ],
-  providers: [AccountService, ServiceUtil],
+  providers: [AccountService, ServiceUtil, RpcUtil],
   controllers: [AccountController],
   exports: [AccountService],
 })

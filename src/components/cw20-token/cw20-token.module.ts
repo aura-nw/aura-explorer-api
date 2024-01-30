@@ -25,8 +25,6 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
   providers: [
     Cw20TokenService,
     ServiceUtil,
-    RedisUtil,
-    AccountService,
     IsUniqueConstraint,
     IsUniqueManyColumnConstraint,
   ],

@@ -771,8 +771,3 @@ export const RPC_QUERY_URL = {
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
 };
-
-export const EXPLORER_CHAIN_ID = {
-  AURA: 'aura-testnet-2',
-  SEI: 'pacific-1',
-};

@@ -27,6 +27,7 @@ import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import { Repository } from 'typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { RpcUtil } from 'src/shared/utils/rpc.util';
 
 @Injectable()
 export class AccountService {
@@ -37,6 +38,7 @@ export class AccountService {
   constructor(
     private readonly logger: AkcLogger,
     private serviceUtil: ServiceUtil,
+    private rpcUtil: RpcUtil,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
   ) {
@@ -409,7 +411,7 @@ export class AccountService {
     explorer: string,
   ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.DELEGATOR_DELEGATIONS,
         QueryDelegatorDelegationsRequest.encode({
           delegatorAddr,
@@ -444,7 +446,7 @@ export class AccountService {
     explorer: string,
   ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.DELEGATOR_UNBONDING_DELEGATIONS,
         QueryDelegatorUnbondingDelegationsRequest.encode({
           delegatorAddr,
@@ -469,7 +471,7 @@ export class AccountService {
     explorer: string,
   ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.DELEGATION_TOTAL_REWARDS,
         QueryDelegationTotalRewardsRequest.encode({
           delegatorAddress,
@@ -494,7 +496,7 @@ export class AccountService {
     explorer: string,
   ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.VALIDATOR_COMMISSION,
         QueryValidatorCommissionRequest.encode({
           validatorAddress,
