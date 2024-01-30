@@ -21,6 +21,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
     keywordEncrypt: string,
     limit: number,
     offset: number,
+    chainId: string,
   ) {
     this._logger.log(
       `============== ${this.getNameTags.name} was called! ==============`,
@@ -37,7 +38,9 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
         tag.updated_at as updatedAt`,
       )
       .leftJoin(User, 'user', 'user.id = tag.created_by')
-      .where('tag.created_by = :user_id', { user_id });
+      .leftJoin('tag.explorer', 'explorer')
+      .where('tag.created_by = :user_id', { user_id })
+      .andWhere('chain_id = :chainId', { chainId });
 
     const _finalizeResult = async () => {
       const result = await builder

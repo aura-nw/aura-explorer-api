@@ -52,11 +52,11 @@ export class ExportCsvService {
         case TYPE_EXPORT.ExecutedTxs:
           return this.executed(payload);
         case TYPE_EXPORT.AuraTxs:
-          return this.coinTransfer(payload, userId);
+          return this.coinTransfer(ctx, payload, userId);
         case TYPE_EXPORT.FtsTxs:
-          return this.tokenTransfer(payload, userId);
+          return this.tokenTransfer(ctx, payload, userId);
         case TYPE_EXPORT.NftTxs:
-          return this.nftTransfer(payload, userId);
+          return this.nftTransfer(ctx, payload, userId);
         default:
           break;
       }
@@ -128,7 +128,11 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async coinTransfer(payload: ExportCsvParamDto, userId) {
+  private async coinTransfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+  ) {
     const fileName = `export-account-native-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
@@ -182,6 +186,7 @@ export class ExportCsvService {
         null,
         LIMIT_PRIVATE_NAME_TAG,
         0,
+        ctx.chainId,
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
@@ -218,7 +223,11 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async tokenTransfer(payload: ExportCsvParamDto, userId) {
+  private async tokenTransfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+  ) {
     const fileName = `export-account-cw20-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
@@ -281,6 +290,7 @@ export class ExportCsvService {
         null,
         LIMIT_PRIVATE_NAME_TAG,
         0,
+        ctx.chainId,
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
@@ -317,7 +327,11 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async nftTransfer(payload: ExportCsvParamDto, userId) {
+  private async nftTransfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+  ) {
     const fileName = `export-account-nft-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
@@ -372,6 +386,7 @@ export class ExportCsvService {
         null,
         LIMIT_PRIVATE_NAME_TAG,
         0,
+        ctx.chainId,
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
