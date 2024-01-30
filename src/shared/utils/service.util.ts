@@ -7,24 +7,18 @@ import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
 import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
 import { sha256 } from 'js-sha256';
-import { HttpBatchClient } from '@cosmjs/tendermint-rpc';
 import { toHex } from '@cosmjs/encoding';
 import { JsonRpcRequest } from '@cosmjs/json-rpc';
 
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
-  private batchClient: HttpBatchClient;
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
     private configService: ConfigService,
   ) {
     this.indexerV2 = this.configService.get('indexerV2');
-    this.batchClient = new HttpBatchClient(this.configService.get('node.rpc'), {
-      batchSizeLimit: 100,
-      dispatchInterval: 100, // millisec
-    });
   }
 
   /**
@@ -162,27 +156,6 @@ export class ServiceUtil {
       return ipfsUrl + value.replace('://', '/');
     } else {
       return value.replace(DEFAULT_IPFS, ipfsUrl);
-    }
-  }
-
-  async queryComosRPC(path: string, data: Uint8Array) {
-    try {
-      const request: JsonRpcRequest = {
-        jsonrpc: '2.0',
-        id: Math.floor(Math.random() * 10000000),
-        method: 'abci_query',
-        params: {
-          path: path,
-          data: toHex(data),
-        },
-      };
-      return await this.batchClient.execute(request);
-    } catch (error) {
-      this.logger.error(
-        null,
-        `Error while querying ${path} from RPC! ${error}`,
-      );
-      return null;
     }
   }
 }

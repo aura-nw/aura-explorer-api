@@ -56,7 +56,7 @@ export class TokenProcessor implements OnModuleInit {
       },
     );
 
-    const explorer = await this.explorerRepository.find({});
+    const explorer = await this.explorerRepository.find();
     explorer?.forEach((item, index) => {
       this.tokenQueue.add(
         QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
