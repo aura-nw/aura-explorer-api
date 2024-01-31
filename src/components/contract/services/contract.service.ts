@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { plainToClass } from 'class-transformer';
 import { lastValueFrom, retry, timeout } from 'rxjs';
 import {
+  AURA_INFO,
   AkcLogger,
   CONTRACT_STATUS,
   ERROR_MAP,
@@ -21,9 +22,11 @@ import { VerifyCodeStepOutputDto } from '../dtos/verify-code-step-output.dto';
 import { VerifyCodeIdParamsDto } from '../dtos/verify-code-id-params.dto';
 import { SoulboundTokenRepository } from '../../soulbound-token/repositories/soulbound-token.repository';
 import { ContractUtil } from '../../../shared/utils/contract.util';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 @Injectable()
 export class ContractService {
-  private verifyContractUrl;
   private chainDB: string;
 
   constructor(
@@ -33,14 +36,15 @@ export class ContractService {
     private httpService: HttpService,
     private soulboundTokenRepository: SoulboundTokenRepository,
     private contractUtil: ContractUtil,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {
     this.logger.setContext(ContractService.name);
-    this.verifyContractUrl = this.configService.get('VERIFY_CONTRACT_URL');
     const appParams = appConfig.default();
     this.chainDB = appParams.indexerV2.chainDB;
   }
 
-  private async getCodeDetail(codeId: number) {
+  private async getCodeDetail(explorer: Explorer, codeId: number) {
     // Attributes for contract code detail
     const codeAttributes = `code_id
       creator
@@ -65,8 +69,8 @@ export class ContractService {
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_DETAIL,
-        this.chainDB,
-        this.chainDB,
+        explorer.chainDb,
+        explorer.chainDb,
         codeAttributes,
       ),
       variables: {
@@ -77,7 +81,7 @@ export class ContractService {
 
     const contracts = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
-    ).data[this.chainDB]['code'];
+    ).data[explorer.chainDb]['code'];
 
     return contracts;
   }
@@ -87,7 +91,10 @@ export class ContractService {
     request: VerifyCodeIdParamsDto,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyCodeId.name} was called!`);
-    const contract = await this.getCodeDetail(request.code_id);
+    const explorer = await this.explorerRepository.findOne({
+      chainId: ctx.chainId,
+    });
+    const contract = await this.getCodeDetail(explorer, request.code_id);
     if (contract?.length === 0) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
@@ -115,7 +122,14 @@ export class ContractService {
       wasmFile: request.wasm_file,
     };
     const result = await lastValueFrom(
-      this.httpService.post(this.verifyContractUrl, properties),
+      this.httpService.post(
+        this.configService.get(
+          explorer.addressPrefix === AURA_INFO.ADDRESS_PREFIX
+            ? 'VERIFY_CONTRACT_URL'
+            : `${explorer.addressPrefix.toUpperCase()}_VERIFY_CONTRACT_URL`,
+        ),
+        properties,
+      ),
     ).then((rs) => rs.data);
 
     return result;
@@ -124,13 +138,17 @@ export class ContractService {
   async getVerifyCodeStep(ctx: RequestContext, codeId: number) {
     this.logger.log(ctx, `${this.getVerifyCodeStep.name} was called!`);
 
+    const explorer = await this.explorerRepository.findOne({
+      chainId: ctx.chainId,
+    });
+
     const codeVerificationAttributes = `verify_step
       verification_status`;
 
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
-        this.chainDB,
+        explorer.chainDb,
         codeVerificationAttributes,
       ),
       variables: {
@@ -140,7 +158,7 @@ export class ContractService {
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[this.chainDB]['code_id_verification'];
+      .data[explorer.chainDb]['code_id_verification'];
 
     const verifySteps = [];
 
@@ -195,7 +213,10 @@ export class ContractService {
     codeId: number,
   ): Promise<any> {
     this.logger.log(ctx, `${this.verifyContractStatus.name} was called!`);
-    const contract = await this.getCodeDetail(codeId);
+    const explorer = await this.explorerRepository.findOne({
+      chainId: ctx.chainId,
+    });
+    const contract = await this.getCodeDetail(explorer, codeId);
     if (contract?.length === 0) {
       const error = {
         Code: ERROR_MAP.CONTRACT_NOT_EXIST.Code,
