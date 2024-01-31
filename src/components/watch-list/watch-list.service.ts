@@ -173,11 +173,10 @@ export class WatchListService {
         },
       });
 
-      updateWatchListDto.id = id;
-      updateWatchListDto.user = { id: ctx.user.id } as User;
-      updateWatchListDto.explorer = explorer;
+      // updateWatchListDto.id = id;
 
-      const updatedWatchList = await this.watchListRepository.save(
+      const updatedWatchList = await this.watchListRepository.update(
+        id,
         updateWatchListDto,
       );
 
