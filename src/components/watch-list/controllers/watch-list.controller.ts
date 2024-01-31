@@ -85,7 +85,7 @@ export class WatchListController {
   async create(
     @ReqContext() ctx: RequestContext,
     @Body() createWatchListDto: CreateWatchListDto,
-  ): Promise<WatchList> {
+  ): Promise<WatchListDetailResponse> {
     return await this.watchListService.create(ctx, createWatchListDto);
   }
 
@@ -110,7 +110,7 @@ export class WatchListController {
     @ReqContext() ctx: RequestContext,
     @Param('id') id: string,
     @Body() updateWatchListDto: UpdateWatchListDto,
-  ): Promise<WatchList> {
+  ): Promise<WatchListDetailResponse> {
     return await this.watchListService.update(ctx, +id, updateWatchListDto);
   }
 

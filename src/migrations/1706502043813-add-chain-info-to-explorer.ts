@@ -11,12 +11,15 @@ export class addChainInfoToExplorer1706502043813 implements MigrationInterface {
       `ALTER TABLE \`explorer\` ADD \`decimal\` int NOT NULL`,
     );
 
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query(
       `UPDATE \`explorer\` SET \`minimal_denom\` = 'utaura', \`decimal\` = 6 WHERE \`id\` = 1`,
     );
     await queryRunner.query(
       `UPDATE \`explorer\` SET \`minimal_denom\` = 'usei', \`decimal\` = 6 WHERE \`id\` = 2`,
     );
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
+
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

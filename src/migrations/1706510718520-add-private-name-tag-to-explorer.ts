@@ -14,7 +14,9 @@ export class addPrivateNameTagToExplorer1706510718520
     );
 
     // Default update current data to 1 (aura network)
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query(`UPDATE private_name_tag SET explorer_id = 1`);
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
