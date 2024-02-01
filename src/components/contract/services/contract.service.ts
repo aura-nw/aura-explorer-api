@@ -69,8 +69,8 @@ export class ContractService {
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.CONTRACT_CODE_DETAIL,
-        explorer.chainDb,
-        explorer.chainDb,
+        explorer?.chainDb,
+        explorer?.chainDb,
         codeAttributes,
       ),
       variables: {
@@ -81,7 +81,7 @@ export class ContractService {
 
     const contracts = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
-    ).data[explorer.chainDb]['code'];
+    ).data[explorer?.chainDb]['code'];
 
     return contracts;
   }
@@ -124,9 +124,9 @@ export class ContractService {
     const result = await lastValueFrom(
       this.httpService.post(
         this.configService.get(
-          explorer.addressPrefix === AURA_INFO.ADDRESS_PREFIX
+          explorer?.addressPrefix === AURA_INFO.ADDRESS_PREFIX
             ? 'VERIFY_CONTRACT_URL'
-            : `${explorer.addressPrefix.toUpperCase()}_VERIFY_CONTRACT_URL`,
+            : `${explorer?.addressPrefix.toUpperCase()}_VERIFY_CONTRACT_URL`,
         ),
         properties,
       ),
@@ -148,7 +148,7 @@ export class ContractService {
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.VERIFY_STEP,
-        explorer.chainDb,
+        explorer?.chainDb,
         codeVerificationAttributes,
       ),
       variables: {
@@ -158,7 +158,7 @@ export class ContractService {
     };
 
     const response = (await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery))
-      .data[explorer.chainDb]['code_id_verification'];
+      .data[explorer?.chainDb]['code_id_verification'];
 
     const verifySteps = [];
 
