@@ -759,6 +759,7 @@ export const WATCH_LIST = {
     ERR_LIMIT_ADDRESS: `You have reached out of ${
       process.env.WATCH_LIST_LIMIT_ADDRESS || 20
     } max limitation of address.`,
+    ERR_INVALID_ADDRESS: `Invalid %s format address.`,
   },
 };
 
@@ -770,4 +771,15 @@ export const RPC_QUERY_URL = {
     '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+};
+
+export const TYPE_ORM_ERROR_CODE = {
+  ER_DUP_ENTRY: 'ER_DUP_ENTRY',
+};
+
+export const COSMOS = {
+  ADDRESS_LENGTH: {
+    ACCOUNT_HEX: 39,
+    CONTRACT_HEX: 59,
+  },
 };

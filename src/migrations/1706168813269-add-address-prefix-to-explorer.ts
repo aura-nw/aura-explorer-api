@@ -1,7 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class addAddressPrefixToExplorer1706168813269
-  implements MigrationInterface {
+  implements MigrationInterface
+{
   name = 'addAddressPrefixToExplorer1706168813269';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -10,11 +11,13 @@ export class addAddressPrefixToExplorer1706168813269
       ADD \`address_prefix\` varchar(255) NOT NULL,
       ADD \`chain_db\` VARCHAR(255) NOT NULL;`,
     );
-    await queryRunner.query('TRUNCATE TABLE explorer;');
+
     await queryRunner.query(
-      `INSERT INTO \`explorer\` (\`chain_id\`, \`name\`, \`address_prefix\`, \`chain_db\`) VALUES
-      ('aura-testnet-2', 'Aura', 'aura', 'auratestnet'),
-      ('pacific-1', 'Sei', 'sei', 'pacific')`,
+      `UPDATE \`explorer\` SET \`address_prefix\` = 'aura', \`chain_db\` = 'auratestnet' WHERE \`id\` = '1'`,
+    );
+
+    await queryRunner.query(
+      `UPDATE \`explorer\` SET \`address_prefix\` = 'sei', \`chain_db\` = 'pacific' WHERE \`id\` = '2'`,
     );
   }
 
