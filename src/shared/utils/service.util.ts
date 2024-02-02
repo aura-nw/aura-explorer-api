@@ -5,10 +5,14 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
+import {
+  AURA_INFO,
+  COSMOS,
+  CW4973_CONTRACT,
+  DEFAULT_IPFS,
+  NAME_TAG_TYPE,
+} from '../constants';
 import { sha256 } from 'js-sha256';
-import { toHex } from '@cosmjs/encoding';
-import { JsonRpcRequest } from '@cosmjs/json-rpc';
 
 @Injectable()
 export class ServiceUtil {
@@ -165,10 +169,11 @@ export function secondsToDate(seconds: number): Date {
   return new Date(seconds * secondsToMilliseconds);
 }
 
-export async function isValidBench32Address(
+export function isValidBench32Address(
   address: string,
   prefix = AURA_INFO.ADDRESS_PREFIX.toString(),
-): Promise<any> {
+  type?: string,
+): boolean {
   if (!address) {
     return false;
   }
@@ -180,6 +185,15 @@ export async function isValidBench32Address(
       throw new Error(
         `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
       );
+    }
+
+    const addressHexLength = address.length - decodedPrefix.length;
+
+    switch (type) {
+      case NAME_TAG_TYPE.ACCOUNT:
+        return addressHexLength === COSMOS.ADDRESS_LENGTH.ACCOUNT_HEX;
+      case NAME_TAG_TYPE.CONTRACT:
+        return addressHexLength === COSMOS.ADDRESS_LENGTH.CONTRACT_HEX;
     }
 
     return true;

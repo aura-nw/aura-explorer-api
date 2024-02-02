@@ -36,10 +36,8 @@ export class WatchListService {
     private readonly privateNameTagRepository: Repository<PrivateNameTag>,
     @InjectRepository(Explorer)
     private readonly explorerRepository: Repository<Explorer>,
-    private userService: UserService,
     private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
-    private readonly logger: AkcLogger,
   ) {}
   async create(
     ctx: RequestContext,
@@ -50,20 +48,11 @@ export class WatchListService {
         chainId: ctx.chainId,
       });
 
-      // validate
-      if (
-        !(await isValidBench32Address(
-          createWatchListDto.address,
-          explorer.addressPrefix,
-        ))
-      ) {
-        throw new BadRequestException(
-          util.format(
-            WATCH_LIST.ERROR_MSGS.ERR_INVALID_ADDRESS,
-            explorer.addressPrefix,
-          ),
-        );
-      }
+      this.validateAddress(
+        createWatchListDto.address,
+        explorer.addressPrefix,
+        createWatchListDto.type,
+      );
 
       // Check limit number address
       const totalWatchList = await this.watchListRepository.count({
@@ -173,7 +162,11 @@ export class WatchListService {
         },
       });
 
-      // updateWatchListDto.id = id;
+      this.validateAddress(
+        updateWatchListDto.address,
+        explorer.addressPrefix,
+        updateWatchListDto.type,
+      );
 
       const updatedWatchList = await this.watchListRepository.update(
         id,
@@ -217,7 +210,7 @@ export class WatchListService {
 
     const explorerId = explorer.id;
 
-    if (await isValidBench32Address(keyword, explorer.addressPrefix)) {
+    if (isValidBench32Address(keyword, explorer.addressPrefix)) {
       // Find in watch list.
       let foundedPublicNameTag = null;
       let foundPrivateNameTag = null;
@@ -339,5 +332,12 @@ export class WatchListService {
     countTrue(obj);
 
     return count;
+  }
+
+  validateAddress(address: string, prefix?: string, type?: string) {
+    if (!isValidBench32Address(address, prefix, type))
+      throw new BadRequestException(
+        util.format(WATCH_LIST.ERROR_MSGS.ERR_INVALID_ADDRESS, prefix),
+      );
   }
 }

@@ -776,3 +776,10 @@ export const RPC_QUERY_URL = {
 export const TYPE_ORM_ERROR_CODE = {
   ER_DUP_ENTRY: 'ER_DUP_ENTRY',
 };
+
+export const COSMOS = {
+  ADDRESS_LENGTH: {
+    ACCOUNT_HEX: 39,
+    CONTRACT_HEX: 59,
+  },
+};
