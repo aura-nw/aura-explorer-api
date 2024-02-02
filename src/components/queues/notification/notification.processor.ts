@@ -23,6 +23,7 @@ import { SyncPointRepository } from '../../sync-point/repositories/sync-point.re
 import { lastValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import * as firebaseAdmin from 'firebase-admin';
+import * as util from 'util';
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { PublicNameTagRepository } from '../../public-name-tag/repositories/public-name-tag.repository';
 import { NotificationTokenRepository } from './repositories/notification-token.repository';
@@ -37,12 +38,11 @@ import { SyncPoint } from '../../../shared/entities/sync-point.entity';
 import { EncryptionService } from '../../../components/encryption/encryption.service';
 import { NotificationToken } from '../../../shared/entities/notification-token.entity';
 import { User } from '../../../shared/entities/user.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Processor(QUEUES.NOTIFICATION.QUEUE_NAME)
 export class NotificationProcessor {
   private readonly logger = new Logger(NotificationProcessor.name);
-  private indexerChainId;
-  private chainDB;
   private notificationConfig;
 
   constructor(
@@ -63,6 +63,8 @@ export class NotificationProcessor {
     @InjectRepository(WatchList)
     private watchListRepository: Repository<WatchList>,
     @InjectQueue(QUEUES.NOTIFICATION.QUEUE_NAME) private readonly queue: Queue,
+    @InjectRepository(Explorer)
+    private readonly explorerRepository: Repository<Explorer>,
   ) {
     this.logger.log(
       '============== Constructor NotificationProcessor Service ==============',
@@ -78,41 +80,9 @@ export class NotificationProcessor {
         clientEmail: this.notificationConfig.fcmClientEmail,
       }),
     });
+  }
 
-    this.indexerChainId = this.configService.get('indexer.chainId');
-
-    this.queue.add(
-      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_EXECUTED,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_30_SECONDS },
-      },
-    );
-
-    this.queue.add(
-      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_COIN_TRANSFER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_30_SECONDS },
-      },
-    );
-
-    this.queue.add(
-      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_NFT_TRANSFER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_30_SECONDS },
-      },
-    );
-
-    this.queue.add(
-      QUEUES.NOTIFICATION.JOBS.NOTIFICATION_TOKEN_TRANSFER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_30_SECONDS },
-      },
-    );
-
+  async onModuleInit() {
     this.queue.add(
       QUEUES.NOTIFICATION.JOBS.RESET_NOTIFICATION,
       {},
@@ -121,28 +91,69 @@ export class NotificationProcessor {
       },
     );
 
-    this.chainDB = configService.get('indexerV2.chainDB');
+    const explorer = await this.explorerRepository.find();
+    explorer?.forEach((item, index) => {
+      // Every 30s + index
+      const cronTime = 30 + index;
+      this.queue.add(
+        QUEUES.NOTIFICATION.JOBS.NOTIFICATION_EXECUTED,
+        { explorer: item },
+        {
+          repeat: { cron: `*/${cronTime.toString()} * * * * *` },
+        },
+      );
+      this.queue.add(
+        QUEUES.NOTIFICATION.JOBS.NOTIFICATION_COIN_TRANSFER,
+        { explorer: item },
+        {
+          repeat: { cron: `*/${cronTime.toString()} * * * * *` },
+        },
+      );
+      this.queue.add(
+        QUEUES.NOTIFICATION.JOBS.NOTIFICATION_NFT_TRANSFER,
+        { explorer: item },
+        {
+          repeat: { cron: `*/${cronTime.toString()} * * * * *` },
+        },
+      );
+      this.queue.add(
+        QUEUES.NOTIFICATION.JOBS.NOTIFICATION_TOKEN_TRANSFER,
+        { explorer: item },
+        {
+          repeat: { cron: `*/${cronTime.toString()} * * * * *` },
+        },
+      );
+    });
   }
 
   @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_EXECUTED)
-  async notificationExecuted() {
+  async notificationExecuted(job: Job) {
     try {
+      const explorer: Explorer = job.data.explorer;
+
       const currentTxHeight = await this.syncPointRepos.findOne({
         where: {
           type: SYNC_POINT_TYPE.EXECUTED_HEIGHT,
+          explorer: { id: explorer.id },
         },
       });
 
       if (!currentTxHeight) {
-        await this.updateBlockNotification(SYNC_POINT_TYPE.EXECUTED_HEIGHT);
+        await this.updateBlockNotification(
+          SYNC_POINT_TYPE.EXECUTED_HEIGHT,
+          explorer,
+        );
         return;
       }
 
       // Get watch list
-      const watchList = await this.queryWatchList();
+      const watchList = await this.queryWatchList(explorer);
       if (watchList.length > 0) {
         const graphQlQuery = {
-          query: INDEXER_API_V2.GRAPH_QL.EXECUTED_NOTIFICATION,
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.EXECUTED_NOTIFICATION,
+            explorer.chainDb,
+          ),
           variables: {
             heightGT: currentTxHeight.point,
           },
@@ -151,7 +162,7 @@ export class NotificationProcessor {
 
         const response = (
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
-        )?.data[this.chainDB];
+        )?.data[explorer.chainDb];
         if (response?.executed?.length > 0) {
           // get list address
           let listAddress = [];
@@ -164,7 +175,7 @@ export class NotificationProcessor {
 
           // Pre-Process
           const { notificationTokens, privateNameTags, publicNameTags } =
-            await this.preProcessNotification(null, listAddress);
+            await this.preProcessNotification(null, listAddress, explorer);
 
           // Get executed notification
           const notifications =
@@ -176,6 +187,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Process notification and push to firebase
@@ -184,6 +196,7 @@ export class NotificationProcessor {
             notificationTokens,
             currentTxHeight,
             response?.executed[0],
+            explorer,
           );
         }
       }
@@ -193,26 +206,32 @@ export class NotificationProcessor {
   }
 
   @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_COIN_TRANSFER)
-  async notificationCoinTransfer() {
+  async notificationCoinTransfer(job: Job) {
     try {
+      const explorer: Explorer = job.data.explorer;
       const currentTxHeight = await this.syncPointRepos.findOne({
         where: {
           type: SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+          explorer: { id: explorer.id },
         },
       });
 
       if (!currentTxHeight) {
         await this.updateBlockNotification(
           SYNC_POINT_TYPE.COIN_TRANSFER_HEIGHT,
+          explorer,
         );
         return;
       }
 
       // Get watch list
-      const watchList = await this.queryWatchList();
+      const watchList = await this.queryWatchList(explorer);
       if (watchList.length > 0) {
         const graphQlQuery = {
-          query: INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.COIN_TRANSFER_NOTIFICATION,
+            explorer.chainDb,
+          ),
           variables: {
             heightGT: currentTxHeight.point,
           },
@@ -222,12 +241,13 @@ export class NotificationProcessor {
 
         const response = (
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
-        )?.data[this.chainDB];
+        )?.data[explorer.chainDb];
 
         if (response?.coin_transfer?.length > 0) {
           // Convert data coin transfer
           const listTx = await this.notificationUtil.convertDataCoinTransfer(
             response.coin_transfer,
+            explorer,
           );
 
           // Get list address
@@ -243,7 +263,7 @@ export class NotificationProcessor {
             publicNameTags,
             notifyReceived,
             notifySent,
-          } = await this.preProcessNotification(listTx, listAddress);
+          } = await this.preProcessNotification(listTx, listAddress, explorer);
 
           // Get received native coin notification
           const coinTransferReceived =
@@ -255,6 +275,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Get sent native coin notification
@@ -267,6 +288,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Process notification and push to firebase
@@ -275,6 +297,7 @@ export class NotificationProcessor {
             notificationTokens,
             currentTxHeight,
             response?.coin_transfer[0],
+            explorer,
           );
         }
       }
@@ -284,23 +307,26 @@ export class NotificationProcessor {
   }
 
   @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_TOKEN_TRANSFER)
-  async notificationTokenTransfer() {
+  async notificationTokenTransfer(job: Job) {
     try {
+      const explorer: Explorer = job.data.explorer;
       const currentTxHeight = await this.syncPointRepos.findOne({
         where: {
           type: SYNC_POINT_TYPE.TOKEN_TRANSFER_HEIGHT,
+          explorer: { id: explorer.id },
         },
       });
 
       if (!currentTxHeight) {
         await this.updateBlockNotification(
           SYNC_POINT_TYPE.TOKEN_TRANSFER_HEIGHT,
+          explorer,
         );
         return;
       }
 
       // Get watch list
-      const watchList = await this.queryWatchList();
+      const watchList = await this.queryWatchList(explorer);
       if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.TOKEN_TRANSFER_NOTIFICATION,
@@ -322,7 +348,7 @@ export class NotificationProcessor {
 
         const response = (
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
-        )?.data[this.chainDB];
+        )?.data[explorer.chainDb];
 
         if (response?.token_transfer?.length > 0) {
           // Get list address
@@ -341,6 +367,7 @@ export class NotificationProcessor {
           } = await this.preProcessNotification(
             response.token_transfer,
             listAddress,
+            explorer,
           );
 
           // Get received token notification
@@ -352,6 +379,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Get sent token notification
@@ -363,6 +391,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Process notification and push to firebase
@@ -371,6 +400,7 @@ export class NotificationProcessor {
             notificationTokens,
             currentTxHeight,
             response?.token_transfer[0],
+            explorer,
           );
         }
       }
@@ -380,21 +410,26 @@ export class NotificationProcessor {
   }
 
   @Process(QUEUES.NOTIFICATION.JOBS.NOTIFICATION_NFT_TRANSFER)
-  async notificationNftTransfer() {
+  async notificationNftTransfer(job: Job) {
     try {
+      const explorer: Explorer = job.data.explorer;
       const currentTxHeight = await this.syncPointRepos.findOne({
         where: {
           type: SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT,
+          explorer: { id: explorer.id },
         },
       });
 
       if (!currentTxHeight) {
-        await this.updateBlockNotification(SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT);
+        await this.updateBlockNotification(
+          SYNC_POINT_TYPE.NFT_TRANSFER_HEIGHT,
+          explorer,
+        );
         return;
       }
 
       // Get watch list
-      const watchList = await this.queryWatchList();
+      const watchList = await this.queryWatchList(explorer);
       if (watchList.length > 0) {
         const graphQlQuery = {
           query: INDEXER_API_V2.GRAPH_QL.NFT_TRANSFER_NOTIFICATION,
@@ -408,7 +443,7 @@ export class NotificationProcessor {
 
         const response = (
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
-        )?.data[this.chainDB];
+        )?.data[explorer.chainDb];
 
         if (response?.nft_transfer?.length > 0) {
           // Get list address
@@ -427,6 +462,7 @@ export class NotificationProcessor {
           } = await this.preProcessNotification(
             response.nft_transfer,
             listAddress,
+            explorer,
           );
 
           // Get sent nft notification
@@ -438,6 +474,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Get received nft notification
@@ -449,6 +486,7 @@ export class NotificationProcessor {
               ),
               privateNameTags,
               publicNameTags,
+              explorer,
             );
 
           // Process notification and push to firebase
@@ -457,6 +495,7 @@ export class NotificationProcessor {
             notificationTokens,
             currentTxHeight,
             response?.nft_transfer[0],
+            explorer,
           );
         }
       }
@@ -530,7 +569,10 @@ export class NotificationProcessor {
       .catch((error) => this.logger.error('cannot-send-notification', error));
   }
 
-  private async blockLimitNotification(notifications: NotificationDto[]) {
+  private async blockLimitNotification(
+    notifications: NotificationDto[],
+    explorer: Explorer,
+  ) {
     const counts = {};
     for (const element of notifications) {
       if (counts.hasOwnProperty(element.user_id)) {
@@ -545,6 +587,7 @@ export class NotificationProcessor {
         where: {
           user: { id: Number(userId) },
           type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+          explorer: { id: explorer.id },
         },
       });
       if (userActivities) {
@@ -556,7 +599,7 @@ export class NotificationProcessor {
 
         if (total >= this.notificationConfig.limitNotifications) {
           this.watchListRepository.update(
-            { user: { id: Number(userId) } },
+            { user: { id: Number(userId) }, explorer: { id: explorer.id } },
             {
               tracking: false,
             },
@@ -575,10 +618,14 @@ export class NotificationProcessor {
     }
   }
 
-  private async updateBlockNotification(type, syncPoint = null) {
+  private async updateBlockNotification(
+    type,
+    explorer: Explorer,
+    syncPoint = null,
+  ) {
     const data = await lastValueFrom(
       this.httpService.get(
-        `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${this.indexerChainId}`,
+        `${process.env.INDEXER_V2_URL}api/v2/statistics/dashboard?chainid=${explorer.chainId}`,
       ),
     ).then((rs) => rs.data);
     if (syncPoint) {
@@ -589,13 +636,18 @@ export class NotificationProcessor {
       await this.syncPointRepos.save({
         type: type,
         point: data?.total_blocks,
+        explorer: explorer,
       });
     }
   }
 
-  private async preProcessNotification(response: any, listAddress: string[]) {
+  private async preProcessNotification(
+    response: any,
+    listAddress: string[],
+    explorer: Explorer,
+  ) {
     const result = await this.privateNameTagRepository.find({
-      where: { address: In(listAddress) },
+      where: { address: In(listAddress), explorer: { id: explorer.id } },
     });
     const privateNameTags = await Promise.all(
       result.map(async (item) => {
@@ -604,7 +656,7 @@ export class NotificationProcessor {
       }),
     );
     const publicNameTags = await this.publicNameTagRepository.find({
-      where: { address: In(listAddress) },
+      where: { address: In(listAddress), explorer: { id: explorer.id } },
     });
     const fcmToken = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },
@@ -614,7 +666,9 @@ export class NotificationProcessor {
     // Filter fcm token less than 100 notification per days.
     const notificationTokens = fcmToken.filter((item) => {
       const dailyNotification = item.user?.userActivities?.find(
-        (activity) => activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+        (activity) =>
+          activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS &&
+          activity.explorer.id === explorer.id,
       );
       return dailyNotification?.total >=
         this.notificationConfig.limitNotifications
@@ -640,6 +694,7 @@ export class NotificationProcessor {
     notificationTokens: NotificationToken[],
     currentTxHeight: SyncPoint,
     response: any,
+    explorer: Explorer,
   ) {
     // Push notification to firebase
     if (notifications?.length > 0) {
@@ -660,14 +715,15 @@ export class NotificationProcessor {
       point: response?.height,
     });
     // Process limit when 100 notification per day
-    await this.blockLimitNotification(notifications);
+    await this.blockLimitNotification(notifications, explorer);
   }
 
-  private async queryWatchList() {
+  private async queryWatchList(explorer: Explorer) {
     // Get all watch list with tracking true
     const watchList = await this.watchListRepository.find({
       where: {
         tracking: true,
+        explorer: { id: explorer.id },
       },
       relations: ['user', 'user.userActivities'],
     });
@@ -675,7 +731,9 @@ export class NotificationProcessor {
     // Filter watch list less than 100 notification per days.
     const watchListFilter = watchList.filter((item) => {
       const dailyNotification = item.user?.userActivities?.find(
-        (activity) => activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+        (activity) =>
+          activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS &&
+          activity.explorer.id === explorer.id,
       );
       return dailyNotification?.total >=
         this.notificationConfig.limitNotifications

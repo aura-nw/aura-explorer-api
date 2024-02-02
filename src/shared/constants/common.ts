@@ -178,7 +178,7 @@ export const INDEXER_API_V2 = {
     }
     `,
     EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
-      ${INDEXER_V2_DB} {
+      %s {
         executed: transaction(where: {height: {_gt: $heightGT, _lt: $heightLT}, code: {_eq: 0}}, order_by: {height: desc}, limit: 100) {
           height
           hash
@@ -192,7 +192,7 @@ export const INDEXER_API_V2 = {
     }
     `,
     COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int = null, $heightLT: Int = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         coin_transfer: transaction(where: {coin_transfers: {block_height: {_lt: $heightLT, _gt: $heightGT}}}, limit: 100, order_by: {height: desc}) {
           hash
           height
