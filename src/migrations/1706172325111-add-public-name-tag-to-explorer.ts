@@ -16,7 +16,9 @@ export class addPublicNameTagToExplorer1706172325111
       REFERENCES \`explorer\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     // Update current data explorer_id to 1 (aura network)
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query('UPDATE public_name_tag SET explorer_id = 1');
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

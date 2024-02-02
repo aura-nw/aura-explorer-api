@@ -14,7 +14,7 @@ export class IsValidBech32AddressConstraint
   implements ValidatorConstraintInterface
 {
   async validate(value: string): Promise<boolean> {
-    return await isValidBench32Address(value);
+    return isValidBench32Address(value);
   }
 
   defaultMessage() {

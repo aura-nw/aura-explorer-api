@@ -2,6 +2,7 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { User } from './user.entity';
 import { WATCH_LIST } from '../constants/common';
+import { Explorer } from './explorer.entity';
 
 @Entity('watch_list')
 @Index(['address', 'user'], { unique: true })
@@ -29,4 +30,10 @@ export class WatchList extends BaseEntityIncrementId {
     name: 'user_id',
   })
   user: User;
+
+  @ManyToOne(() => Explorer, (explorer) => explorer.watchLists)
+  @JoinColumn({
+    name: 'explorer_id',
+  })
+  explorer: Explorer;
 }

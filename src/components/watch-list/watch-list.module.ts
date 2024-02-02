@@ -8,6 +8,8 @@ import { PublicNameTag } from '../../shared/entities/public-name-tag.entity';
 import { PrivateNameTag } from '../../shared/entities/private-name-tag.entity';
 import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import { AkcLogger } from 'src/shared';
 
 @Module({
   imports: [
@@ -16,10 +18,11 @@ import { CipherKey } from '../../shared/entities/cipher-key.entity';
       PublicNameTag,
       PrivateNameTag,
       CipherKey,
+      Explorer,
     ]),
     UserModule,
   ],
   controllers: [WatchListController],
-  providers: [WatchListService, EncryptionService],
+  providers: [WatchListService, EncryptionService, AkcLogger],
 })
 export class WatchListModule {}

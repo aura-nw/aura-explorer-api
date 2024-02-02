@@ -185,7 +185,7 @@ export class PrivateNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = await isValidBench32Address(
+      const validFormat = isValidBench32Address(
         req.address,
         explorer.addressPrefix,
       );
