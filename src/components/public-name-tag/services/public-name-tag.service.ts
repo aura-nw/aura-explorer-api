@@ -145,9 +145,10 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = await isValidBench32Address(
+      const validFormat = isValidBench32Address(
         req.address,
         explorer?.addressPrefix,
+        req.type,
       );
 
       if (
