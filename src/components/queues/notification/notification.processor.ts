@@ -660,7 +660,11 @@ export class NotificationProcessor {
     });
     const fcmToken = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },
-      relations: ['user', 'user.userActivities'],
+      relations: [
+        'user',
+        'user.userActivities',
+        'user.userActivities.explorer',
+      ],
     });
 
     // Filter fcm token less than 100 notification per days.
@@ -725,7 +729,11 @@ export class NotificationProcessor {
         tracking: true,
         explorer: { id: explorer.id },
       },
-      relations: ['user', 'user.userActivities'],
+      relations: [
+        'user',
+        'user.userActivities',
+        'user.userActivities.explorer',
+      ],
     });
 
     // Filter watch list less than 100 notification per days.
