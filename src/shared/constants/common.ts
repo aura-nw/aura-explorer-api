@@ -62,7 +62,7 @@ export const INDEXER_API_V2 = {
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
     CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { data} cw721_contract {smart_contract {address}} sender}}}`,
     TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: String = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
           hash
           height
@@ -77,7 +77,7 @@ export const INDEXER_API_V2 = {
       }
     }`,
     TX_COIN_TRANSFER: `query QueryTxMsgOfAccount($from: String = "_", $to: String = "_", $startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         transaction(where: {coin_transfers: {_or: [{from: {_eq: $from}}, {to: {_eq: $to}}], block_height: {_lt: $heightLT, _gt: $heightGT}}, timestamp: {_lte: $endTime, _gte: $startTime}}, limit: $limit, order_by: {height: desc}) {
           hash
           height
@@ -99,7 +99,7 @@ export const INDEXER_API_V2 = {
       }
     }`,
     TX_TOKEN_TRANSFER: `query Cw20TXMultilCondition($receiver: String = null, $sender: String = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = 100, $actionIn: [String!] = null, $startTime: timestamptz = null, $endTime: timestamptz = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         transaction: cw20_activity(where: {_or: [{to: {_eq: $receiver}}, {from: {_eq: $sender}}], cw20_contract: {}, action: {_in: $actionIn}, height: {_gt: $heightGT, _lt: $heightLT}, tx: {timestamp: {_lte: $endTime, _gte: $startTime}}}, order_by: {height: desc}, limit: $limit) {
           action
           amount
@@ -136,7 +136,7 @@ export const INDEXER_API_V2 = {
       $startTime: timestamptz = null
       $endTime: timestamptz = null
     ) {
-      ${INDEXER_V2_DB} {
+      %s {
         transaction: cw721_activity(
           where: {
             _or: [{ to: { _eq: $receiver } }, { from: { _eq: $sender } }]
