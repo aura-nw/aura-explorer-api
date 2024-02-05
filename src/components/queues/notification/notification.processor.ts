@@ -589,6 +589,7 @@ export class NotificationProcessor {
           type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
           explorer: { id: explorer.id },
         },
+        relations: ['explorer'],
       });
       if (userActivities) {
         const currentTotal = userActivities.total || 0;
@@ -648,6 +649,7 @@ export class NotificationProcessor {
   ) {
     const result = await this.privateNameTagRepository.find({
       where: { address: In(listAddress), explorer: { id: explorer.id } },
+      relations: ['explorer'],
     });
     const privateNameTags = await Promise.all(
       result.map(async (item) => {
@@ -657,6 +659,7 @@ export class NotificationProcessor {
     );
     const publicNameTags = await this.publicNameTagRepository.find({
       where: { address: In(listAddress), explorer: { id: explorer.id } },
+      relations: ['explorer'],
     });
     const fcmToken = await this.notificationTokenRepository.find({
       where: { status: NOTIFICATION.STATUS.ACTIVE },
