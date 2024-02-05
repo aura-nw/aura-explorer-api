@@ -252,11 +252,21 @@ export const INDEXER_API_V2 = {
     }`,
     BASE_QUERY: `query BaseQuery {
       ${INDEXER_V2_DB} { %s } }`,
-    LIST_VALIDATOR: `query ListValidator($address: String) {
-      ${process.env.INDEXER_V2_DB} {
-        validator(where: {account_address: {_eq: $address}}) {
+    LIST_VALIDATOR: `query ListValidator($address: [String!] = null) {
+      ${INDEXER_V2_DB} {
+        validator(where: {account_address: {_in: $address}}) {
+          account_address
           operator_address
         }
+      }
+    }`,
+    LIST_ACCOUNT: `query ListAccount($address: [String!] = null) {
+      ${INDEXER_V2_DB} { 
+        account(where: {address: {_in: $address}}) { 
+          spendable_balances
+          balances
+          address 
+        } 
       }
     }`,
   },
@@ -284,6 +294,7 @@ export const INDEXER_API_V2 = {
     CW4973_MEDIA_INFO: 'CW4973MediaInfo',
     BASE_QUERY: 'BaseQuery',
     LIST_VALIDATOR: 'ListValidator',
+    LIST_ACCOUNT: 'ListAccount',
   },
 };
 
@@ -696,6 +707,7 @@ export const TX_HEADER = {
 export const QUERY_LIMIT_RECORD = 100;
 export const EXPORT_LIMIT_RECORD = 1000;
 export const LIMIT_PRIVATE_NAME_TAG = 500;
+export const LIMIT_HOLDER_ADDRESS = 5;
 
 export const NOTIFICATION = {
   TYPE: {
@@ -744,4 +756,14 @@ export const WATCH_LIST = {
       process.env.WATCH_LIST_LIMIT_ADDRESS || 20
     } max limitation of address.`,
   },
+};
+
+export const RPC_QUERY_URL = {
+  DELEGATOR_DELEGATIONS: '/cosmos.staking.v1beta1.Query/DelegatorDelegations',
+  DELEGATOR_UNBONDING_DELEGATIONS:
+    '/cosmos.staking.v1beta1.Query/DelegatorUnbondingDelegations',
+  DELEGATION_TOTAL_REWARDS:
+    '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
+  VALIDATOR_COMMISSION:
+    '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
 };
