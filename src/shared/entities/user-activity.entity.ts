@@ -24,7 +24,7 @@ export class UserActivity extends BaseEntityIncrementId {
   })
   user: User;
 
-  @ManyToOne(() => Explorer, (explorer) => explorer.tokenMarkets)
+  @ManyToOne(() => Explorer, (explorer) => explorer.userActivities)
   @JoinColumn({
     name: 'explorer_id',
   })

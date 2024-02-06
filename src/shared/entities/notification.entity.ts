@@ -32,7 +32,7 @@ export class Notification extends BaseEntityIncrementId {
   @Column({ default: false })
   is_read: boolean;
 
-  @ManyToOne(() => Explorer, (explorer) => explorer.tokenMarkets)
+  @ManyToOne(() => Explorer, (explorer) => explorer.notifications)
   @JoinColumn({
     name: 'explorer_id',
   })

@@ -11,7 +11,7 @@ export class SyncPoint extends BaseEntityIncrementId {
   @Column({ nullable: true })
   point: number;
 
-  @ManyToOne(() => Explorer, (explorer) => explorer.tokenMarkets)
+  @ManyToOne(() => Explorer, (explorer) => explorer.syncPoints)
   @JoinColumn({
     name: 'explorer_id',
   })
