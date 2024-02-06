@@ -329,7 +329,10 @@ export class NotificationProcessor {
       const watchList = await this.queryWatchList(explorer);
       if (watchList.length > 0) {
         const graphQlQuery = {
-          query: INDEXER_API_V2.GRAPH_QL.TOKEN_TRANSFER_NOTIFICATION,
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.TOKEN_TRANSFER_NOTIFICATION,
+            explorer.chainDb,
+          ),
           variables: {
             heightGT: currentTxHeight.point,
             listFilterCW20: [
@@ -432,7 +435,10 @@ export class NotificationProcessor {
       const watchList = await this.queryWatchList(explorer);
       if (watchList.length > 0) {
         const graphQlQuery = {
-          query: INDEXER_API_V2.GRAPH_QL.NFT_TRANSFER_NOTIFICATION,
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.NFT_TRANSFER_NOTIFICATION,
+            explorer.chainDb,
+          ),
           variables: {
             heightGT: currentTxHeight.point,
             listFilterCW721: ['mint', 'burn', 'transfer_nft', 'send_nft'],
