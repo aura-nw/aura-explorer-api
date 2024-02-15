@@ -9,11 +9,12 @@ import {
   TypeTransaction,
 } from '../constants/transaction';
 import BigNumber from 'bignumber.js';
+import { Explorer } from '../entities/explorer.entity';
 
 export class TransactionHelper {
   static convertDataAccountTransaction(
     data,
-    coinInfo,
+    coinInfo: Explorer,
     modeQuery,
     currentAddress,
     coinConfig = null,
@@ -38,7 +39,7 @@ export class TransactionHelper {
       }
       const lstType = this.getTypeTxMsg(lstTypeTemp);
 
-      let denom = coinInfo.coinDenom;
+      let denom = coinInfo.minimalDenom;
       const _amount = _.get(element, 'events[0].event_attributes[2].value');
       const value = _amount?.match(/\d+/g);
       let amount = this.balanceOf(value?.length > 0 ? value[0] : 0);
@@ -50,8 +51,8 @@ export class TransactionHelper {
 
       const fee = this.balanceOf(
         _.get(element, 'fee[0].amount') || 0,
-        coinInfo.coinDecimals,
-      ).toFixed(coinInfo.coinDecimals);
+        coinInfo.decimal,
+      ).toFixed(coinInfo.decimal);
       const height = _.get(element, 'height');
       const timestamp =
         _.get(element, 'timestamp') || _.get(element, 'tx.timestamp');
@@ -80,7 +81,7 @@ export class TransactionHelper {
             // Get denom ibc not find in config or denom is native
             const denom =
               coin.denom?.indexOf('ibc') === -1
-                ? coinInfo.coinDenom
+                ? coinInfo.minimalDenom
                 : coin.denom;
 
             if (coin.to === currentAddress || coin.from === currentAddress) {
@@ -91,14 +92,14 @@ export class TransactionHelper {
                 fromAddress: coin.from,
                 amount: this.balanceOf(
                   Number(coin.amount) || 0,
-                  dataIBC['decimal'] || coinInfo.coinDecimals,
+                  dataIBC['decimal'] || coinInfo.decimal,
                 ),
                 denom: denomIBC || denom,
                 action,
                 denomOrigin:
                   coin.denom?.indexOf('ibc') === -1 ? '' : coin.denom,
                 amountTemp: coin.amount,
-                decimal: dataIBC['decimal'] || coinInfo.coinDecimals,
+                decimal: dataIBC['decimal'] || coinInfo.decimal,
               };
               arrTemp.push(result);
             }
