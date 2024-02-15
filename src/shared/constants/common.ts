@@ -178,7 +178,7 @@ export const INDEXER_API_V2 = {
     }
     `,
     EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
-      ${INDEXER_V2_DB} {
+      %s {
         executed: transaction(where: {height: {_gt: $heightGT, _lt: $heightLT}, code: {_eq: 0}}, order_by: {height: desc}, limit: 100) {
           height
           hash
@@ -192,7 +192,7 @@ export const INDEXER_API_V2 = {
     }
     `,
     COIN_TRANSFER_NOTIFICATION: `query CoinTransferNotification($heightGT: Int = null, $heightLT: Int = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         coin_transfer: transaction(where: {coin_transfers: {block_height: {_lt: $heightLT, _gt: $heightGT}}}, limit: 100, order_by: {height: desc}) {
           hash
           height
@@ -211,7 +211,7 @@ export const INDEXER_API_V2 = {
     }
     `,
     TOKEN_TRANSFER_NOTIFICATION: `query TokenTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW20: [String!] = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         token_transfer: cw20_activity(where: {height: {_gt: $heightGT, _lt: $heightLT}, amount: {_is_null: false}, action: {_in: $listFilterCW20}}, order_by: {height: desc}, limit: 100) {
           height
           tx_hash
@@ -230,7 +230,7 @@ export const INDEXER_API_V2 = {
     }
     `,
     NFT_TRANSFER_NOTIFICATION: `query NftTransferNotification($heightGT: Int, $heightLT: Int, $listFilterCW721: [String!] = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         nft_transfer: cw721_activity(where: {action: {_in: $listFilterCW721}, cw721_token: {token_id: {_is_null: false}}, cw721_contract: {smart_contract: {name: {_neq: "crates.io:cw4973"}}}, height: {_gt: $heightGT, _lt: $heightLT}}, order_by: {height: desc}, limit: 100) {
           tx_hash
           height

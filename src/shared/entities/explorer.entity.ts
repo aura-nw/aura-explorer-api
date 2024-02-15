@@ -3,6 +3,9 @@ import { BaseEntityIncrementId } from './base/base.entity';
 import { PublicNameTag } from './public-name-tag.entity';
 import { TokenMarkets } from './token-markets.entity';
 import { PrivateNameTag } from './private-name-tag.entity';
+import { SyncPoint } from './sync-point.entity';
+import { UserActivity } from './user-activity.entity';
+import { Notification } from './notification.entity';
 import { WatchList } from './watch-list.entity';
 
 @Entity('explorer')
@@ -36,4 +39,13 @@ export class Explorer extends BaseEntityIncrementId {
 
   @OneToMany(() => WatchList, (watchList) => watchList.explorer)
   watchLists: WatchList[];
+
+  @OneToMany(() => SyncPoint, (syncPoint) => syncPoint.explorer)
+  syncPoints: SyncPoint[];
+
+  @OneToMany(() => UserActivity, (userActivity) => userActivity.explorer)
+  userActivities: UserActivity[];
+
+  @OneToMany(() => Notification, (userActivity) => userActivity.explorer)
+  notifications: Notification[];
 }
