@@ -31,7 +31,13 @@ import { UserService } from '../user.service';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
-import { BaseApiResponse, MESSAGES, USER_ROLE } from '../../../shared';
+import {
+  BaseApiResponse,
+  MESSAGES,
+  ReqContext,
+  RequestContext,
+  USER_ROLE,
+} from '../../../shared';
 import { RoleGuard } from '../../../auth/role/roles.guard';
 import { Roles } from '../../../auth/role/roles.decorator';
 import { User } from '../../../../src/shared/entities/user.entity';
@@ -173,10 +179,15 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @Post('register-notification-token')
   async registerNotificationToken(
+    @ReqContext() ctx: RequestContext,
     @Req() req,
     @Body() body: NotificationTokenDto,
   ): Promise<NotificationToken> {
-    return await this.userService.registerNotificationToken(req.user.id, body);
+    return await this.userService.registerNotificationToken(
+      ctx,
+      req.user.id,
+      body,
+    );
   }
 
   @ApiBearerAuth()

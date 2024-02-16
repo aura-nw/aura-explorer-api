@@ -5,6 +5,7 @@ import { NotificationParamsDto } from '../dtos/get-notification-param.dto';
 import { Repository, UpdateResult } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserActivity } from '../../../shared/entities/user-activity.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Injectable()
 export class NotificationService {
@@ -13,13 +14,20 @@ export class NotificationService {
     private notificationRepository: NotificationRepository,
     @InjectRepository(UserActivity)
     private userActivityRepository: Repository<UserActivity>,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {}
 
   async getNotifications(ctx: RequestContext, param: NotificationParamsDto) {
     this.logger.log(ctx, `${this.getNotifications.name} was called!`);
 
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
+
     return await this.notificationRepository.getNotifications(
       ctx.user.id,
+      explorer?.id,
       param,
     );
   }
@@ -37,18 +45,24 @@ export class NotificationService {
 
   async readAllNotification(ctx: RequestContext): Promise<UpdateResult> {
     this.logger.log(ctx, `${this.readAllNotification.name} was called!`);
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
     return await this.notificationRepository.update(
-      { user_id: ctx.user.id, is_read: false },
+      { user_id: ctx.user.id, explorer: { id: explorer?.id }, is_read: false },
       { is_read: true },
     );
   }
 
   async getDailyQuotaNotification(ctx: RequestContext): Promise<UserActivity> {
     this.logger.log(ctx, `${this.getDailyQuotaNotification.name} was called!`);
-
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
     const userActivities = await this.userActivityRepository.findOne({
       where: {
         user: { id: ctx.user.id },
+        explorer: { id: explorer?.id },
         type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
       },
     });

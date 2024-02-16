@@ -8,4 +8,6 @@ export class RequestContext {
   public ip: string;
 
   public user: UserAccessTokenClaims;
+
+  public chainId: string;
 }

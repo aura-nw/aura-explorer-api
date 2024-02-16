@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateWatchListDto } from './dto/create-watch-list.dto';
 import { UpdateWatchListDto } from './dto/update-watch-list.dto';
 import { RequestContext } from '../../shared/request-context/request-context.dto';
@@ -11,14 +7,23 @@ import { Repository } from 'typeorm/repository/Repository';
 import { WatchList } from '../../shared/entities/watch-list.entity';
 import { UserService } from '../user/user.service';
 import { DeleteResult } from 'typeorm/query-builder/result/DeleteResult';
-import { In, Not } from 'typeorm';
+import { EntityNotFoundError, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { BaseApiResponse, WATCH_LIST } from '../../shared/';
+import {
+  AkcLogger,
+  BaseApiResponse,
+  TYPE_ORM_ERROR_CODE,
+  WATCH_LIST,
+} from '../../shared/';
 import { WatchListDetailResponse } from './dto/watch-list-detail.response';
 import { isValidBench32Address } from 'src/shared/utils/service.util';
 import { PublicNameTag } from '../../shared/entities/public-name-tag.entity';
 import { EncryptionService } from '../encryption/encryption.service';
 import { PrivateNameTag } from '../../shared/entities/private-name-tag.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import { plainToClass } from 'class-transformer';
+import { User } from 'src/shared/entities/user.entity';
+import * as util from 'util';
 
 @Injectable()
 export class WatchListService {
@@ -29,38 +34,54 @@ export class WatchListService {
     private readonly publicNameTagRepository: Repository<PublicNameTag>,
     @InjectRepository(PrivateNameTag)
     private readonly privateNameTagRepository: Repository<PrivateNameTag>,
-    private userService: UserService,
+    @InjectRepository(Explorer)
+    private readonly explorerRepository: Repository<Explorer>,
     private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
   ) {}
   async create(
     ctx: RequestContext,
     createWatchListDto: CreateWatchListDto,
-  ): Promise<WatchList> {
-    // Check limit number address
-    const totalWatchList = await this.watchListRepository.count({
-      where: { user: { id: ctx.user.id } },
-    });
+  ): Promise<WatchListDetailResponse> {
+    try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
 
-    if (totalWatchList >= this.configService.get('watchList.limitAddress')) {
-      throw new BadRequestException(WATCH_LIST.ERROR_MSGS.ERR_LIMIT_ADDRESS);
+      this.validateAddress(
+        createWatchListDto.address,
+        explorer.addressPrefix,
+        createWatchListDto.type,
+      );
+
+      // Check limit number address
+      const totalWatchList = await this.watchListRepository.count({
+        where: { user: { id: ctx.user.id }, explorer: { id: explorer.id } },
+      });
+
+      if (totalWatchList >= this.configService.get('watchList.limitAddress')) {
+        throw new BadRequestException(WATCH_LIST.ERROR_MSGS.ERR_LIMIT_ADDRESS);
+      }
+
+      createWatchListDto.explorer = explorer;
+      createWatchListDto.user = { id: ctx.user.id } as User;
+
+      const newWatchList = await this.watchListRepository.save(
+        createWatchListDto,
+      );
+
+      return plainToClass(WatchListDetailResponse, newWatchList);
+    } catch (error) {
+      if (error instanceof EntityNotFoundError) {
+        throw new BadRequestException(error.message);
+      } else if (
+        error?.driverError?.code === TYPE_ORM_ERROR_CODE.ER_DUP_ENTRY
+      ) {
+        throw new BadRequestException(WATCH_LIST.ERROR_MSGS.ERR_UNIQUE_ADDRESS);
+      }
+
+      throw error;
     }
-
-    // Check unique
-    const duplicateRecord = await this.watchListRepository.findOne({
-      where: { address: createWatchListDto.address, user: { id: ctx.user.id } },
-    });
-
-    if (duplicateRecord) {
-      throw new BadRequestException(WATCH_LIST.ERROR_MSGS.ERR_UNIQUE_ADDRESS);
-    }
-
-    // Create address
-    createWatchListDto.user = await this.userService.findOne({
-      where: { id: ctx.user.id },
-    });
-
-    return this.watchListRepository.save(createWatchListDto);
   }
 
   async findAll(
@@ -127,38 +148,42 @@ export class WatchListService {
     ctx: RequestContext,
     id: number,
     updateWatchListDto: UpdateWatchListDto,
-  ): Promise<WatchList> {
-    const foundedWatchList = await this.watchListRepository.findOne({
-      where: {
-        id,
-        user: { id: ctx.user.id },
-      },
-    });
+  ): Promise<WatchListDetailResponse> {
+    try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
 
-    // Check duplicate when update address
-    if (updateWatchListDto.address) {
-      const duplicateRecord = await this.watchListRepository.findOne({
+      await this.watchListRepository.findOneOrFail({
         where: {
-          id: Not(id),
-          address: updateWatchListDto.address,
+          id: id,
           user: { id: ctx.user.id },
+          explorer: { id: explorer.id },
         },
       });
 
-      if (duplicateRecord)
-        throw new BadRequestException(WATCH_LIST.ERROR_MSGS.ERR_UNIQUE_ADDRESS);
-    }
+      this.validateAddress(
+        updateWatchListDto.address,
+        explorer.addressPrefix,
+        updateWatchListDto.type,
+      );
 
-    if (foundedWatchList) {
-      updateWatchListDto.id = id;
-      await this.watchListRepository.merge(
-        foundedWatchList,
+      const updatedWatchList = await this.watchListRepository.update(
+        id,
         updateWatchListDto,
       );
 
-      return this.watchListRepository.save(foundedWatchList);
-    } else {
-      throw new NotFoundException(WATCH_LIST.ERROR_MSGS.ERR_ADDRESS_NOT_FOUND);
+      return plainToClass(WatchListDetailResponse, updatedWatchList);
+    } catch (error) {
+      if (error?.driverError?.code === TYPE_ORM_ERROR_CODE.ER_DUP_ENTRY) {
+        throw new BadRequestException(WATCH_LIST.ERROR_MSGS.ERR_UNIQUE_ADDRESS);
+      } else if (error instanceof EntityNotFoundError) {
+        throw new BadRequestException(
+          WATCH_LIST.ERROR_MSGS.ERR_ADDRESS_NOT_FOUND,
+        );
+      }
+
+      throw error;
     }
   }
 
@@ -179,7 +204,13 @@ export class WatchListService {
     ctx: RequestContext,
     keyword: string,
   ): Promise<BaseApiResponse<WatchListDetailResponse[]>> {
-    if (await isValidBench32Address(keyword)) {
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
+
+    const explorerId = explorer.id;
+
+    if (isValidBench32Address(keyword, explorer.addressPrefix)) {
       // Find in watch list.
       let foundedPublicNameTag = null;
       let foundPrivateNameTag = null;
@@ -191,12 +222,16 @@ export class WatchListService {
       if (foundedWatchList) {
         // Find in public tag.
         foundedPublicNameTag = await this.publicNameTagRepository.findOne({
-          where: { address: keyword },
+          where: { address: keyword, explorer: { id: explorerId } },
         });
 
         // Find in private tag.
         foundPrivateNameTag = await this.privateNameTagRepository.findOne({
-          where: { address: keyword, createdBy: ctx.user.id },
+          where: {
+            address: keyword,
+            createdBy: ctx.user.id,
+            explorer: { id: explorerId },
+          },
         });
 
         // Mapping tags.
@@ -219,12 +254,16 @@ export class WatchListService {
       const keywordEncrypted = await this.encryptionService.encrypt(keyword);
 
       const foundedPublicNameTag = await this.publicNameTagRepository.findOne({
-        where: { name_tag: keyword },
+        where: { name_tag: keyword, explorer: { id: explorerId } },
       });
 
       const foundedPrivateNameTag = await this.privateNameTagRepository.findOne(
         {
-          where: { createdBy: ctx.user.id, nameTag: keywordEncrypted },
+          where: {
+            createdBy: ctx.user.id,
+            nameTag: keywordEncrypted,
+            explorer: { id: explorerId },
+          },
         },
       );
 
@@ -236,6 +275,7 @@ export class WatchListService {
             foundedPrivateNameTag?.address,
           ]),
           user: { id: ctx.user.id },
+          explorer: { id: explorerId },
         },
         order: { favorite: 'DESC', updated_at: 'DESC' },
       })) as any as WatchListDetailResponse[];
@@ -292,5 +332,12 @@ export class WatchListService {
     countTrue(obj);
 
     return count;
+  }
+
+  validateAddress(address: string, prefix?: string, type?: string) {
+    if (!isValidBench32Address(address, prefix, type))
+      throw new BadRequestException(
+        util.format(WATCH_LIST.ERROR_MSGS.ERR_INVALID_ADDRESS, prefix),
+      );
   }
 }
