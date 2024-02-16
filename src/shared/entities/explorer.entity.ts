@@ -7,6 +7,7 @@ import { SyncPoint } from './sync-point.entity';
 import { UserActivity } from './user-activity.entity';
 import { Notification } from './notification.entity';
 import { WatchList } from './watch-list.entity';
+import { Asset } from './asset.entity';
 
 @Entity('explorer')
 export class Explorer extends BaseEntityIncrementId {
@@ -48,4 +49,7 @@ export class Explorer extends BaseEntityIncrementId {
 
   @OneToMany(() => Notification, (userActivity) => userActivity.explorer)
   notifications: Notification[];
+
+  @OneToMany(() => Asset, (asset) => asset.explorer)
+  assets: Asset[];
 }
