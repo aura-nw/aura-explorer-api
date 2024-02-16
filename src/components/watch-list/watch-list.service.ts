@@ -93,8 +93,12 @@ export class WatchListService {
       return await this.filterWatchList(ctx, keyword);
     }
 
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
+
     const watchList = (await this.watchListRepository.find({
-      where: { user: { id: ctx.user.id } },
+      where: { user: { id: ctx.user.id }, explorer: { id: explorer.id } },
       order: { favorite: 'DESC', updated_at: 'DESC' },
     })) as any as WatchListDetailResponse[];
 
