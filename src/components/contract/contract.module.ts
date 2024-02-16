@@ -9,6 +9,7 @@ import { HttpModule } from '@nestjs/axios';
 import { TokenMarketsRepository } from '../cw20-token/repositories/token-markets.repository';
 import { SoulboundTokenRepository } from '../soulbound-token/repositories/soulbound-token.repository';
 import { ContractUtil } from '../../shared/utils/contract.util';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ContractUtil } from '../../shared/utils/contract.util';
     TypeOrmModule.forFeature([
       TokenMarketsRepository,
       SoulboundTokenRepository,
+      Explorer,
     ]),
     ConfigModule,
     HttpModule,

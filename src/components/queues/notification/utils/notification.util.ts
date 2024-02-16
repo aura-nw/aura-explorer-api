@@ -13,6 +13,7 @@ import { WatchList } from '../../../../shared/entities/watch-list.entity';
 import { TRANSACTION_TYPE_ENUM } from '../../../../shared/constants/transaction';
 import { TokenMarketsRepository } from '../../../cw20-token/repositories/token-markets.repository';
 import { IsNull, Not } from 'typeorm';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Injectable()
 export class NotificationUtil {
@@ -29,6 +30,7 @@ export class NotificationUtil {
     watchList: WatchList[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
+    explorer: Explorer,
   ) {
     const lstNotification: NotificationDto[] = [];
     response?.forEach((tx) => {
@@ -43,6 +45,7 @@ export class NotificationUtil {
             element.user.id,
             listPrivateNameTag,
             listPublicNameTag,
+            explorer,
           );
           const notification = new NotificationDto();
           notification.title = NOTIFICATION.TITLE.EXECUTED;
@@ -58,6 +61,7 @@ export class NotificationUtil {
               nameTag: nameTagPhase,
             },
           };
+          notification.explorer = explorer;
           lstNotification.push(notification);
         }
       });
@@ -70,6 +74,7 @@ export class NotificationUtil {
     watchList: WatchList[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
+    explorer: Explorer,
   ) {
     const lstNotification: NotificationDto[] = [];
     data?.forEach((tx) => {
@@ -105,6 +110,7 @@ export class NotificationUtil {
             element.user.id,
             listPrivateNameTag,
             listPublicNameTag,
+            explorer,
           );
 
           const notification = new NotificationDto();
@@ -132,6 +138,7 @@ export class NotificationUtil {
               nameTag: nameTagPhase,
             },
           };
+          notification.explorer = explorer;
           lstNotification.push(notification);
         }
       });
@@ -144,6 +151,7 @@ export class NotificationUtil {
     watchList: WatchList[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
+    explorer: Explorer,
   ) {
     const lstNotification: NotificationDto[] = [];
     data?.forEach((tx) => {
@@ -168,6 +176,7 @@ export class NotificationUtil {
           element.user.id,
           listPrivateNameTag,
           listPublicNameTag,
+          explorer,
         );
 
         const notification = new NotificationDto();
@@ -196,6 +205,7 @@ export class NotificationUtil {
             nameTag: nameTagPhase,
           },
         };
+        notification.explorer = explorer;
         lstNotification.push(notification);
       });
     });
@@ -208,6 +218,7 @@ export class NotificationUtil {
     watchList: WatchList[],
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
+    explorer: Explorer,
   ) {
     const lstNotification: NotificationDto[] = [];
     data?.forEach((tx) => {
@@ -226,6 +237,7 @@ export class NotificationUtil {
           element.user.id,
           listPrivateNameTag,
           listPublicNameTag,
+          explorer,
         );
 
         const notification = new NotificationDto();
@@ -257,6 +269,7 @@ export class NotificationUtil {
             nameTag: nameTagPhase,
           },
         };
+        notification.explorer = explorer;
         lstNotification.push(notification);
       });
     });
@@ -307,14 +320,10 @@ export class NotificationUtil {
     });
   }
 
-  async convertDataCoinTransfer(data) {
-    const envConfig = await lastValueFrom(
-      this.httpService.get(this.config.configUrl),
-    ).then((rs) => rs.data);
+  async convertDataCoinTransfer(data, explorer: Explorer) {
     const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+      where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
     });
-    const coinInfo = envConfig?.chainConfig?.chain_info?.currencies[0];
     const listTx = [];
     data?.forEach((tx) => {
       tx.coin_transfers?.forEach((coin) => {
@@ -326,7 +335,9 @@ export class NotificationUtil {
             : dataIBC['symbol'];
         // Get denom ibc not find in config or denom is native
         const denom =
-          coin.denom?.indexOf('ibc') === -1 ? coinInfo.coinDenom : coin.denom;
+          coin.denom?.indexOf('ibc') === -1
+            ? explorer.minimalDenom
+            : coin.denom;
 
         listTx.push({
           tx_hash: tx.hash,
@@ -339,7 +350,7 @@ export class NotificationUtil {
           to: coin.to,
           amount: TransactionHelper.balanceOf(
             Number(coin.amount) || 0,
-            dataIBC['decimal'] || coinInfo.coinDecimals,
+            dataIBC['decimal'] || explorer.decimal,
           ),
           image: dataIBC['logo'] || '',
           denom: denomIBC || denom,
@@ -354,12 +365,16 @@ export class NotificationUtil {
     userId: number,
     listPrivateNameTag: PrivateNameTag[],
     listPublicNameTag: PublicNameTag[],
+    explorer: Explorer,
   ) {
     const privateNameTag = listPrivateNameTag.find(
-      (item) => item.createdBy === userId && item.address === address,
+      (item) =>
+        item.createdBy === userId &&
+        item.address === address &&
+        item.explorer.id === explorer.id,
     )?.nameTag;
     const publicNameTag = listPublicNameTag.find(
-      (item) => item.address === address,
+      (item) => item.address === address && item.explorer.id === explorer.id,
     )?.name_tag;
 
     const nameTagPhase = [];

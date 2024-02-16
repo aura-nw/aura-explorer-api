@@ -17,10 +17,11 @@ import { AkcLoggerModule } from './logger/logger.module';
 import { RedisUtil } from './utils/redis.util';
 import { EncryptionModule } from '../components/encryption/encryption.module';
 import { CipherKey } from './entities/cipher-key.entity';
+import { Explorer } from './entities/explorer.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CipherKey]),
+    TypeOrmModule.forFeature([CipherKey, Explorer]),
     ConfigModule.forRoot(configModuleOptions),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

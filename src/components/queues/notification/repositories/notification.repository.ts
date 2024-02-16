@@ -2,6 +2,7 @@ import { EntityRepository, Repository } from 'typeorm';
 import { Notification } from '../../../../shared/entities/notification.entity';
 import { Logger } from '@nestjs/common';
 import { NotificationParamsDto } from '../../../notification/dtos/get-notification-param.dto';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @EntityRepository(Notification)
 export class NotificationRepository extends Repository<Notification> {
@@ -9,17 +10,23 @@ export class NotificationRepository extends Repository<Notification> {
 
   /**
    * Get list notifications
-   * @param user_id
+   * @param userId
+   * @param explorerId
    * @param is_read
    * @returns
    */
-  async getNotifications(user_id: number, param: NotificationParamsDto) {
+  async getNotifications(
+    userId: number,
+    explorerId: number,
+    param: NotificationParamsDto,
+  ) {
     this._logger.log(
       `============== ${this.getNotifications.name} was called! ==============`,
     );
     const builder = this.createQueryBuilder('noti')
       .select('noti.*')
-      .where('noti.user_id = :user_id', { user_id });
+      .where('noti.user_id = :userId', { userId })
+      .andWhere('noti.explorer_id =:explorerId', { explorerId });
 
     const _finalizeResult = async () => {
       const result = await builder
@@ -33,7 +40,8 @@ export class NotificationRepository extends Repository<Notification> {
       const countUnread = await this.count({
         where: {
           is_read: false,
-          user_id: user_id,
+          user_id: userId,
+          explorer: { id: explorerId },
         },
       });
 
