@@ -13,7 +13,7 @@ export class addAddressPrefixToExplorer1706168813269
     );
 
     await queryRunner.query(
-      `UPDATE \`explorer\` SET \`address_prefix\` = 'aura', \`chain_db\` = 'auratestnet' WHERE \`id\` = '1'`,
+      `UPDATE \`explorer\` SET \`address_prefix\` = 'aura', \`chain_db\` = 'serenity' WHERE \`id\` = '1'`,
     );
 
     await queryRunner.query(
