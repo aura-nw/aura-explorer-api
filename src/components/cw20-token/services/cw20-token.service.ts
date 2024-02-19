@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AkcLogger, RequestContext, TokenMarkets } from '../../../shared';
+import { AkcLogger, Asset, RequestContext } from '../../../shared';
 import { TokenMarketsRepository } from '../repositories/token-markets.repository';
 import { Cw20TokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 import { CreateCw20TokenDto } from '../dtos/create-cw20-token.dto';
@@ -12,12 +12,14 @@ import { UpdateIbcDto } from '../dtos/update-ibc.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { Repository } from 'typeorm';
+import { AssetsRepository } from '../repositories/assets.repository';
 
 @Injectable()
 export class Cw20TokenService {
   constructor(
     private readonly logger: AkcLogger,
     private tokenMarketsRepository: TokenMarketsRepository,
+    private assetsRepository: AssetsRepository,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
   ) {
@@ -27,14 +29,14 @@ export class Cw20TokenService {
   async getTokenMarket(
     ctx: RequestContext,
     query: Cw20TokenMarketParamsDto,
-  ): Promise<TokenMarkets[]> {
+  ): Promise<Asset[]> {
     this.logger.log(ctx, `${this.getTokenMarket.name} was called!`);
     const explorer = await this.explorerRepository.findOne({
       chainId: ctx.chainId,
     });
 
     if (query.contractAddress) {
-      return await this.tokenMarketsRepository.find({
+      return await this.assetsRepository.find({
         where: [
           {
             contract_address: query.contractAddress,
@@ -44,11 +46,9 @@ export class Cw20TokenService {
         ],
       });
     } else if (query.onlyIbc === 'true') {
-      return await this.tokenMarketsRepository.getIbcTokenWithStatistics(
-        explorer.id,
-      );
+      return await this.assetsRepository.getIbcTokenWithStatistics(explorer.id);
     } else {
-      return await this.tokenMarketsRepository.find({
+      return await this.assetsRepository.find({
         where: { explorer: { id: explorer.id } },
       });
     }

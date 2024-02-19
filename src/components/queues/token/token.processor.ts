@@ -5,24 +5,17 @@ import {
   Process,
   Processor,
 } from '@nestjs/bull';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { Logger, OnModuleInit } from '@nestjs/common';
 import { Job, Queue } from 'bull';
-import {
-  COINGECKO_API,
-  COIN_MARKET_CAP,
-  COIN_MARKET_CAP_API,
-  INDEXER_API_V2,
-  QUEUES,
-  TokenMarkets,
-} from '../../../shared';
+import { Asset, COINGECKO_API, INDEXER_API_V2, QUEUES } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
+import { AssetsRepository } from '../../cw20-token/repositories/assets.repository';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
@@ -31,7 +24,7 @@ export class TokenProcessor implements OnModuleInit {
 
   constructor(
     private serviceUtil: ServiceUtil,
-    private tokenMarketsRepository: TokenMarketsRepository,
+    private assetsRepository: AssetsRepository,
     @InjectRepository(TokenHolderStatistic)
     private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
     @InjectRepository(Explorer)
@@ -72,79 +65,19 @@ export class TokenProcessor implements OnModuleInit {
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
   async syncCW20TokenPrice(): Promise<void> {
     const numberCW20Tokens =
-      await this.tokenMarketsRepository.countCw20TokensHavingCoinId();
+      await this.assetsRepository.countAssetsHavingCoinId();
 
     const limit = this.appParams.coingecko.maxRequest;
     const pages = Math.ceil(numberCW20Tokens / limit);
     for (let i = 0; i < pages; i++) {
       // Get data CW20 by paging
       const dataHavingCoinId =
-        await this.tokenMarketsRepository.getCw20TokenMarketsHavingCoinId(
-          limit,
-          i,
-        );
+        await this.assetsRepository.getAssetsHavingCoinId(limit, i);
 
       const tokensHavingCoinId = dataHavingCoinId?.map((i) => i.coin_id);
       if (tokensHavingCoinId.length > 0) {
-        this.handleSyncPriceVolume(tokensHavingCoinId);
+        this.syncCoingeckoPrice(tokensHavingCoinId);
       }
-    }
-  }
-
-  async handleSyncPriceVolume(listTokens: string[]): Promise<void> {
-    try {
-      if (this.appParams.priceHostSync === COIN_MARKET_CAP) {
-        await this.syncCoinMarketCapPrice(listTokens);
-      } else {
-        await this.syncCoingeckoPrice(listTokens);
-      }
-    } catch (err) {
-      this.logger.log(`sync-price-volume has error: ${err.message}`, err.stack);
-    }
-  }
-
-  async syncCoinMarketCapPrice(listTokens) {
-    const coinMarketCap = this.appParams.coinMarketCap;
-    this.logger.log(`============== Call CoinMarketCap Api ==============`);
-    const coinIds = listTokens.join(',');
-    const coinMarkets: TokenMarkets[] = [];
-
-    const para = `${util.format(
-      COIN_MARKET_CAP_API.GET_COINS_MARKET,
-      coinIds,
-    )}`;
-
-    const headersRequest = {
-      'Content-Type': 'application/json',
-      'X-CMC_PRO_API_KEY': coinMarketCap.apiKey,
-    };
-
-    const [response, tokenInfos] = await Promise.all([
-      this.serviceUtil.getDataAPIWithHeader(
-        coinMarketCap.api,
-        para,
-        headersRequest,
-      ),
-      this.tokenMarketsRepository.find({
-        where: {
-          coin_id: In(listTokens),
-        },
-      }),
-    ]);
-
-    if (response?.status?.error_code == 0 && response?.data) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const [key, value] of Object.entries(response?.data)) {
-        const data = response?.data[key];
-        let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.slug);
-        if (tokenInfo) {
-          tokenInfo = this.updateCoinMarketsData(tokenInfo, data);
-          coinMarkets.push(tokenInfo);
-        }
-      }
-    }
-    if (coinMarkets.length > 0) {
-      await this.tokenMarketsRepository.save(coinMarkets);
     }
   }
 
@@ -152,7 +85,7 @@ export class TokenProcessor implements OnModuleInit {
     const coingecko = this.appParams.coingecko;
     this.logger.log(`============== Call Coingecko Api ==============`);
     const coinIds = listTokens.join(',');
-    const coinMarkets: TokenMarkets[] = [];
+    const coinMarkets: Asset[] = [];
 
     const para = `${util.format(
       COINGECKO_API.GET_COINS_MARKET,
@@ -162,9 +95,9 @@ export class TokenProcessor implements OnModuleInit {
 
     const [response, tokenInfos] = await Promise.all([
       this.serviceUtil.getDataAPI(coingecko.api, para, ''),
-      this.tokenMarketsRepository.find({
+      this.assetsRepository.find({
         where: {
-          coin_id: In(listTokens),
+          coinId: In(listTokens),
         },
       }),
     ]);
@@ -172,7 +105,7 @@ export class TokenProcessor implements OnModuleInit {
     if (response) {
       for (let index = 0; index < response.length; index++) {
         const data = response[index];
-        const tokenInfo = tokenInfos?.filter((f) => f.coin_id === data.id);
+        const tokenInfo = tokenInfos?.filter((f) => f.coinId === data.id);
         tokenInfo?.forEach((item) => {
           const tokenInfoUpdated = this.updateTokenMarketsData(item, data);
           coinMarkets.push(tokenInfoUpdated);
@@ -180,62 +113,27 @@ export class TokenProcessor implements OnModuleInit {
       }
     }
     if (coinMarkets.length > 0) {
-      await this.tokenMarketsRepository.save(coinMarkets);
+      await this.assetsRepository.save(coinMarkets);
     }
   }
 
-  updateCoinMarketsData(currentData: TokenMarkets, data: any): TokenMarkets {
-    const quote = data.quote?.USD;
+  updateTokenMarketsData(currentData: Asset, data: any): Asset {
     const coinInfo = { ...currentData };
-    coinInfo.current_price = Number(quote?.price?.toFixed(6)) || 0;
-    coinInfo.price_change_percentage_24h =
-      Number(quote?.percent_change_24h?.toFixed(6)) || 0;
-    coinInfo.total_volume = Number(quote?.volume_24h?.toFixed(6)) || 0;
-    coinInfo.circulating_supply =
-      Number(data.circulating_supply?.toFixed(6)) || 0;
-    const circulating_market_cap =
-      coinInfo.circulating_supply * coinInfo.current_price;
-    coinInfo.circulating_market_cap =
-      Number(circulating_market_cap?.toFixed(6)) || 0;
-    coinInfo.max_supply = Number(data.max_supply?.toFixed(6)) || 0;
-    coinInfo.market_cap =
-      Number(data.self_reported_market_cap?.toFixed(6)) || 0;
-    coinInfo.fully_diluted_valuation =
-      Number(quote?.fully_diluted_market_cap?.toFixed(6)) || 0;
-
-    return coinInfo;
-  }
-
-  updateTokenMarketsData(currentData: TokenMarkets, data: any): TokenMarkets {
-    const coinInfo = { ...currentData };
-    coinInfo.current_price = Number(data.current_price?.toFixed(6)) || 0;
-    coinInfo.price_change_percentage_24h =
+    coinInfo.currentPrice = Number(data.current_price?.toFixed(6)) || 0;
+    coinInfo.priceChangePercentage24h =
       Number(data.price_change_percentage_24h?.toFixed(6)) || 0;
-    coinInfo.total_volume = Number(data.total_volume?.toFixed(6)) || 0;
-    coinInfo.circulating_supply =
-      Number(data.circulating_supply?.toFixed(6)) || 0;
-
-    const circulating_market_cap =
-      coinInfo.circulating_supply * coinInfo.current_price;
-    coinInfo.circulating_market_cap =
-      Number(circulating_market_cap?.toFixed(6)) || 0;
-    coinInfo.max_supply = Number(data.max_supply?.toFixed(6)) || 0;
-    coinInfo.market_cap = Number(data.market_cap?.toFixed(6)) || 0;
-    coinInfo.fully_diluted_valuation =
-      Number(data.fully_diluted_valuation?.toFixed(6)) || 0;
-
     return coinInfo;
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
   async syncAuraTokenHolder(job: Job): Promise<void> {
     const explorer: Explorer = job.data.explorer;
-    const tokenMarkets = await this.tokenMarketsRepository.find({
+    const assets = await this.assetsRepository.find({
       where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
     });
 
     let subQuery = '';
-    for (const [index, denom] of tokenMarkets.entries()) {
+    for (const [index, denom] of assets.entries()) {
       subQuery =
         subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${denom.denom}"}}) {
                             aggregate {
@@ -261,12 +159,12 @@ export class TokenProcessor implements OnModuleInit {
     )?.data[explorer.chainDb];
 
     const totalHolderStatistics = [];
-    for (const [index, tokenMarket] of tokenMarkets.entries()) {
+    for (const [index, asset] of assets.entries()) {
       const totalHolder = totalHolders[`total_holder_${index}`].aggregate.count;
 
       const newTokenHolderStatistic = new TokenHolderStatistic();
       newTokenHolderStatistic.totalHolder = totalHolder;
-      newTokenHolderStatistic.tokenMarket = tokenMarket;
+      newTokenHolderStatistic.asset = asset;
 
       totalHolderStatistics.push(newTokenHolderStatistic);
     }
