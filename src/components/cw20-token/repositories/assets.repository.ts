@@ -20,6 +20,9 @@ export class AssetsRepository extends Repository<Asset> {
   }
 
   async getAssetsHavingCoinId(limit: number, pageIndex: number) {
+    this._logger.log(
+      `============== ${this.getAssetsHavingCoinId.name} was called! ==============`,
+    );
     const sqlSelect = ` tm.coin_id`;
 
     const queryBuilder = this.createQueryBuilder('tm')
@@ -36,9 +39,12 @@ export class AssetsRepository extends Repository<Asset> {
    *
    * @param {exploreId} int - chain id
    * @param {number} days - The number of days to retrieve token statistics for. Defaults to 2.
-   * @return {Promise<TokenMarkets[]>} - A Promise that resolves to an array of token market data.
+   * @return {Promise<Asset[]>} - A Promise that resolves to an array of Asset data.
    */
   async getIbcTokenWithStatistics(exploreId, days = 2): Promise<Asset[]> {
+    this._logger.log(
+      `============== ${this.getIbcTokenWithStatistics.name} was called! ==============`,
+    );
     return this.createQueryBuilder('tokenMarket')
       .leftJoinAndSelect(
         'tokenMarket.tokenHolderStatistics',
