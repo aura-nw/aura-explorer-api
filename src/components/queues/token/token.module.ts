@@ -8,7 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
-import { AssetsRepository } from '../../cw20-token/repositories/assets.repository';
+import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
 @Module({
   imports: [

@@ -15,7 +15,7 @@ import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { Explorer } from '../../../shared/entities/explorer.entity';
-import { AssetsRepository } from '../../cw20-token/repositories/assets.repository';
+import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {

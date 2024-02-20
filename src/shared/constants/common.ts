@@ -440,6 +440,12 @@ export const PAGE_REQUEST = {
   MAX_500: 500,
 };
 
+export enum ASSETS_TYPE {
+  IBC = 'IBC_TOKEN',
+  CW20 = 'CW20_TOKEN',
+  NATIVE = 'NATIVE',
+}
+
 export enum SOULBOUND_TOKEN_STATUS {
   UNCLAIM = 'Unclaimed',
   EQUIPPED = 'Equipped',

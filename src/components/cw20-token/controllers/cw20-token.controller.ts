@@ -27,7 +27,6 @@ import {
 } from '@nestjs/swagger';
 import {
   AkcLogger,
-  Asset,
   MESSAGES,
   ReqContext,
   RequestContext,
@@ -75,7 +74,7 @@ export class Cw20TokenController {
   async getTokenMarket(
     @ReqContext() ctx: RequestContext,
     @Query() query: Cw20TokenMarketParamsDto,
-  ): Promise<Asset[]> {
+  ): Promise<TokenMarkets[]> {
     this.logger.log(ctx, `${this.getTokenMarket.name} was called!`);
     return await this.cw20TokenService.getTokenMarket(ctx, query);
   }
