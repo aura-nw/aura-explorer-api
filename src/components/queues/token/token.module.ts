@@ -7,7 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
-import { Explorer } from 'src/shared/entities/explorer.entity';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
 @Module({
@@ -15,11 +14,7 @@ import { AssetsRepository } from '../../asset/repositories/assets.repository';
     SharedModule,
     ConfigModule,
     HttpModule,
-    TypeOrmModule.forFeature([
-      TokenHolderStatistic,
-      Explorer,
-      AssetsRepository,
-    ]),
+    TypeOrmModule.forFeature([TokenHolderStatistic, AssetsRepository]),
     BullModule.registerQueueAsync({
       name: QUEUES.TOKEN.QUEUE_NAME,
     }),

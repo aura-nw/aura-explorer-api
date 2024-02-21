@@ -40,9 +40,10 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
             , tm.\`official_site\`
             , tm.\`social_profiles\`
         FROM 
-           \`token_markets\` \`tm\`
+          \`token_markets\` \`tm\`
         WHERE 
-            tm.\`coin_id\` <> ''
+          tm.\`coin_id\` <> ''
+          AND tm.\`coin_id\` <> 'bitcoin'
     `);
 
     await queryRunner.query(`

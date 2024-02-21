@@ -14,27 +14,27 @@ import { ServiceUtil } from '../../../shared/utils/service.util';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
-import { Explorer } from '../../../shared/entities/explorer.entity';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
+import { CronExpression } from '@nestjs/schedule';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
   private readonly logger = new Logger(TokenProcessor.name);
   private appParams: any;
+  private chainDB;
 
   constructor(
     private serviceUtil: ServiceUtil,
     private assetsRepository: AssetsRepository,
     @InjectRepository(TokenHolderStatistic)
     private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
-    @InjectRepository(Explorer)
-    private readonly explorerRepository: Repository<Explorer>,
     @InjectQueue(QUEUES.TOKEN.QUEUE_NAME) private readonly tokenQueue: Queue,
   ) {
     this.logger.log(
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
+    this.chainDB = this.appParams.indexerV2.chainDB;
   }
 
   async onModuleInit() {
@@ -48,18 +48,13 @@ export class TokenProcessor implements OnModuleInit {
         repeat: { cron: this.appParams.priceTimeSync },
       },
     );
-
-    const explorer = await this.explorerRepository.find();
-    explorer?.forEach((item, index) => {
-      this.tokenQueue.add(
-        QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
-        { explorer: item },
-        {
-          // Each time run job 1 minute apart.
-          repeat: { cron: `${index} 0 * * *` },
-        },
-      );
-    });
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
+      },
+    );
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
@@ -126,10 +121,9 @@ export class TokenProcessor implements OnModuleInit {
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
-  async syncAuraTokenHolder(job: Job): Promise<void> {
-    const explorer: Explorer = job.data.explorer;
+  async syncAuraTokenHolder(): Promise<void> {
     const assets = await this.assetsRepository.find({
-      where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
+      where: { denom: Not(IsNull()) },
     });
 
     let subQuery = '';
@@ -144,7 +138,7 @@ export class TokenProcessor implements OnModuleInit {
 
     const query = util.format(
       INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-      explorer.chainDb,
+      this.chainDB,
       subQuery,
     );
 
@@ -156,7 +150,7 @@ export class TokenProcessor implements OnModuleInit {
 
     const totalHolders = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-    )?.data[explorer.chainDb];
+    )?.data[this.chainDB];
 
     const totalHolderStatistics = [];
     for (const [index, asset] of assets.entries()) {
