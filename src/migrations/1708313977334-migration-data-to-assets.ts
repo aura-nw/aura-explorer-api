@@ -17,7 +17,6 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
             , \`verify_text\`
             , \`denom\`
             , \`decimal\`
-            , \`chain_id\`
             , \`official_site\`
             , \`social_profiles\`
         )
@@ -36,7 +35,6 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
                 ELSE tm.\`contract_address\`
             END AS \`denom\`
             , tm.\`decimal\`
-            , tm.\`chain_id\`
             , tm.\`official_site\`
             , tm.\`social_profiles\`
         FROM 

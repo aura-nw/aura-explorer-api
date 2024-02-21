@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ASSETS_TYPE } from 'src/shared';
+import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 
 export class AssetAttributes {
   @ApiProperty({ example: 1 })
@@ -22,9 +23,22 @@ export class AssetAttributes {
   totalSupply: number;
 
   @ApiProperty({
-    example: 223,
+    example: [
+      {
+        created_at: '2024-02-20T23:20:44.112Z',
+        updated_at: '2024-02-20T23:22:56.220Z',
+        id: 122,
+        totalHolder: 28687,
+      },
+      {
+        created_at: '2024-02-20T23:20:44.112Z',
+        updated_at: '2024-02-20T23:22:56.321Z',
+        id: 127,
+        totalHolder: 28687,
+      },
+    ],
   })
-  holders: number;
+  holders: TokenHolderStatistic[];
 }
 
 export class GetAssetResult {

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { Max, Min } from 'class-validator';
-import { PAGE_REQUEST } from '../../../shared/constants/common';
+import { ASSETS_TYPE, PAGE_REQUEST } from '../../../shared/constants/common';
 
 export class AssetParamsDto {
   @ApiPropertyOptional({ default: '' })
@@ -20,6 +20,9 @@ export class AssetParamsDto {
   @ApiProperty({ default: 0 })
   offset: number;
 
-  @ApiPropertyOptional({ default: [] })
-  type: [];
+  @ApiPropertyOptional({
+    default: '',
+    example: `${ASSETS_TYPE.IBC},${ASSETS_TYPE.NATIVE}`,
+  })
+  type: string;
 }

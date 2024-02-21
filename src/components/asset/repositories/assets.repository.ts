@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { ASSETS_TYPE, Asset } from '../../../shared';
-import { AssetParamsDto } from '../dtos/asset-params.dto';
 
 @EntityRepository(Asset)
 export class AssetsRepository extends Repository<Asset> {
@@ -35,30 +34,7 @@ export class AssetsRepository extends Repository<Asset> {
     return await queryBuilder.getRawMany();
   }
 
-  /**
-   * Retrieves IBC token with statistics for a specified number of days.
-   *
-   * @param {number} days - The number of days to retrieve token statistics for. Defaults to 2.
-   * @return {Promise<Asset[]>} - A Promise that resolves to an array of Asset data.
-   */
-  async getTokenWithStatistics(days = 2): Promise<Asset[]> {
-    this._logger.log(
-      `============== ${this.getTokenWithStatistics.name} was called! ==============`,
-    );
-    return this.createQueryBuilder('asset')
-      .leftJoinAndSelect(
-        'asset.tokenHolderStatistics',
-        'tokenHolderStatistics',
-        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
-        { days },
-      )
-      .where('asset.type IN(:...type)', {
-        type: [ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE],
-      })
-      .getMany();
-  }
-
-  async getAssets(keyword, limit = 1, offset = 0, type = [], days = 2) {
+  async getAssets(keyword, limit = 1, offset = 0, type = '', days = 2) {
     this._logger.log(
       `============== ${this.getAssets.name} was called! ==============`,
     );
@@ -74,6 +50,7 @@ export class AssetsRepository extends Repository<Asset> {
       const result: Asset[] = await builder
         .limit(limit)
         .offset(offset)
+        .orderBy(`CASE WHEN asset.\`type\`='NATIVE' THEN 0 ELSE 1 END`)
         .addOrderBy('asset.verify_status', 'DESC')
         .addOrderBy('asset.total_supply', 'DESC')
         .getMany();
@@ -98,11 +75,13 @@ export class AssetsRepository extends Repository<Asset> {
       );
     }
 
-    if (type?.length > 0) {
-      builder.andWhere('sbt.type IN(:...type)', {
-        type: type,
+    const assetType = !!type ? type.split(',') : [];
+    if (assetType?.length > 0) {
+      builder.andWhere('asset.type IN(:...type)', {
+        type: assetType,
       });
     }
+
     return await _finalizeResult();
   }
 

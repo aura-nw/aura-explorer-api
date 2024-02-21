@@ -3,6 +3,7 @@ import { ASSETS_TYPE, AkcLogger, Asset, RequestContext } from '../../../shared';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { AssetParamsDto } from '../dtos/asset-params.dto';
 import { AssetsTokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
+import { In } from 'typeorm';
 
 @Injectable()
 export class AssetService {
@@ -19,15 +20,6 @@ export class AssetService {
       param.offset,
       param.type,
     );
-    // Move native coin to first element.
-    result.sort((prev, next) => {
-      return prev.type === ASSETS_TYPE.NATIVE
-        ? -1
-        : next.type === ASSETS_TYPE.NATIVE
-        ? 1
-        : 0;
-    });
-
     return { result, count };
   }
 
@@ -47,10 +39,17 @@ export class AssetService {
       return await this.assetsRepository.find({
         where: [{ denom: param.denom }],
       });
-    } else if (param.onlyIbc === 'true') {
-      return await this.assetsRepository.getTokenWithStatistics();
     } else {
-      return await this.assetsRepository.find();
+      const assetType = !!param.type ? param.type.split(',') : [];
+      return await this.assetsRepository.find(
+        assetType?.length > 0
+          ? {
+              where: {
+                type: In(assetType),
+              },
+            }
+          : {},
+      );
     }
   }
 }

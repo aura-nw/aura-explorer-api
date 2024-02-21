@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ASSETS_TYPE } from 'src/shared';
 
 export class AssetsTokenMarketParamsDto {
   @ApiPropertyOptional({
@@ -9,9 +10,8 @@ export class AssetsTokenMarketParamsDto {
   denom: string;
 
   @ApiPropertyOptional({
-    description: `Optional get ibc token or all.`,
-    type: Boolean,
-    default: false,
+    default: '',
+    example: `${ASSETS_TYPE.IBC},${ASSETS_TYPE.NATIVE}`,
   })
-  onlyIbc: string;
+  type: string;
 }
