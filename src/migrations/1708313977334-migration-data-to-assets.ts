@@ -6,7 +6,8 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         INSERT INTO \`asset\` (
-            \`coin_id\`
+            \`id\`
+            , \`coin_id\`
             , \`symbol\`
             , \`name\`
             , \`image\`
@@ -21,7 +22,8 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
             , \`social_profiles\`
         )
         SELECT 
-            tm.\`coin_id\`
+            tm.\`id\`
+            , tm.\`coin_id\`
             , tm.\`symbol\`
             , tm.\`name\`
             , tm.\`image\`
@@ -41,6 +43,12 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
            \`token_markets\` \`tm\`
         WHERE 
             tm.\`coin_id\` <> ''
+    `);
+
+    await queryRunner.query(`
+        UPDATE \`token_holder_statistic\`
+        SET \`asset_id\` = \`token_market_id\`
+        WHERE \`asset_id\` IS NULL
     `);
   }
 
