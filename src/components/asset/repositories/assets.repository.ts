@@ -52,57 +52,78 @@ export class AssetsRepository extends Repository<Asset> {
         'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
         { days },
       )
-      .where('type IN :type', { type: [ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE] })
+      .where('asset.type IN(:...type)', {
+        type: [ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE],
+      })
       .getMany();
   }
 
-  async getAssets(param: AssetParamsDto, days = 2) {
+  async getAssets(keyword, limit = 1, offset = 0, type = [], days = 2) {
     this._logger.log(
       `============== ${this.getAssets.name} was called! ==============`,
     );
 
-    const builder = this.createQueryBuilder('asset')
-      .select('asset.*')
-      .leftJoinAndSelect(
-        'asset.tokenHolderStatistics',
-        'tokenHolderStatistics',
-        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
-        { days },
-      );
+    const builder = this.createQueryBuilder('asset').leftJoinAndSelect(
+      'asset.tokenHolderStatistics',
+      'tokenHolderStatistics',
+      'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
+      { days },
+    );
 
     const _finalizeResult = async () => {
-      const result = await builder
-        .limit(param.limit)
-        .offset(param.offset)
+      const result: Asset[] = await builder
+        .limit(limit)
+        .offset(offset)
         .addOrderBy('asset.verify_status', 'DESC')
         .addOrderBy('asset.total_supply', 'DESC')
-        .getRawMany();
+        .getMany();
 
       const count = await builder.getCount();
       return { result, count };
     };
 
-    if (param.keyword) {
+    if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('LOWER(asset.denom) =:keyword', {
-            keyword: `${param.keyword}`,
+          qb.where('LOWER(asset.denom) LIKE LOWER(:keyword)', {
+            keyword: `%${keyword}%`,
           })
-            .orWhere('LOWER(asset.name) LIKE :keyword', {
-              keyword: `%${param.keyword}%`,
+            .orWhere('LOWER(asset.name) LIKE LOWER(:keyword)', {
+              keyword: `%${keyword}%`,
             })
-            .orWhere('LOWER(asset.symbol) LIKE :keyword', {
-              keyword: `%${param.keyword}%`,
+            .orWhere('LOWER(asset.symbol) LIKE LOWER(:keyword)', {
+              keyword: `%${keyword}%`,
             });
         }),
       );
     }
 
-    if (param.type?.length > 0) {
-      builder.andWhere('sbt.type IN :type', {
-        type: param.type,
+    if (type?.length > 0) {
+      builder.andWhere('sbt.type IN(:...type)', {
+        type: type,
       });
     }
     return await _finalizeResult();
+  }
+
+  async getAssetsDetail(denom, days = 2) {
+    this._logger.log(
+      `============== ${this.getAssets.name} was called! ==============`,
+    );
+
+    return this.createQueryBuilder('asset')
+      .leftJoinAndSelect(
+        'asset.tokenHolderStatistics',
+        'tokenHolderStatistics',
+        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
+        { days },
+      )
+      .where('asset.denom =:denom', {
+        denom: `${denom}`,
+      })
+      .orWhere('asset.denom =:denom', {
+        denom: `ibc/${denom}`,
+      })
+      .getMany();
   }
 }

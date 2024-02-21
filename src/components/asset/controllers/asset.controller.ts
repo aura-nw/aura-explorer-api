@@ -1,4 +1,14 @@
-import { CacheInterceptor, ClassSerializerInterceptor, Controller, Get, HttpCode, HttpStatus, Query, UseInterceptors } from '@nestjs/common';
+import {
+  CacheInterceptor,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
@@ -16,7 +26,7 @@ import {
 } from 'src/shared';
 import { AssetService } from '../services/asset.service';
 import { AssetParamsDto } from '../dtos/asset-params.dto';
-import { GetAssetResult } from '../dtos/get-asset.dto';
+import { AssetAttributes, GetAssetResult } from '../dtos/get-asset.dto';
 import { AssetsTokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 
 @Controller()
@@ -41,13 +51,10 @@ export class AssetController {
   async getAssets(
     @ReqContext() ctx: RequestContext,
     @Query() param: AssetParamsDto,
-  ): Promise<BaseApiResponse<GetAssetResult[]>> {
+  ): Promise<BaseApiResponse<Asset[]>> {
     this.logger.log(ctx, `${this.getAssets.name} was called!`);
-    const { result, count, countUnread } = await this.assetService.getAssets(
-      ctx,
-      param,
-    );
-    return { data: result, meta: { count, countUnread } };
+    const { result, count } = await this.assetService.getAssets(ctx, param);
+    return { data: result, meta: { count } };
   }
 
   @Get('assets/token-market')
@@ -63,5 +70,19 @@ export class AssetController {
   ): Promise<Asset[]> {
     this.logger.log(ctx, `${this.getAssetsTokenMarket.name} was called!`);
     return await this.assetService.getAssetsTokenMarket(ctx, query);
+  }
+
+  @Get('assets/:denom')
+  @ApiOperation({ summary: 'Get Assets detail' })
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
+  @ApiOkResponse({ type: AssetAttributes })
+  async getAssetsDetail(
+    @ReqContext() ctx: RequestContext,
+    @Param('denom') denom: string,
+  ): Promise<Asset> {
+    this.logger.log(ctx, `${this.getAssetsDetail.name} was called!`);
+    return await this.assetService.getAssetsDetail(ctx, denom);
   }
 }

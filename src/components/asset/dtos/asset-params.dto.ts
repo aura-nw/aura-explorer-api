@@ -20,6 +20,6 @@ export class AssetParamsDto {
   @ApiProperty({ default: 0 })
   offset: number;
 
-  @ApiProperty({ default: [] })
+  @ApiPropertyOptional({ default: [] })
   type: [];
 }

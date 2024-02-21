@@ -13,15 +13,28 @@ export class AssetService {
 
   async getAssets(ctx: RequestContext, param: AssetParamsDto) {
     this.logger.log(ctx, `${this.getAssets.name} was called!`);
-    const { result, count } = await this.assetsRepository.getAssets(param);
+    const { result, count } = await this.assetsRepository.getAssets(
+      param.keyword,
+      param.limit,
+      param.offset,
+      param.type,
+    );
     // Move native coin to first element.
-    result.sort((a, b) => {
-      if (a.type == b.type) return 0;
-      if (a.type == ASSETS_TYPE.NATIVE) return -1;
-      if (b.type == ASSETS_TYPE.NATIVE) return 1;
+    result.sort((prev, next) => {
+      return prev.type === ASSETS_TYPE.NATIVE
+        ? -1
+        : next.type === ASSETS_TYPE.NATIVE
+        ? 1
+        : 0;
     });
 
     return { result, count };
+  }
+
+  async getAssetsDetail(ctx: RequestContext, denom: string) {
+    this.logger.log(ctx, `${this.getAssets.name} was called!`);
+    const { result } = await this.assetsRepository.getAssets(denom);
+    return result[0];
   }
 
   async getAssetsTokenMarket(
