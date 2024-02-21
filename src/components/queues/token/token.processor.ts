@@ -15,6 +15,8 @@ import {
   INDEXER_API_V2,
   QUEUES,
   TokenMarkets,
+  INDEXER_V2_DB,
+  SYNC_POINT_TYPE,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
@@ -23,6 +25,9 @@ import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { CronExpression } from '@nestjs/schedule';
+import { SyncPoint } from 'src/shared/entities/sync-point.entity';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
@@ -36,12 +41,23 @@ export class TokenProcessor implements OnModuleInit {
     private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
     @InjectRepository(Explorer)
     private readonly explorerRepository: Repository<Explorer>,
+    @InjectRepository(SyncPoint)
+    private readonly syncPointRepository: Repository<SyncPoint>,
+    @InjectRepository(Asset)
+    private readonly assetRepository: Repository<Asset>,
     @InjectQueue(QUEUES.TOKEN.QUEUE_NAME) private readonly tokenQueue: Queue,
   ) {
     this.logger.log(
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SYNC_ASSET,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_MINUTE },
+      },
+    );
   }
 
   async onModuleInit() {
@@ -272,6 +288,49 @@ export class TokenProcessor implements OnModuleInit {
     }
 
     await this.tokenHolderStatisticRepo.save(totalHolderStatistics);
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SYNC_ASSET)
+  async syncAsset(): Promise<void> {
+    let from = new Date(new Date().getTime() - 60 * 1000).toJSON();
+    const alreadySynced = await this.syncPointRepository.findOne({
+      where: { type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS },
+    });
+
+    if (!alreadySynced) {
+      from = null;
+
+      await this.syncPointRepository.save({
+        type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+      });
+    }
+
+    const queryAssets = {
+      query: INDEXER_API_V2.GRAPH_QL.ASSETS,
+      variables: { from: from },
+      operationName: INDEXER_API_V2.OPERATION_NAME.ASSETS,
+    };
+
+    const listAsset = await this.getAssetsWithPagination(queryAssets);
+    await this.assetRepository.upsert(listAsset, ['denom']);
+  }
+
+  private async getAssetsWithPagination(queryAssets) {
+    const listAsset = [];
+    let assetRequestLength;
+    do {
+      const { data } = await this.serviceUtil.fetchDataFromGraphQL(queryAssets);
+      const newAsset = data[INDEXER_V2_DB]['asset'];
+      newAsset.map((asset) => {
+        asset.totalSupply = asset.total_supply;
+        return asset;
+      });
+      listAsset.push(...newAsset);
+      queryAssets.variables.id_gt = newAsset[newAsset.length - 1].id;
+      assetRequestLength = newAsset.length;
+    } while (assetRequestLength === INDEXER_API_V2.MAX_REQUEST);
+
+    return listAsset;
   }
 
   @OnQueueError()

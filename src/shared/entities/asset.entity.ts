@@ -1,28 +1,20 @@
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Column, Entity, OneToMany, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
-import { Explorer } from './explorer.entity';
 import { TokenHolderStatistic } from './token-holder-statistic.entity';
 
 @Entity('asset')
-@Index(['denom', 'explorer'], { unique: true })
+@Unique(['denom'])
 export class Asset extends BaseEntityIncrementId {
-  @Column({ name: 'coin_id' })
+  @Column({ name: 'coin_id', nullable: true, default: '' })
   coinId: string;
 
-  @Column()
+  @Column({ nullable: true })
   symbol: string;
 
-  @Column()
+  @Column({ nullable: true })
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   image: string;
 
   @Column({
@@ -31,6 +23,7 @@ export class Asset extends BaseEntityIncrementId {
     precision: 38,
     scale: 6,
     default: 0,
+    nullable: true,
   })
   currentPrice: number;
 
@@ -38,6 +31,7 @@ export class Asset extends BaseEntityIncrementId {
     name: 'price_change_percentage_24h',
     type: 'float',
     default: 0,
+    nullable: true,
   })
   priceChangePercentage24h: number;
 
@@ -50,11 +44,8 @@ export class Asset extends BaseEntityIncrementId {
   @Column({ name: 'denom', nullable: true })
   denom: string;
 
-  @Column({ name: 'decimal', default: 0 })
+  @Column({ name: 'decimal', default: 0, nullable: true })
   decimal: number;
-
-  @Column({ name: 'chain_id', nullable: true })
-  chainId: string;
 
   @Column({ name: 'official_site', nullable: true })
   officialSite: string;
@@ -62,15 +53,16 @@ export class Asset extends BaseEntityIncrementId {
   @Column({ name: 'social_profiles', nullable: true, type: 'json' })
   socialProfiles: JSON;
 
-  @Column({ name: 'type' })
+  @Column({ name: 'type', nullable: true })
   type: string;
 
   @Column({
     name: 'total_supply',
     type: 'decimal',
-    precision: 38,
+    precision: 60,
     scale: 6,
     default: 0,
+    nullable: true,
   })
   totalSupply: number;
 
@@ -79,10 +71,4 @@ export class Asset extends BaseEntityIncrementId {
     (tokenHolderStatistic) => tokenHolderStatistic.asset,
   )
   tokenHolderStatistics: TokenHolderStatistic[];
-
-  @ManyToOne(() => Explorer, (explorer) => explorer.assets)
-  @JoinColumn({
-    name: 'explorer_id',
-  })
-  explorer: Explorer;
 }
