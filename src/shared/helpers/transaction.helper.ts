@@ -72,10 +72,7 @@ export class TransactionHelper {
           const arrTemp = [];
           element.coin_transfers?.forEach((coin) => {
             const dataIBC =
-              coinConfig.find(
-                (k) =>
-                  k.denom === coin.denom && k.denom !== coinInfo.minimalDenom,
-              ) || {};
+              coinConfig.find((k) => k.denom === coin.denom) || {};
             // Get denom ibc in config
             const denomIBC =
               dataIBC['symbol']?.indexOf('ibc') === -1

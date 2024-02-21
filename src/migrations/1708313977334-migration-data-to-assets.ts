@@ -19,7 +19,6 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
             , \`chain_id\`
             , \`official_site\`
             , \`social_profiles\`
-            , \`explorer_id\`
         )
         SELECT 
             tm.\`coin_id\`
@@ -38,7 +37,6 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
             , tm.\`chain_id\`
             , tm.\`official_site\`
             , tm.\`social_profiles\`
-            , tm.\`explorer_id\`
         FROM 
            \`token_markets\` \`tm\`
         WHERE 

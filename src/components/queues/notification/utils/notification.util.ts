@@ -327,10 +327,7 @@ export class NotificationUtil {
     const listTx = [];
     data?.forEach((tx) => {
       tx.coin_transfers?.forEach((coin) => {
-        const dataIBC =
-          coinConfig.find(
-            (k) => k.denom === coin.denom && k.denom !== explorer.minimalDenom,
-          ) || {};
+        const dataIBC = coinConfig.find((k) => k.denom === coin.denom) || {};
         // Get denom ibc in config
         const denomIBC =
           dataIBC['symbol']?.indexOf('ibc') === -1
