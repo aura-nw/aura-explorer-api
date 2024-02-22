@@ -3,7 +3,7 @@ export const VALIDATION_PIPE_OPTIONS = { transform: true };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
+export const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
 
 export const REQUEST_CHAIN_ID_HEADER = 'chain-id';
 
@@ -273,6 +273,27 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+
+    ASSETS: `query Assets(
+      $from: timestamptz = null
+      $id_gt: Int = null
+    ) {
+      ${INDEXER_V2_DB} {
+        asset(
+          where: { updated_at: { _gte: $from }, id: { _gt: $id_gt } }
+          order_by: { id: asc }
+        ) {
+          decimal
+          denom
+          id
+          name
+          total_supply
+          type
+          updated_at
+        }
+      }
+    }
+  `,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -299,7 +320,9 @@ export const INDEXER_API_V2 = {
     BASE_QUERY: 'BaseQuery',
     LIST_VALIDATOR: 'ListValidator',
     LIST_ACCOUNT: 'ListAccount',
+    ASSETS: 'Assets',
   },
+  MAX_REQUEST: 100,
 };
 
 export enum AURA_INFO {
@@ -547,6 +570,7 @@ export const QUEUES = {
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
     JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
+    JOB_SYNC_ASSET: 'sync-asset',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',
@@ -590,6 +614,7 @@ export enum SYNC_POINT_TYPE {
   COIN_TRANSFER_HEIGHT = 'COIN_TRANSFER_HEIGHT',
   TOKEN_TRANSFER_HEIGHT = 'TOKEN_TRANSFER_HEIGHT',
   NFT_TRANSFER_HEIGHT = 'NFT_TRANSFER_HEIGHT',
+  FIRST_TIME_SYNC_ASSETS = 'FIRST_TIME_SYNC_ASSETS',
 }
 
 export const TX_HEADER = {
