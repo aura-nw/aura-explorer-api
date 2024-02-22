@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Brackets, EntityRepository, Repository } from 'typeorm';
-import { ASSETS_TYPE, Asset } from '../../../shared';
+import { Asset } from '../../../shared';
 
 @EntityRepository(Asset)
 export class AssetsRepository extends Repository<Asset> {

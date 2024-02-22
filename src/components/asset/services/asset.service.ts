@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ASSETS_TYPE, AkcLogger, Asset, RequestContext } from '../../../shared';
+import { AkcLogger, Asset, RequestContext } from '../../../shared';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { AssetParamsDto } from '../dtos/asset-params.dto';
 import { AssetsTokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
-import { In } from 'typeorm';
+import { In, IsNull, Not } from 'typeorm';
 
 @Injectable()
 export class AssetService {
@@ -37,19 +37,12 @@ export class AssetService {
 
     if (param.denom) {
       return await this.assetsRepository.find({
-        where: [{ denom: param.denom }],
+        where: { denom: param.denom },
       });
     } else {
-      const assetType = !!param.type ? param.type.split(',') : [];
-      return await this.assetsRepository.find(
-        assetType?.length > 0
-          ? {
-              where: {
-                type: In(assetType),
-              },
-            }
-          : {},
-      );
+      return await this.assetsRepository.find({
+        where: { coinId: Not('') },
+      });
     }
   }
 }
