@@ -285,7 +285,6 @@ export const INDEXER_API_V2 = {
         ) {
           decimal
           denom
-          id
           name
           total_supply
           type
