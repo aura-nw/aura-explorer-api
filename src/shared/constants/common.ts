@@ -3,7 +3,7 @@ export const VALIDATION_PIPE_OPTIONS = { transform: true };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
+export const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
 
 export const REQUEST_CHAIN_ID_HEADER = 'chain-id';
 
@@ -60,7 +60,7 @@ export const INDEXER_API_V2 = {
     CW20_OWNER: `query CW20Owner($limit: Int, $offset: Int, $owner: String, $name: String, $address: String) { %s { cw20_contract(limit: $limit, offset: $offset, where: {cw20_holders: {address: {_eq: $owner}, amount: {_gt: 0}}, name: {_ilike: $name}, smart_contract: {address: {_eq: $address}}}) { %s } } }`,
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
-    CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { data} cw721_contract {smart_contract {address}} sender}}}`,
+    CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { transaction_messages { content } } cw721_contract {smart_contract {address}} sender}}}`,
     TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: String = null) {
       %s {
         transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
@@ -273,6 +273,27 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+
+    ASSETS: `query Assets(
+      $from: timestamptz = null
+      $id_gt: Int = null
+    ) {
+      ${INDEXER_V2_DB} {
+        asset(
+          where: { updated_at: { _gte: $from }, id: { _gt: $id_gt } }
+          order_by: { id: asc }
+        ) {
+          decimal
+          denom
+          id
+          name
+          total_supply
+          type
+          updated_at
+        }
+      }
+    }
+  `,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -299,7 +320,9 @@ export const INDEXER_API_V2 = {
     BASE_QUERY: 'BaseQuery',
     LIST_VALIDATOR: 'ListValidator',
     LIST_ACCOUNT: 'ListAccount',
+    ASSETS: 'Assets',
   },
+  MAX_REQUEST: 100,
 };
 
 export enum AURA_INFO {
@@ -553,6 +576,7 @@ export const QUEUES = {
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
     JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
+    JOB_SYNC_ASSET: 'sync-asset',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',
@@ -596,6 +620,7 @@ export enum SYNC_POINT_TYPE {
   COIN_TRANSFER_HEIGHT = 'COIN_TRANSFER_HEIGHT',
   TOKEN_TRANSFER_HEIGHT = 'TOKEN_TRANSFER_HEIGHT',
   NFT_TRANSFER_HEIGHT = 'NFT_TRANSFER_HEIGHT',
+  FIRST_TIME_SYNC_ASSETS = 'FIRST_TIME_SYNC_ASSETS',
 }
 
 export const TX_HEADER = {
