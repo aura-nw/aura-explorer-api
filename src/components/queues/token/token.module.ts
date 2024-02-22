@@ -9,6 +9,8 @@ import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Asset } from 'src/shared/entities/asset.entity';
+import { SyncPoint } from 'src/shared/entities/sync-point.entity';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
       TokenMarketsRepository,
       TokenHolderStatistic,
       Explorer,
+      Asset,
+      SyncPoint,
     ]),
     BullModule.registerQueueAsync({
       name: QUEUES.TOKEN.QUEUE_NAME,
