@@ -289,6 +289,30 @@ export const INDEXER_API_V2 = {
           total_supply
           type
           updated_at
+          id
+        }
+      }
+    }
+  `,
+    CW20_HOLDER_STAT: `query Cw20HolderStat($date_eq: date = null, $id_gt: Int = null) {
+      ${INDEXER_V2_DB} {
+        cw20_contract(
+          where: { track: { _eq: true }, id: { _gt: $id_gt } }
+          order_by: { id: asc }
+        ) {
+          smart_contract {
+            address
+          }
+          cw20_total_holder_stats(
+            where: { date: { _eq: $date_eq } }
+            limit: 1
+            order_by: { date: desc }
+          ) {
+            total_holder
+            date
+          }
+          marketing_info
+          id
         }
       }
     }
@@ -320,6 +344,7 @@ export const INDEXER_API_V2 = {
     LIST_VALIDATOR: 'ListValidator',
     LIST_ACCOUNT: 'ListAccount',
     ASSETS: 'Assets',
+    CW20_HOLDER_STAT: 'Cw20HolderStat',
   },
   MAX_REQUEST: 100,
 };
@@ -576,6 +601,8 @@ export const QUEUES = {
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
     JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
     JOB_SYNC_ASSET: 'sync-asset',
+    JOB_SYNC_NATIVE_ASSET_HOLDER: 'sync-native-asset-holder',
+    JOB_SYNC_CW20_ASSET_HOLDER: 'sync-cw20-asset-holder',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',

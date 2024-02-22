@@ -14,6 +14,7 @@ import {
   QUEUES,
   INDEXER_V2_DB,
   SYNC_POINT_TYPE,
+  ASSETS_TYPE,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
@@ -52,6 +53,20 @@ export class TokenProcessor implements OnModuleInit {
         repeat: { cron: CronExpression.EVERY_MINUTE },
       },
     );
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER,
+      {},
+      {
+        repeat: { cron: `2 * * * *` },
+      },
+    );
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER,
+      {},
+      {
+        repeat: { cron: '1 * * * *' },
+      },
+    );
   }
 
   async onModuleInit() {
@@ -63,13 +78,6 @@ export class TokenProcessor implements OnModuleInit {
       {},
       {
         repeat: { cron: this.appParams.priceTimeSync },
-      },
-    );
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
       },
     );
   }
@@ -137,52 +145,6 @@ export class TokenProcessor implements OnModuleInit {
     return coinInfo;
   }
 
-  @Process(QUEUES.TOKEN.JOB_SYNC_TOKEN_HOLDER)
-  async syncAuraTokenHolder(): Promise<void> {
-    const assets = await this.assetsRepository.find({
-      where: { denom: Not(IsNull()) },
-    });
-
-    let subQuery = '';
-    for (const [index, denom] of assets.entries()) {
-      subQuery =
-        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${denom.denom}"}}) {
-                            aggregate {
-                              count
-                            }
-                          }`);
-    }
-
-    const query = util.format(
-      INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-      this.chainDB,
-      subQuery,
-    );
-
-    const graphqlQueryTotalHolder = {
-      query,
-      operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
-      variables: {},
-    };
-
-    const totalHolders = (
-      await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-    )?.data[this.chainDB];
-
-    const totalHolderStatistics = [];
-    for (const [index, asset] of assets.entries()) {
-      const totalHolder = totalHolders[`total_holder_${index}`].aggregate.count;
-
-      const newTokenHolderStatistic = new TokenHolderStatistic();
-      newTokenHolderStatistic.totalHolder = totalHolder;
-      newTokenHolderStatistic.asset = asset;
-
-      totalHolderStatistics.push(newTokenHolderStatistic);
-    }
-
-    await this.tokenHolderStatisticRepo.save(totalHolderStatistics);
-  }
-
   @Process(QUEUES.TOKEN.JOB_SYNC_ASSET)
   async syncAsset(): Promise<void> {
     let from = new Date(new Date().getTime() - 60 * 1000).toJSON();
@@ -204,26 +166,171 @@ export class TokenProcessor implements OnModuleInit {
       operationName: INDEXER_API_V2.OPERATION_NAME.ASSETS,
     };
 
-    const listAsset = await this.getAssetsWithPagination(queryAssets);
+    const listAsset = await this.getDataWithPagination(queryAssets, 'asset');
     await this.assetsRepository.upsert(listAsset, ['denom']);
   }
 
-  private async getAssetsWithPagination(queryAssets) {
-    const listAsset = [];
-    let assetRequestLength;
-    do {
-      const { data } = await this.serviceUtil.fetchDataFromGraphQL(queryAssets);
-      const newAsset = data[INDEXER_V2_DB]['asset'];
-      newAsset.map((asset) => {
-        asset.totalSupply = asset.total_supply;
-        return asset;
-      });
-      listAsset.push(...newAsset);
-      queryAssets.variables.id_gt = newAsset[newAsset.length - 1].id;
-      assetRequestLength = newAsset.length;
-    } while (assetRequestLength === INDEXER_API_V2.MAX_REQUEST);
+  @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
+  async syncNativeAssetHolder(): Promise<void> {
+    const listCw20Holders = await this.getNewNativeHolders();
 
-    return listAsset;
+    await this.tokenHolderStatisticRepo.save(listCw20Holders);
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER)
+  async syncCw20AssetHolder(): Promise<void> {
+    const { cw20WithNewImage, listHolderStatistics } =
+      await this.getNewCw20Info();
+
+    await this.assetsRepository.save(cw20WithNewImage);
+
+    await this.tokenHolderStatisticRepo.save(listHolderStatistics);
+  }
+
+  async getNewNativeHolders(): Promise<TokenHolderStatistic[]> {
+    const listCw20Holders: TokenHolderStatistic[] = [];
+    const nativeAsset = await this.assetsRepository.find({
+      where: {
+        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.IBC]),
+      },
+    });
+    let subQuery = '';
+
+    for (const [index, asset] of nativeAsset.entries()) {
+      subQuery =
+        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}}) {
+                            aggregate {
+                              count
+                            }
+                          }`);
+    }
+
+    const query = util.format(
+      INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
+      INDEXER_V2_DB,
+      subQuery,
+    );
+
+    const graphqlQueryTotalHolder = {
+      query,
+      operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
+      variables: {},
+    };
+
+    const totalHolders = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
+    )?.data[INDEXER_V2_DB];
+
+    for (const [index, asset] of nativeAsset.entries()) {
+      const totalHolder = totalHolders[`total_holder_${index}`].aggregate.count;
+
+      const newTokenHolderStatistic = new TokenHolderStatistic();
+      newTokenHolderStatistic.totalHolder = totalHolder;
+      newTokenHolderStatistic.asset = asset;
+
+      listCw20Holders.push(newTokenHolderStatistic);
+    }
+
+    return listCw20Holders;
+  }
+
+  async getNewCw20Info(): Promise<{
+    cw20WithNewImage: Asset[];
+    listHolderStatistics: TokenHolderStatistic[];
+  }> {
+    const cw20WithNewImage: Asset[] = [];
+    const listHolderStatistics: TokenHolderStatistic[] = [];
+    const listCw20Asset = await this.assetsRepository.find({
+      where: { type: ASSETS_TYPE.CW20 },
+    });
+    const cw20Query = {
+      variables: {},
+      query: INDEXER_API_V2.GRAPH_QL.CW20_HOLDER_STAT,
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_HOLDER_STAT,
+    };
+    const newCw20Holders = await this.getDataWithPagination(
+      cw20Query,
+      'cw20_contract',
+    );
+
+    for (const cw20Asset of listCw20Asset) {
+      const newCw20Image = newCw20Holders.find(
+        (cw20) =>
+          cw20.smart_contract.address === cw20Asset.denom &&
+          cw20Asset.image === null &&
+          cw20.marketing_info?.logo?.url,
+      );
+      if (newCw20Image) {
+        cw20Asset.image = newCw20Image.marketing_info?.logo?.url;
+        cw20WithNewImage.push(cw20Asset);
+      }
+
+      const newCw20Holder = newCw20Holders.find(
+        (cw20) => cw20.smart_contract.address === cw20Asset.denom,
+      );
+      if (newCw20Holder) {
+        const newTokenHolderStatistic = new TokenHolderStatistic();
+        newTokenHolderStatistic.totalHolder =
+          newCw20Holder.cw20_total_holder_stats[0]?.total_holder || 0;
+        newTokenHolderStatistic.asset = cw20Asset;
+        // listHolderStatistics.push(newTokenHolderStatistic);
+        const lastHolderStatistic = await this.tokenHolderStatisticRepo.findOne(
+          {
+            where: { asset: cw20Asset },
+            order: { created_at: 'DESC' },
+          },
+        );
+
+        if (
+          !lastHolderStatistic ||
+          !this.isSameDay(new Date(), lastHolderStatistic[0]?.created_at)
+        ) {
+          const newTokenHolderStatistic = new TokenHolderStatistic();
+          newTokenHolderStatistic.totalHolder =
+            newCw20Holder.cw20_total_holder_stats[0]?.total_holder;
+          newTokenHolderStatistic.asset = cw20Asset;
+          // await this.tokenHolderStatisticRepo.save(newTokenHolderStatistic);
+          listHolderStatistics.push(newTokenHolderStatistic);
+        } else {
+          lastHolderStatistic[0].totalHolder =
+            newCw20Holder.cw20_total_holder_stats[0]?.total_holder || 0;
+          listHolderStatistics.push(lastHolderStatistic[0]);
+        }
+      }
+    }
+
+    return { cw20WithNewImage, listHolderStatistics };
+  }
+
+  isSameDay(date1: Date, date2: Date) {
+    if (!date1 || !date2) {
+      return false;
+    }
+
+    return (
+      date1.getDate() === date2.getDate() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getFullYear() === date2.getFullYear()
+    );
+  }
+  async getDataWithPagination(query, keyData) {
+    const result = [];
+    let pageLength;
+    do {
+      const { data } = await this.serviceUtil.fetchDataFromGraphQL(query);
+      const newData = data[INDEXER_V2_DB][keyData];
+
+      result.push(...newData);
+
+      query.variables.id_gt = newData[newData.length - 1].id;
+      pageLength = newData.length;
+    } while (pageLength === INDEXER_API_V2.MAX_REQUEST);
+
+    result.forEach((data) => {
+      delete data.id;
+    });
+
+    return result;
   }
 
   @OnQueueError()
