@@ -241,7 +241,7 @@ export class WatchListService {
       })) as any as WatchListDetailResponse[];
 
       // Mapping name tags
-      foundedWatchList?.forEach(async (address) => {
+      for (const address of foundedWatchList) {
         if (address.address === foundedPublicNameTag?.address) {
           address.publicNameTag = foundedPublicNameTag.name_tag;
         } else {
@@ -258,7 +258,7 @@ export class WatchListService {
 
         // Calculate group tracking.
         address.groupTracking = this.countTrueValues(address.settings);
-      });
+      }
 
       return {
         data: foundedWatchList,
