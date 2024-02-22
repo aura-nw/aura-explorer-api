@@ -19,3 +19,4 @@ export * from './auth/constants/role.constant';
 
 export * from './entities/token-markets.entity';
 export * from './entities/soulbound-token.entity';
+export * from './entities/asset.entity';
