@@ -91,7 +91,7 @@ export class CW4973Processor {
 
     if (dataCw4973Statuses?.length > 0) {
       for (const dataCw4973Status of dataCw4973Statuses) {
-        let message = dataCw4973Status.tx.transaction_messages.content.msg;
+        let message = dataCw4973Status.tx.transaction_messages[0].content.msg;
 
         if (typeof message === 'string') {
           message = JSON.parse(message);
