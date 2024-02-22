@@ -61,61 +61,66 @@ export class CW4973Processor {
 
   @Process(QUEUES.CW4973.JOBS.SYNC_4973_STATUS)
   async handleJobSyncCw4973Status() {
-    const currentCw4973Height = await this.syncPointRepos.findOne({
-      where: {
-        type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
-      },
-    });
-
-    if (!currentCw4973Height) {
-      await this.syncPointRepos.save({
-        type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
-        point: 0,
+    try {
+      const currentCw4973Height = await this.syncPointRepos.findOne({
+        where: {
+          type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
+        },
       });
 
-      return;
-    }
+      if (!currentCw4973Height) {
+        await this.syncPointRepos.save({
+          type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
+          point: 0,
+        });
 
-    const graphQlQuery = {
-      query: INDEXER_API_V2.GRAPH_QL.CW4973_STATUS,
-      variables: {
-        heightGT: currentCw4973Height.point,
-        limit: PAGE_REQUEST.MAX,
-      },
-      operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_STATUS,
-    };
+        return;
+      }
 
-    const dataCw4973Statuses = (
-      await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
-    )?.data[this.chainDB].cw721_activity;
+      const graphQlQuery = {
+        query: INDEXER_API_V2.GRAPH_QL.CW4973_STATUS,
+        variables: {
+          heightGT: currentCw4973Height.point,
+          limit: PAGE_REQUEST.MAX,
+        },
+        operationName: INDEXER_API_V2.OPERATION_NAME.CW4973_STATUS,
+      };
 
-    if (dataCw4973Statuses?.length > 0) {
-      dataCw4973Statuses.forEach(async (dataCw4973Status) => {
-        let message = dataCw4973Status.tx.data.tx.body.messages[0].msg;
+      const dataCw4973Statuses = (
+        await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
+      )?.data[this.chainDB].cw721_activity;
 
-        if (typeof message === 'string') {
-          message = JSON.parse(message);
-        }
-        const takeMessage = message?.take?.signature ? message : null;
-        const unequipMessage = message?.unequip?.token_id ? message : null;
-        const contractAddress =
-          dataCw4973Status.cw721_contract.smart_contract.address;
-        const receiverAddress = dataCw4973Status.sender;
+      if (dataCw4973Statuses?.length > 0) {
+        dataCw4973Statuses.forEach(async (dataCw4973Status) => {
+          let message = dataCw4973Status.tx.transaction_messages[0].content.msg;
 
-        const dataToHandle = {
-          takeMessage,
-          unequipMessage,
-          contractAddress,
-          receiverAddress,
-        };
+          if (typeof message === 'string') {
+            message = JSON.parse(message);
+          }
+          const takeMessage = message?.take?.signature ? message : null;
+          const unequipMessage = message?.unequip?.token_id ? message : null;
+          const contractAddress =
+            dataCw4973Status.cw721_contract.smart_contract.address;
+          const receiverAddress = dataCw4973Status.sender;
 
-        await this.handleSyncCw4973NftStatus(dataToHandle);
-      });
+          const dataToHandle = {
+            takeMessage,
+            unequipMessage,
+            contractAddress,
+            receiverAddress,
+          };
 
-      currentCw4973Height.point = dataCw4973Statuses.slice(-1)[0].height;
-      await this.syncPointRepos.save(currentCw4973Height);
+          await this.handleSyncCw4973NftStatus(dataToHandle);
+        });
+
+        currentCw4973Height.point = dataCw4973Statuses.slice(-1)[0].height;
+        await this.syncPointRepos.save(currentCw4973Height);
+      }
+    } catch (error) {
+      this.logger.error(`Error sync cw4973 ${error.message} ${error.stack}`);
     }
   }
+
   async handleSyncCw4973NftStatus(cw9473Data: {
     takeMessage: any;
     unequipMessage: any;
