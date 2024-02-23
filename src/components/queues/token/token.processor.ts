@@ -14,6 +14,7 @@ import {
   QUEUES,
   INDEXER_V2_DB,
   SYNC_POINT_TYPE,
+  ASSETS_TYPE,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
@@ -24,6 +25,7 @@ import { TokenHolderStatistic } from '../../../shared/entities/token-holder-stat
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { CronExpression } from '@nestjs/schedule';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
+import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
@@ -205,7 +207,7 @@ export class TokenProcessor implements OnModuleInit {
     };
 
     const listAsset = await this.getAssetsWithPagination(queryAssets);
-    await this.assetsRepository.upsert(listAsset, ['denom']);
+    await this.assetsRepository.storeAsset(listAsset);
   }
 
   private async getAssetsWithPagination(queryAssets) {
@@ -215,7 +217,10 @@ export class TokenProcessor implements OnModuleInit {
       const { data } = await this.serviceUtil.fetchDataFromGraphQL(queryAssets);
       const newAsset = data[INDEXER_V2_DB]['asset'];
       newAsset.map((asset) => {
-        asset.totalSupply = asset.total_supply;
+        asset.totalSupply = TransactionHelper.balanceOf(
+          asset.total_supply,
+          asset.decimal || 6,
+        );
         return asset;
       });
       listAsset.push(...newAsset);
