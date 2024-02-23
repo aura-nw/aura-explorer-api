@@ -112,7 +112,7 @@ export class AssetsRepository extends Repository<Asset> {
    * @param {listAsset} List - list data Asset
    */
   async storeAsset(listAsset) {
-    return this.createQueryBuilder('asset')
+    return this.createQueryBuilder()
       .insert()
       .into(Asset)
       .values(listAsset)
