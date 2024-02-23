@@ -105,4 +105,19 @@ export class AssetsRepository extends Repository<Asset> {
       })
       .getMany();
   }
+
+  /**
+   * Insert Or Update Asset.
+   *
+   * @param {listAsset} List - list data Asset
+   */
+  async storeAsset(listAsset) {
+    return this.createQueryBuilder('asset')
+      .insert()
+      .into(Asset)
+      .values(listAsset)
+      .orUpdate(['total_supply'], ['denom'])
+      .orIgnore()
+      .execute();
+  }
 }
