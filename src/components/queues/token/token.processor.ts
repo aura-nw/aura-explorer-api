@@ -19,13 +19,15 @@ import {
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { In, IsNull, Not, Repository } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { CronExpression } from '@nestjs/schedule';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
+import * as moment from 'moment';
+import { date } from 'joi';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
@@ -66,6 +68,13 @@ export class TokenProcessor implements OnModuleInit {
       {},
       {
         repeat: { cron: '1 * * * *' },
+      },
+    );
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
       },
     );
   }
@@ -168,50 +177,31 @@ export class TokenProcessor implements OnModuleInit {
     };
 
     const listAsset = await this.getDataWithPagination(queryAssets, 'asset');
-    await this.assetsRepository.upsert(listAsset, ['denom']);
+    await this.assetsRepository.storeAsset(listAsset);
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
   async syncNativeAssetHolder(): Promise<void> {
-    const listCw20Holders = await this.getNewNativeHolders();
-  }
+    const listHolderStatistic = await this.getNewNativeHolders();
 
-  private async getAssetsWithPagination(queryAssets) {
-    const listAsset = [];
-    let assetRequestLength;
-    do {
-      const { data } = await this.serviceUtil.fetchDataFromGraphQL(queryAssets);
-      const newAsset = data[INDEXER_V2_DB]['asset'];
-      newAsset.map((asset) => {
-        asset.totalSupply = TransactionHelper.balanceOf(
-          asset.total_supply,
-          asset.decimal || 6,
-        );
-        return asset;
-      });
-      listAsset.push(...newAsset);
-      queryAssets.variables.id_gt = newAsset[newAsset.length - 1].id;
-      assetRequestLength = newAsset.length;
-    } while (assetRequestLength === INDEXER_API_V2.MAX_REQUEST);
-
-    return listAsset;
+    await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER)
   async syncCw20AssetHolder(): Promise<void> {
-    const { cw20WithNewImage, listHolderStatistics } =
+    const { cw20WithNewImage, listHolderStatistic } =
       await this.getNewCw20Info();
 
     await this.assetsRepository.save(cw20WithNewImage);
 
-    await this.tokenHolderStatisticRepo.save(listHolderStatistics);
+    await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
 
   async getNewNativeHolders(): Promise<TokenHolderStatistic[]> {
-    const listCw20Holders: TokenHolderStatistic[] = [];
+    const listHolder: TokenHolderStatistic[] = [];
     const nativeAsset = await this.assetsRepository.find({
       where: {
-        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.IBC]),
+        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE]),
       },
     });
     let subQuery = '';
@@ -242,24 +232,33 @@ export class TokenProcessor implements OnModuleInit {
     )?.data[INDEXER_V2_DB];
 
     for (const [index, asset] of nativeAsset.entries()) {
-      const totalHolder = totalHolders[`total_holder_${index}`].aggregate.count;
+      const newTotalHolder =
+        totalHolders[`total_holder_${index}`].aggregate.count;
 
-      const newTokenHolderStatistic = new TokenHolderStatistic();
-      newTokenHolderStatistic.totalHolder = totalHolder;
-      newTokenHolderStatistic.asset = asset;
+      const newHolderStatistic = new TokenHolderStatistic();
+      newHolderStatistic.id = null;
+      newHolderStatistic.asset = asset;
+      newHolderStatistic.totalHolder = newTotalHolder;
+      newHolderStatistic.date = new Date();
 
-      listCw20Holders.push(newTokenHolderStatistic);
+      listHolder.push(newHolderStatistic);
     }
 
-    return listCw20Holders;
+    return listHolder;
   }
 
+  @Process(QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER)
+  async cleanAssetHolder(): Promise<void> {
+    await this.tokenHolderStatisticRepo.delete({
+      created_at: LessThan(moment().subtract(2, 'days').toDate()),
+    });
+  }
   async getNewCw20Info(): Promise<{
     cw20WithNewImage: Asset[];
-    listHolderStatistics: TokenHolderStatistic[];
+    listHolderStatistic: TokenHolderStatistic[];
   }> {
     const cw20WithNewImage: Asset[] = [];
-    const listHolderStatistics: TokenHolderStatistic[] = [];
+    const listHolderStatistic: TokenHolderStatistic[] = [];
     const listCw20Asset = await this.assetsRepository.find({
       where: { type: ASSETS_TYPE.CW20 },
     });
@@ -288,61 +287,44 @@ export class TokenProcessor implements OnModuleInit {
       const newCw20Holder = newCw20Holders.find(
         (cw20) => cw20.smart_contract.address === cw20Asset.denom,
       );
-      if (newCw20Holder) {
-        const newTokenHolderStatistic = new TokenHolderStatistic();
-        newTokenHolderStatistic.totalHolder =
-          newCw20Holder.cw20_total_holder_stats[0]?.total_holder || 0;
-        newTokenHolderStatistic.asset = cw20Asset;
-        // listHolderStatistics.push(newTokenHolderStatistic);
-        const lastHolderStatistic = await this.tokenHolderStatisticRepo.findOne(
-          {
-            where: { asset: cw20Asset },
-            order: { created_at: 'DESC' },
-          },
-        );
 
-        if (
-          !lastHolderStatistic ||
-          !this.isSameDay(new Date(), lastHolderStatistic[0]?.created_at)
-        ) {
-          const newTokenHolderStatistic = new TokenHolderStatistic();
-          newTokenHolderStatistic.totalHolder =
-            newCw20Holder.cw20_total_holder_stats[0]?.total_holder;
-          newTokenHolderStatistic.asset = cw20Asset;
-          // await this.tokenHolderStatisticRepo.save(newTokenHolderStatistic);
-          listHolderStatistics.push(newTokenHolderStatistic);
-        } else {
-          lastHolderStatistic[0].totalHolder =
-            newCw20Holder.cw20_total_holder_stats[0]?.total_holder || 0;
-          listHolderStatistics.push(lastHolderStatistic[0]);
-        }
+      if (newCw20Holder?.cw20_total_holder_stats[0]) {
+        const newCw20HolderStatistic = new TokenHolderStatistic();
+        newCw20HolderStatistic.id = null;
+        newCw20HolderStatistic.totalHolder =
+          newCw20Holder.cw20_total_holder_stats[0]?.total_holder;
+        newCw20HolderStatistic.date =
+          newCw20Holder.cw20_total_holder_stats[0]?.date;
+        newCw20HolderStatistic.asset = cw20Asset;
+        listHolderStatistic.push(newCw20HolderStatistic);
       }
     }
 
-    return { cw20WithNewImage, listHolderStatistics };
+    return { cw20WithNewImage, listHolderStatistic };
   }
 
-  isSameDay(date1: Date, date2: Date) {
-    if (!date1 || !date2) {
-      return false;
-    }
-
-    return (
-      date1.getDate() === date2.getDate() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getFullYear() === date2.getFullYear()
-    );
-  }
   async getDataWithPagination(query, keyData) {
     const result = [];
     let pageLength;
+
     do {
       const { data } = await this.serviceUtil.fetchDataFromGraphQL(query);
       const newData = data[INDEXER_V2_DB][keyData];
 
+      if (keyData === 'asset') {
+        newData.map((asset) => {
+          asset.totalSupply = TransactionHelper.balanceOf(
+            asset.total_supply,
+            asset.decimal || 6,
+          );
+
+          return asset;
+        });
+      }
+
       result.push(...newData);
 
-      query.variables.id_gt = newData[newData.length - 1].id;
+      query.variables.id_gt = newData[newData.length - 1]?.id;
       pageLength = newData.length;
     } while (pageLength === INDEXER_API_V2.MAX_REQUEST);
 
@@ -351,6 +333,17 @@ export class TokenProcessor implements OnModuleInit {
     });
 
     return result;
+  }
+
+  async upsertTokenHolderStatistic(
+    listHolderStatistic: TokenHolderStatistic[],
+  ) {
+    await this.tokenHolderStatisticRepo
+      .createQueryBuilder()
+      .insert()
+      .values(listHolderStatistic)
+      .orUpdate(['total_holder', 'updated_at'], ['asset', 'date'])
+      .execute();
   }
 
   @OnQueueError()

@@ -596,13 +596,13 @@ export const QUEUES = {
     JOB: 'job-send-mail',
   },
   TOKEN: {
-    QUEUE_NAME: 'token-price-queue',
+    QUEUE_NAME: 'asset',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
-    JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
     JOB_SYNC_ASSET: 'sync-asset',
     JOB_SYNC_NATIVE_ASSET_HOLDER: 'sync-native-asset-holder',
     JOB_SYNC_CW20_ASSET_HOLDER: 'sync-cw20-asset-holder',
+    JOB_CLEAN_ASSET_HOLDER: 'clean-asset-holder',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',
