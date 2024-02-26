@@ -25,6 +25,7 @@ import { TokenHolderStatistic } from '../../../shared/entities/token-holder-stat
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { CronExpression } from '@nestjs/schedule';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
+import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
@@ -173,8 +174,27 @@ export class TokenProcessor implements OnModuleInit {
   @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
   async syncNativeAssetHolder(): Promise<void> {
     const listCw20Holders = await this.getNewNativeHolders();
+  }
 
-    await this.tokenHolderStatisticRepo.save(listCw20Holders);
+  private async getAssetsWithPagination(queryAssets) {
+    const listAsset = [];
+    let assetRequestLength;
+    do {
+      const { data } = await this.serviceUtil.fetchDataFromGraphQL(queryAssets);
+      const newAsset = data[INDEXER_V2_DB]['asset'];
+      newAsset.map((asset) => {
+        asset.totalSupply = TransactionHelper.balanceOf(
+          asset.total_supply,
+          asset.decimal || 6,
+        );
+        return asset;
+      });
+      listAsset.push(...newAsset);
+      queryAssets.variables.id_gt = newAsset[newAsset.length - 1].id;
+      assetRequestLength = newAsset.length;
+    } while (assetRequestLength === INDEXER_API_V2.MAX_REQUEST);
+
+    return listAsset;
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER)
