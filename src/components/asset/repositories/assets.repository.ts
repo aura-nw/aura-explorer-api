@@ -44,7 +44,7 @@ export class AssetsRepository extends Repository<Asset> {
       .leftJoinAndSelect(
         'asset.tokenHolderStatistics',
         'tokenHolderStatistics',
-        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
+        'DATE(tokenHolderStatistics.date) > DATE(NOW() - INTERVAL :days DAY)',
         { days },
       );
 
@@ -96,7 +96,7 @@ export class AssetsRepository extends Repository<Asset> {
       .leftJoinAndSelect(
         'asset.tokenHolderStatistics',
         'tokenHolderStatistics',
-        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
+        'DATE(tokenHolderStatistics.date) > DATE(NOW() - INTERVAL :days DAY)',
         { days },
       )
       .where('asset.denom =:denom', {
