@@ -39,12 +39,14 @@ export class AssetsRepository extends Repository<Asset> {
       `============== ${this.getAssets.name} was called! ==============`,
     );
 
-    const builder = this.createQueryBuilder('asset').leftJoinAndSelect(
-      'asset.tokenHolderStatistics',
-      'tokenHolderStatistics',
-      'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
-      { days },
-    );
+    const builder = this.createQueryBuilder('asset')
+      .where('asset.name IS NOT NULL')
+      .leftJoinAndSelect(
+        'asset.tokenHolderStatistics',
+        'tokenHolderStatistics',
+        'DATE(tokenHolderStatistics.created_at) > DATE(NOW() - INTERVAL :days DAY)',
+        { days },
+      );
 
     const _finalizeResult = async () => {
       const result: Asset[] = await builder
