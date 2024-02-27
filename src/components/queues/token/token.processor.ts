@@ -328,9 +328,7 @@ export class TokenProcessor implements OnModuleInit {
       pageLength = newData.length;
     } while (pageLength === INDEXER_API_V2.MAX_REQUEST);
 
-    result.forEach((data) => {
-      delete data.id;
-    });
+    result.map((e) => (e.id = null));
 
     return result;
   }
@@ -342,7 +340,7 @@ export class TokenProcessor implements OnModuleInit {
       .createQueryBuilder()
       .insert()
       .values(listHolderStatistic)
-      .orUpdate(['total_holder', 'updated_at'], ['asset', 'date'])
+      .orUpdate(['total_holder'], ['asset', 'date'])
       .execute();
   }
 
