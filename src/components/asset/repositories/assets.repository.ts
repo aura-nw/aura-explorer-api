@@ -39,14 +39,9 @@ export class AssetsRepository extends Repository<Asset> {
       `============== ${this.getAssets.name} was called! ==============`,
     );
 
-    const builder = this.createQueryBuilder('asset')
-      .where('asset.name IS NOT NULL')
-      .leftJoinAndSelect(
-        'asset.tokenHolderStatistics',
-        'tokenHolderStatistics',
-        'DATE(tokenHolderStatistics.date) > DATE(NOW() - INTERVAL :days DAY)',
-        { days },
-      );
+    const builder = this.createQueryBuilder('asset').where(
+      'asset.name IS NOT NULL',
+    );
 
     const _finalizeResult = async () => {
       const result: Asset[] = await builder
