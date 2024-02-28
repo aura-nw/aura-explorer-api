@@ -44,8 +44,8 @@ export class AssetService {
   }
 
   async getAssetsDetail(ctx: RequestContext, denom: string) {
-    this.logger.log(ctx, `${this.getAssets.name} was called!`);
-    const { result } = await this.assetsRepository.getAssets(denom);
+    this.logger.log(ctx, `${this.getAssetsDetail.name} was called!`);
+    const result = await this.assetsRepository.getAssetsDetail(denom);
     return result[0];
   }
 
