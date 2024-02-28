@@ -27,13 +27,11 @@ import { CronExpression } from '@nestjs/schedule';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import * as moment from 'moment';
-import { date } from 'joi';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
   private readonly logger = new Logger(TokenProcessor.name);
   private appParams: any;
-  private chainDB;
 
   constructor(
     private serviceUtil: ServiceUtil,
@@ -48,12 +46,11 @@ export class TokenProcessor implements OnModuleInit {
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
-    this.chainDB = this.appParams.indexerV2.chainDB;
     this.tokenQueue.add(
       QUEUES.TOKEN.JOB_SYNC_ASSET,
       {},
       {
-        repeat: { cron: CronExpression.EVERY_MINUTE },
+        repeat: { cron: `30 * * * * *` },
       },
     );
     this.tokenQueue.add(
