@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { Asset } from '../../../shared';
+import { isValidBench32Address } from '../../../shared/utils/service.util';
 
 @EntityRepository(Asset)
 export class AssetsRepository extends Repository<Asset> {
@@ -34,7 +35,7 @@ export class AssetsRepository extends Repository<Asset> {
     return await queryBuilder.getRawMany();
   }
 
-  async getAssets(keyword, limit = 1, offset = 0, type = '', days = 2) {
+  async getAssets(keyword, limit = 1, offset = 0, type = '') {
     this._logger.log(
       `============== ${this.getAssets.name} was called! ==============`,
     );
@@ -59,9 +60,12 @@ export class AssetsRepository extends Repository<Asset> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('LOWER(asset.denom) LIKE LOWER(:keyword)', {
-            keyword: `%${keyword}%`,
+          qb.where('asset.denom =:address', {
+            address: keyword,
           })
+            .orWhere('asset.denom =:ibc', {
+              ibc: `ibc/${keyword}`,
+            })
             .orWhere('LOWER(asset.name) LIKE LOWER(:keyword)', {
               keyword: `%${keyword}%`,
             })
@@ -86,8 +90,7 @@ export class AssetsRepository extends Repository<Asset> {
     this._logger.log(
       `============== ${this.getAssets.name} was called! ==============`,
     );
-
-    return this.createQueryBuilder('asset')
+    return await this.createQueryBuilder('asset')
       .leftJoinAndSelect(
         'asset.tokenHolderStatistics',
         'tokenHolderStatistics',
@@ -97,8 +100,8 @@ export class AssetsRepository extends Repository<Asset> {
       .where('asset.denom =:denom', {
         denom: `${denom}`,
       })
-      .orWhere('asset.denom =:denom', {
-        denom: `ibc/${denom}`,
+      .orWhere('asset.denom =:ibcDenom', {
+        ibcDenom: `ibc/${denom}`,
       })
       .getMany();
   }
