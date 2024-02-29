@@ -146,11 +146,12 @@ export class TokenProcessor implements OnModuleInit {
 
   updateTokenMarketsData(currentData: Asset, data: any): Asset {
     const coinInfo = { ...currentData };
-    coinInfo.currentPrice = Number(data.current_price?.toFixed(6)) || 0;
-    coinInfo.priceChangePercentage24h =
-      Number(data.price_change_percentage_24h?.toFixed(6)) || 0;
-    coinInfo.marketCap = Number(data.market_cap?.toFixed(6)) || 0;
-    coinInfo.totalVolume = Number(data.total_volume?.toFixed(6)) || 0;
+    coinInfo.currentPrice = Number(data.current_price?.toFixed(6));
+    coinInfo.priceChangePercentage24h = Number(
+      data.price_change_percentage_24h?.toFixed(6),
+    );
+    coinInfo.marketCap = Number(data.market_cap?.toFixed(6));
+    coinInfo.totalVolume = Number(data.total_volume?.toFixed(6));
     return coinInfo;
   }
 
