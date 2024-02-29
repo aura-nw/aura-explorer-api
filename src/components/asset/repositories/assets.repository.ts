@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { Asset } from '../../../shared';
-import { isValidBench32Address } from '../../../shared/utils/service.util';
 
 @EntityRepository(Asset)
 export class AssetsRepository extends Repository<Asset> {
