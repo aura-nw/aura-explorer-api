@@ -66,6 +66,24 @@ export class Asset extends BaseEntityIncrementId {
   })
   totalSupply: number;
 
+  @Column({
+    name: 'total_volume',
+    type: 'decimal',
+    precision: 38,
+    scale: 6,
+    default: 0,
+  })
+  totalVolume: number;
+
+  @Column({
+    name: 'market_cap',
+    type: 'decimal',
+    precision: 38,
+    scale: 6,
+    default: 0,
+  })
+  marketCap: number;
+
   @OneToMany(
     () => TokenHolderStatistic,
     (tokenHolderStatistic) => tokenHolderStatistic.asset,

@@ -146,9 +146,12 @@ export class TokenProcessor implements OnModuleInit {
 
   updateTokenMarketsData(currentData: Asset, data: any): Asset {
     const coinInfo = { ...currentData };
-    coinInfo.currentPrice = Number(data.current_price?.toFixed(6)) || 0;
-    coinInfo.priceChangePercentage24h =
-      Number(data.price_change_percentage_24h?.toFixed(6)) || 0;
+    coinInfo.currentPrice = Number(data.current_price?.toFixed(6));
+    coinInfo.priceChangePercentage24h = Number(
+      data.price_change_percentage_24h?.toFixed(6),
+    );
+    coinInfo.marketCap = Number(data.market_cap?.toFixed(6));
+    coinInfo.totalVolume = Number(data.total_volume?.toFixed(6));
     return coinInfo;
   }
 
@@ -270,14 +273,13 @@ export class TokenProcessor implements OnModuleInit {
     );
 
     for (const cw20Asset of listCw20Asset) {
-      const newCw20Image = newCw20Holders.find(
-        (cw20) =>
-          cw20.smart_contract.address === cw20Asset.denom &&
-          cw20Asset.image === null &&
-          cw20.marketing_info?.logo?.url,
-      );
-      if (newCw20Image) {
-        cw20Asset.image = newCw20Image.marketing_info?.logo?.url;
+      if (!cw20Asset.image || !cw20Asset.symbol) {
+        const newCw20Image = newCw20Holders.find(
+          (cw20) => cw20.smart_contract.address === cw20Asset.denom,
+        );
+        cw20Asset.image = newCw20Image.marketing_info?.logo?.url || '';
+        cw20Asset.symbol = newCw20Image.symbol || '';
+
         cw20WithNewImage.push(cw20Asset);
       }
 
