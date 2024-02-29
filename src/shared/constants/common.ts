@@ -312,6 +312,7 @@ export const INDEXER_API_V2 = {
             date
           }
           marketing_info
+          symbol
           id
         }
       }
