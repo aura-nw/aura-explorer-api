@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import {
+  ASSETS_TYPE,
   AkcLogger,
   EXPORT_LIMIT_RECORD,
   INDEXER_API_V2,
@@ -20,10 +21,10 @@ import { ExportCsvParamDto } from '../dtos/export-csv-param.dto';
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { EncryptionService } from '../../encryption/encryption.service';
 import { IsNull, Not, Repository } from 'typeorm';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import * as util from 'util';
+import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
 @Injectable()
 export class ExportCsvService {
@@ -35,7 +36,7 @@ export class ExportCsvService {
     private readonly logger: AkcLogger,
     private privateNameTagRepository: PrivateNameTagRepository,
     private encryptionService: EncryptionService,
-    private tokenMarketsRepository: TokenMarketsRepository,
+    private assetRepository: AssetsRepository,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
   ) {
@@ -101,8 +102,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
@@ -166,8 +170,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
@@ -270,8 +277,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
@@ -366,8 +376,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
