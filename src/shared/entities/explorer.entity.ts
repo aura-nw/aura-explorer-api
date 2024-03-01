@@ -49,4 +49,7 @@ export class Explorer extends BaseEntityIncrementId {
 
   @OneToMany(() => Notification, (userActivity) => userActivity.explorer)
   notifications: Notification[];
+
+  @OneToMany(() => Asset, (asset) => asset.explorer)
+  assets: Asset[];
 }
