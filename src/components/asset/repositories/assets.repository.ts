@@ -115,7 +115,7 @@ export class AssetsRepository extends Repository<Asset> {
       .insert()
       .into(Asset)
       .values(listAsset)
-      .orUpdate(['total_supply'], ['denom'])
+      .orUpdate(['total_supply', 'type'], ['denom'])
       .orIgnore()
       .execute();
   }
