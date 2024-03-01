@@ -3,7 +3,7 @@ export const VALIDATION_PIPE_OPTIONS = { transform: true };
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 require('dotenv').config();
 
-const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
+export const INDEXER_V2_DB = process.env.INDEXER_V2_DB;
 
 export const REQUEST_CHAIN_ID_HEADER = 'chain-id';
 
@@ -273,6 +273,51 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+
+    ASSETS: `query Assets(
+      $from: timestamptz = null
+      $id_gt: Int = null
+    ) {
+      ${INDEXER_V2_DB} {
+        asset(
+          where: { updated_at: { _gte: $from }, id: { _gt: $id_gt } }
+          order_by: { id: asc }
+        ) {
+          decimal
+          denom
+          name
+          total_supply
+          type
+          updated_at
+          id
+        }
+      }
+    }
+  `,
+    CW20_HOLDER_STAT: `query Cw20HolderStat($date_eq: date = null, $id_gt: Int = null) {
+      ${INDEXER_V2_DB} {
+        cw20_contract(
+          where: { track: { _eq: true }, id: { _gt: $id_gt } }
+          order_by: { id: asc }
+        ) {
+          smart_contract {
+            address
+          }
+          cw20_total_holder_stats(
+            where: { date: { _eq: $date_eq } }
+            limit: 1
+            order_by: { date: desc }
+          ) {
+            total_holder
+            date
+          }
+          marketing_info
+          symbol
+          id
+        }
+      }
+    }
+  `,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -299,7 +344,10 @@ export const INDEXER_API_V2 = {
     BASE_QUERY: 'BaseQuery',
     LIST_VALIDATOR: 'ListValidator',
     LIST_ACCOUNT: 'ListAccount',
+    ASSETS: 'Assets',
+    CW20_HOLDER_STAT: 'Cw20HolderStat',
   },
+  MAX_REQUEST: 100,
 };
 
 export enum AURA_INFO {
@@ -440,6 +488,12 @@ export const PAGE_REQUEST = {
   MAX_500: 500,
 };
 
+export enum ASSETS_TYPE {
+  IBC = 'IBC_TOKEN',
+  CW20 = 'CW20_TOKEN',
+  NATIVE = 'NATIVE',
+}
+
 export enum SOULBOUND_TOKEN_STATUS {
   UNCLAIM = 'Unclaimed',
   EQUIPPED = 'Equipped',
@@ -543,10 +597,13 @@ export const QUEUES = {
     JOB: 'job-send-mail',
   },
   TOKEN: {
-    QUEUE_NAME: 'token-price-queue',
+    QUEUE_NAME: 'asset',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
     JOB_SYNC_CW20_PRICE: 'sync-cw20-price',
-    JOB_SYNC_TOKEN_HOLDER: 'sync-token-holder',
+    JOB_SYNC_ASSET: 'sync-asset',
+    JOB_SYNC_NATIVE_ASSET_HOLDER: 'sync-native-asset-holder',
+    JOB_SYNC_CW20_ASSET_HOLDER: 'sync-cw20-asset-holder',
+    JOB_CLEAN_ASSET_HOLDER: 'clean-asset-holder',
   },
   CW4973: {
     QUEUE_NAME: 'cw4973',
@@ -590,6 +647,7 @@ export enum SYNC_POINT_TYPE {
   COIN_TRANSFER_HEIGHT = 'COIN_TRANSFER_HEIGHT',
   TOKEN_TRANSFER_HEIGHT = 'TOKEN_TRANSFER_HEIGHT',
   NFT_TRANSFER_HEIGHT = 'NFT_TRANSFER_HEIGHT',
+  FIRST_TIME_SYNC_ASSETS = 'FIRST_TIME_SYNC_ASSETS',
 }
 
 export const TX_HEADER = {

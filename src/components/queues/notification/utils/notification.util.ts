@@ -8,19 +8,19 @@ import { PrivateNameTag } from '../../../../shared/entities/private-name-tag.ent
 import { PublicNameTag } from '../../../../shared/entities/public-name-tag.entity';
 import { NotificationDto } from '../dtos/notification.dtos';
 import { TransactionHelper } from '../../../../shared/helpers/transaction.helper';
-import { NOTIFICATION } from '../../../../shared';
+import { ASSETS_TYPE, NOTIFICATION } from '../../../../shared';
 import { WatchList } from '../../../../shared/entities/watch-list.entity';
 import { TRANSACTION_TYPE_ENUM } from '../../../../shared/constants/transaction';
-import { TokenMarketsRepository } from '../../../cw20-token/repositories/token-markets.repository';
 import { IsNull, Not } from 'typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { AssetsRepository } from '../../../asset/repositories/assets.repository';
 
 @Injectable()
 export class NotificationUtil {
   private config;
   constructor(
     private httpService: HttpService,
-    private tokenMarketsRepository: TokenMarketsRepository,
+    private assetsRepository: AssetsRepository,
   ) {
     this.config = appConfig.default();
   }
@@ -321,8 +321,11 @@ export class NotificationUtil {
   }
 
   async convertDataCoinTransfer(data, explorer: Explorer) {
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()), explorer: { id: explorer.id } },
+    const coinConfig = await this.assetsRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
     const listTx = [];
     data?.forEach((tx) => {

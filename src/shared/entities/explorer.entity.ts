@@ -7,6 +7,7 @@ import { SyncPoint } from './sync-point.entity';
 import { UserActivity } from './user-activity.entity';
 import { Notification } from './notification.entity';
 import { WatchList } from './watch-list.entity';
+import { Asset } from './asset.entity';
 
 @Entity('explorer')
 export class Explorer extends BaseEntityIncrementId {
