@@ -277,8 +277,8 @@ export class TokenProcessor implements OnModuleInit {
         const newCw20Image = newCw20Holders.find(
           (cw20) => cw20.smart_contract.address === cw20Asset.denom,
         );
-        cw20Asset.image = newCw20Image.marketing_info?.logo?.url || '';
-        cw20Asset.symbol = newCw20Image.symbol || '';
+        cw20Asset.image = newCw20Image?.marketing_info?.logo?.url || '';
+        cw20Asset.symbol = newCw20Image?.symbol || '';
 
         cw20WithNewImage.push(cw20Asset);
       }
