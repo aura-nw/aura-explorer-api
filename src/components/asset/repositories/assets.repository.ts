@@ -41,7 +41,7 @@ export class AssetsRepository extends Repository<Asset> {
 
     const builder = this.createQueryBuilder('asset')
       .where('asset.name IS NOT NULL')
-      .andWhere('asset.explorer_id:=explorerId', {
+      .andWhere('asset.explorer_id=:explorerId', {
         explorerId,
       });
 
@@ -98,7 +98,7 @@ export class AssetsRepository extends Repository<Asset> {
         'DATE(tokenHolderStatistics.date) > DATE(NOW() - INTERVAL :days DAY)',
         { days },
       )
-      .where('asset.explorer_id:=explorerId', {
+      .where('asset.explorer_id=:explorerId', {
         explorerId,
       })
       .andWhere(
