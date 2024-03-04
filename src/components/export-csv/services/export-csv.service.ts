@@ -106,6 +106,7 @@ export class ExportCsvService {
       where: {
         type: ASSETS_TYPE.IBC,
         name: Not(IsNull()),
+        explorer: { id: explorer.id },
       },
     });
 
@@ -174,6 +175,7 @@ export class ExportCsvService {
       where: {
         type: ASSETS_TYPE.IBC,
         name: Not(IsNull()),
+        explorer: { id: explorer.id },
       },
     });
 
@@ -281,6 +283,7 @@ export class ExportCsvService {
       where: {
         type: ASSETS_TYPE.IBC,
         name: Not(IsNull()),
+        explorer: { id: explorer.id },
       },
     });
 
@@ -380,6 +383,7 @@ export class ExportCsvService {
       where: {
         type: ASSETS_TYPE.IBC,
         name: Not(IsNull()),
+        explorer: { id: explorer.id },
       },
     });
 

@@ -34,14 +34,16 @@ export class AssetsRepository extends Repository<Asset> {
     return await queryBuilder.getRawMany();
   }
 
-  async getAssets(keyword, limit = 1, offset = 0, type = '') {
+  async getAssets(keyword, limit = 1, offset = 0, type = '', explorerId = 1) {
     this._logger.log(
       `============== ${this.getAssets.name} was called! ==============`,
     );
 
-    const builder = this.createQueryBuilder('asset').where(
-      'asset.name IS NOT NULL',
-    );
+    const builder = this.createQueryBuilder('asset')
+      .where('asset.name IS NOT NULL')
+      .andWhere('asset.explorer_id:=explorerId', {
+        explorerId,
+      });
 
     const _finalizeResult = async () => {
       const result: Asset[] = await builder
@@ -85,7 +87,7 @@ export class AssetsRepository extends Repository<Asset> {
     return await _finalizeResult();
   }
 
-  async getAssetsDetail(denom, days = 2) {
+  async getAssetsDetail(denom, days = 2, explorerId = 1) {
     this._logger.log(
       `============== ${this.getAssets.name} was called! ==============`,
     );
@@ -96,12 +98,18 @@ export class AssetsRepository extends Repository<Asset> {
         'DATE(tokenHolderStatistics.date) > DATE(NOW() - INTERVAL :days DAY)',
         { days },
       )
-      .where('asset.denom =:denom', {
-        denom: `${denom}`,
+      .where('asset.explorer_id:=explorerId', {
+        explorerId,
       })
-      .orWhere('asset.denom =:ibcDenom', {
-        ibcDenom: `ibc/${denom}`,
-      })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('asset.denom =:denom', {
+            denom: `${denom}`,
+          }).orWhere('asset.denom =:ibcDenom', {
+            ibcDenom: `ibc/${denom}`,
+          });
+        }),
+      )
       .getMany();
   }
 
