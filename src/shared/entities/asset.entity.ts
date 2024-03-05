@@ -22,7 +22,7 @@ export class Asset extends BaseEntityIncrementId {
   @Column({ nullable: true })
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   image: string;
 
   @Column({
