@@ -12,7 +12,6 @@ import {
   COINGECKO_API,
   INDEXER_API_V2,
   QUEUES,
-  INDEXER_V2_DB,
   SYNC_POINT_TYPE,
   ASSETS_TYPE,
 } from '../../../shared';
@@ -27,6 +26,7 @@ import { CronExpression } from '@nestjs/schedule';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import * as moment from 'moment';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {
@@ -40,51 +40,60 @@ export class TokenProcessor implements OnModuleInit {
     private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
     @InjectRepository(SyncPoint)
     private readonly syncPointRepository: Repository<SyncPoint>,
+    @InjectRepository(Explorer)
+    private readonly explorerRepository: Repository<Explorer>,
     @InjectQueue(QUEUES.TOKEN.QUEUE_NAME) private readonly tokenQueue: Queue,
   ) {
     this.logger.log(
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_SYNC_ASSET,
-      {},
-      {
-        repeat: { cron: `30 * * * * *` },
-      },
-    );
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER,
-      {},
-      {
-        repeat: { cron: `2 * * * *` },
-      },
-    );
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER,
-      {},
-      {
-        repeat: { cron: '1 * * * *' },
-      },
-    );
-    this.tokenQueue.add(
-      QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER,
-      {},
-      {
-        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
-      },
-    );
   }
 
   async onModuleInit() {
     this.logger.log(
       '============== On Module Init Token Price Processor Service ==============',
     );
+
+    const explorer = await this.explorerRepository.find();
+
+    explorer.forEach((explorer, index) => {
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_ASSET,
+        { explorer },
+        {
+          repeat: { cron: `${index + 1}0 * * * * *` },
+        },
+      );
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER,
+        { explorer },
+        {
+          repeat: { cron: `${index + 2} * * * *` },
+        },
+      );
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER,
+        { explorer },
+        {
+          repeat: { cron: `${index + 1} * * * *` },
+        },
+      );
+    });
+
     this.tokenQueue.add(
       QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
       {},
       {
         repeat: { cron: this.appParams.priceTimeSync },
+      },
+    );
+
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
       },
     );
   }
@@ -156,10 +165,14 @@ export class TokenProcessor implements OnModuleInit {
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_ASSET)
-  async syncAsset(): Promise<void> {
+  async syncAsset(job: Job): Promise<void> {
+    const explorer: Explorer = job.data.explorer;
     let from = new Date(new Date().getTime() - 60 * 1000).toJSON();
     const alreadySynced = await this.syncPointRepository.findOne({
-      where: { type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS },
+      where: {
+        type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+        explorer: { id: explorer.id },
+      },
     });
 
     if (!alreadySynced) {
@@ -167,41 +180,52 @@ export class TokenProcessor implements OnModuleInit {
 
       await this.syncPointRepository.save({
         type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+        explorer: { id: explorer.id },
       });
     }
 
     const queryAssets = {
-      query: INDEXER_API_V2.GRAPH_QL.ASSETS,
+      query: util.format(INDEXER_API_V2.GRAPH_QL.ASSETS, explorer.chainDb),
       variables: { from: from },
       operationName: INDEXER_API_V2.OPERATION_NAME.ASSETS,
     };
 
-    const listAsset = await this.getDataWithPagination(queryAssets, 'asset');
+    const listAsset = await this.getDataWithPagination(
+      queryAssets,
+      'asset',
+      explorer,
+    );
     await this.assetsRepository.storeAsset(listAsset);
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
-  async syncNativeAssetHolder(): Promise<void> {
-    const listHolderStatistic = await this.getNewNativeHolders();
+  async syncNativeAssetHolder(job: Job): Promise<void> {
+    const listHolderStatistic = await this.getNewNativeHolders(
+      job.data.explorer,
+    );
 
     await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER)
-  async syncCw20AssetHolder(): Promise<void> {
-    const { cw20WithNewImage, listHolderStatistic } =
-      await this.getNewCw20Info();
+  async syncCw20AssetHolder(job: Job): Promise<void> {
+    const { cw20WithNewImage, listHolderStatistic } = await this.getNewCw20Info(
+      job.data.explorer,
+    );
 
     await this.assetsRepository.save(cw20WithNewImage);
 
     await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
 
-  async getNewNativeHolders(): Promise<TokenHolderStatistic[]> {
+  async getNewNativeHolders(
+    explorer: Explorer,
+  ): Promise<TokenHolderStatistic[]> {
     const listHolder: TokenHolderStatistic[] = [];
     const nativeAsset = await this.assetsRepository.find({
       where: {
         type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE]),
+        explorer: { id: explorer.id },
       },
     });
     let subQuery = '';
@@ -217,7 +241,7 @@ export class TokenProcessor implements OnModuleInit {
 
     const query = util.format(
       INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-      INDEXER_V2_DB,
+      explorer.chainDb,
       subQuery,
     );
 
@@ -229,7 +253,7 @@ export class TokenProcessor implements OnModuleInit {
 
     const totalHolders = (
       await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-    )?.data[INDEXER_V2_DB];
+    )?.data[explorer.chainDb];
 
     for (const [index, asset] of nativeAsset.entries()) {
       const newTotalHolder =
@@ -253,23 +277,27 @@ export class TokenProcessor implements OnModuleInit {
       created_at: LessThan(moment().subtract(2, 'days').toDate()),
     });
   }
-  async getNewCw20Info(): Promise<{
+  async getNewCw20Info(explorer: Explorer): Promise<{
     cw20WithNewImage: Asset[];
     listHolderStatistic: TokenHolderStatistic[];
   }> {
     const cw20WithNewImage: Asset[] = [];
     const listHolderStatistic: TokenHolderStatistic[] = [];
     const listCw20Asset = await this.assetsRepository.find({
-      where: { type: ASSETS_TYPE.CW20 },
+      where: { type: ASSETS_TYPE.CW20, explorer: { id: explorer.id } },
     });
     const cw20Query = {
       variables: {},
-      query: INDEXER_API_V2.GRAPH_QL.CW20_HOLDER_STAT,
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_HOLDER_STAT,
+        explorer.chainDb,
+      ),
       operationName: INDEXER_API_V2.OPERATION_NAME.CW20_HOLDER_STAT,
     };
     const newCw20Holders = await this.getDataWithPagination(
       cw20Query,
       'cw20_contract',
+      explorer,
     );
 
     for (const cw20Asset of listCw20Asset) {
@@ -302,13 +330,13 @@ export class TokenProcessor implements OnModuleInit {
     return { cw20WithNewImage, listHolderStatistic };
   }
 
-  async getDataWithPagination(query, keyData) {
+  async getDataWithPagination(query: any, keyData: string, explorer: Explorer) {
     const result = [];
     let pageLength;
 
     do {
       const { data } = await this.serviceUtil.fetchDataFromGraphQL(query);
-      const newData = data[INDEXER_V2_DB][keyData];
+      const newData = data[explorer.chainDb][keyData];
 
       if (keyData === 'asset') {
         newData.map((asset) => {
@@ -316,6 +344,7 @@ export class TokenProcessor implements OnModuleInit {
             asset.total_supply,
             asset.decimal || 6,
           );
+          asset.explorer = explorer;
 
           return asset;
         });

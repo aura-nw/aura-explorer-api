@@ -278,7 +278,7 @@ export const INDEXER_API_V2 = {
       $from: timestamptz = null
       $id_gt: Int = null
     ) {
-      ${INDEXER_V2_DB} {
+      %s {
         asset(
           where: { updated_at: { _gte: $from }, id: { _gt: $id_gt } }
           order_by: { id: asc }
@@ -295,7 +295,7 @@ export const INDEXER_API_V2 = {
     }
   `,
     CW20_HOLDER_STAT: `query Cw20HolderStat($date_eq: date = null, $id_gt: Int = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         cw20_contract(
           where: { track: { _eq: true }, id: { _gt: $id_gt } }
           order_by: { id: asc }
