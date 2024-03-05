@@ -364,6 +364,9 @@ export class TokenProcessor implements OnModuleInit {
   async upsertTokenHolderStatistic(
     listHolderStatistic: TokenHolderStatistic[],
   ) {
+    await this.tokenHolderStatisticRepo.query(
+      `ALTER TABLE \`token_holder_statistic\` AUTO_INCREMENT = 1`,
+    );
     await this.tokenHolderStatisticRepo
       .createQueryBuilder()
       .insert()
