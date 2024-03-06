@@ -119,6 +119,7 @@ export class AssetsRepository extends Repository<Asset> {
    * @param {listAsset} List - list data Asset
    */
   async storeAsset(listAsset) {
+    await this.query(`ALTER TABLE \`asset\` AUTO_INCREMENT = 1`);
     return this.createQueryBuilder()
       .insert()
       .into(Asset)
