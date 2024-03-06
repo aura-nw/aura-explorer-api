@@ -90,8 +90,8 @@ export class CW4973Processor {
     )?.data[this.chainDB].cw721_activity;
 
     if (dataCw4973Statuses?.length > 0) {
-      dataCw4973Statuses.forEach(async (dataCw4973Status) => {
-        let message = dataCw4973Status.tx.data.tx.body.messages[0].msg;
+      for (const dataCw4973Status of dataCw4973Statuses) {
+        let message = dataCw4973Status.tx.transaction_messages[0].content.msg;
 
         if (typeof message === 'string') {
           message = JSON.parse(message);
@@ -110,12 +110,12 @@ export class CW4973Processor {
         };
 
         await this.handleSyncCw4973NftStatus(dataToHandle);
-      });
-
+      }
       currentCw4973Height.point = dataCw4973Statuses.slice(-1)[0].height;
       await this.syncPointRepos.save(currentCw4973Height);
     }
   }
+
   async handleSyncCw4973NftStatus(cw9473Data: {
     takeMessage: any;
     unequipMessage: any;

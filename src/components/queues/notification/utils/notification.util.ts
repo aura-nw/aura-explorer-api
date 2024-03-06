@@ -31,8 +31,8 @@ export class NotificationUtil {
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: NotificationDto[] = [];
-    response?.forEach((tx) => {
-      watchList?.forEach(async (element) => {
+    for (const tx of response) {
+      for (const element of watchList) {
         const findAddressNotify = tx.transaction_messages?.find(
           (msg) => msg.sender === element.address,
         );
@@ -60,8 +60,8 @@ export class NotificationUtil {
           };
           lstNotification.push(notification);
         }
-      });
-    });
+      }
+    }
     return lstNotification;
   }
 
@@ -72,7 +72,7 @@ export class NotificationUtil {
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: NotificationDto[] = [];
-    data?.forEach((tx) => {
+    for (const tx of data) {
       // Filter amount, symbol pair number more than 3 display the first 3 pairs
       const listTransfer = tx.activities
         ?.slice(0, 3)
@@ -82,7 +82,7 @@ export class NotificationUtil {
       const listWatch = watchList.filter(
         (item) => item.address === tx.from || item.address === tx.to,
       );
-      listWatch?.forEach(async (element) => {
+      for (const element of listWatch) {
         // Check is restake transaction
         const isRestakeTx =
           tx?.tx_msg?.type === TRANSACTION_TYPE_ENUM.ExecuteAuthz &&
@@ -134,8 +134,8 @@ export class NotificationUtil {
           };
           lstNotification.push(notification);
         }
-      });
-    });
+      }
+    }
     return lstNotification;
   }
 
@@ -146,7 +146,7 @@ export class NotificationUtil {
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: NotificationDto[] = [];
-    data?.forEach((tx) => {
+    for (const tx of data) {
       // Filter amount, symbol pair number more than 3 display the first 3 pairs
       const listTokenId = tx.activities
         ?.slice(0, 3)
@@ -162,7 +162,7 @@ export class NotificationUtil {
       const listWatch = watchList.filter(
         (item) => item.address === tx.from || item.address === tx.to,
       );
-      listWatch?.forEach(async (element) => {
+      for (const element of listWatch) {
         const nameTagPhase = await this.getNameTag(
           element.address,
           element.user.id,
@@ -197,8 +197,8 @@ export class NotificationUtil {
           },
         };
         lstNotification.push(notification);
-      });
-    });
+      }
+    }
 
     return lstNotification;
   }
@@ -210,7 +210,7 @@ export class NotificationUtil {
     listPublicNameTag: PublicNameTag[],
   ) {
     const lstNotification: NotificationDto[] = [];
-    data?.forEach((tx) => {
+    for (const tx of data) {
       // Filter NFT more than 2 display the first 2 NFT
       const listTokenId = tx.activities
         ?.slice(0, 2)
@@ -220,7 +220,7 @@ export class NotificationUtil {
       const listWatch = watchList.filter(
         (item) => item.address === tx.from || item.address === tx.to,
       );
-      listWatch?.forEach(async (element) => {
+      for (const element of listWatch) {
         const nameTagPhase = await this.getNameTag(
           element.address,
           element.user.id,
@@ -258,8 +258,8 @@ export class NotificationUtil {
           },
         };
         lstNotification.push(notification);
-      });
-    });
+      }
+    }
     return lstNotification;
   }
 
