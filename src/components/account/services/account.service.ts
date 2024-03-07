@@ -24,30 +24,29 @@ import {
   QueryValidatorCommissionResponse,
 } from 'cosmjs-types/cosmos/distribution/v1beta1/query';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
+import { Repository } from 'typeorm';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { RpcUtil } from 'src/shared/utils/rpc.util';
 
 @Injectable()
 export class AccountService {
   private api;
   private minimalDenom;
-  private precisionDiv;
-  private decimals;
   private chainDB;
 
   constructor(
     private readonly logger: AkcLogger,
     private serviceUtil: ServiceUtil,
+    private rpcUtil: RpcUtil,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {
     this.logger.setContext(AccountService.name);
     const appParams = appConfig.default();
     this.api = appParams.node.api;
     this.minimalDenom = appParams.chainInfo.coinMinimalDenom;
-    this.precisionDiv = appParams.chainInfo.precisionDiv;
-    this.decimals = appParams.chainInfo.coinDecimals;
     this.chainDB = appParams.indexerV2.chainDB;
-  }
-
-  changeUauraToAura(amount) {
-    return (amount / this.precisionDiv).toFixed(this.decimals);
   }
 
   async getTotalBalanceByAddress(
@@ -75,7 +74,10 @@ export class AccountService {
       };
 
       const graphqlQueryVal = {
-        query: INDEXER_API_V2.GRAPH_QL.LIST_VALIDATOR,
+        query: util.format(
+          INDEXER_API_V2.GRAPH_QL.LIST_VALIDATOR,
+          this.chainDB,
+        ),
         variables: {
           address: address,
         },
@@ -241,9 +243,16 @@ export class AccountService {
         );
       }
 
+      const explorer = await this.explorerRepository.findOne({
+        chainId: ctx.chainId,
+      });
+
       // get list account detail
       const graphqlQueryAcc = {
-        query: util.format(INDEXER_API_V2.GRAPH_QL.LIST_ACCOUNT),
+        query: util.format(
+          INDEXER_API_V2.GRAPH_QL.LIST_ACCOUNT,
+          explorer.chainDb,
+        ),
         variables: {
           address: address,
         },
@@ -251,7 +260,10 @@ export class AccountService {
       };
 
       const graphqlQueryVal = {
-        query: INDEXER_API_V2.GRAPH_QL.LIST_VALIDATOR,
+        query: util.format(
+          INDEXER_API_V2.GRAPH_QL.LIST_VALIDATOR,
+          explorer.chainDb,
+        ),
         variables: {
           address: address,
         },
@@ -262,14 +274,14 @@ export class AccountService {
         await Promise.all([
           this.serviceUtil.fetchDataFromGraphQL(graphqlQueryAcc),
           this.serviceUtil.fetchDataFromGraphQL(graphqlQueryVal),
-          this.getDelegatorDelegations(address),
-          this.getDelegatorUnbondingDelegations(address),
+          this.getDelegatorDelegations(address, ctx.chainId),
+          this.getDelegatorUnbondingDelegations(address, ctx.chainId),
         ]);
 
-      const accountData = account?.data[this.chainDB]['account'] || [];
+      const accountData = account?.data[explorer.chainDb]['account'] || [];
       const result = [];
       for (const data of accountData) {
-        const validatorData = validators?.data[this.chainDB]['validator'];
+        const validatorData = validators?.data[explorer.chainDb]['validator'];
         if (!data) {
           return { address, amount: 0 };
         }
@@ -288,7 +300,7 @@ export class AccountService {
         let balancesAmount = 0;
         const balances = data.balances?.length ? data.balances : [];
         balances.forEach((item) => {
-          if (item.denom === this.minimalDenom) {
+          if (item.denom === explorer.minimalDenom) {
             balancesAmount = parseFloat(item.amount);
           }
         });
@@ -300,7 +312,7 @@ export class AccountService {
             ? data.spendable_balances
             : [];
           const uaura = spendable_balances?.find(
-            (f) => f.denom === this.minimalDenom,
+            (f) => f.denom === explorer.minimalDenom,
           );
           if (uaura) {
             const amount = uaura.amount;
@@ -313,13 +325,16 @@ export class AccountService {
         let stakeReward = 0;
         if (accountDelegations?.length > 0) {
           const delegationsRewardRespone =
-            await this.queryDelegationTotalRewardsRequests(data.address);
+            await this.queryDelegationTotalRewardsRequests(
+              data.address,
+              ctx.chainId,
+            );
           accountDelegations.forEach((item) => {
             delegatedAmount += parseInt(item.balance.amount);
             if (
               delegationsRewardRespone &&
               delegationsRewardRespone.length > 0 &&
-              delegationsRewardRespone[0].denom === this.minimalDenom
+              delegationsRewardRespone[0].denom === explorer.minimalDenom
             ) {
               stakeReward = parseInt(delegationsRewardRespone[0].amount);
             }
@@ -345,10 +360,11 @@ export class AccountService {
         if (validator?.length > 0) {
           const commissionData = await this.queryValidatorCommissionRequests(
             validator[0].operator_address,
+            ctx.chainId,
           );
           if (
             commissionData?.length > 0 &&
-            commissionData[0].denom === this.minimalDenom
+            commissionData[0].denom === explorer.minimalDenom
           ) {
             commission = commissionData[0].amount;
           }
@@ -380,9 +396,9 @@ export class AccountService {
     }
   }
 
-  async getDelegatorDelegations(address = []) {
+  async getDelegatorDelegations(address = [], explorer: string) {
     const res = address.map((delegatorAddr) =>
-      this.queryDelegatorDelegationsRequests(delegatorAddr),
+      this.queryDelegatorDelegationsRequests(delegatorAddr, explorer),
     );
     const results = await Promise.allSettled(res);
     return results
@@ -390,13 +406,17 @@ export class AccountService {
       .map((x: any) => x.value);
   }
 
-  async queryDelegatorDelegationsRequests(delegatorAddr: string) {
+  async queryDelegatorDelegationsRequests(
+    delegatorAddr: string,
+    explorer: string,
+  ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.DELEGATOR_DELEGATIONS,
         QueryDelegatorDelegationsRequest.encode({
           delegatorAddr,
         }).finish(),
+        explorer,
       );
       const value = response.result.response.value;
       return QueryDelegatorDelegationsResponse.decode(
@@ -411,9 +431,9 @@ export class AccountService {
     }
   }
 
-  async getDelegatorUnbondingDelegations(address = []) {
+  async getDelegatorUnbondingDelegations(address = [], explorer: string) {
     const res = address.map((delegatorAddr) =>
-      this.queryDelegatorUnbondingDelegationsRequests(delegatorAddr),
+      this.queryDelegatorUnbondingDelegationsRequests(delegatorAddr, explorer),
     );
     const results = await Promise.allSettled(res);
     return results
@@ -421,13 +441,17 @@ export class AccountService {
       .map((x: any) => x.value);
   }
 
-  async queryDelegatorUnbondingDelegationsRequests(delegatorAddr: string) {
+  async queryDelegatorUnbondingDelegationsRequests(
+    delegatorAddr: string,
+    explorer: string,
+  ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.DELEGATOR_UNBONDING_DELEGATIONS,
         QueryDelegatorUnbondingDelegationsRequest.encode({
           delegatorAddr,
         }).finish(),
+        explorer,
       );
       const value = response.result.response.value;
       return QueryDelegatorUnbondingDelegationsResponse.decode(
@@ -442,13 +466,17 @@ export class AccountService {
     }
   }
 
-  async queryDelegationTotalRewardsRequests(delegatorAddress: string) {
+  async queryDelegationTotalRewardsRequests(
+    delegatorAddress: string,
+    explorer: string,
+  ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.DELEGATION_TOTAL_REWARDS,
         QueryDelegationTotalRewardsRequest.encode({
           delegatorAddress,
         }).finish(),
+        explorer,
       );
       const value = response.result.response.value;
       return QueryDelegationTotalRewardsResponse.decode(
@@ -463,13 +491,17 @@ export class AccountService {
     }
   }
 
-  async queryValidatorCommissionRequests(validatorAddress: string) {
+  async queryValidatorCommissionRequests(
+    validatorAddress: string,
+    explorer: string,
+  ) {
     try {
-      const response = await this.serviceUtil.queryComosRPC(
+      const response = await this.rpcUtil.queryComosRPC(
         RPC_QUERY_URL.VALIDATOR_COMMISSION,
         QueryValidatorCommissionRequest.encode({
           validatorAddress,
         }).finish(),
+        explorer,
       );
       const value = response.result.response.value;
       return QueryValidatorCommissionResponse.decode(

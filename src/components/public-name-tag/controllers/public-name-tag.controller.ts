@@ -171,9 +171,14 @@ export class PublicNameTagController {
     description: 'Key for next page.',
   })
   async getNameTag(
+    @ReqContext() ctx: RequestContext,
     @Query('limit') limit?: number,
     @Query('nextKey') nextKey?: number,
   ): Promise<GetPublicNameTagResult> {
-    return await this.nameTagService.getNameTagMainSite({ limit, nextKey });
+    return await this.nameTagService.getNameTagMainSite({
+      limit,
+      nextKey,
+      chainId: ctx.chainId,
+    });
   }
 }
