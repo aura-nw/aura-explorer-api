@@ -15,8 +15,7 @@ export class createExplorerTable1706070214520 implements MigrationInterface {
 
     await queryRunner.query(
       `INSERT INTO \`explorer\` (\`chain_id\`, \`name\`) VALUES
-      ('serenity-testnet-001', 'Aura'),
-      ('pacific-1', 'Sei')`,
+      ('euphoria-2', 'Aura')`,
     );
   }
 

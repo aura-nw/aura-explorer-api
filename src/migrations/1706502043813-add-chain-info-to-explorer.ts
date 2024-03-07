@@ -13,10 +13,7 @@ export class addChainInfoToExplorer1706502043813 implements MigrationInterface {
 
     await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query(
-      `UPDATE \`explorer\` SET \`minimal_denom\` = 'uaura', \`decimal\` = 6 WHERE \`id\` = 1`,
-    );
-    await queryRunner.query(
-      `UPDATE \`explorer\` SET \`minimal_denom\` = 'usei', \`decimal\` = 6 WHERE \`id\` = 2`,
+      `UPDATE \`explorer\` SET \`minimal_denom\` = 'ueaura', \`decimal\` = 6 WHERE \`id\` = 1`,
     );
     await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
   }
