@@ -7,12 +7,13 @@ import { PublicNameTagController } from './controllers/public-name-tag.controlle
 import { PublicNameTagRepository } from './repositories/public-name-tag.repository';
 import { PublicNameTagService } from './services/public-name-tag.service';
 import { UserModule } from '../user/user.module';
-import { ServiceUtil } from 'src/shared/utils/service.util';
+import { ServiceUtil } from '../../shared/utils/service.util';
+import { Explorer } from '../../shared/entities/explorer.entity';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([PublicNameTagRepository]),
+    TypeOrmModule.forFeature([PublicNameTagRepository, Explorer]),
     HttpModule,
     ConfigModule,
     UserModule,

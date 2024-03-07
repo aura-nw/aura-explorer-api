@@ -1,3 +1,5 @@
+import { Explorer } from 'src/shared/entities/explorer.entity';
+
 export class NotificationDto {
   title: string;
   body: any;
@@ -7,4 +9,5 @@ export class NotificationDto {
   type: string;
   user_id: number;
   height: number;
+  explorer: Explorer;
 }

@@ -17,12 +17,12 @@ import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-p
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
-import {
-  ServiceUtil,
-  isValidBench32Address,
-} from '../../../shared/utils/service.util';
-import { Not } from 'typeorm';
+import { isValidBench32Address } from '../../../shared/utils/service.util';
+import { Not, Repository } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import * as util from 'util';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -32,29 +32,37 @@ export class PrivateNameTagService {
     private readonly logger: AkcLogger,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
-    private serviceUtil: ServiceUtil,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {
     this.config = appConfig.default();
   }
 
   async getNameTags(ctx: RequestContext, req: PrivateNameTagParamsDto) {
-    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
-    const { result, count, countFavorite } =
-      await this.privateNameTagRepository.getNameTags(
-        ctx.user.id,
-        req.keyword,
-        await this.encryptionService.encrypt(req.keyword ?? ''),
-        req.limit,
-        req.offset,
-      );
-    const data = await Promise.all(
-      result.map(async (item) => {
-        item.nameTag = await this.encryptionService.decrypt(item.nameTag);
-        return item;
-      }),
-    );
+    try {
+      this.logger.log(ctx, `${this.getNameTags.name} was called!`);
 
-    return { data, count, countFavorite };
+      const { result, count, countFavorite } =
+        await this.privateNameTagRepository.getNameTags(
+          ctx.user.id,
+          req.keyword,
+          await this.encryptionService.encrypt(req.keyword ?? ''),
+          req.limit,
+          req.offset,
+          ctx.chainId,
+        );
+      const data = await Promise.all(
+        result.map(async (item) => {
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+
+      return { data, count, countFavorite };
+    } catch (error) {
+      this.logger.error(ctx, error);
+      throw new BadRequestException(error.message);
+    }
   }
 
   async getNameTagsDetail(ctx: RequestContext, id: number) {
@@ -71,20 +79,24 @@ export class PrivateNameTagService {
   }
 
   async createNameTag(ctx: RequestContext, req: CreatePrivateNameTagParamsDto) {
-    this.logger.log(ctx, `${this.createNameTag.name} was called!`);
-    const errorMsg = await this.validate(0, ctx.user.id, req);
-    if (errorMsg) {
-      return errorMsg;
-    }
-    const entity = new PrivateNameTag();
-    entity.address = req.address;
-    entity.isFavorite = req.isFavorite;
-    entity.type = req.type;
-    entity.note = req.note;
-    entity.nameTag = await this.encryptionService.encrypt(req.nameTag);
-    entity.createdBy = ctx.user.id;
-
     try {
+      this.logger.log(ctx, `${this.createNameTag.name} was called!`);
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
+      const errorMsg = await this.validate(0, ctx, req);
+      if (errorMsg) {
+        return errorMsg;
+      }
+      const entity = new PrivateNameTag();
+      entity.address = req.address;
+      entity.isFavorite = req.isFavorite;
+      entity.type = req.type;
+      entity.note = req.note;
+      entity.nameTag = await this.encryptionService.encrypt(req.nameTag);
+      entity.createdBy = ctx.user.id;
+      entity.explorer = explorer;
+
       const result = await this.privateNameTagRepository.save(entity);
       return { data: result, meta: {} };
     } catch (err) {
@@ -103,7 +115,7 @@ export class PrivateNameTagService {
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
     const request: CreatePrivateNameTagParamsDto = { ...req, address: '' };
-    const errorMsg = await this.validate(id, ctx.user.id, request, false);
+    const errorMsg = await this.validate(id, ctx, request, false);
     if (errorMsg) {
       return errorMsg;
     }
@@ -156,10 +168,15 @@ export class PrivateNameTagService {
 
   private async validate(
     id: number,
-    user_id: number,
+    ctx: RequestContext,
     req: CreatePrivateNameTagParamsDto,
     isCreate = true,
   ) {
+    const user_id = ctx.user.id;
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
+
     if (req.nameTag && !req.nameTag?.match(REGEX_PARTERN.NAME_TAG)) {
       return {
         code: ADMIN_ERROR_MAP.INVALID_NAME_TAG.Code,
@@ -168,7 +185,10 @@ export class PrivateNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = await isValidBench32Address(req.address);
+      const validFormat = isValidBench32Address(
+        req.address,
+        explorer.addressPrefix,
+      );
 
       if (
         !validFormat ||
@@ -179,7 +199,10 @@ export class PrivateNameTagService {
       ) {
         return {
           code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-          message: ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
+          message: util.format(
+            ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
+            explorer.addressPrefix,
+          ),
         };
       }
 

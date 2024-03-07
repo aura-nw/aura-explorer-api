@@ -5,26 +5,24 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
+import {
+  AURA_INFO,
+  COSMOS,
+  CW4973_CONTRACT,
+  DEFAULT_IPFS,
+  NAME_TAG_TYPE,
+} from '../constants';
 import { sha256 } from 'js-sha256';
-import { HttpBatchClient } from '@cosmjs/tendermint-rpc';
-import { toHex } from '@cosmjs/encoding';
-import { JsonRpcRequest } from '@cosmjs/json-rpc';
 
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
-  private batchClient: HttpBatchClient;
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
     private configService: ConfigService,
   ) {
     this.indexerV2 = this.configService.get('indexerV2');
-    this.batchClient = new HttpBatchClient(this.configService.get('node.rpc'), {
-      batchSizeLimit: 100,
-      dispatchInterval: 100, // millisec
-    });
   }
 
   /**
@@ -70,7 +68,6 @@ export class ServiceUtil {
   }
 
   async fetchDataFromGraphQL(query, endpoint?, method?) {
-    this.logger.log(query, `${this.fetchDataFromGraphQL.name} was called`);
     endpoint = endpoint ? endpoint : this.indexerV2.graphQL;
     method = method ? method : 'POST';
 
@@ -164,27 +161,6 @@ export class ServiceUtil {
       return value.replace(DEFAULT_IPFS, ipfsUrl);
     }
   }
-
-  async queryComosRPC(path: string, data: Uint8Array) {
-    try {
-      const request: JsonRpcRequest = {
-        jsonrpc: '2.0',
-        id: Math.floor(Math.random() * 10000000),
-        method: 'abci_query',
-        params: {
-          path: path,
-          data: toHex(data),
-        },
-      };
-      return await this.batchClient.execute(request);
-    } catch (error) {
-      this.logger.error(
-        null,
-        `Error while querying ${path} from RPC! ${error}`,
-      );
-      return null;
-    }
-  }
 }
 
 export function secondsToDate(seconds: number): Date {
@@ -192,9 +168,11 @@ export function secondsToDate(seconds: number): Date {
   return new Date(seconds * secondsToMilliseconds);
 }
 
-export async function isValidBench32Address(address: string): Promise<any> {
-  const prefix = AURA_INFO.ADDRESS_PREFIX;
-
+export function isValidBench32Address(
+  address: string,
+  prefix = AURA_INFO.ADDRESS_PREFIX.toString(),
+  type?: string,
+): boolean {
   if (!address) {
     return false;
   }
@@ -206,6 +184,15 @@ export async function isValidBench32Address(address: string): Promise<any> {
       throw new Error(
         `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
       );
+    }
+
+    const addressHexLength = address.length - decodedPrefix.length;
+
+    switch (type) {
+      case NAME_TAG_TYPE.ACCOUNT:
+        return addressHexLength === COSMOS.ADDRESS_LENGTH.ACCOUNT_HEX;
+      case NAME_TAG_TYPE.CONTRACT:
+        return addressHexLength === COSMOS.ADDRESS_LENGTH.CONTRACT_HEX;
     }
 
     return true;

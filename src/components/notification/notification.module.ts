@@ -8,11 +8,12 @@ import { NotificationService } from './services/notification.service';
 import { NotificationController } from './controllers/notification.controller';
 import { UserModule } from '../user/user.module';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([NotificationRepository, UserActivity]),
+    TypeOrmModule.forFeature([NotificationRepository, UserActivity, Explorer]),
     HttpModule,
     ConfigModule,
     UserModule,

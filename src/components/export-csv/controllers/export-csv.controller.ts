@@ -67,22 +67,28 @@ export class ExportCsvController {
   }
 
   private async proccessCSV(ctx, query, res, userId = null) {
-    const { data, fileName, fields } =
-      await this.exportCsvService.exportTransactionDataToCSV(
-        ctx,
-        query,
-        userId,
-      );
+    try {
+      const { data, fileName, fields } =
+        await this.exportCsvService.exportTransactionDataToCSV(
+          ctx,
+          query,
+          userId,
+        );
 
-    const csvParser = new Parser({
-      fields,
-    });
-    const csv = csvParser.parse(data?.length > 0 ? data : {});
+      const csvParser = new Parser({
+        fields,
+      });
+      const csv = csvParser.parse(data?.length > 0 ? data : {});
 
-    res.set({
-      'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="${fileName}"`,
-    });
-    res.send(csv);
+      res.set({
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+      });
+      res.send(csv);
+    } catch (error) {
+      res
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .json({ error: { message: 'Something went wrong!' } });
+    }
   }
 }
