@@ -87,9 +87,9 @@ export class AssetsRepository extends Repository<Asset> {
     return await _finalizeResult();
   }
 
-  async getAssetsDetail(denom, days = 2, explorerId = 1) {
+  async getAssetsDetail(denom, explorerId = 1, days = 2) {
     this._logger.log(
-      `============== ${this.getAssets.name} was called! ==============`,
+      `============== ${this.getAssetsDetail.name} was called! ==============`,
     );
     return await this.createQueryBuilder('asset')
       .leftJoinAndSelect(
