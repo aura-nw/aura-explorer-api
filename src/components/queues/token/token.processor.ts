@@ -342,7 +342,7 @@ export class TokenProcessor implements OnModuleInit {
         newData.map((asset) => {
           asset.totalSupply = TransactionHelper.balanceOf(
             asset.total_supply,
-            asset.decimal || 6,
+            asset.decimal || explorer.decimal,
           );
           asset.explorer = explorer;
 
