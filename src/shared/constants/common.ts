@@ -76,6 +76,24 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
+    TX_EVM_EXECUTED: `query QueryEvmTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $orderHeight: order_by = desc, $address: String = null) {
+      %s {
+        transaction: evm_transaction(where: {from: {_eq: $address}, transaction: {timestamp: {_gt: $startTime, _lt: $endTime}}, height: {_gt: $heightGT, _lt: $heightLT}}, limit: $limit, order_by: {height: $orderHeight}) {
+          from
+          to
+          hash
+          height
+          data
+          transaction {
+            timestamp
+            hash
+            transaction_messages {
+              content
+            }
+          }
+        }
+      }
+    }`,
     TX_COIN_TRANSFER: `query QueryTxMsgOfAccount($from: String = "_", $to: String = "_", $startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null) {
       %s {
         transaction(where: {coin_transfers: {_or: [{from: {_eq: $from}}, {to: {_eq: $to}}], block_height: {_lt: $heightLT, _gt: $heightGT}}, timestamp: {_lte: $endTime, _gte: $startTime}}, limit: $limit, order_by: {height: desc}) {
@@ -333,6 +351,7 @@ export const INDEXER_API_V2 = {
     VALIDATORS: 'Validators',
     CW4973_STATUS: 'QueryCW4973Status',
     TX_EXECUTED: 'QueryTxOfAccount',
+    TX_EVM_EXECUTED: 'QueryEvmTxOfAccount',
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
@@ -663,6 +682,21 @@ export const TX_HEADER = {
     'UnixTimestamp',
     'Fee',
     'BlockHeight',
+  ],
+  EVM_EXECUTED: [
+    'EvmTxHash',
+    'Method',
+    'Height',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'ToAddress',
+    'Amount',
+    'Symbol',
+    'ComosTxHash',
   ],
   COIN_TRANSFER: [
     'TxHash',

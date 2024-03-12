@@ -64,6 +64,8 @@ export class ExportCsvService {
           return this.tokenTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.NftTxs:
           return this.nftTransfer(ctx, payload, userId, explorer);
+        case TYPE_EXPORT.EVMExecutedTxs:
+          return this.evmExecuted(payload, explorer);
         default:
           break;
       }
@@ -129,6 +131,58 @@ export class ExportCsvService {
         UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
         Fee: tx.fee,
         BlockHeight: tx.height,
+      };
+    });
+
+    return { data, fileName, fields };
+  }
+
+  private async evmExecuted(payload: ExportCsvParamDto, explorer: Explorer) {
+    const fileName = `export-account-evm-executed-${payload.address}.csv`;
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_EVM_EXECUTED,
+        explorer.chainDb,
+      ),
+      variables: {
+        limit: QUERY_LIMIT_RECORD,
+        address: payload.address,
+        heightLT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.max + 1
+            : null,
+        heightGT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.min > 1
+              ? +payload.min - 1
+              : 0
+            : null,
+        startTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+        endTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_EVM_EXECUTED,
+    };
+
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+
+    const fields = TX_HEADER.EVM_EXECUTED;
+    const data = response.transaction.map((tx) => {
+      const method = TransactionHelper.toHexData(tx.data);
+      return {
+        EvmTxHash: tx.hash,
+        Method: method ? method : 'Transfer',
+        Height: tx.height,
+        Timestamp: tx.transaction?.timestamp,
+        UnixTimestamp: Math.floor(
+          new Date(tx.transaction?.timestamp).getTime() / 1000,
+        ),
+        FromAddress: tx.from,
+        ToAddress: tx.to,
+        Amount: tx.transaction?.transaction_messages[0].content.data.value,
+        Symbol: explorer.minimalDenom,
+        ComosTxHash: tx.transaction?.hash,
       };
     });
 
