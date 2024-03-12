@@ -115,6 +115,7 @@ export enum TYPE_EXPORT {
   AuraTxs = 'native-transfer',
   FtsTxs = 'cw20-transfer',
   NftTxs = 'nft-transfer',
+  EVMExecutedTxs = 'evm-executed',
 }
 
 export enum RANGE_EXPORT {
