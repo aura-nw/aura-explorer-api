@@ -10,6 +10,7 @@ import {
 } from '../constants/transaction';
 import BigNumber from 'bignumber.js';
 import { Explorer } from '../entities/explorer.entity';
+import { toHex, fromBase64 } from '@cosmjs/encoding';
 
 export class TransactionHelper {
   static convertDataAccountTransaction(
@@ -242,5 +243,12 @@ export class TransactionHelper {
       result += ', ...';
     }
     return result;
+  }
+
+  static toHexData(data: string) {
+    if (!data) {
+      return data;
+    }
+    return `0x${toHex(fromBase64(data))}`;
   }
 }
