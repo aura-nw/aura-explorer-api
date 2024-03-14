@@ -11,6 +11,7 @@ import {
 import BigNumber from 'bignumber.js';
 import { Explorer } from '../entities/explorer.entity';
 import { toHex, fromBase64 } from '@cosmjs/encoding';
+import { ASSETS_TYPE } from '../constants';
 
 export class TransactionHelper {
   static convertDataAccountTransaction(
@@ -72,18 +73,18 @@ export class TransactionHelper {
         case TYPE_EXPORT.AuraTxs:
           const arrTemp = [];
           element.coin_transfers?.forEach((coin) => {
-            const dataIBC =
-              coinConfig.find((k) => k.denom === coin.denom) || {};
+            const asset = coinConfig.find((k) => k.denom === coin.denom) || {};
             // Get denom ibc in config
-            const denomIBC =
-              dataIBC['symbol']?.indexOf('ibc') === -1
-                ? 'ibc/' + dataIBC['symbol']
-                : dataIBC['symbol'];
-            // Get denom ibc not find in config or denom is native
-            const denom =
-              coin.denom?.indexOf('ibc') === -1
-                ? coinInfo.minimalDenom
-                : coin.denom;
+            let denom = '';
+            if (asset?.type === ASSETS_TYPE.IBC) {
+              denom =
+                asset.symbol?.indexOf('ibc') === -1
+                  ? 'ibc/' + asset.symbol
+                  : asset.symbol;
+            } else {
+              denom =
+                coin.denom?.indexOf('ibc') === -1 ? asset?.symbol : coin.denom;
+            }
 
             if (coin.to === currentAddress || coin.from === currentAddress) {
               const { type, action } = this.getTypeTx(element);
@@ -93,14 +94,14 @@ export class TransactionHelper {
                 fromAddress: coin.from,
                 amount: this.balanceOf(
                   Number(coin.amount) || 0,
-                  dataIBC['decimal'] || coinInfo.decimal,
+                  asset.decimal || coinInfo.decimal,
                 ),
-                denom: denomIBC || denom,
+                denom,
                 action,
                 denomOrigin:
                   coin.denom?.indexOf('ibc') === -1 ? '' : coin.denom,
                 amountTemp: coin.amount,
-                decimal: dataIBC['decimal'] || coinInfo.decimal,
+                decimal: asset.decimal || coinInfo.decimal,
               };
               arrTemp.push(result);
             }
@@ -249,6 +250,6 @@ export class TransactionHelper {
     if (!data) {
       return data;
     }
-    return `0x${toHex(fromBase64(data))}`;
+    return `0x${toHex(fromBase64(data))}`.substring(0, 10);
   }
 }

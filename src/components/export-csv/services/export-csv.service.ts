@@ -20,7 +20,7 @@ import {
 import { ExportCsvParamDto } from '../dtos/export-csv-param.dto';
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { EncryptionService } from '../../encryption/encryption.service';
-import { IsNull, Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import * as util from 'util';
@@ -104,20 +104,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.assetRepository.find({
-      where: {
-        type: ASSETS_TYPE.IBC,
-        name: Not(IsNull()),
-        explorer: { id: explorer.id },
-      },
-    });
-
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       explorer,
       payload.dataType,
       payload.address,
-      coinConfig,
     );
 
     const fields = TX_HEADER.EXECUTED;
@@ -166,6 +157,9 @@ export class ExportCsvService {
     };
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const asset = await this.assetRepository.findOneOrFail({
+      denom: explorer.minimalDenom,
+    });
 
     const fields = TX_HEADER.EVM_EXECUTED;
     const data = response.transaction.map((tx) => {
@@ -181,7 +175,7 @@ export class ExportCsvService {
         FromAddress: tx.from,
         ToAddress: tx.to,
         Amount: tx.transaction?.transaction_messages[0].content.data.value,
-        Symbol: explorer.minimalDenom,
+        Symbol: asset.symbol,
         ComosTxHash: tx.transaction?.hash,
       };
     });
@@ -227,7 +221,7 @@ export class ExportCsvService {
 
     const coinConfig = await this.assetRepository.find({
       where: {
-        type: ASSETS_TYPE.IBC,
+        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE]),
         name: Not(IsNull()),
         explorer: { id: explorer.id },
       },
@@ -333,20 +327,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.assetRepository.find({
-      where: {
-        type: ASSETS_TYPE.IBC,
-        name: Not(IsNull()),
-        explorer: { id: explorer.id },
-      },
-    });
-
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       explorer,
       payload.dataType,
       payload.address,
-      coinConfig,
     );
 
     let lstPrivateName;
@@ -433,20 +418,11 @@ export class ExportCsvService {
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const coinConfig = await this.assetRepository.find({
-      where: {
-        type: ASSETS_TYPE.IBC,
-        name: Not(IsNull()),
-        explorer: { id: explorer.id },
-      },
-    });
-
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       explorer,
       payload.dataType,
       payload.address,
-      coinConfig,
     );
 
     let lstPrivateName;
