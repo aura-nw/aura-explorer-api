@@ -174,7 +174,10 @@ export class ExportCsvService {
         ),
         FromAddress: tx.from,
         ToAddress: tx.to,
-        Amount: tx.transaction?.transaction_messages[0].content.data.value,
+        Amount: TransactionHelper.balanceOf(
+          tx.transaction?.transaction_messages[0].content.data.value,
+          explorer.decimal,
+        ),
         Symbol: asset.symbol,
         ComosTxHash: tx.transaction?.hash,
       };
