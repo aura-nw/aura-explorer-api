@@ -21,7 +21,6 @@ import {
   SOULBOUND_TOKEN_STATUS,
   SYNC_POINT_TYPE,
   SoulboundToken,
-  SyncStatus,
 } from '../../../shared';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ConfigService } from '@nestjs/config';
@@ -42,8 +41,6 @@ export class CW4973Processor {
     private httpService: HttpService,
     private soulboundTokenRepos: SoulboundTokenRepository,
     private syncPointRepos: SyncPointRepository,
-    @InjectRepository(SyncStatus)
-    private syncStatusRepos: Repository<SyncStatus>,
     @InjectQueue(QUEUES.CW4973.QUEUE_NAME) private readonly cw4973Queue: Queue,
   ) {
     this.logger.log(
@@ -71,12 +68,9 @@ export class CW4973Processor {
     });
 
     if (!currentCw4973Height) {
-      const continueHeight =
-        (await this.syncStatusRepos.findOne())?.current_block || 0;
-
       await this.syncPointRepos.save({
         type: SYNC_POINT_TYPE.CW4973_BLOCK_HEIGHT,
-        point: continueHeight,
+        point: 0,
       });
 
       return;
@@ -96,8 +90,8 @@ export class CW4973Processor {
     )?.data[this.chainDB].cw721_activity;
 
     if (dataCw4973Statuses?.length > 0) {
-      dataCw4973Statuses.forEach(async (dataCw4973Status) => {
-        let message = dataCw4973Status.tx.data.tx.body.messages[0].msg;
+      for (const dataCw4973Status of dataCw4973Statuses) {
+        let message = dataCw4973Status.tx.transaction_messages[0].content.msg;
 
         if (typeof message === 'string') {
           message = JSON.parse(message);
@@ -116,12 +110,12 @@ export class CW4973Processor {
         };
 
         await this.handleSyncCw4973NftStatus(dataToHandle);
-      });
-
+      }
       currentCw4973Height.point = dataCw4973Statuses.slice(-1)[0].height;
       await this.syncPointRepos.save(currentCw4973Height);
     }
   }
+
   async handleSyncCw4973NftStatus(cw9473Data: {
     takeMessage: any;
     unequipMessage: any;

@@ -22,6 +22,7 @@ import {
   NOTIFICATION,
   PROVIDER,
   QUEUES,
+  RequestContext,
   SITE,
   SUPPORT_EMAIL,
   USER_ACTIVITIES,
@@ -43,6 +44,7 @@ import { secondsToDate } from '../../shared/utils/service.util';
 import { NotificationTokenDto } from './dtos/notification-token.dto';
 import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
 import { NotificationToken } from '../../shared/entities/notification-token.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 const VERIFICATION_TOKEN_LENGTH = 20;
 const RESET_PASSWORD_TOKEN_LENGTH = 21;
 const RANDOM_BYTES_LENGTH = 20;
@@ -58,6 +60,8 @@ export class UserService {
     private userActivityRepository: Repository<UserActivity>,
     private configService: ConfigService,
     private notificationTokenRepository: NotificationTokenRepository,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {}
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
@@ -466,13 +470,19 @@ export class UserService {
   }
 
   async registerNotificationToken(
+    ctx: RequestContext,
     userId: number,
     token: NotificationTokenDto,
   ): Promise<NotificationToken> {
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
+
     const userActivities = await this.userActivityRepository.findOne({
       where: {
         user: { id: userId },
         type: USER_ACTIVITIES.DAILY_NOTIFICATIONS,
+        explorer: { id: explorer.id },
       },
     });
     const user = await this.usersRepository.findOne({
@@ -482,6 +492,7 @@ export class UserService {
       const activity = new UserActivity();
       activity.type = USER_ACTIVITIES.DAILY_NOTIFICATIONS;
       activity.user = user;
+      activity.explorer = explorer;
       activity.total = 0;
       await this.userActivityRepository.save(activity);
     }

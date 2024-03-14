@@ -4,10 +4,6 @@ import { SharedModule } from '../shared/shared.module';
 import { ChainInfoModule } from './chain-info/chain-info.module';
 
 @Module({
-  imports: [
-    SharedModule,    
-    ScheduleModule.forRoot(),
-    ChainInfoModule,
-  ],
+  imports: [SharedModule, ScheduleModule.forRoot(), ChainInfoModule],
 })
 export class ComponentsModule {}

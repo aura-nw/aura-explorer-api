@@ -10,11 +10,12 @@ import { UserModule } from '../user/user.module';
 import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { ServiceUtil } from '../../shared/utils/service.util';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
     SharedModule,
-    TypeOrmModule.forFeature([PrivateNameTagRepository, CipherKey]),
+    TypeOrmModule.forFeature([PrivateNameTagRepository, CipherKey, Explorer]),
     HttpModule,
     ConfigModule,
     UserModule,

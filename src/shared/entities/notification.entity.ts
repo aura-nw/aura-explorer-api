@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
+import { Explorer } from './explorer.entity';
 
 @Entity('notification')
 export class Notification extends BaseEntityIncrementId {
@@ -30,4 +31,10 @@ export class Notification extends BaseEntityIncrementId {
 
   @Column({ default: false })
   is_read: boolean;
+
+  @ManyToOne(() => Explorer, (explorer) => explorer.notifications)
+  @JoinColumn({
+    name: 'explorer_id',
+  })
+  explorer: Explorer;
 }

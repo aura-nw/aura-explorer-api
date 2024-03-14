@@ -1,33 +1,86 @@
-import { InjectQueue, Process, Processor } from '@nestjs/bull';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
-import { Logger } from '@nestjs/common';
-import { Queue } from 'bull';
 import {
+  InjectQueue,
+  OnQueueError,
+  OnQueueFailed,
+  Process,
+  Processor,
+} from '@nestjs/bull';
+import { Logger, OnModuleInit } from '@nestjs/common';
+import { Job, Queue } from 'bull';
+import {
+  Asset,
   COINGECKO_API,
-  COIN_MARKET_CAP,
-  COIN_MARKET_CAP_API,
+  INDEXER_API_V2,
   QUEUES,
-  TokenMarkets,
+  SYNC_POINT_TYPE,
+  ASSETS_TYPE,
 } from '../../../shared';
 import * as appConfig from '../../../shared/configs/configuration';
 import * as util from 'util';
 import { ServiceUtil } from '../../../shared/utils/service.util';
-import { In } from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
+import { AssetsRepository } from '../../asset/repositories/assets.repository';
+import { CronExpression } from '@nestjs/schedule';
+import { SyncPoint } from 'src/shared/entities/sync-point.entity';
+import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
+import * as moment from 'moment';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
-export class TokenProcessor {
+export class TokenProcessor implements OnModuleInit {
   private readonly logger = new Logger(TokenProcessor.name);
   private appParams: any;
 
   constructor(
     private serviceUtil: ServiceUtil,
-    private tokenMarketsRepository: TokenMarketsRepository,
+    private assetsRepository: AssetsRepository,
+    @InjectRepository(TokenHolderStatistic)
+    private readonly tokenHolderStatisticRepo: Repository<TokenHolderStatistic>,
+    @InjectRepository(SyncPoint)
+    private readonly syncPointRepository: Repository<SyncPoint>,
+    @InjectRepository(Explorer)
+    private readonly explorerRepository: Repository<Explorer>,
     @InjectQueue(QUEUES.TOKEN.QUEUE_NAME) private readonly tokenQueue: Queue,
   ) {
     this.logger.log(
       '============== Constructor Token Price Processor Service ==============',
     );
     this.appParams = appConfig.default();
+  }
+
+  async onModuleInit() {
+    this.logger.log(
+      '============== On Module Init Token Price Processor Service ==============',
+    );
+
+    const explorer = await this.explorerRepository.find();
+
+    explorer.forEach((explorer, index) => {
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_ASSET,
+        { explorer },
+        {
+          repeat: { cron: `${index + 1}0 * * * * *` },
+        },
+      );
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER,
+        { explorer },
+        {
+          repeat: { cron: `${index + 2} * * * *` },
+        },
+      );
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER,
+        { explorer },
+        {
+          repeat: { cron: `${index + 1} * * * *` },
+        },
+      );
+    });
+
     this.tokenQueue.add(
       QUEUES.TOKEN.JOB_SYNC_CW20_PRICE,
       {},
@@ -35,84 +88,32 @@ export class TokenProcessor {
         repeat: { cron: this.appParams.priceTimeSync },
       },
     );
+
+    this.tokenQueue.add(
+      QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER,
+      {},
+      {
+        repeat: { cron: CronExpression.EVERY_DAY_AT_MIDNIGHT },
+      },
+    );
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
   async syncCW20TokenPrice(): Promise<void> {
     const numberCW20Tokens =
-      await this.tokenMarketsRepository.countCw20TokensHavingCoinId();
+      await this.assetsRepository.countAssetsHavingCoinId();
 
     const limit = this.appParams.coingecko.maxRequest;
     const pages = Math.ceil(numberCW20Tokens / limit);
     for (let i = 0; i < pages; i++) {
       // Get data CW20 by paging
       const dataHavingCoinId =
-        await this.tokenMarketsRepository.getCw20TokenMarketsHavingCoinId(
-          limit,
-          i,
-        );
+        await this.assetsRepository.getAssetsHavingCoinId(limit, i);
 
       const tokensHavingCoinId = dataHavingCoinId?.map((i) => i.coin_id);
       if (tokensHavingCoinId.length > 0) {
-        this.handleSyncPriceVolume(tokensHavingCoinId);
+        this.syncCoingeckoPrice(tokensHavingCoinId);
       }
-    }
-  }
-
-  async handleSyncPriceVolume(listTokens: string[]): Promise<void> {
-    try {
-      if (this.appParams.priceHostSync === COIN_MARKET_CAP) {
-        await this.syncCoinMarketCapPrice(listTokens);
-      } else {
-        await this.syncCoingeckoPrice(listTokens);
-      }
-    } catch (err) {
-      this.logger.log(`sync-price-volume has error: ${err.message}`, err.stack);
-    }
-  }
-
-  async syncCoinMarketCapPrice(listTokens) {
-    const coinMarketCap = this.appParams.coinMarketCap;
-    this.logger.log(`============== Call CoinMarketCap Api ==============`);
-    const coinIds = listTokens.join(',');
-    const coinMarkets: TokenMarkets[] = [];
-
-    const para = `${util.format(
-      COIN_MARKET_CAP_API.GET_COINS_MARKET,
-      coinIds,
-    )}`;
-
-    const headersRequest = {
-      'Content-Type': 'application/json',
-      'X-CMC_PRO_API_KEY': coinMarketCap.apiKey,
-    };
-
-    const [response, tokenInfos] = await Promise.all([
-      this.serviceUtil.getDataAPIWithHeader(
-        coinMarketCap.api,
-        para,
-        headersRequest,
-      ),
-      this.tokenMarketsRepository.find({
-        where: {
-          coin_id: In(listTokens),
-        },
-      }),
-    ]);
-
-    if (response?.status?.error_code == 0 && response?.data) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      for (const [key, value] of Object.entries(response?.data)) {
-        const data = response?.data[key];
-        let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.slug);
-        if (tokenInfo) {
-          tokenInfo = this.updateCoinMarketsData(tokenInfo, data);
-          coinMarkets.push(tokenInfo);
-        }
-      }
-    }
-    if (coinMarkets.length > 0) {
-      await this.tokenMarketsRepository.save(coinMarkets);
     }
   }
 
@@ -120,7 +121,7 @@ export class TokenProcessor {
     const coingecko = this.appParams.coingecko;
     this.logger.log(`============== Call Coingecko Api ==============`);
     const coinIds = listTokens.join(',');
-    const coinMarkets: TokenMarkets[] = [];
+    const coinMarkets: Asset[] = [];
 
     const para = `${util.format(
       COINGECKO_API.GET_COINS_MARKET,
@@ -130,9 +131,9 @@ export class TokenProcessor {
 
     const [response, tokenInfos] = await Promise.all([
       this.serviceUtil.getDataAPI(coingecko.api, para, ''),
-      this.tokenMarketsRepository.find({
+      this.assetsRepository.find({
         where: {
-          coin_id: In(listTokens),
+          coinId: In(listTokens),
         },
       }),
     ]);
@@ -140,58 +141,249 @@ export class TokenProcessor {
     if (response) {
       for (let index = 0; index < response.length; index++) {
         const data = response[index];
-        let tokenInfo = tokenInfos?.find((f) => f.coin_id === data.id);
-        if (tokenInfo) {
-          tokenInfo = this.updateTokenMarketsData(tokenInfo, data);
-          coinMarkets.push(tokenInfo);
-        }
+        const tokenInfo = tokenInfos?.filter((f) => f.coinId === data.id);
+        tokenInfo?.forEach((item) => {
+          const tokenInfoUpdated = this.updateTokenMarketsData(item, data);
+          coinMarkets.push(tokenInfoUpdated);
+        });
       }
     }
     if (coinMarkets.length > 0) {
-      await this.tokenMarketsRepository.save(coinMarkets);
+      await this.assetsRepository.save(coinMarkets);
     }
   }
 
-  updateCoinMarketsData(currentData: TokenMarkets, data: any): TokenMarkets {
-    const quote = data.quote?.USD;
+  updateTokenMarketsData(currentData: Asset, data: any): Asset {
     const coinInfo = { ...currentData };
-    coinInfo.current_price = Number(quote?.price?.toFixed(6)) || 0;
-    coinInfo.price_change_percentage_24h =
-      Number(quote?.percent_change_24h?.toFixed(6)) || 0;
-    coinInfo.total_volume = Number(quote?.volume_24h?.toFixed(6)) || 0;
-    coinInfo.circulating_supply =
-      Number(data.circulating_supply?.toFixed(6)) || 0;
-    const circulating_market_cap =
-      coinInfo.circulating_supply * coinInfo.current_price;
-    coinInfo.circulating_market_cap =
-      Number(circulating_market_cap?.toFixed(6)) || 0;
-    coinInfo.max_supply = Number(data.max_supply?.toFixed(6)) || 0;
-    coinInfo.market_cap =
-      Number(data.self_reported_market_cap?.toFixed(6)) || 0;
-    coinInfo.fully_diluted_valuation =
-      Number(quote?.fully_diluted_market_cap?.toFixed(6)) || 0;
-
+    coinInfo.currentPrice = Number(data.current_price?.toFixed(6));
+    coinInfo.priceChangePercentage24h = Number(
+      data.price_change_percentage_24h?.toFixed(6),
+    );
+    coinInfo.marketCap = Number(data.market_cap?.toFixed(6));
+    coinInfo.totalVolume = Number(data.total_volume?.toFixed(6));
     return coinInfo;
   }
 
-  updateTokenMarketsData(currentData: TokenMarkets, data: any): TokenMarkets {
-    const coinInfo = { ...currentData };
-    coinInfo.current_price = Number(data.current_price?.toFixed(6)) || 0;
-    coinInfo.price_change_percentage_24h =
-      Number(data.price_change_percentage_24h?.toFixed(6)) || 0;
-    coinInfo.total_volume = Number(data.total_volume?.toFixed(6)) || 0;
-    coinInfo.circulating_supply =
-      Number(data.circulating_supply?.toFixed(6)) || 0;
+  @Process(QUEUES.TOKEN.JOB_SYNC_ASSET)
+  async syncAsset(job: Job): Promise<void> {
+    const explorer: Explorer = job.data.explorer;
+    let from = new Date(new Date().getTime() - 60 * 1000).toJSON();
+    const alreadySynced = await this.syncPointRepository.findOne({
+      where: {
+        type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+        explorer: { id: explorer.id },
+      },
+    });
 
-    const circulating_market_cap =
-      coinInfo.circulating_supply * coinInfo.current_price;
-    coinInfo.circulating_market_cap =
-      Number(circulating_market_cap?.toFixed(6)) || 0;
-    coinInfo.max_supply = Number(data.max_supply?.toFixed(6)) || 0;
-    coinInfo.market_cap = Number(data.market_cap?.toFixed(6)) || 0;
-    coinInfo.fully_diluted_valuation =
-      Number(data.fully_diluted_valuation?.toFixed(6)) || 0;
+    if (!alreadySynced) {
+      from = null;
 
-    return coinInfo;
+      await this.syncPointRepository.save({
+        type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+        explorer: { id: explorer.id },
+      });
+    }
+
+    const queryAssets = {
+      query: util.format(INDEXER_API_V2.GRAPH_QL.ASSETS, explorer.chainDb),
+      variables: { from: from },
+      operationName: INDEXER_API_V2.OPERATION_NAME.ASSETS,
+    };
+
+    const listAsset = await this.getDataWithPagination(
+      queryAssets,
+      'asset',
+      explorer,
+    );
+    await this.assetsRepository.storeAsset(listAsset);
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
+  async syncNativeAssetHolder(job: Job): Promise<void> {
+    const listHolderStatistic = await this.getNewNativeHolders(
+      job.data.explorer,
+    );
+
+    await this.upsertTokenHolderStatistic(listHolderStatistic);
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER)
+  async syncCw20AssetHolder(job: Job): Promise<void> {
+    const { cw20WithNewImage, listHolderStatistic } = await this.getNewCw20Info(
+      job.data.explorer,
+    );
+
+    await this.assetsRepository.save(cw20WithNewImage);
+
+    await this.upsertTokenHolderStatistic(listHolderStatistic);
+  }
+
+  async getNewNativeHolders(
+    explorer: Explorer,
+  ): Promise<TokenHolderStatistic[]> {
+    const listHolder: TokenHolderStatistic[] = [];
+    const nativeAsset = await this.assetsRepository.find({
+      where: {
+        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE]),
+        explorer: { id: explorer.id },
+      },
+    });
+    let subQuery = '';
+
+    for (const [index, asset] of nativeAsset.entries()) {
+      subQuery =
+        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}}) {
+                            aggregate {
+                              count
+                            }
+                          }`);
+    }
+
+    const query = util.format(
+      INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
+      explorer.chainDb,
+      subQuery,
+    );
+
+    const graphqlQueryTotalHolder = {
+      query,
+      operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
+      variables: {},
+    };
+
+    const totalHolders = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
+    )?.data[explorer.chainDb];
+
+    for (const [index, asset] of nativeAsset.entries()) {
+      const newTotalHolder =
+        totalHolders[`total_holder_${index}`].aggregate.count;
+
+      const newHolderStatistic = new TokenHolderStatistic();
+      newHolderStatistic.id = null;
+      newHolderStatistic.asset = asset;
+      newHolderStatistic.totalHolder = newTotalHolder;
+      newHolderStatistic.date = new Date();
+
+      listHolder.push(newHolderStatistic);
+    }
+
+    return listHolder;
+  }
+
+  @Process(QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER)
+  async cleanAssetHolder(): Promise<void> {
+    await this.tokenHolderStatisticRepo.delete({
+      created_at: LessThan(moment().subtract(2, 'days').toDate()),
+    });
+  }
+  async getNewCw20Info(explorer: Explorer): Promise<{
+    cw20WithNewImage: Asset[];
+    listHolderStatistic: TokenHolderStatistic[];
+  }> {
+    const cw20WithNewImage: Asset[] = [];
+    const listHolderStatistic: TokenHolderStatistic[] = [];
+    const listCw20Asset = await this.assetsRepository.find({
+      where: { type: ASSETS_TYPE.CW20, explorer: { id: explorer.id } },
+    });
+    const cw20Query = {
+      variables: {},
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.CW20_HOLDER_STAT,
+        explorer.chainDb,
+      ),
+      operationName: INDEXER_API_V2.OPERATION_NAME.CW20_HOLDER_STAT,
+    };
+    const newCw20Holders = await this.getDataWithPagination(
+      cw20Query,
+      'cw20_contract',
+      explorer,
+    );
+
+    for (const cw20Asset of listCw20Asset) {
+      if (!cw20Asset.image || !cw20Asset.symbol) {
+        const newCw20Image = newCw20Holders.find(
+          (cw20) => cw20.smart_contract.address === cw20Asset.denom,
+        );
+        cw20Asset.image = newCw20Image?.marketing_info?.logo?.url || '';
+        cw20Asset.symbol = newCw20Image?.symbol || '';
+
+        cw20WithNewImage.push(cw20Asset);
+      }
+
+      const newCw20Holder = newCw20Holders.find(
+        (cw20) => cw20.smart_contract.address === cw20Asset.denom,
+      );
+
+      if (newCw20Holder?.cw20_total_holder_stats[0]) {
+        const newCw20HolderStatistic = new TokenHolderStatistic();
+        newCw20HolderStatistic.id = null;
+        newCw20HolderStatistic.totalHolder =
+          newCw20Holder.cw20_total_holder_stats[0]?.total_holder;
+        newCw20HolderStatistic.date =
+          newCw20Holder.cw20_total_holder_stats[0]?.date;
+        newCw20HolderStatistic.asset = cw20Asset;
+        listHolderStatistic.push(newCw20HolderStatistic);
+      }
+    }
+
+    return { cw20WithNewImage, listHolderStatistic };
+  }
+
+  async getDataWithPagination(query: any, keyData: string, explorer: Explorer) {
+    const result = [];
+    let pageLength;
+
+    do {
+      const { data } = await this.serviceUtil.fetchDataFromGraphQL(query);
+      const newData = data[explorer.chainDb][keyData];
+
+      if (keyData === 'asset') {
+        newData.map((asset) => {
+          asset.totalSupply = TransactionHelper.balanceOf(
+            asset.total_supply,
+            asset.decimal || explorer.decimal,
+          );
+          asset.explorer = explorer;
+
+          return asset;
+        });
+      }
+
+      result.push(...newData);
+
+      query.variables.id_gt = newData[newData.length - 1]?.id;
+      pageLength = newData.length;
+    } while (pageLength === INDEXER_API_V2.MAX_REQUEST);
+
+    result.map((e) => (e.id = null));
+
+    return result;
+  }
+
+  async upsertTokenHolderStatistic(
+    listHolderStatistic: TokenHolderStatistic[],
+  ) {
+    await this.tokenHolderStatisticRepo.query(
+      `ALTER TABLE \`token_holder_statistic\` AUTO_INCREMENT = 1`,
+    );
+    await this.tokenHolderStatisticRepo
+      .createQueryBuilder()
+      .insert()
+      .values(listHolderStatistic)
+      .orUpdate(['total_holder'], ['asset', 'date'])
+      .execute();
+  }
+
+  @OnQueueError()
+  onError(job: Job, error: Error) {
+    this.logger.error(`Error job ${job.id} of type ${job.name}`);
+    this.logger.error(`Error: ${error}`);
+  }
+
+  @OnQueueFailed()
+  async onFailed(job: Job, error: Error) {
+    this.logger.error(`Failed job ${job.id} of type ${job.name}`);
+    this.logger.error(`Error: ${error}`);
   }
 }

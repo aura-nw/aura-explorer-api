@@ -4,19 +4,16 @@ import {
 } from '@nestjs/swagger/dist/decorators';
 import { IsBoolean, IsIn, IsNotEmpty, IsOptional } from 'class-validator';
 import { NAME_TAG_TYPE, WATCH_LIST } from '../../../shared';
-import { IsValidBench32Address } from '../validators/validate-address';
 import { User } from '../../../shared/entities/user.entity';
 import { MatchKeys } from '../validators/match-keys';
-import { MatchType } from '../validators/match-type';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 export class CreateWatchListDto {
   @ApiProperty()
   @IsNotEmpty()
-  @IsValidBench32Address('address')
   address: string;
 
   @ApiProperty({ default: NAME_TAG_TYPE.ACCOUNT })
   @IsIn([NAME_TAG_TYPE.ACCOUNT, NAME_TAG_TYPE.CONTRACT])
-  @MatchType('address')
   type: NAME_TAG_TYPE;
 
   @ApiPropertyOptional()
@@ -39,4 +36,6 @@ export class CreateWatchListDto {
   settings: JSON;
 
   user: User;
+
+  explorer: Explorer;
 }

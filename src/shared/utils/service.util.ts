@@ -5,12 +5,18 @@ import { lastValueFrom } from 'rxjs';
 import axios from 'axios';
 import { bech32 } from 'bech32';
 import { ConfigService } from '@nestjs/config';
-import { AURA_INFO, CW4973_CONTRACT, DEFAULT_IPFS } from '../constants';
+import {
+  AURA_INFO,
+  COSMOS,
+  CW4973_CONTRACT,
+  DEFAULT_IPFS,
+  NAME_TAG_TYPE,
+} from '../constants';
 import { sha256 } from 'js-sha256';
+
 @Injectable()
 export class ServiceUtil {
   private readonly indexerV2;
-
   constructor(
     private readonly logger: AkcLogger,
     private httpService: HttpService,
@@ -62,7 +68,6 @@ export class ServiceUtil {
   }
 
   async fetchDataFromGraphQL(query, endpoint?, method?) {
-    this.logger.log(query, `${this.fetchDataFromGraphQL.name} was called`);
     endpoint = endpoint ? endpoint : this.indexerV2.graphQL;
     method = method ? method : 'POST';
 
@@ -163,9 +168,11 @@ export function secondsToDate(seconds: number): Date {
   return new Date(seconds * secondsToMilliseconds);
 }
 
-export async function isValidBench32Address(address: string): Promise<any> {
-  const prefix = AURA_INFO.ADDRESS_PREFIX;
-
+export function isValidBench32Address(
+  address: string,
+  prefix = AURA_INFO.ADDRESS_PREFIX.toString(),
+  type?: string,
+): boolean {
   if (!address) {
     return false;
   }
@@ -177,6 +184,15 @@ export async function isValidBench32Address(address: string): Promise<any> {
       throw new Error(
         `Unexpected prefix (expected: ${prefix}, actual: ${decodedPrefix}`,
       );
+    }
+
+    const addressHexLength = address.length - decodedPrefix.length;
+
+    switch (type) {
+      case NAME_TAG_TYPE.ACCOUNT:
+        return addressHexLength === COSMOS.ADDRESS_LENGTH.ACCOUNT_HEX;
+      case NAME_TAG_TYPE.CONTRACT:
+        return addressHexLength === COSMOS.ADDRESS_LENGTH.CONTRACT_HEX;
     }
 
     return true;
