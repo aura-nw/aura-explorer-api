@@ -15,12 +15,15 @@ export class VerifyAddressUtil {
   constructor(private serviceUtil: ServiceUtil) {}
 
   async verify(address: string, type: NAME_TAG_TYPE, explorer: Explorer) {
+    // adrress is cosmos address
     if (address.startsWith(explorer.addressPrefix)) {
       const validFormat = isValidBench32Address(
         address,
         explorer.addressPrefix,
       );
+      // Remove prefix address
       const addressNoPrefix = address.replace(explorer.addressPrefix, '');
+      // Check valid type address
       if (
         !validFormat ||
         (addressNoPrefix.length === LENGTH.CONTRACT_ADDRESS_NO_PREFIX &&
@@ -39,6 +42,7 @@ export class VerifyAddressUtil {
       return false;
     } else {
       const validFormat = this.isValidEvmAddress(address);
+      // address is valid evm address
       if (validFormat) {
         const graphQlQuery = {
           query: util.format(
@@ -50,10 +54,11 @@ export class VerifyAddressUtil {
           },
           operationName: INDEXER_API_V2.OPERATION_NAME.FIND_EVM_SMART_CONTRACT,
         };
+        // Query horoscope check this address is contract or not.
         const response = (
           await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
         )?.data[explorer.chainDb];
-
+        // Check valid type address
         if (
           (type === NAME_TAG_TYPE.CONTRACT &&
             response?.evm_smart_contract?.length <= 0) ||
@@ -67,6 +72,7 @@ export class VerifyAddressUtil {
         }
         return false;
       } else {
+        // address is no valid evm address
         return {
           code: ADMIN_ERROR_MAP.INVALID_EVM_FORMAT.Code,
           message: ADMIN_ERROR_MAP.INVALID_EVM_FORMAT.Message,
