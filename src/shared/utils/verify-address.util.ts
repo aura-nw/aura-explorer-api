@@ -2,19 +2,21 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   EVM_PREFIX,
-  INDEXER_API_V2,
   LENGTH,
   NAME_TAG_TYPE,
   REGEX_PARTERN,
+  RPC_QUERY_URL,
 } from '../constants';
 import { Explorer } from '../entities/explorer.entity';
 import { Keccak } from 'sha3';
 import * as util from 'util';
-import { ServiceUtil, isValidBench32Address } from './service.util';
+import { isValidBench32Address } from './service.util';
+import { RpcUtil } from './rpc.util';
+import { Writer } from 'protobufjs';
 
 @Injectable()
 export class VerifyAddressUtil {
-  constructor(private serviceUtil: ServiceUtil) {}
+  constructor(private rpcUtil: RpcUtil) {}
 
   async verify(address: string, type: NAME_TAG_TYPE, explorer: Explorer) {
     // adrress is cosmos address
@@ -46,26 +48,17 @@ export class VerifyAddressUtil {
       const validFormat = this.isValidEvmAddress(address);
       // address is valid evm address
       if (validFormat) {
-        const graphQlQuery = {
-          query: util.format(
-            INDEXER_API_V2.GRAPH_QL.FIND_EVM_SMART_CONTRACT,
-            explorer.chainDb,
-          ),
-          variables: {
-            address: address,
-          },
-          operationName: INDEXER_API_V2.OPERATION_NAME.FIND_EVM_SMART_CONTRACT,
-        };
-        // Query horoscope check this address is contract or not.
-        const response = (
-          await this.serviceUtil.fetchDataFromGraphQL(graphQlQuery)
-        )?.data[explorer.chainDb];
+        // Query RPC check this address is contract or not.
+        const res = await this.rpcUtil.queryComosRPC(
+          RPC_QUERY_URL.EVM_CODES_ADDRESS,
+          Writer.create().uint32(10).string(address).finish(),
+          explorer.chainId,
+        );
+        const isContract = res?.result.response.value ? true : false;
         // Check valid type address
         if (
-          (type === NAME_TAG_TYPE.CONTRACT &&
-            response?.evm_smart_contract?.length <= 0) ||
-          (type === NAME_TAG_TYPE.ACCOUNT &&
-            response?.evm_smart_contract?.length > 0)
+          (type === NAME_TAG_TYPE.CONTRACT && !isContract) ||
+          (type === NAME_TAG_TYPE.ACCOUNT && isContract)
         ) {
           return {
             code: ADMIN_ERROR_MAP.INVALID_EVM_FORMAT.Code,

@@ -11,8 +11,7 @@ import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { AkcLogger } from 'src/shared';
 import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
-import { ServiceUtil } from '../../shared/utils/service.util';
-import { HttpModule } from '@nestjs/axios';
+import { RpcUtil } from '../../shared/utils/rpc.util';
 
 @Module({
   imports: [
@@ -24,7 +23,6 @@ import { HttpModule } from '@nestjs/axios';
       Explorer,
     ]),
     UserModule,
-    HttpModule,
   ],
   controllers: [WatchListController],
   providers: [
@@ -32,7 +30,7 @@ import { HttpModule } from '@nestjs/axios';
     EncryptionService,
     AkcLogger,
     VerifyAddressUtil,
-    ServiceUtil,
+    RpcUtil,
   ],
 })
 export class WatchListModule {}

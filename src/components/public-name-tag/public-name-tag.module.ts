@@ -10,6 +10,7 @@ import { UserModule } from '../user/user.module';
 import { ServiceUtil } from '../../shared/utils/service.util';
 import { Explorer } from '../../shared/entities/explorer.entity';
 import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
+import { RpcUtil } from '../../shared/utils/rpc.util';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
     ConfigModule,
     UserModule,
   ],
-  providers: [PublicNameTagService, ServiceUtil, VerifyAddressUtil],
+  providers: [PublicNameTagService, ServiceUtil, VerifyAddressUtil, RpcUtil],
   controllers: [PublicNameTagController],
   exports: [PublicNameTagService],
 })

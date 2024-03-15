@@ -338,14 +338,6 @@ export const INDEXER_API_V2 = {
       }
     }
   `,
-    FIND_EVM_SMART_CONTRACT: `query FindEvmSmartContract($address: String = null) {
-      %s {
-        evm_smart_contract(limit: 1, where: {address: {_eq: $address}}) {
-          address
-        }
-      }
-    }
-  `,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -375,7 +367,6 @@ export const INDEXER_API_V2 = {
     LIST_ACCOUNT: 'ListAccount',
     ASSETS: 'Assets',
     CW20_HOLDER_STAT: 'Cw20HolderStat',
-    FIND_EVM_SMART_CONTRACT: 'FindEvmSmartContract',
   },
   MAX_REQUEST: 100,
 };
@@ -881,6 +872,7 @@ export const RPC_QUERY_URL = {
     '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+  EVM_CODES_ADDRESS: '/ethermint.evm.v1.Query/Code',
 };
 
 export const TYPE_ORM_ERROR_CODE = {
