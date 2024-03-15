@@ -11,6 +11,7 @@ import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { ServiceUtil } from '../../shared/utils/service.util';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
 
 @Module({
   imports: [
@@ -20,7 +21,12 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
     ConfigModule,
     UserModule,
   ],
-  providers: [PrivateNameTagService, EncryptionService, ServiceUtil],
+  providers: [
+    PrivateNameTagService,
+    EncryptionService,
+    ServiceUtil,
+    VerifyAddressUtil,
+  ],
   controllers: [PrivateNameTagController],
   exports: [PrivateNameTagService],
 })

@@ -336,6 +336,14 @@ export const INDEXER_API_V2 = {
       }
     }
   `,
+    FIND_EVM_SMART_CONTRACT: `query FindEvmSmartContract($address: String = null) {
+      %s {
+        evm_smart_contract(limit: 1, where: {address: {_eq: $address}}) {
+          address
+        }
+      }
+    }
+  `,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -365,6 +373,7 @@ export const INDEXER_API_V2 = {
     LIST_ACCOUNT: 'ListAccount',
     ASSETS: 'Assets',
     CW20_HOLDER_STAT: 'Cw20HolderStat',
+    FIND_EVM_SMART_CONTRACT: 'FindEvmSmartContract',
   },
   MAX_REQUEST: 100,
 };
@@ -379,6 +388,8 @@ export enum AURA_INFO {
 export enum LENGTH {
   CONTRACT_ADDRESS = 63,
   ACCOUNT_ADDRESS = 43,
+  CONTRACT_ADDRESS_NO_PREFIX = 59,
+  ACCOUNT_ADDRESS_NO_PREFIX = 39,
 }
 
 export const ERROR_MAP = {
@@ -482,6 +493,10 @@ export const ADMIN_ERROR_MAP = {
   INVALID_FORMAT: {
     Code: 'E003',
     Message: `Invalid %s address format`,
+  },
+  INVALID_EVM_FORMAT: {
+    Code: 'E003',
+    Message: `Invalid EVM address format`,
   },
   INVALID_NAME_TAG: {
     Code: 'E004',

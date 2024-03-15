@@ -9,6 +9,7 @@ import { PublicNameTagService } from './services/public-name-tag.service';
 import { UserModule } from '../user/user.module';
 import { ServiceUtil } from '../../shared/utils/service.util';
 import { Explorer } from '../../shared/entities/explorer.entity';
+import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Explorer } from '../../shared/entities/explorer.entity';
     ConfigModule,
     UserModule,
   ],
-  providers: [PublicNameTagService, ServiceUtil],
+  providers: [PublicNameTagService, ServiceUtil, VerifyAddressUtil],
   controllers: [PublicNameTagController],
   exports: [PublicNameTagService],
 })

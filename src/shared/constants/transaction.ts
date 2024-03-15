@@ -49,6 +49,7 @@ export enum TRANSACTION_TYPE_ENUM {
   ExecuteAuthz = '/cosmos.authz.v1beta1.MsgExec',
   RevokeAuthz = '/cosmos.authz.v1beta1.MsgRevoke',
   MsgMigrateContract = '/cosmwasm.wasm.v1.MsgMigrateContract',
+  MsgEthereumTx = '/ethermint.evm.v1.MsgEthereumTx',
   Fail = 'FAILED',
 }
 
@@ -98,6 +99,7 @@ export enum TypeTransaction {
   ExecuteAuthz = 'Execute Authz',
   RevokeAuthz = 'Revoke Authz',
   MsgMigrateContract = 'Migrate Contract',
+  MsgEthereumTx = 'EthereumTx',
   Fail = 'Fail',
 }
 
@@ -281,6 +283,10 @@ export const TYPE_TRANSACTION = [
     value: TypeTransaction.MsgMigrateContract,
   },
   { label: TRANSACTION_TYPE_ENUM.Fail, value: TypeTransaction.Fail },
+  {
+    label: TRANSACTION_TYPE_ENUM.MsgEthereumTx,
+    value: TypeTransaction.MsgEthereumTx,
+  },
 ];
 
 export const NULL_ADDRESS = 'Null address';

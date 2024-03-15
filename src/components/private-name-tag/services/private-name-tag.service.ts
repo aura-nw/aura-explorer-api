@@ -6,6 +6,7 @@ import {
 import {
   ADMIN_ERROR_MAP,
   AkcLogger,
+  INDEXER_API_V2,
   LENGTH,
   NAME_TAG_TYPE,
   REGEX_PARTERN,
@@ -17,12 +18,12 @@ import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-p
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
-import { isValidBench32Address } from '../../../shared/utils/service.util';
 import { Not, Repository } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import * as util from 'util';
+import { VerifyAddressUtil } from '../../../shared/utils/verify-address.util';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -30,6 +31,7 @@ export class PrivateNameTagService {
 
   constructor(
     private readonly logger: AkcLogger,
+    private verifyAddressUtil: VerifyAddressUtil,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
     @InjectRepository(Explorer)
@@ -185,25 +187,13 @@ export class PrivateNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = isValidBench32Address(
+      const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
-        explorer.addressPrefix,
+        req.type,
+        explorer,
       );
-
-      if (
-        !validFormat ||
-        (req.address.length === LENGTH.CONTRACT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.CONTRACT) ||
-        (req.address.length === LENGTH.ACCOUNT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.ACCOUNT)
-      ) {
-        return {
-          code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-          message: util.format(
-            ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
-            explorer.addressPrefix,
-          ),
-        };
+      if (msgErrorVerify) {
+        return msgErrorVerify;
       }
 
       // check limited private name tag
