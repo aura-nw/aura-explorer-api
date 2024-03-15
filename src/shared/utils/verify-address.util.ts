@@ -1,9 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
+  EVM_PREFIX,
   INDEXER_API_V2,
   LENGTH,
   NAME_TAG_TYPE,
+  REGEX_PARTERN,
 } from '../constants';
 import { Explorer } from '../entities/explorer.entity';
 import { Keccak } from 'sha3';
@@ -109,11 +111,11 @@ export class VerifyAddressUtil {
   }
 
   isValidAddress(address) {
-    return /^0x[0-9a-fA-F]{40}$/.test(address);
+    return REGEX_PARTERN.EVM_ADDRESS.test(address);
   }
 
   stripHexPrefix = (str) => {
-    return str.slice(0, 2) === '0x' ? str.slice(2) : str;
+    return str.slice(0, 2) === EVM_PREFIX ? str.slice(2) : str;
   };
 
   toChecksumAddress = (address, chainId = null) => {
@@ -125,12 +127,12 @@ export class VerifyAddressUtil {
       );
     }
     const stripAddress = this.stripHexPrefix(address).toLowerCase();
-    const prefix = chainId != null ? chainId.toString() + '0x' : '';
+    const prefix = chainId != null ? chainId.toString() + EVM_PREFIX : '';
     const keccakHash = new Keccak(256)
       .update(prefix + stripAddress)
       .digest()
       .toString('hex');
-    let output = '0x';
+    let output = EVM_PREFIX;
 
     for (let i = 0; i < stripAddress.length; i++)
       output +=
