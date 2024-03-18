@@ -61,9 +61,9 @@ export const INDEXER_API_V2 = {
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
     CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { transaction_messages { content } } cw721_contract {smart_contract {address}} sender}}}`,
-    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: String = null) {
+    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: [String!] = null) {
       %s {
-        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_in: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
           hash
           height
           fee
@@ -76,9 +76,9 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
-    TX_EVM_EXECUTED: `query QueryEvmTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $orderHeight: order_by = desc, $address: String = null) {
+    TX_EVM_EXECUTED: `query QueryEvmTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $orderHeight: order_by = desc, $address: [String!] = null) {
       %s {
-        transaction: evm_transaction(where: {from: {_eq: $address}, transaction: {timestamp: {_gt: $startTime, _lt: $endTime}}, height: {_gt: $heightGT, _lt: $heightLT}}, limit: $limit, order_by: {height: $orderHeight}) {
+        transaction: evm_transaction(where: {from: {_in: $address}, transaction: {timestamp: {_gt: $startTime, _lt: $endTime}}, height: {_gt: $heightGT, _lt: $heightLT}}, limit: $limit, order_by: {height: $orderHeight}) {
           from
           to
           hash
