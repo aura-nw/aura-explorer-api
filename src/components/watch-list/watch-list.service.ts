@@ -5,13 +5,12 @@ import { RequestContext } from '../../shared/request-context/request-context.dto
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm/repository/Repository';
 import { WatchList } from '../../shared/entities/watch-list.entity';
-import { UserService } from '../user/user.service';
 import { DeleteResult } from 'typeorm/query-builder/result/DeleteResult';
 import { EntityNotFoundError, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
-  AkcLogger,
   BaseApiResponse,
+  NAME_TAG_TYPE,
   TYPE_ORM_ERROR_CODE,
   WATCH_LIST,
 } from '../../shared/';
@@ -23,7 +22,7 @@ import { PrivateNameTag } from '../../shared/entities/private-name-tag.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { plainToClass } from 'class-transformer';
 import { User } from 'src/shared/entities/user.entity';
-import * as util from 'util';
+import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
 
 @Injectable()
 export class WatchListService {
@@ -38,6 +37,7 @@ export class WatchListService {
     private readonly explorerRepository: Repository<Explorer>,
     private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
+    private verifyAddressUtil: VerifyAddressUtil,
   ) {}
   async create(
     ctx: RequestContext,
@@ -48,9 +48,9 @@ export class WatchListService {
         chainId: ctx.chainId,
       });
 
-      this.validateAddress(
+      await this.validateAddress(
         createWatchListDto.address,
-        explorer.addressPrefix,
+        explorer,
         createWatchListDto.type,
       );
 
@@ -166,9 +166,9 @@ export class WatchListService {
         },
       });
 
-      this.validateAddress(
+      await this.validateAddress(
         updateWatchListDto.address,
-        explorer.addressPrefix,
+        explorer,
         updateWatchListDto.type,
       );
 
@@ -338,10 +338,18 @@ export class WatchListService {
     return count;
   }
 
-  validateAddress(address: string, prefix?: string, type?: string) {
-    if (!isValidBench32Address(address, prefix, type))
-      throw new BadRequestException(
-        util.format(WATCH_LIST.ERROR_MSGS.ERR_INVALID_ADDRESS, prefix),
-      );
+  async validateAddress(
+    address: string,
+    explorer: Explorer,
+    type?: NAME_TAG_TYPE,
+  ) {
+    const msgErrorVerify = await this.verifyAddressUtil.verify(
+      address,
+      type,
+      explorer,
+    );
+    if (msgErrorVerify) {
+      throw new BadRequestException(msgErrorVerify.message);
+    }
   }
 }

@@ -75,6 +75,7 @@
     "tendermint": "^5.0.2",
     "typeorm": "^0.2.40",
     "uuid": "^8.3.2",
+    "web3-validator": "^2.0.4",
     "winston": "^3.3.3"
   },
   "devDependencies": {
