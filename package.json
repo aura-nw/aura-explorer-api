@@ -71,11 +71,11 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
-    "sha3": "^2.1.4",
     "swagger-ui-express": "^4.1.6",
     "tendermint": "^5.0.2",
     "typeorm": "^0.2.40",
     "uuid": "^8.3.2",
+    "web3-validator": "^2.0.4",
     "winston": "^3.3.3"
   },
   "devDependencies": {

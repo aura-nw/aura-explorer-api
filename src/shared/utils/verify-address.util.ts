@@ -1,15 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
-  EVM_PREFIX,
   LENGTH,
   NAME_TAG_TYPE,
-  REGEX_PARTERN,
   RPC_QUERY_URL,
 } from '../constants';
 import { Explorer } from '../entities/explorer.entity';
-import { Keccak } from 'sha3';
 import * as util from 'util';
+import { isAddress } from 'web3-validator';
 import { isValidBench32Address } from './service.util';
 import { RpcUtil } from './rpc.util';
 import { Writer } from 'protobufjs';
@@ -45,7 +43,7 @@ export class VerifyAddressUtil {
       }
       return false;
     } else {
-      const validFormat = this.isValidEvmAddress(address);
+      const validFormat = isAddress(address, true);
       // address is valid evm address
       if (validFormat) {
         // Query RPC check this address is contract or not.
@@ -75,63 +73,4 @@ export class VerifyAddressUtil {
       }
     }
   }
-
-  isValidEvmAddress(address: string): boolean {
-    if (!address) {
-      return false;
-    }
-
-    try {
-      const stripped = this.stripHexPrefix(address);
-      if (
-        !this.isValidChecksumAddress(address) &&
-        stripped !== stripped.toLowerCase() &&
-        stripped !== stripped.toUpperCase()
-      ) {
-        throw Error('Invalid address checksum');
-      }
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
-
-  isValidChecksumAddress(address) {
-    return (
-      this.isValidAddress(address) &&
-      this.toChecksumAddress(address) === address
-    );
-  }
-
-  isValidAddress(address) {
-    return REGEX_PARTERN.EVM_ADDRESS.test(address);
-  }
-
-  stripHexPrefix = (str) => {
-    return str.slice(0, 2) === EVM_PREFIX ? str.slice(2) : str;
-  };
-
-  toChecksumAddress = (address, chainId = null) => {
-    if (typeof address !== 'string') {
-      throw new BadRequestException(
-        "stripHexPrefix param must be type 'string', is currently type " +
-          typeof address +
-          '.',
-      );
-    }
-    const stripAddress = this.stripHexPrefix(address).toLowerCase();
-    const prefix = chainId != null ? chainId.toString() + EVM_PREFIX : '';
-    const keccakHash = new Keccak(256)
-      .update(prefix + stripAddress)
-      .digest()
-      .toString('hex');
-    let output = EVM_PREFIX;
-
-    for (let i = 0; i < stripAddress.length; i++)
-      output +=
-        parseInt(keccakHash[i], 16) >= 8
-          ? stripAddress[i].toUpperCase()
-          : stripAddress[i];
-    return output;
-  };
 }

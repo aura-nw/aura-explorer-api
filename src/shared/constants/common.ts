@@ -47,8 +47,6 @@ export enum COIN_MARKET_CAP_API {
 
 export const COIN_MARKET_CAP = 'COIN_MARKET_CAP';
 
-export const EVM_PREFIX = '0x';
-
 export const INDEXER_API_V2 = {
   GRAPH_QL: {
     PROPOSAL_COUNT: `query CountProposal { %s { proposal_aggregate { aggregate { count } } } }`,
@@ -601,7 +599,6 @@ export const REGEX_PARTERN = {
   PASSWORD: new RegExp(
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[`~!@#$%^&*()_+{}|/:;",.?<>\[\]`])[A-Za-z\d~!@#$%^&*()_+{}|/:;",.?<>\[\]]{8,}$/,
   ),
-  EVM_ADDRESS: new RegExp(/^0x[0-9a-fA-F]{40}$/),
 };
 
 export enum USER_ACTIVITIES {
