@@ -79,11 +79,12 @@ export class ExportCsvService {
 
   private async executed(payload: ExportCsvParamDto, explorer: Explorer) {
     const fileName = `export-account-executed-${payload.address}.csv`;
+    const listAdress = payload.address.split(',');
     const graphqlQuery = {
       query: util.format(INDEXER_API_V2.GRAPH_QL.TX_EXECUTED, explorer.chainDb),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        address: payload.address,
+        address: listAdress,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -130,6 +131,7 @@ export class ExportCsvService {
 
   private async evmExecuted(payload: ExportCsvParamDto, explorer: Explorer) {
     const fileName = `export-account-evm-executed-${payload.address}.csv`;
+    const listAdress = payload.address.split(',');
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.TX_EVM_EXECUTED,
@@ -137,7 +139,7 @@ export class ExportCsvService {
       ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        address: payload.address,
+        address: listAdress,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
