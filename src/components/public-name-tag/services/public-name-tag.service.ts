@@ -2,8 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   AkcLogger,
-  LENGTH,
-  NAME_TAG_TYPE,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
@@ -13,11 +11,10 @@ import { StorePublicNameTagParamsDto } from '../dtos/store-public-name-tag-param
 import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { Not, Repository } from 'typeorm';
-import { isValidBench32Address } from '../../../shared/utils/service.util';
 import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
 import { Explorer } from '../../../shared/entities/explorer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as util from 'util';
+import { VerifyAddressUtil } from '../../../shared/utils/verify-address.util';
 
 @Injectable()
 export class PublicNameTagService {
@@ -26,6 +23,7 @@ export class PublicNameTagService {
     private nameTagRepository: PublicNameTagRepository,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
+    private verifyAddressUtil: VerifyAddressUtil,
   ) {}
 
   async getPublicNameTags(ctx: RequestContext, req: PublicNameTagParamsDto) {
@@ -145,26 +143,13 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = isValidBench32Address(
+      const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
-        explorer?.addressPrefix,
         req.type,
+        explorer,
       );
-
-      if (
-        !validFormat ||
-        (req.address.length === LENGTH.CONTRACT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.CONTRACT) ||
-        (req.address.length === LENGTH.ACCOUNT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.ACCOUNT)
-      ) {
-        return {
-          code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-          message: util.format(
-            ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
-            explorer.addressPrefix,
-          ),
-        };
+      if (msgErrorVerify) {
+        return msgErrorVerify;
       }
       // check duplicate address
       const address = await this.nameTagRepository.findOne({

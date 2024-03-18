@@ -377,8 +377,8 @@ export enum AURA_INFO {
 }
 
 export enum LENGTH {
-  CONTRACT_ADDRESS = 63,
-  ACCOUNT_ADDRESS = 43,
+  CONTRACT_ADDRESS_NO_PREFIX = 59,
+  ACCOUNT_ADDRESS_NO_PREFIX = 39,
 }
 
 export const ERROR_MAP = {
@@ -482,6 +482,10 @@ export const ADMIN_ERROR_MAP = {
   INVALID_FORMAT: {
     Code: 'E003',
     Message: `Invalid %s address format`,
+  },
+  INVALID_EVM_FORMAT: {
+    Code: 'E003',
+    Message: `Invalid EVM address format`,
   },
   INVALID_NAME_TAG: {
     Code: 'E004',
@@ -863,6 +867,7 @@ export const RPC_QUERY_URL = {
     '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+  EVM_CODES_ADDRESS: '/ethermint.evm.v1.Query/Code',
 };
 
 export const TYPE_ORM_ERROR_CODE = {
