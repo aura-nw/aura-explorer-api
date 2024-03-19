@@ -23,6 +23,7 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
 import { plainToClass } from 'class-transformer';
 import { User } from 'src/shared/entities/user.entity';
 import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
+import { isAddress } from 'web3-validator';
 
 @Injectable()
 export class WatchListService {
@@ -214,7 +215,10 @@ export class WatchListService {
 
     const explorerId = explorer.id;
 
-    if (isValidBench32Address(keyword, explorer.addressPrefix)) {
+    if (
+      isValidBench32Address(keyword, explorer.addressPrefix) ||
+      isAddress(keyword)
+    ) {
       // Find in watch list.
       let foundedPublicNameTag = null;
       let foundPrivateNameTag = null;
