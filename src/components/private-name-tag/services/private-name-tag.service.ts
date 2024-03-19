@@ -198,7 +198,7 @@ export class PrivateNameTagService {
 
       // check limited private name tag
       const count = await this.privateNameTagRepository.count({
-        where: { createdBy: user_id },
+        where: { createdBy: user_id, explorer: { id: explorer.id } },
       });
 
       if (count >= this.config.limitedPrivateNameTag) {
@@ -226,6 +226,7 @@ export class PrivateNameTagService {
         id: Not(id),
         createdBy: user_id,
         nameTag: await this.encryptionService.encrypt(req.nameTag ?? ''),
+        explorer: { id: explorer.id },
       },
     });
     if (entity) {

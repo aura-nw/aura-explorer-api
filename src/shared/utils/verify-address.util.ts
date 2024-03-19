@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
+  EVM_EXTENSIONS,
   LENGTH,
   NAME_TAG_TYPE,
   RPC_QUERY_URL,
@@ -52,7 +53,10 @@ export class VerifyAddressUtil {
           Writer.create().uint32(10).string(address).finish(),
           explorer.chainId,
         );
-        const isContract = res?.result.response.value ? true : false;
+        const isContract =
+          res?.result.response.value || EVM_EXTENSIONS.includes(address)
+            ? true
+            : false;
         // Check valid type address
         if (
           (type === NAME_TAG_TYPE.CONTRACT && !isContract) ||
