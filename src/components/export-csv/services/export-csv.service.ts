@@ -12,7 +12,6 @@ import {
   TX_HEADER,
 } from '../../../shared';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
-import { HttpService } from '@nestjs/axios';
 import {
   RANGE_EXPORT,
   TYPE_EXPORT,
@@ -65,7 +64,7 @@ export class ExportCsvService {
         case TYPE_EXPORT.NftTxs:
           return this.nftTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.EVMExecutedTxs:
-          return this.evmExecuted(payload, explorer);
+          return this.evmExecuted(payload, userId, explorer);
         default:
           break;
       }
@@ -129,7 +128,11 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async evmExecuted(payload: ExportCsvParamDto, explorer: Explorer) {
+  private async evmExecuted(
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
     const fileName = `export-account-evm-executed-${payload.address}.csv`;
     const listAdress = payload.address.split(',');
     const graphqlQuery = {
@@ -163,19 +166,41 @@ export class ExportCsvService {
       denom: explorer.minimalDenom,
     });
 
-    const fields = TX_HEADER.EVM_EXECUTED;
+    let fields = TX_HEADER.EVM_EXECUTED;
+    let lstPrivateName;
+    if (userId) {
+      fields = TX_HEADER.EVM_EXECUTED_NAMETAG;
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        userId,
+        null,
+        null,
+        LIMIT_PRIVATE_NAME_TAG,
+        0,
+        explorer.chainId,
+      );
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
     const data = response.transaction.map((tx) => {
-      const method = TransactionHelper.toHexData(tx.data);
       return {
         EvmTxHash: tx.hash,
-        Method: method ? method : 'Transfer',
+        Method: tx.data ? tx.data.substring(0, 8) : 'Transfer',
         Height: tx.height,
         Timestamp: tx.transaction?.timestamp,
         UnixTimestamp: Math.floor(
           new Date(tx.transaction?.timestamp).getTime() / 1000,
         ),
         FromAddress: tx.from,
+        FromAddressPrivateNameTag:
+          lstPrivateName?.find((item) => item.address === tx.from)?.nameTag ||
+          '',
         ToAddress: tx.to,
+        ToAddressPrivateNameTag:
+          lstPrivateName?.find((item) => item.address === tx.to)?.nameTag || '',
         Amount: TransactionHelper.balanceOf(
           tx.transaction?.transaction_messages[0].content.data.value,
           explorer.decimal,

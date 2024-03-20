@@ -749,6 +749,23 @@ export const TX_HEADER = {
     'TokenIdOut',
     'NFTContractAddress',
   ],
+  EVM_EXECUTED_NAMETAG: [
+    'EvmTxHash',
+    'Method',
+    'Height',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'Amount',
+    'Symbol',
+    'ComosTxHash',
+  ],
   COIN_TRANSFER_NAMETAG: [
     'TxHash',
     'MessageRaw',
