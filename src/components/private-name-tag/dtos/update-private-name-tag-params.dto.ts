@@ -8,6 +8,9 @@ export class UpdatePrivateNameTagParamsDto {
   @IsOptional()
   nameTag: string;
 
+  @IsOptional()
+  evmAddress: string;
+
   @ApiPropertyOptional({ default: null })
   @IsEnum(NAME_TAG_TYPE)
   @IsOptional()

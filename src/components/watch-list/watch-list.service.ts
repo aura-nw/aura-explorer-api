@@ -51,6 +51,7 @@ export class WatchListService {
 
       await this.validateAddress(
         createWatchListDto.address,
+        createWatchListDto.evmAddress,
         explorer,
         createWatchListDto.type,
       );
@@ -169,6 +170,7 @@ export class WatchListService {
 
       await this.validateAddress(
         updateWatchListDto.address,
+        updateWatchListDto.evmAddress,
         explorer,
         updateWatchListDto.type,
       );
@@ -224,22 +226,35 @@ export class WatchListService {
       let foundPrivateNameTag = null;
 
       const foundedWatchList = (await this.watchListRepository.findOne({
-        where: { address: keyword, user: { id: ctx.user.id } },
+        where: [
+          { address: keyword, user: { id: ctx.user.id } },
+          { evmAddress: keyword, user: { id: ctx.user.id } },
+        ],
       })) as any as WatchListDetailResponse;
 
       if (foundedWatchList) {
         // Find in public tag.
         foundedPublicNameTag = await this.publicNameTagRepository.findOne({
-          where: { address: keyword, explorer: { id: explorerId } },
+          where: [
+            { address: keyword, explorer: { id: explorerId } },
+            { evmAddress: keyword, explorer: { id: explorerId } },
+          ],
         });
 
         // Find in private tag.
         foundPrivateNameTag = await this.privateNameTagRepository.findOne({
-          where: {
-            address: keyword,
-            createdBy: ctx.user.id,
-            explorer: { id: explorerId },
-          },
+          where: [
+            {
+              address: keyword,
+              createdBy: ctx.user.id,
+              explorer: { id: explorerId },
+            },
+            {
+              evmAddress: keyword,
+              createdBy: ctx.user.id,
+              explorer: { id: explorerId },
+            },
+          ],
         });
 
         // Mapping tags.
@@ -344,11 +359,13 @@ export class WatchListService {
 
   async validateAddress(
     address: string,
+    evmAddress: string,
     explorer: Explorer,
     type?: NAME_TAG_TYPE,
   ) {
     const msgErrorVerify = await this.verifyAddressUtil.verify(
       address,
+      evmAddress,
       type,
       explorer,
     );
