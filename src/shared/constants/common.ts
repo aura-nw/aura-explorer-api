@@ -469,7 +469,7 @@ export const INFRASTRUCTURE_ERROR = {
 export const ADMIN_ERROR_MAP = {
   DUPLICATE_ADDRESS: {
     Code: 'E001',
-    Message: 'This address has already been set name tag',
+    Message: 'This address has already been set %s name tag',
   },
   DUPLICATE_TAG: {
     Code: 'E002',
@@ -482,6 +482,10 @@ export const ADMIN_ERROR_MAP = {
   INVALID_FORMAT: {
     Code: 'E003',
     Message: `Invalid %s address format`,
+  },
+  INVALID_TYPE_ADDRESS: {
+    Code: 'E007',
+    Message: 'Invalid type address',
   },
   INVALID_EVM_FORMAT: {
     Code: 'E003',
@@ -748,6 +752,23 @@ export const TX_HEADER = {
     'TokenIdIn',
     'TokenIdOut',
     'NFTContractAddress',
+  ],
+  EVM_EXECUTED_NAMETAG: [
+    'EvmTxHash',
+    'Method',
+    'Height',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'Amount',
+    'Symbol',
+    'ComosTxHash',
   ],
   COIN_TRANSFER_NAMETAG: [
     'TxHash',

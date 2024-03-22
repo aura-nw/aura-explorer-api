@@ -15,6 +15,7 @@ import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-par
 import { Explorer } from '../../../shared/entities/explorer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { VerifyAddressUtil } from '../../../shared/utils/verify-address.util';
+import * as util from 'util';
 
 @Injectable()
 export class PublicNameTagService {
@@ -68,6 +69,7 @@ export class PublicNameTagService {
 
       const entity = new PublicNameTag();
       entity.address = req.address;
+      entity.evmAddress = req.evmAddress;
       entity.type = req.type;
       entity.name_tag = req.nameTag;
       entity.updated_by = userId;
@@ -99,6 +101,7 @@ export class PublicNameTagService {
     entity.name_tag = req.nameTag;
     entity.updated_by = userId;
     entity.enterpriseUrl = req.enterpriseUrl;
+    entity.evmAddress = req.evmAddress;
     try {
       const result = await this.nameTagRepository.update(req.id, entity);
       return { data: result, meta: {} };
@@ -145,6 +148,7 @@ export class PublicNameTagService {
     if (isCreate) {
       const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
+        req.evmAddress,
         req.type,
         explorer,
       );
@@ -153,12 +157,15 @@ export class PublicNameTagService {
       }
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
-        where: { address: req.address },
+        where: [{ address: req.address }, { evmAddress: req.evmAddress }],
       });
       if (address) {
         return {
           code: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Code,
-          message: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+          message: util.format(
+            ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+            'public',
+          ),
         };
       }
     }
@@ -166,7 +173,7 @@ export class PublicNameTagService {
     const tag = await this.nameTagRepository.findOne({
       where: {
         name_tag: req.nameTag,
-        address: Not(req.address),
+        id: Not(req.id),
         explorer: { id: explorer.id },
       },
     });

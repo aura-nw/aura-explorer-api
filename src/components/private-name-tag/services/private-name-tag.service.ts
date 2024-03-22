@@ -6,9 +6,6 @@ import {
 import {
   ADMIN_ERROR_MAP,
   AkcLogger,
-  INDEXER_API_V2,
-  LENGTH,
-  NAME_TAG_TYPE,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
@@ -92,6 +89,7 @@ export class PrivateNameTagService {
       }
       const entity = new PrivateNameTag();
       entity.address = req.address;
+      entity.evmAddress = req.evmAddress;
       entity.isFavorite = req.isFavorite;
       entity.type = req.type;
       entity.note = req.note;
@@ -116,7 +114,11 @@ export class PrivateNameTagService {
     req: UpdatePrivateNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    const request: CreatePrivateNameTagParamsDto = { ...req, address: '' };
+    const request: CreatePrivateNameTagParamsDto = {
+      ...req,
+      address: '',
+      evmAddress: '',
+    };
     const errorMsg = await this.validate(id, ctx, request, false);
     if (errorMsg) {
       return errorMsg;
@@ -128,7 +130,7 @@ export class PrivateNameTagService {
     if (!entity) {
       throw new NotFoundException('Private Name Tag not found');
     }
-
+    entity.evmAddress = req.evmAddress;
     entity.createdBy = ctx.user.id;
     entity.updatedAt = new Date();
 
@@ -189,6 +191,7 @@ export class PrivateNameTagService {
     if (isCreate) {
       const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
+        req.evmAddress,
         req.type,
         explorer,
       );
@@ -210,12 +213,21 @@ export class PrivateNameTagService {
 
       // check duplicate address
       const entity = await this.privateNameTagRepository.findOne({
-        where: { createdBy: user_id, address: req.address },
+        where: [
+          {
+            createdBy: user_id,
+            address: req.address,
+          },
+          { createdBy: user_id, evmAddress: req.evmAddress },
+        ],
       });
       if (entity) {
         return {
           code: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Code,
-          message: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+          message: util.format(
+            ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+            'private',
+          ),
         };
       }
     }
