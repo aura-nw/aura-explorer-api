@@ -49,6 +49,10 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
         SET \`asset_id\` = \`token_market_id\`
         WHERE \`asset_id\` IS NULL
     `);
+
+    await queryRunner.query(
+      `UPDATE \`asset\` SET \`name\` = 'Aura Mainnet', \`symbol\` = 'AURA' WHERE \`coin_id\` = 'aura-network'`,
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
