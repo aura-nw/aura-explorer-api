@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as appConfig from '../../../shared/configs/configuration';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import {
+  ASSETS_TYPE,
   AkcLogger,
   EXPORT_LIMIT_RECORD,
   INDEXER_API_V2,
@@ -12,7 +13,6 @@ import {
 } from '../../../shared';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
 import {
   RANGE_EXPORT,
   TYPE_EXPORT,
@@ -20,25 +20,29 @@ import {
 import { ExportCsvParamDto } from '../dtos/export-csv-param.dto';
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { EncryptionService } from '../../encryption/encryption.service';
-import { IsNull, Not } from 'typeorm';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
+import { IsNull, Not, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import * as util from 'util';
+import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
 @Injectable()
 export class ExportCsvService {
   private config;
-  private chainDB: string;
+  private defaultChainDB: string;
 
   constructor(
     private serviceUtil: ServiceUtil,
     private readonly logger: AkcLogger,
-    private httpService: HttpService,
     private privateNameTagRepository: PrivateNameTagRepository,
     private encryptionService: EncryptionService,
-    private tokenMarketsRepository: TokenMarketsRepository,
+    private assetRepository: AssetsRepository,
+    @InjectRepository(Explorer)
+    private explorerRepository: Repository<Explorer>,
   ) {
     this.logger.setContext(ExportCsvService.name);
     this.config = appConfig.default();
-    this.chainDB = this.config.indexerV2.chainDB;
+    this.defaultChainDB = this.config.indexerV2.chainDB;
   }
 
   async exportTransactionDataToCSV(
@@ -48,15 +52,18 @@ export class ExportCsvService {
   ) {
     this.logger.log(ctx, `${this.exportTransactionDataToCSV.name} was called!`);
     try {
+      const explorer = await this.explorerRepository.findOneOrFail({
+        chainId: ctx.chainId,
+      });
       switch (payload.dataType) {
         case TYPE_EXPORT.ExecutedTxs:
-          return this.executed(payload);
+          return this.executed(payload, explorer);
         case TYPE_EXPORT.AuraTxs:
-          return this.coinTransfer(payload, userId);
+          return this.coinTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.FtsTxs:
-          return this.tokenTransfer(payload, userId);
+          return this.tokenTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.NftTxs:
-          return this.nftTransfer(payload, userId);
+          return this.nftTransfer(ctx, payload, userId, explorer);
         default:
           break;
       }
@@ -68,10 +75,10 @@ export class ExportCsvService {
     }
   }
 
-  private async executed(payload: ExportCsvParamDto) {
+  private async executed(payload: ExportCsvParamDto, explorer: Explorer) {
     const fileName = `export-account-executed-${payload.address}.csv`;
     const graphqlQuery = {
-      query: INDEXER_API_V2.GRAPH_QL.TX_EXECUTED,
+      query: util.format(INDEXER_API_V2.GRAPH_QL.TX_EXECUTED, explorer.chainDb),
       variables: {
         limit: QUERY_LIMIT_RECORD,
         address: payload.address,
@@ -93,19 +100,18 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_EXECUTED,
     };
 
-    const response = await this.queryData(graphqlQuery);
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const envConfig = await lastValueFrom(
-      this.httpService.get(this.config.configUrl),
-    ).then((rs) => rs.data);
-
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig?.chainConfig?.chain_info?.currencies[0],
+      explorer,
       payload.dataType,
       payload.address,
       coinConfig,
@@ -128,10 +134,18 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async coinTransfer(payload: ExportCsvParamDto, userId) {
+  private async coinTransfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
     const fileName = `export-account-native-transfer-${payload.address}.csv`;
     const graphqlQuery = {
-      query: INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_COIN_TRANSFER,
+        explorer.chainDb,
+      ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
         from: payload.address,
@@ -154,19 +168,18 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_COIN_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery);
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const envConfig = await lastValueFrom(
-      this.httpService.get(this.config.configUrl),
-    ).then((rs) => rs.data);
-
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig?.chainConfig?.chain_info?.currencies[0],
+      explorer,
       payload.dataType,
       payload.address,
       coinConfig,
@@ -182,6 +195,7 @@ export class ExportCsvService {
         null,
         LIMIT_PRIVATE_NAME_TAG,
         0,
+        ctx.chainId,
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
@@ -218,10 +232,18 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async tokenTransfer(payload: ExportCsvParamDto, userId) {
+  private async tokenTransfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
     const fileName = `export-account-cw20-transfer-${payload.address}.csv`;
     const graphqlQuery = {
-      query: INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_TOKEN_TRANSFER,
+        explorer.chainDb,
+      ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
         receiver: payload.address,
@@ -253,19 +275,18 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery);
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const envConfig = await lastValueFrom(
-      this.httpService.get(this.config.configUrl),
-    ).then((rs) => rs.data);
-
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig?.chainConfig?.chain_info?.currencies[0],
+      explorer,
       payload.dataType,
       payload.address,
       coinConfig,
@@ -281,6 +302,7 @@ export class ExportCsvService {
         null,
         LIMIT_PRIVATE_NAME_TAG,
         0,
+        ctx.chainId,
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
@@ -317,10 +339,18 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async nftTransfer(payload: ExportCsvParamDto, userId) {
+  private async nftTransfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
     const fileName = `export-account-nft-transfer-${payload.address}.csv`;
     const graphqlQuery = {
-      query: INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
+        explorer.chainDb,
+      ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
         receiver: payload.address,
@@ -344,19 +374,18 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery);
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
 
-    const envConfig = await lastValueFrom(
-      this.httpService.get(this.config.configUrl),
-    ).then((rs) => rs.data);
-
-    const coinConfig = await this.tokenMarketsRepository.find({
-      where: { denom: Not(IsNull()) },
+    const coinConfig = await this.assetRepository.find({
+      where: {
+        type: ASSETS_TYPE.IBC,
+        name: Not(IsNull()),
+      },
     });
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
-      envConfig?.chainConfig?.chain_info?.currencies[0],
+      explorer,
       payload.dataType,
       payload.address,
       coinConfig,
@@ -372,6 +401,7 @@ export class ExportCsvService {
         null,
         LIMIT_PRIVATE_NAME_TAG,
         0,
+        ctx.chainId,
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
@@ -407,7 +437,7 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async queryData(graphqlQuery) {
+  private async queryData(graphqlQuery, chainDB = this.defaultChainDB) {
     const result = { transaction: [] };
     let next = true;
     let timesLoop = 0;
@@ -419,7 +449,7 @@ export class ExportCsvService {
     ) {
       const response = (
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery)
-      )?.data[this.chainDB];
+      )?.data[chainDB];
 
       // break loop when horoscope return no data
       if (!response) {

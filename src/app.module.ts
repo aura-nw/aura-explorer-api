@@ -19,6 +19,7 @@ import { ExportCsvModule } from './components/export-csv/export-csv.module';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptcha.module';
 import { NotificationModule } from './components/notification/notification.module';
 import { WatchListModule } from './components/watch-list/watch-list.module';
+import { AssetModule } from './components/asset/asset.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { WatchListModule } from './components/watch-list/watch-list.module';
     ExportCsvModule,
     MailModule,
     WatchListModule,
+    AssetModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),

@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { USER_ACTIVITIES } from '../constants';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { User } from './user.entity';
+import { Explorer } from './explorer.entity';
 
 @Entity('user_activity')
 export class UserActivity extends BaseEntityIncrementId {
@@ -22,4 +23,10 @@ export class UserActivity extends BaseEntityIncrementId {
     name: 'user_id',
   })
   user: User;
+
+  @ManyToOne(() => Explorer, (explorer) => explorer.userActivities)
+  @JoinColumn({
+    name: 'explorer_id',
+  })
+  explorer: Explorer;
 }

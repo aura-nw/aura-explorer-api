@@ -3,10 +3,13 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { NAME_TAG_TYPE } from '../constants/common';
+import { Explorer } from './explorer.entity';
 
 @Entity('private_name_tag')
 @Index(['address', 'createdBy'], { unique: true })
@@ -43,4 +46,10 @@ export class PrivateNameTag {
     name: 'updated_at',
   })
   updatedAt: Date;
+
+  @ManyToOne(() => Explorer, (explorer) => explorer.privateNameTags)
+  @JoinColumn({
+    name: 'explorer_id',
+  })
+  explorer: Explorer;
 }

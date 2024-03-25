@@ -17,7 +17,8 @@ import { UserActivity } from '../../../shared/entities/user-activity.entity';
 import { NotificationRepository } from './repositories/notification.repository';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
 import { User } from '../../../shared/entities/user.entity';
-import { TokenMarketsRepository } from '../../cw20-token/repositories/token-markets.repository';
+import { Explorer } from 'src/shared/entities/explorer.entity';
+import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
 @Module({
   imports: [
@@ -29,12 +30,13 @@ import { TokenMarketsRepository } from '../../cw20-token/repositories/token-mark
       PublicNameTagRepository,
       NotificationTokenRepository,
       NotificationRepository,
-      TokenMarketsRepository,
+      AssetsRepository,
       SyncPointRepository,
       CipherKey,
       UserActivity,
       User,
       WatchList,
+      Explorer,
     ]),
     BullModule.registerQueueAsync({
       name: QUEUES.NOTIFICATION.QUEUE_NAME,
