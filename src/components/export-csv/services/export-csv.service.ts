@@ -196,11 +196,14 @@ export class ExportCsvService {
         ),
         FromAddress: tx.from,
         FromAddressPrivateNameTag:
-          lstPrivateName?.find((item) => item.address === tx.from)?.nameTag ||
-          '',
+          lstPrivateName?.find(
+            (item) => item.address === tx.from || item.evmAddress === tx.from,
+          )?.nameTag || '',
         ToAddress: tx.to,
         ToAddressPrivateNameTag:
-          lstPrivateName?.find((item) => item.address === tx.to)?.nameTag || '',
+          lstPrivateName?.find(
+            (item) => item.address === tx.to || item.evmAddress === tx.to,
+          )?.nameTag || '',
         Amount: TransactionHelper.balanceOf(
           tx.transaction?.transaction_messages[0].content.data.value,
           explorer.decimal,
@@ -295,12 +298,18 @@ export class ExportCsvService {
           UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           FromAddress: evt.fromAddress,
           FromAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.fromAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                item.evmAddress === evt.fromAddress,
+            )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.toAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                item.evmAddress === evt.toAddress,
+            )?.nameTag || '',
           AmountIn: evt.toAddress === payload.address ? evt.amount : '',
           AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
           Symbol: evt.denom,
@@ -394,12 +403,18 @@ export class ExportCsvService {
           UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           FromAddress: evt.fromAddress,
           FromAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.fromAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                item.evmAddress === evt.fromAddress,
+            )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.toAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                item.evmAddress === evt.toAddress,
+            )?.nameTag || '',
           AmountIn: evt.toAddress === payload.address ? evt.amount : '',
           AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
           Symbol: evt.denom,
@@ -485,12 +500,18 @@ export class ExportCsvService {
           UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           FromAddress: evt.fromAddress,
           FromAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.fromAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                item.evmAddress === evt.fromAddress,
+            )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.toAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                item.evmAddress === evt.toAddress,
+            )?.nameTag || '',
           TokenIdIn: evt.toAddress === payload.address ? evt.tokenId : '',
           TokenIdOut: evt.toAddress !== payload.address ? evt.tokenId : '',
           NFTContractAddress: evt.contractAddress,

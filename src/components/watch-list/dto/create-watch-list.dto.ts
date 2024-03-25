@@ -13,6 +13,7 @@ export class CreateWatchListDto {
   address: string;
 
   @ApiProperty()
+  @IsOptional()
   evmAddress: string;
 
   @ApiProperty({ default: NAME_TAG_TYPE.ACCOUNT })

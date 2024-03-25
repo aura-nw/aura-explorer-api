@@ -28,6 +28,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
       .select(
         `public_name_tag.id,
         public_name_tag.address,
+        public_name_tag.evm_address,
         public_name_tag.type,
         public_name_tag.name_tag,
         public_name_tag.created_at,
