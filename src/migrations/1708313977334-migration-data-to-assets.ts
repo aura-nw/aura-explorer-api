@@ -50,9 +50,11 @@ export class migrationDataToAssets1708313977334 implements MigrationInterface {
         WHERE \`asset_id\` IS NULL
     `);
 
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query(
       `UPDATE \`asset\` SET \`name\` = 'Aura Mainnet', \`symbol\` = 'AURA' WHERE \`coin_id\` = 'aura-network'`,
     );
+    await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
