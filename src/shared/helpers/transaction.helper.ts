@@ -257,19 +257,15 @@ export class TransactionHelper {
   }
 
   static getFunctionNameByMethodId(methodId: string) {
-    let listTxEvmMapping: Map<string, string>;
     let methodTemp = '';
-    if (listTxEvmMapping) {
-      methodTemp = listTxEvmMapping.get(methodId);
-    } else {
-      const arrTxMapping = ABI_CHECK_INTERFACE.map<[string, string]>((k) => {
-        const item = keccak256Str(k).slice(2, 10);
-        return [item, k];
-      });
-      arrTxMapping?.unshift([EMethodContract.Creation, 'Create Contract']);
-      listTxEvmMapping = new Map(arrTxMapping);
-      methodTemp = listTxEvmMapping.get(methodId);
-    }
+
+    const arrTxMapping = ABI_CHECK_INTERFACE.map<[string, string]>((k) => {
+      const item = keccak256Str(k).slice(2, 10);
+      return [item, k];
+    });
+    arrTxMapping?.unshift([EMethodContract.Creation, 'Create Contract']);
+    const listTxEvmMapping = new Map(arrTxMapping);
+    methodTemp = listTxEvmMapping.get(methodId);
 
     if (!methodTemp) return methodId?.slice(0, 8);
 
