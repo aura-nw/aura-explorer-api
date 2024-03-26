@@ -7,11 +7,14 @@ import {
   TYPE_TRANSACTION,
   TYPE_EXPORT,
   TypeTransaction,
+  ABI_CHECK_INTERFACE,
+  EMethodContract,
 } from '../constants/transaction';
 import BigNumber from 'bignumber.js';
 import { Explorer } from '../entities/explorer.entity';
 import { toHex, fromBase64 } from '@cosmjs/encoding';
 import { ASSETS_TYPE } from '../constants';
+import { id as keccak256Str } from 'ethers';
 
 export class TransactionHelper {
   static convertDataAccountTransaction(
@@ -251,5 +254,30 @@ export class TransactionHelper {
       return data;
     }
     return `0x${toHex(fromBase64(data))}`.substring(0, 10);
+  }
+
+  static getFunctionNameByMethodId(methodId: string) {
+    let listTxEvmMapping: Map<string, string>;
+    let methodTemp = '';
+    if (listTxEvmMapping) {
+      methodTemp = listTxEvmMapping.get(methodId);
+    } else {
+      const arrTxMapping = ABI_CHECK_INTERFACE.map<[string, string]>((k) => {
+        const item = keccak256Str(k).slice(2, 10);
+        return [item, k];
+      });
+      arrTxMapping?.unshift([EMethodContract.Creation, 'Create Contract']);
+      listTxEvmMapping = new Map(arrTxMapping);
+      methodTemp = listTxEvmMapping.get(methodId);
+    }
+
+    if (!methodTemp) return methodId?.slice(0, 8);
+
+    methodTemp = methodTemp?.charAt(0).toUpperCase() + methodTemp?.slice(1);
+    const indexChar = methodTemp?.indexOf('(');
+    if (indexChar > 0) {
+      methodTemp = methodTemp?.substring(0, indexChar);
+    }
+    return methodTemp;
   }
 }

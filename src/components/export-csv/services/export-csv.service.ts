@@ -188,7 +188,9 @@ export class ExportCsvService {
     const data = response.transaction.map((tx) => {
       return {
         EvmTxHash: tx.hash,
-        Method: tx.data ? tx.data.substring(0, 8) : 'Transfer',
+        Method: tx.data
+          ? TransactionHelper.getFunctionNameByMethodId(tx.data.substring(0, 8))
+          : 'Transfer',
         Height: tx.height,
         Timestamp: tx.transaction?.timestamp,
         UnixTimestamp: Math.floor(
