@@ -257,6 +257,9 @@ export class TransactionHelper {
   }
 
   static getFunctionNameByMethodId(methodId: string) {
+    if (!methodId) {
+      return 'Transfer';
+    }
     let methodTemp = '';
 
     const arrTxMapping = ABI_CHECK_INTERFACE.map<[string, string]>((k) => {
