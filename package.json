@@ -76,7 +76,8 @@
     "typeorm": "^0.2.40",
     "uuid": "^8.3.2",
     "web3-validator": "^2.0.4",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "ethers": "^6.11.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
