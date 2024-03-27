@@ -290,3 +290,22 @@ export const TYPE_TRANSACTION = [
 ];
 
 export const NULL_ADDRESS = 'Null address';
+
+export const ABI_CHECK_INTERFACE = [
+  'safeTransferFrom(address,address,uint256)',
+  'transferFrom(address,address,uint256)',
+  'approve(address,uint256)',
+  'setApprovalForAll(address,bool)',
+  'isApprovedForAll(address,address)',
+  'safeTransferFrom(address,address,uint256,bytes)',
+  'transfer(address,uint256)',
+  'approve(address,uint256)',
+  'transferFrom(address,address,uint256)',
+  'safeTransferFrom(address,address,uint256,uint256,bytes)',
+  'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)',
+  'setApprovalForAll(address,bool)',
+];
+
+export enum EMethodContract {
+  Creation = '60806040',
+}

@@ -23,6 +23,9 @@ export class VerifyAddressUtil {
     type: NAME_TAG_TYPE,
     explorer: Explorer,
   ) {
+    if (!address) {
+      return false;
+    }
     // Remove prefix address
     const addressNoPrefix = address.replace(explorer.addressPrefix, '');
     // Check valid type address
