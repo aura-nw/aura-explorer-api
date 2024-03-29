@@ -341,11 +341,10 @@ export class TokenProcessor implements OnModuleInit {
       if (keyData === 'asset') {
         newData.map((asset) => {
           asset.totalSupply = TransactionHelper.balanceOf(
-            asset.total_supply,
+            asset.total_supply || 0,
             asset.decimal || explorer.decimal,
           );
           asset.explorer = explorer;
-
           return asset;
         });
       }
