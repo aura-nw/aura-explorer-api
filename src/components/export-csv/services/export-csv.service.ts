@@ -65,6 +65,8 @@ export class ExportCsvService {
           return this.nftTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.EVMExecutedTxs:
           return this.evmExecuted(payload, userId, explorer);
+        case TYPE_EXPORT.Erc20Txs:
+          return this.erc20Transfer(ctx, payload, userId, explorer);
         default:
           break;
       }
@@ -340,6 +342,111 @@ export class ExportCsvService {
         limit: QUERY_LIMIT_RECORD,
         receiver: payload.address,
         sender: payload.address,
+        heightLT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.max + 1
+            : null,
+        heightGT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.min > 1
+              ? +payload.min - 1
+              : 0
+            : null,
+        startTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+        endTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+        actionIn: [
+          'mint',
+          'burn',
+          'transfer',
+          'send',
+          'transfer_from',
+          'burn_from',
+          'send_from',
+        ],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
+    };
+
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+
+    const txs = TransactionHelper.convertDataAccountTransaction(
+      response,
+      explorer,
+      payload.dataType,
+      payload.address,
+    );
+
+    let lstPrivateName;
+    let fields = TX_HEADER.TOKEN_TRANSFER;
+    if (userId) {
+      fields = TX_HEADER.TOKEN_TRANSFER_NAMETAG;
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        userId,
+        null,
+        null,
+        LIMIT_PRIVATE_NAME_TAG,
+        0,
+        ctx.chainId,
+      );
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
+    const data = [];
+    txs?.forEach((tx) => {
+      tx.arrEvent.forEach((evt) => {
+        data.push({
+          TxHash: tx.tx_hash,
+          MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
+          Message: tx.lstType,
+          Timestamp: tx.timestamp,
+          UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
+          FromAddress: evt.fromAddress,
+          FromAddressPrivateNameTag:
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                item.evmAddress === evt.fromAddress,
+            )?.nameTag || '',
+          ToAddress: evt.toAddress,
+          ToAddressPrivateNameTag:
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                item.evmAddress === evt.toAddress,
+            )?.nameTag || '',
+          AmountIn: evt.toAddress === payload.address ? evt.amount : '',
+          AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
+          Symbol: evt.denom,
+          TokenContractAddress: tx.contractAddress,
+        });
+      });
+    });
+
+    return { data, fileName, fields };
+  }
+
+  private async erc20Transfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
+    const fileName = `export-account-erc20-transfer-${payload.address}.csv`;
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_ERC20_TRANSFER,
+        explorer.chainDb,
+      ),
+      variables: {
+        limit: QUERY_LIMIT_RECORD,
+        to: payload.address,
+        from: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1

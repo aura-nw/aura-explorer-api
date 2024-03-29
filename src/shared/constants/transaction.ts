@@ -118,6 +118,7 @@ export enum TYPE_EXPORT {
   FtsTxs = 'cw20-transfer',
   NftTxs = 'nft-transfer',
   EVMExecutedTxs = 'evm-executed',
+  Erc20Txs = 'erc20-transfer',
 }
 
 export enum RANGE_EXPORT {
