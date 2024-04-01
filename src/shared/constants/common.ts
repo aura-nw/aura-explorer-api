@@ -146,7 +146,7 @@ export const INDEXER_API_V2 = {
     }`,
     TX_ERC20_TRANSFER: `query queryListTxsERC20($to: String = null, $from: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = 100, $actionIn: [String!] = null) {
       %s {
-        erc20_activity(where: {_or: [{to: {_eq: $to}}, {from: {_eq: $from}}], action: {_in: $actionIn}, height: {_gt: $heightGT, _lt: $heightLT}, evm_transaction: {transaction: {timestamp: {_lte: $endTime, _gte: $startTime}}}}, order_by: {id: desc}, limit: $limit) {
+        transaction: erc20_activity(where: {_or: [{to: {_eq: $to}}, {from: {_eq: $from}}], action: {_in: $actionIn}, height: {_gt: $heightGT, _lt: $heightLT}, evm_transaction: {transaction: {timestamp: {_lte: $endTime, _gte: $startTime}}}}, order_by: {id: desc}, limit: $limit) {
           action
           amount
           from
@@ -169,9 +169,7 @@ export const INDEXER_API_V2 = {
           }
         }
       }
-    }
-    
-    `,
+    }`,
     TX_NFT_TRANSFER: `query Cw721TXMultilCondition(
       $receiver: String = null
       $sender: String = null
@@ -381,7 +379,7 @@ export const INDEXER_API_V2 = {
     TX_EXECUTED: 'QueryTxOfAccount',
     TX_EVM_EXECUTED: 'QueryEvmTxOfAccount',
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
-    TX_ERC20_TRANSFER: 'QueryErc20OfAccount',
+    TX_ERC20_TRANSFER: 'queryListTxsERC20',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
     EXECUTED_NOTIFICATION: 'ExecutedNotification',

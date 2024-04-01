@@ -309,4 +309,5 @@ export const ABI_CHECK_INTERFACE = [
 
 export enum EMethodContract {
   Creation = '60806040',
+  Default = 'Send',
 }

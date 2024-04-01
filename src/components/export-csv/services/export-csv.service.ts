@@ -471,17 +471,10 @@ export class ExportCsvService {
           'send_from',
         ],
       },
-      operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_ERC20_TRANSFER,
     };
 
     const response = await this.queryData(graphqlQuery, explorer.chainDb);
-
-    const txs = TransactionHelper.convertDataAccountTransaction(
-      response,
-      explorer,
-      payload.dataType,
-      payload.address,
-    );
 
     let lstPrivateName;
     let fields = TX_HEADER.TOKEN_TRANSFER;
@@ -502,35 +495,39 @@ export class ExportCsvService {
         }),
       );
     }
-    const data = [];
-    txs?.forEach((tx) => {
-      tx.arrEvent.forEach((evt) => {
-        data.push({
-          TxHash: tx.tx_hash,
-          MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
-          Message: tx.lstType,
-          Timestamp: tx.timestamp,
-          UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
-          FromAddress: evt.fromAddress,
-          FromAddressPrivateNameTag:
-            lstPrivateName?.find(
-              (item) =>
-                item.address === evt.fromAddress ||
-                item.evmAddress === evt.fromAddress,
-            )?.nameTag || '',
-          ToAddress: evt.toAddress,
-          ToAddressPrivateNameTag:
-            lstPrivateName?.find(
-              (item) =>
-                item.address === evt.toAddress ||
-                item.evmAddress === evt.toAddress,
-            )?.nameTag || '',
-          AmountIn: evt.toAddress === payload.address ? evt.amount : '',
-          AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
-          Symbol: evt.denom,
-          TokenContractAddress: tx.contractAddress,
-        });
-      });
+    const data = response.transaction?.map((tx) => {
+      console.log(tx);
+      return {
+        TxHash: tx.tx_hash,
+        MessageRaw: tx.evm_transaction.transaction_message.type,
+        Message: TransactionHelper.getFunctionNameByMethodId(
+          tx.evm_transaction.data?.substring(0, 8),
+        ),
+        Timestamp: tx.evm_transaction.transaction.timestamp,
+        UnixTimestamp: Math.floor(
+          new Date(tx.evm_transaction.transaction.timestamp).getTime() / 1000,
+        ),
+        FromAddress: tx.from,
+        FromAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) => item.address === tx.from || item.evmAddress === tx.from,
+          )?.nameTag || '',
+        ToAddress: tx.to,
+        ToAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) => item.address === tx.to || item.evmAddress === tx.to,
+          )?.nameTag || '',
+        AmountIn:
+          tx.to === payload.address
+            ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
+            : '',
+        AmountOut:
+          tx.to !== payload.address
+            ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
+            : '',
+        Symbol: tx.erc20_contract.symbol,
+        TokenContractAddress: tx.erc20_contract.address,
+      };
     });
 
     return { data, fileName, fields };
