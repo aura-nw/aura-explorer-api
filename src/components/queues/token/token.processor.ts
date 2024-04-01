@@ -79,6 +79,13 @@ export class TokenProcessor implements OnModuleInit {
           repeat: { cron: `${index + 1} * * * *` },
         },
       );
+      this.tokenQueue.add(
+        QUEUES.TOKEN.JOB_SYNC_ERC20_ASSET_HOLDER,
+        { explorer },
+        {
+          repeat: { cron: `${index + 3} * * * *` },
+        },
+      );
     });
 
     this.tokenQueue.add(
@@ -328,6 +335,43 @@ export class TokenProcessor implements OnModuleInit {
     }
 
     return { cw20WithNewImage, listHolderStatistic };
+  }
+
+  @Process(QUEUES.TOKEN.JOB_SYNC_ERC20_ASSET_HOLDER)
+  async syncErc20AssetHolder(job: Job): Promise<void> {
+    const erc20Asset = await this.getNewErc20Info(job.data.explorer);
+
+    await this.assetsRepository.save(erc20Asset);
+  }
+
+  async getNewErc20Info(explorer: Explorer): Promise<Asset[]> {
+    const erc20Asset: Asset[] = [];
+    const listErc20Asset = await this.assetsRepository.find({
+      where: { type: ASSETS_TYPE.ERC20, explorer: { id: explorer.id } },
+    });
+
+    const erc20Query = {
+      variables: {},
+      query: util.format(INDEXER_API_V2.GRAPH_QL.ERC20_INFO, explorer.chainDb),
+      operationName: INDEXER_API_V2.OPERATION_NAME.ERC20_INFO,
+    };
+    const listErc20Contract = await this.getDataWithPagination(
+      erc20Query,
+      'erc20_contract',
+      explorer,
+    );
+    for (const erc20 of listErc20Asset) {
+      if (!erc20.name || !erc20.symbol) {
+        const erc20Contract = listErc20Contract.find(
+          (erc20) => erc20.address === erc20.denom,
+        );
+        erc20.symbol = erc20Contract?.symbol || '';
+        erc20.name = erc20Contract?.name || '';
+
+        erc20Asset.push(erc20);
+      }
+    }
+    return erc20Asset;
   }
 
   async getDataWithPagination(query: any, keyData: string, explorer: Explorer) {

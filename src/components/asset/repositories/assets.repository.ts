@@ -40,7 +40,11 @@ export class AssetsRepository extends Repository<Asset> {
     );
 
     const builder = this.createQueryBuilder('asset')
-      .where('asset.name IS NOT NULL')
+      .where(
+        new Brackets((qb) => {
+          qb.where('asset.name IS NOT NULL').orWhere("asset.name <> ''");
+        }),
+      )
       .andWhere('asset.explorer_id=:explorerId', {
         explorerId,
       });
@@ -105,8 +109,8 @@ export class AssetsRepository extends Repository<Asset> {
         new Brackets((qb) => {
           qb.where('asset.denom =:denom', {
             denom: `${denom}`,
-          }).orWhere('asset.denom =:ibcDenom', {
-            ibcDenom: `ibc/${denom}`,
+          }).orWhere('asset.denom LIKE :ibcDenom', {
+            ibcDenom: `%/${denom}`,
           });
         }),
       )
