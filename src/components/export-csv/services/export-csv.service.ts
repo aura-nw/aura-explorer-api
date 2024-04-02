@@ -496,7 +496,6 @@ export class ExportCsvService {
       );
     }
     const data = response.transaction?.map((tx) => {
-      console.log(tx);
       return {
         TxHash: tx.tx_hash,
         MessageRaw: tx.evm_transaction.transaction_message.type,
