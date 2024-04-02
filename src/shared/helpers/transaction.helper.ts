@@ -258,7 +258,7 @@ export class TransactionHelper {
 
   static getFunctionNameByMethodId(methodId: string) {
     if (!methodId) {
-      return 'Transfer';
+      return EMethodContract.Default;
     }
     let methodTemp = '';
 

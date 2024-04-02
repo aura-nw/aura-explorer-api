@@ -118,6 +118,7 @@ export enum TYPE_EXPORT {
   FtsTxs = 'cw20-transfer',
   NftTxs = 'nft-transfer',
   EVMExecutedTxs = 'evm-executed',
+  Erc20Txs = 'erc20-transfer',
 }
 
 export enum RANGE_EXPORT {
@@ -308,4 +309,5 @@ export const ABI_CHECK_INTERFACE = [
 
 export enum EMethodContract {
   Creation = '60806040',
+  Default = 'Send',
 }
