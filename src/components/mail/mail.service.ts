@@ -45,10 +45,9 @@ export class MailService {
     }
   }
 
-  async sendMailResetPassword(user: User, token: string) {
-    const auraScanUrl = this.configService.get('auraScanUrl');
+  async sendMailResetPassword(user: User, url: string, token: string) {
     const resetPasswordPath = `/user/reset-password/email/${user.email}/code/${token}`;
-    const resetPasswordUrl = auraScanUrl + resetPasswordPath;
+    const resetPasswordUrl = url + resetPasswordPath;
     const logoPath = join(__dirname, 'images', AURA_LOGO);
 
     try {
