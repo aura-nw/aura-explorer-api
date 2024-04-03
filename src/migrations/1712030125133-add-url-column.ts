@@ -21,6 +21,8 @@ export class addUrlColumn1712030125133 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE \`explorer\` DROP COLUMN \`url\``);
+    await queryRunner.query(
+      `ALTER TABLE \`explorer\` DROP COLUMN \`explorer_url\``,
+    );
   }
 }
