@@ -80,12 +80,11 @@ export class ExportCsvService {
 
   private async executed(payload: ExportCsvParamDto, explorer: Explorer) {
     const fileName = `export-account-executed-${payload.address}.csv`;
-    const listAdress = payload.address.split(',');
     const graphqlQuery = {
       query: util.format(INDEXER_API_V2.GRAPH_QL.TX_EXECUTED, explorer.chainDb),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        address: listAdress,
+        address: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -135,8 +134,7 @@ export class ExportCsvService {
     userId,
     explorer: Explorer,
   ) {
-    const fileName = `export-account-evm-executed-${payload.address}.csv`;
-    const listAdress = payload.address.split(',');
+    const fileName = `export-account-evm-executed-${payload.evmAddress}.csv`;
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.TX_EVM_EXECUTED,
@@ -144,7 +142,7 @@ export class ExportCsvService {
       ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        address: listAdress,
+        address: payload.evmAddress,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -437,7 +435,7 @@ export class ExportCsvService {
     userId,
     explorer: Explorer,
   ) {
-    const fileName = `export-account-erc20-transfer-${payload.address}.csv`;
+    const fileName = `export-account-erc20-transfer-${payload.evmAddress}.csv`;
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.TX_ERC20_TRANSFER,
@@ -445,8 +443,8 @@ export class ExportCsvService {
       ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        to: payload.address,
-        from: payload.address,
+        to: payload.evmAddress,
+        from: payload.evmAddress,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -517,11 +515,11 @@ export class ExportCsvService {
             (item) => item.address === tx.to || item.evmAddress === tx.to,
           )?.nameTag || '',
         AmountIn:
-          tx.to === payload.address
+          tx.to === payload.evmAddress
             ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
             : '',
         AmountOut:
-          tx.to !== payload.address
+          tx.to !== payload.evmAddress
             ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
             : '',
         Symbol: tx.erc20_contract.symbol,
