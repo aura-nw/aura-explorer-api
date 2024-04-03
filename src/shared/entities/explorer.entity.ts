@@ -30,7 +30,7 @@ export class Explorer extends BaseEntityIncrementId {
   decimal: number;
 
   @Column({ name: 'explorer_url' })
-  exploreUrl: string;
+  explorerUrl: string;
 
   @OneToMany(() => PublicNameTag, (publicNameTag) => publicNameTag.explorer)
   publicNameTags: PublicNameTag[];

@@ -184,20 +184,20 @@ export class UserService {
     });
 
     if (!userToActive) {
-      return { msg: MSGS_ACTIVE_USER.EA002, url: explorer.exploreUrl };
+      return { msg: MSGS_ACTIVE_USER.EA002, url: explorer.explorerUrl };
     }
 
     if (userToActive.verifiedAt) {
-      return { msg: MSGS_ACTIVE_USER.EA001, url: explorer.exploreUrl };
+      return { msg: MSGS_ACTIVE_USER.EA001, url: explorer.explorerUrl };
     }
 
     if (userToActive.verificationToken === token) {
       userToActive.verifiedAt = new Date();
       await this.usersRepository.save(userToActive);
 
-      return { msg: MSGS_ACTIVE_USER.SA001, url: explorer.exploreUrl };
+      return { msg: MSGS_ACTIVE_USER.SA001, url: explorer.explorerUrl };
     } else {
-      return { msg: MSGS_ACTIVE_USER.EA003, url: explorer.exploreUrl };
+      return { msg: MSGS_ACTIVE_USER.EA003, url: explorer.explorerUrl };
     }
   }
 
@@ -312,7 +312,7 @@ export class UserService {
       QUEUES.SEND_MAIL.JOB,
       {
         user: user,
-        url: explorer.exploreUrl,
+        url: explorer.explorerUrl,
         mailType: USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD,
       },
       {
