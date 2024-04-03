@@ -1,9 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   RANGE_EXPORT,
   TYPE_EXPORT,
 } from '../../../shared/constants/transaction';
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class ExportCsvParamDto {
   @ApiProperty({
@@ -18,6 +18,10 @@ export class ExportCsvParamDto {
   @ApiProperty({ default: '' })
   @IsNotEmpty()
   address: string;
+
+  @ApiPropertyOptional({ default: '' })
+  @IsOptional()
+  evmAddress: string;
 
   @ApiProperty({
     enum: RANGE_EXPORT,
