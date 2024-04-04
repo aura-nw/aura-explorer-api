@@ -363,12 +363,13 @@ export class TokenProcessor implements OnModuleInit {
     for (const erc20 of listErc20Asset) {
       if (!erc20.name || !erc20.symbol) {
         const erc20Contract = listErc20Contract.find(
-          (erc20) => erc20.address === erc20.denom,
+          (item) => item.address === erc20.denom,
         );
-        erc20.symbol = erc20Contract?.symbol || '';
-        erc20.name = erc20Contract?.name || '';
-
-        erc20Asset.push(erc20);
+        if (erc20Contract) {
+          erc20.symbol = erc20Contract?.symbol || '';
+          erc20.name = erc20Contract?.name || '';
+          erc20Asset.push(erc20);
+        }
       }
     }
     return erc20Asset;
