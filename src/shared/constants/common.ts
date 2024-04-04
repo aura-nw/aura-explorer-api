@@ -73,6 +73,9 @@ export const INDEXER_API_V2 = {
             type
             content
           }
+          evm_transaction{
+            hash
+          }
         }
       }
     }`,
@@ -717,6 +720,7 @@ export const TX_HEADER = {
     'UnixTimestamp',
     'Fee',
     'BlockHeight',
+    'EvmTxHash',
   ],
   EVM_EXECUTED: [
     'EvmTxHash',
