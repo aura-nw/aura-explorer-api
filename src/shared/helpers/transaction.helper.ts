@@ -68,10 +68,12 @@ export class TransactionHelper {
       let tokenId;
       let contractAddress;
       let action;
+      let evmTxHash;
 
       switch (modeQuery) {
         case TYPE_EXPORT.ExecutedTxs:
           type = this.getTypeTx(element)?.type;
+          evmTxHash = element.evm_transaction?.hash || '';
           break;
         case TYPE_EXPORT.AuraTxs:
           const arrTemp = [];
@@ -161,6 +163,7 @@ export class TransactionHelper {
       return {
         code,
         tx_hash,
+        evmTxHash,
         type,
         status,
         amount,

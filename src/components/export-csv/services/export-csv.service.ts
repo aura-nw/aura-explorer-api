@@ -116,6 +116,7 @@ export class ExportCsvService {
     const data = txs?.map((tx) => {
       return {
         TxHash: tx.tx_hash,
+        EvmTxHash: tx.evmTxHash,
         MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
         Message: tx.lstType,
         Result: tx.status,
