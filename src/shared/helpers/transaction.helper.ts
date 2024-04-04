@@ -57,7 +57,7 @@ export class TransactionHelper {
       const fee = this.balanceOf(
         _.get(element, 'fee[0].amount') || 0,
         coinInfo.decimal,
-      ).toFixed(coinInfo.decimal);
+      );
       const height = _.get(element, 'height');
       const timestamp =
         _.get(element, 'timestamp') || _.get(element, 'tx.timestamp');
