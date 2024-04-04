@@ -109,8 +109,8 @@ export class AssetsRepository extends Repository<Asset> {
         new Brackets((qb) => {
           qb.where('asset.denom =:denom', {
             denom: `${denom}`,
-          }).orWhere('asset.denom LIKE :ibcDenom', {
-            ibcDenom: `%/${denom}`,
+          }).orWhere('asset.denom =:ibcDenom', {
+            ibcDenom: `ibc/${denom}`,
           });
         }),
       )
