@@ -61,9 +61,9 @@ export const INDEXER_API_V2 = {
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
     CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { transaction_messages { content } } cw721_contract {smart_contract {address}} sender}}}`,
-    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: [String!] = null) {
+    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $order: order_by = desc, $address: String = null) {
       %s {
-        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_in: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {id: $order}) {
           hash
           height
           fee
@@ -76,9 +76,9 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
-    TX_EVM_EXECUTED: `query QueryEvmTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $orderHeight: order_by = desc, $address: [String!] = null) {
+    TX_EVM_EXECUTED: `query QueryEvmTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $order: order_by = desc, $address: String = null) {
       %s {
-        transaction: evm_transaction(where: {from: {_in: $address}, transaction: {timestamp: {_gt: $startTime, _lt: $endTime}}, height: {_gt: $heightGT, _lt: $heightLT}}, limit: $limit, order_by: {height: $orderHeight}) {
+        transaction: evm_transaction(where: {from: {_eq: $address}, transaction: {timestamp: {_gt: $startTime, _lt: $endTime}}, height: {_gt: $heightGT, _lt: $heightLT}}, limit: $limit, order_by: {id: $order}) {
           from
           to
           hash
@@ -139,6 +139,32 @@ export const INDEXER_API_V2 = {
             transaction_messages {
               type
               content
+            }
+          }
+        }
+      }
+    }`,
+    TX_ERC20_TRANSFER: `query queryListTxsERC20($to: String = null, $from: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = 100, $actionIn: [String!] = null) {
+      %s {
+        transaction: erc20_activity(where: {_or: [{to: {_eq: $to}}, {from: {_eq: $from}}], action: {_in: $actionIn}, height: {_gt: $heightGT, _lt: $heightLT}, evm_transaction: {transaction: {timestamp: {_lte: $endTime, _gte: $startTime}}}}, order_by: {id: desc}, limit: $limit) {
+          action
+          amount
+          from
+          to
+          height
+          erc20_contract {
+            decimal
+            address
+            symbol
+          }
+          tx_hash
+          evm_transaction {
+            data
+            transaction {
+              timestamp
+            }
+            transaction_message {
+              type
             }
           }
         }
@@ -364,6 +390,7 @@ export const INDEXER_API_V2 = {
     TX_EXECUTED: 'QueryTxOfAccount',
     TX_EVM_EXECUTED: 'QueryEvmTxOfAccount',
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
+    TX_ERC20_TRANSFER: 'queryListTxsERC20',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
     EXECUTED_NOTIFICATION: 'ExecutedNotification',

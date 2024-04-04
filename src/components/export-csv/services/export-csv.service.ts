@@ -65,6 +65,8 @@ export class ExportCsvService {
           return this.nftTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.EVMExecutedTxs:
           return this.evmExecuted(payload, userId, explorer);
+        case TYPE_EXPORT.Erc20Txs:
+          return this.erc20Transfer(ctx, payload, userId, explorer);
         default:
           break;
       }
@@ -78,12 +80,11 @@ export class ExportCsvService {
 
   private async executed(payload: ExportCsvParamDto, explorer: Explorer) {
     const fileName = `export-account-executed-${payload.address}.csv`;
-    const listAdress = payload.address.split(',');
     const graphqlQuery = {
       query: util.format(INDEXER_API_V2.GRAPH_QL.TX_EXECUTED, explorer.chainDb),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        address: listAdress,
+        address: payload.address,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -133,8 +134,7 @@ export class ExportCsvService {
     userId,
     explorer: Explorer,
   ) {
-    const fileName = `export-account-evm-executed-${payload.address}.csv`;
-    const listAdress = payload.address.split(',');
+    const fileName = `export-account-evm-executed-${payload.evmAddress}.csv`;
     const graphqlQuery = {
       query: util.format(
         INDEXER_API_V2.GRAPH_QL.TX_EVM_EXECUTED,
@@ -142,7 +142,7 @@ export class ExportCsvService {
       ),
       variables: {
         limit: QUERY_LIMIT_RECORD,
-        address: listAdress,
+        address: payload.evmAddress,
         heightLT:
           payload.dataRangeType === RANGE_EXPORT.Height
             ? +payload.max + 1
@@ -424,6 +424,107 @@ export class ExportCsvService {
           TokenContractAddress: tx.contractAddress,
         });
       });
+    });
+
+    return { data, fileName, fields };
+  }
+
+  private async erc20Transfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
+    const fileName = `export-account-erc20-transfer-${payload.evmAddress}.csv`;
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_ERC20_TRANSFER,
+        explorer.chainDb,
+      ),
+      variables: {
+        limit: QUERY_LIMIT_RECORD,
+        to: payload.evmAddress,
+        from: payload.evmAddress,
+        heightLT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.max + 1
+            : null,
+        heightGT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.min > 1
+              ? +payload.min - 1
+              : 0
+            : null,
+        startTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+        endTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+        actionIn: [
+          'mint',
+          'burn',
+          'transfer',
+          'send',
+          'transfer_from',
+          'burn_from',
+          'send_from',
+        ],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_ERC20_TRANSFER,
+    };
+
+    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+
+    let lstPrivateName;
+    let fields = TX_HEADER.TOKEN_TRANSFER;
+    if (userId) {
+      fields = TX_HEADER.TOKEN_TRANSFER_NAMETAG;
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        userId,
+        null,
+        null,
+        LIMIT_PRIVATE_NAME_TAG,
+        0,
+        ctx.chainId,
+      );
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
+    const data = response.transaction?.map((tx) => {
+      return {
+        TxHash: tx.tx_hash,
+        MessageRaw: tx.evm_transaction.transaction_message.type,
+        Message: TransactionHelper.getFunctionNameByMethodId(
+          tx.evm_transaction.data?.substring(0, 8),
+        ),
+        Timestamp: tx.evm_transaction.transaction.timestamp,
+        UnixTimestamp: Math.floor(
+          new Date(tx.evm_transaction.transaction.timestamp).getTime() / 1000,
+        ),
+        FromAddress: tx.from,
+        FromAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) => item.address === tx.from || item.evmAddress === tx.from,
+          )?.nameTag || '',
+        ToAddress: tx.to,
+        ToAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) => item.address === tx.to || item.evmAddress === tx.to,
+          )?.nameTag || '',
+        AmountIn:
+          tx.to === payload.evmAddress
+            ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
+            : '',
+        AmountOut:
+          tx.to !== payload.evmAddress
+            ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
+            : '',
+        Symbol: tx.erc20_contract.symbol,
+        TokenContractAddress: tx.erc20_contract.address,
+      };
     });
 
     return { data, fileName, fields };
