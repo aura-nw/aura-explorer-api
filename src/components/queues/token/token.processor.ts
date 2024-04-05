@@ -207,9 +207,10 @@ export class TokenProcessor implements OnModuleInit {
 
   @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
   async syncNativeAssetHolder(job: Job): Promise<void> {
-    const listHolderStatistic = await this.getNewNativeHolders(
-      job.data.explorer,
-    );
+    const listHolderStatistic = await this.getHolders(job.data.explorer, [
+      ASSETS_TYPE.IBC,
+      ASSETS_TYPE.NATIVE,
+    ]);
 
     await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
@@ -225,13 +226,14 @@ export class TokenProcessor implements OnModuleInit {
     await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
 
-  async getNewNativeHolders(
+  async getHolders(
     explorer: Explorer,
+    type: string[],
   ): Promise<TokenHolderStatistic[]> {
     const listHolder: TokenHolderStatistic[] = [];
     const nativeAsset = await this.assetsRepository.find({
       where: {
-        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE]),
+        type: In(type),
         explorer: { id: explorer.id },
       },
     });
@@ -340,8 +342,12 @@ export class TokenProcessor implements OnModuleInit {
   @Process(QUEUES.TOKEN.JOB_SYNC_ERC20_ASSET_HOLDER)
   async syncErc20AssetHolder(job: Job): Promise<void> {
     const erc20Asset = await this.getNewErc20Info(job.data.explorer);
+    const listHolderStatistic = await this.getHolders(job.data.explorer, [
+      ASSETS_TYPE.ERC20,
+    ]);
 
     await this.assetsRepository.save(erc20Asset);
+    await this.upsertTokenHolderStatistic(listHolderStatistic);
   }
 
   async getNewErc20Info(explorer: Explorer): Promise<Asset[]> {
@@ -381,7 +387,7 @@ export class TokenProcessor implements OnModuleInit {
 
     do {
       const { data } = await this.serviceUtil.fetchDataFromGraphQL(query);
-      const newData = data[explorer.chainDb][keyData] || [];
+      const newData = data ? data[explorer.chainDb][keyData] : [];
 
       if (keyData === 'asset') {
         newData.map((asset) => {
