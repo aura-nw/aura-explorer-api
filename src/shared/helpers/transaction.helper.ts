@@ -104,7 +104,9 @@ export class TransactionHelper {
                 denom,
                 action,
                 denomOrigin:
-                  coin.denom?.indexOf('ibc') === -1 ? '' : coin.denom,
+                  coin.denom?.indexOf('ibc') === -1
+                    ? coinInfo.minimalDenom
+                    : coin.denom,
                 amountTemp: coin.amount,
                 decimal: asset.decimal || coinInfo.decimal,
               };

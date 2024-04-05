@@ -181,6 +181,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
@@ -286,6 +287,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
@@ -391,6 +393,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
@@ -489,6 +492,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
@@ -589,6 +593,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
