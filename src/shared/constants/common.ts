@@ -365,6 +365,17 @@ export const INDEXER_API_V2 = {
       }
     }
   `,
+    ERC20_INFO: `query Erc20Info($id_gt: Int = null) {
+      %s {
+        erc20_contract(where: {name: {_neq: ""}, id: {_gt: $id_gt}}, order_by: {id: asc}) {
+          name
+          address
+          symbol
+          id
+        }
+      }
+    }
+`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -395,6 +406,7 @@ export const INDEXER_API_V2 = {
     LIST_ACCOUNT: 'ListAccount',
     ASSETS: 'Assets',
     CW20_HOLDER_STAT: 'Cw20HolderStat',
+    ERC20_INFO: 'Erc20Info',
   },
   MAX_REQUEST: 100,
 };
@@ -549,6 +561,7 @@ export enum ASSETS_TYPE {
   IBC = 'IBC_TOKEN',
   CW20 = 'CW20_TOKEN',
   NATIVE = 'NATIVE',
+  ERC20 = 'ERC20_TOKEN',
 }
 
 export enum SOULBOUND_TOKEN_STATUS {
@@ -660,6 +673,7 @@ export const QUEUES = {
     JOB_SYNC_ASSET: 'sync-asset',
     JOB_SYNC_NATIVE_ASSET_HOLDER: 'sync-native-asset-holder',
     JOB_SYNC_CW20_ASSET_HOLDER: 'sync-cw20-asset-holder',
+    JOB_SYNC_ERC20_ASSET_HOLDER: 'sync-erc20-asset-holder',
     JOB_CLEAN_ASSET_HOLDER: 'clean-asset-holder',
   },
   CW4973: {

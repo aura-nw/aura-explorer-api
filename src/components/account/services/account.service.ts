@@ -237,11 +237,11 @@ export class AccountService {
       `${this.getTotalBalanceByListAddress.name} was called!`,
     );
     try {
-      if (address.length > LIMIT_HOLDER_ADDRESS) {
-        throw new BadRequestException(
-          `You have reached out of ${LIMIT_HOLDER_ADDRESS} max limitation of address.`,
-        );
-      }
+      // if (address.length > LIMIT_HOLDER_ADDRESS) {
+      //   throw new BadRequestException(
+      //     `You have reached out of ${LIMIT_HOLDER_ADDRESS} max limitation of address.`,
+      //   );
+      // }
 
       const explorer = await this.explorerRepository.findOne({
         chainId: ctx.chainId,
