@@ -387,7 +387,7 @@ export class TokenProcessor implements OnModuleInit {
 
     do {
       const { data } = await this.serviceUtil.fetchDataFromGraphQL(query);
-      const newData = data[explorer.chainDb][keyData] || [];
+      const newData = data ? data[explorer.chainDb][keyData] : [];
 
       if (keyData === 'asset') {
         newData.map((asset) => {
