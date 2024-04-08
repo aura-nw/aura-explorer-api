@@ -682,7 +682,7 @@ export class NotificationProcessor {
       const dailyNotification = item.user?.userActivities?.find(
         (activity) =>
           activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS &&
-          activity.explorer.id === explorer.id,
+          activity.explorer?.id === explorer.id,
       );
       return dailyNotification?.total >=
         this.notificationConfig.limitNotifications
@@ -751,7 +751,7 @@ export class NotificationProcessor {
       const dailyNotification = item.user?.userActivities?.find(
         (activity) =>
           activity.type === USER_ACTIVITIES.DAILY_NOTIFICATIONS &&
-          activity.explorer.id === explorer.id,
+          activity.explorer?.id === explorer.id,
       );
       return dailyNotification?.total >=
         this.notificationConfig.limitNotifications
