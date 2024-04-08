@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { AkcLogger, Asset, RequestContext } from '../../../shared';
+import { ASSETS_TYPE, AkcLogger, Asset, RequestContext } from '../../../shared';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { AssetParamsDto } from '../dtos/asset-params.dto';
 import { AssetsTokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
-import { In, MoreThan, Not, Repository } from 'typeorm';
+import { In, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from 'src/shared/entities/token-holder-statistic.entity';
 import * as moment from 'moment';
@@ -79,7 +79,14 @@ export class AssetService {
       });
     } else {
       return await this.assetsRepository.find({
-        where: { coinId: Not(''), explorer: { id: explorer.id } },
+        where: [
+          { coinId: Not(''), explorer: { id: explorer.id } },
+          {
+            type: ASSETS_TYPE.ERC20,
+            name: Not(IsNull()),
+            explorer: { id: explorer.id },
+          },
+        ],
       });
     }
   }
