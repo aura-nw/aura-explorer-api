@@ -620,6 +620,7 @@ export class NotificationProcessor {
         activity.type = USER_ACTIVITIES.DAILY_NOTIFICATIONS;
         activity.user = user;
         activity.total = 1;
+        activity.explorer = explorer;
         await this.userActivityRepository.save(activity);
       }
     }
