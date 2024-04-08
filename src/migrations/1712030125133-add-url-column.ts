@@ -9,13 +9,10 @@ export class addUrlColumn1712030125133 implements MigrationInterface {
     );
     await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query(
-      `UPDATE explorer set explorer_url = 'https://explorer.dev.aura.network' where id = 1`,
+      `UPDATE explorer set explorer_url = 'https://serenity.aurascan.io' where id = 1`,
     );
     await queryRunner.query(
       `UPDATE explorer set explorer_url = 'https://sei.dev.aurascan.io' where id = 2`,
-    );
-    await queryRunner.query(
-      `UPDATE explorer set explorer_url = 'https://evmos.dev.aurascan.io' where id = 3`,
     );
     await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
   }
