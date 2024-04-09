@@ -666,9 +666,9 @@ export const QUEUES = {
     QUEUE_NAME: 'send-mail',
     JOB: 'job-send-mail',
   },
-  ADDRESS: {
-    QUEUE_NAME: 'address',
-    JOB_MIGRATE_EVM_ADDRESS: 'migrate-evm-address',
+  MIGRATION: {
+    QUEUE_NAME: 'migration',
+    JOB_MIGRATE_EVM_ADDRESS: 'migration-evm-address',
   },
   TOKEN: {
     QUEUE_NAME: 'asset',

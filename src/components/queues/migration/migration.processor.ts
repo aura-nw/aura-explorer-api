@@ -11,14 +11,14 @@ import { LENGTH, QUEUES } from '../../../shared';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
-import { Equal, IsNull, Not, Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from '../../../shared/entities/explorer.entity';
 import { convertBech32AddressToEvmAddress } from 'src/shared/utils/service.util';
 
-@Processor(QUEUES.ADDRESS.QUEUE_NAME)
-export class AddressProcessor implements OnModuleInit {
-  private readonly logger = new Logger(AddressProcessor.name);
+@Processor(QUEUES.MIGRATION.QUEUE_NAME)
+export class MigrationProcessor implements OnModuleInit {
+  private readonly logger = new Logger(MigrationProcessor.name);
 
   constructor(
     @InjectRepository(PrivateNameTag)
@@ -29,7 +29,7 @@ export class AddressProcessor implements OnModuleInit {
     private readonly watchListRepo: Repository<WatchList>,
     @InjectRepository(Explorer)
     private readonly explorerRepository: Repository<Explorer>,
-    @InjectQueue(QUEUES.ADDRESS.QUEUE_NAME)
+    @InjectQueue(QUEUES.MIGRATION.QUEUE_NAME)
     private readonly addressQueue: Queue,
   ) {
     this.logger.log(
@@ -46,7 +46,7 @@ export class AddressProcessor implements OnModuleInit {
 
     explorer.forEach((explorer, index) => {
       this.addressQueue.add(
-        QUEUES.ADDRESS.JOB_MIGRATE_EVM_ADDRESS,
+        QUEUES.MIGRATION.JOB_MIGRATE_EVM_ADDRESS,
         { explorer },
         {
           repeat: { cron: `0 ${index} * * *` },
@@ -55,7 +55,7 @@ export class AddressProcessor implements OnModuleInit {
     });
   }
 
-  @Process(QUEUES.ADDRESS.JOB_MIGRATE_EVM_ADDRESS)
+  @Process(QUEUES.MIGRATION.JOB_MIGRATE_EVM_ADDRESS)
   async handleMigrateEvmAddress(job: Job) {
     this.logger.log(
       `============== handleMigrateEvmAddress was run! ==============`,

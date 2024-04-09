@@ -1,7 +1,7 @@
 import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { QUEUES, SharedModule } from '../../../shared';
-import { AddressProcessor } from './address.processor';
+import { MigrationProcessor } from './migration.processor';
 import { ServiceUtil } from '../../../shared/utils/service.util';
 import { ConfigModule } from '@nestjs/config';
 import { WatchList } from '../../../shared/entities/watch-list.entity';
@@ -23,14 +23,14 @@ import { HttpModule } from '@nestjs/axios';
       Explorer,
     ]),
     BullModule.registerQueueAsync({
-      name: QUEUES.ADDRESS.QUEUE_NAME,
+      name: QUEUES.MIGRATION.QUEUE_NAME,
     }),
   ],
-  providers: [AddressProcessor, ServiceUtil],
+  providers: [MigrationProcessor, ServiceUtil],
   exports: [
     BullModule.registerQueueAsync({
-      name: QUEUES.ADDRESS.QUEUE_NAME,
+      name: QUEUES.MIGRATION.QUEUE_NAME,
     }),
   ],
 })
-export class AddressModule {}
+export class MigrationModule {}
