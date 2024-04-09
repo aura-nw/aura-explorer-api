@@ -77,7 +77,8 @@
     "uuid": "^8.3.2",
     "web3-validator": "^2.0.4",
     "winston": "^3.3.3",
-    "ethers": "^6.11.1"
+    "ethers": "^6.11.1",
+    "crypto-addr-codec": "^0.1.8"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
