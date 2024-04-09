@@ -15,8 +15,10 @@ export class SendMailProcessor {
     if (mailType === USER_ACTIVITIES.SEND_MAIL_VERIFY) {
       await this.mailService.sendMailVerify(user, user.verificationToken);
     } else if (mailType === USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD) {
+      const url = job.data.url;
       await this.mailService.sendMailResetPassword(
         user,
+        url,
         user.resetPasswordToken,
       );
     }

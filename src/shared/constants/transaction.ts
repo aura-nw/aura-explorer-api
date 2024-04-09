@@ -49,6 +49,7 @@ export enum TRANSACTION_TYPE_ENUM {
   ExecuteAuthz = '/cosmos.authz.v1beta1.MsgExec',
   RevokeAuthz = '/cosmos.authz.v1beta1.MsgRevoke',
   MsgMigrateContract = '/cosmwasm.wasm.v1.MsgMigrateContract',
+  MsgEthereumTx = '/ethermint.evm.v1.MsgEthereumTx',
   Fail = 'FAILED',
 }
 
@@ -98,6 +99,7 @@ export enum TypeTransaction {
   ExecuteAuthz = 'Execute Authz',
   RevokeAuthz = 'Revoke Authz',
   MsgMigrateContract = 'Migrate Contract',
+  MsgEthereumTx = 'EthereumTx',
   Fail = 'Fail',
 }
 
@@ -115,6 +117,8 @@ export enum TYPE_EXPORT {
   AuraTxs = 'native-transfer',
   FtsTxs = 'cw20-transfer',
   NftTxs = 'nft-transfer',
+  EVMExecutedTxs = 'evm-executed',
+  Erc20Txs = 'erc20-transfer',
 }
 
 export enum RANGE_EXPORT {
@@ -280,6 +284,30 @@ export const TYPE_TRANSACTION = [
     value: TypeTransaction.MsgMigrateContract,
   },
   { label: TRANSACTION_TYPE_ENUM.Fail, value: TypeTransaction.Fail },
+  {
+    label: TRANSACTION_TYPE_ENUM.MsgEthereumTx,
+    value: TypeTransaction.MsgEthereumTx,
+  },
 ];
 
 export const NULL_ADDRESS = 'Null address';
+
+export const ABI_CHECK_INTERFACE = [
+  'safeTransferFrom(address,address,uint256)',
+  'transferFrom(address,address,uint256)',
+  'approve(address,uint256)',
+  'setApprovalForAll(address,bool)',
+  'isApprovedForAll(address,address)',
+  'safeTransferFrom(address,address,uint256,bytes)',
+  'transfer(address,uint256)',
+  'approve(address,uint256)',
+  'transferFrom(address,address,uint256)',
+  'safeTransferFrom(address,address,uint256,uint256,bytes)',
+  'safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)',
+  'setApprovalForAll(address,bool)',
+];
+
+export enum EMethodContract {
+  Creation = '60806040',
+  Default = 'Send',
+}
