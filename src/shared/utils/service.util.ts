@@ -10,9 +10,12 @@ import {
   COSMOS,
   CW4973_CONTRACT,
   DEFAULT_IPFS,
+  EVM_ADDRESS_PREFIX,
   NAME_TAG_TYPE,
 } from '../constants';
 import { sha256 } from 'js-sha256';
+import { fromBech32, toBech32 } from '@cosmjs/encoding';
+import { stripHexPrefix, toChecksumAddress } from 'crypto-addr-codec';
 
 @Injectable()
 export class ServiceUtil {
@@ -199,4 +202,94 @@ export function isValidBench32Address(
   } catch (error) {
     return false;
   }
+}
+
+/**
+ * Creates a Bech32 encoder function with the given prefix.
+ *
+ * @param {string} prefix - The prefix for the Bech32 encoding.
+ * @return {function} - A function that accepts a Buffer and returns the Bech32 encoded string.
+ */
+function makeBech32Encoder(prefix: string) {
+  return (data: Buffer) => toBech32(prefix, data);
+}
+
+/**
+ * Returns a function that decodes a Bech32 string into a Buffer, using the provided currentPrefix.
+ *
+ * @param {string} input - The Bech32 string to decode.
+ * @return {Buffer} The decoded Buffer.
+ */
+function makeBech32Decoder(currentPrefix: string) {
+  return (input: string) => {
+    const { prefix, data } = fromBech32(input);
+    if (prefix !== currentPrefix) {
+      throw Error('Unrecognised address format');
+    }
+    return Buffer.from(data);
+  };
+}
+
+/**
+ * Creates a checksummed hex decoder function.
+ *
+ * @return {(data: string) => Buffer} The checksummed hex decoder function
+ */
+function makeChecksummedHexDecoder() {
+  return (data: string) => {
+    return Buffer.from(stripHexPrefix(data), 'hex');
+  };
+}
+
+/**
+ * Returns a function that takes a Buffer and returns the checksummed hex encoding of the data.
+ *
+ * @param {number} chainId - The chain ID to be used for checksum calculation (optional)
+ * @return {Function} - A function that takes a Buffer and returns the checksummed hex encoding
+ */
+function makeChecksummedHexEncoder(chainId?: number) {
+  return (data: Buffer) =>
+    toChecksumAddress(data.toString('hex'), chainId || null);
+}
+
+/**
+ * Converts a Bech32 address to an EVM address.
+ *
+ * @param {string} prefix - The prefix of the Bech32 address.
+ * @param {string} bech32Address - The Bech32 address to be converted.
+ * @return {string} The converted EVM address.
+ */
+export function convertBech32AddressToEvmAddress(
+  prefix: string,
+  bech32Address: string,
+): string {
+  try {
+    const data = makeBech32Decoder(prefix)(bech32Address);
+    return makeChecksummedHexEncoder()(data)?.toLowerCase();
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Converts an EVM address to a Bech32 address with the specified prefix.
+ *
+ * @param {string} prefix - The prefix for the Bech32 address
+ * @param {string} ethAddress - The Ethereum address to convert
+ * @return {string} The converted Bech32 address
+ */
+export function convertEvmAddressToBech32Address(
+  prefix: string,
+  ethAddress: string,
+): string {
+  let result = ethAddress;
+  if (result.startsWith(EVM_ADDRESS_PREFIX)) {
+    try {
+      const data = makeChecksummedHexDecoder()(ethAddress);
+      result = makeBech32Encoder(prefix)(data);
+    } catch (err) {
+      return null;
+    }
+  }
+  return result?.toLowerCase();
 }

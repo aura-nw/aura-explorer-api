@@ -666,6 +666,10 @@ export const QUEUES = {
     QUEUE_NAME: 'send-mail',
     JOB: 'job-send-mail',
   },
+  ADDRESS: {
+    QUEUE_NAME: 'address',
+    JOB_MIGRATE_EVM_ADDRESS: 'migrate-evm-address',
+  },
   TOKEN: {
     QUEUE_NAME: 'asset',
     JOB_SYNC_TOKEN_PRICE: 'sync-token-price',
@@ -946,6 +950,8 @@ export const COSMOS = {
     CONTRACT_HEX: 59,
   },
 };
+
+export const EVM_ADDRESS_PREFIX = '0x';
 
 export const EVM_EXTENSIONS = [
   '0x0000000000000000000000000000000000000001',

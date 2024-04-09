@@ -53,6 +53,7 @@ async function bootstrap() {
     createQueueAdapter(QUEUES.TOKEN.QUEUE_NAME, configService),
     createQueueAdapter(QUEUES.CW4973.QUEUE_NAME, configService),
     createQueueAdapter(QUEUES.NOTIFICATION.QUEUE_NAME, configService),
+    createQueueAdapter(QUEUES.ADDRESS.QUEUE_NAME, configService),
   ];
 
   const serverAdapter = new ExpressAdapter();
