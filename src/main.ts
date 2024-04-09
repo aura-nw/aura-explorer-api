@@ -8,12 +8,7 @@ import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import * as cookieParser from 'cookie-parser';
 
-import {
-  VALIDATION_PIPE_OPTIONS,
-  RequestIdMiddleware,
-  QUEUES,
-  SYNC_SERVICE_QUEUES,
-} from './shared';
+import { VALIDATION_PIPE_OPTIONS, RequestIdMiddleware, QUEUES } from './shared';
 
 import { AppModule } from './app.module';
 import { useContainer } from 'class-validator';
@@ -49,7 +44,6 @@ async function bootstrap() {
   //bull-board
   const queues = [
     createQueueAdapter(QUEUES.SEND_MAIL.QUEUE_NAME, configService),
-    createQueueAdapter(SYNC_SERVICE_QUEUES.SMART_CONTRACT, configService),
     createQueueAdapter(QUEUES.TOKEN.QUEUE_NAME, configService),
     createQueueAdapter(QUEUES.CW4973.QUEUE_NAME, configService),
     createQueueAdapter(QUEUES.NOTIFICATION.QUEUE_NAME, configService),

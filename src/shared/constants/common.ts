@@ -699,10 +699,6 @@ export const QUEUES = {
   },
 };
 
-export const SYNC_SERVICE_QUEUES = {
-  SMART_CONTRACT: 'smart-contracts',
-};
-
 export const MSGS_USER = {
   EU001: { message: 'User must be verified.', code: 'EU001' },
   EU002: { message: 'Wrong email or password.', code: 'EU002' },
