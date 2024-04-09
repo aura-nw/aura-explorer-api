@@ -61,9 +61,9 @@ export const INDEXER_API_V2 = {
     CW20_HOLDER: `query CW20Holder($owner: String) { %s { cw20_contract(where: {cw20_holders: {address: {_eq: $owner}}}) { %s } } }`,
     VALIDATORS: `query Validators { %s { validator { %s } } }`,
     CW4973_STATUS: `query QueryCW4973Status($heightGT: Int, $limit: Int) { ${INDEXER_V2_DB} { cw721_activity(where: {cw721_contract: {smart_contract: {name: {_eq: "crates.io:cw4973"}}}, height: {_gt: $heightGT}}, order_by: {height: asc}, limit: $limit) { height tx { transaction_messages { content } } cw721_contract {smart_contract {address}} sender}}}`,
-    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $orderHeight: order_by = desc, $address: String = null) {
+    TX_EXECUTED: `query QueryTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $limit: Int = null, $listTxMsgType: [String!] = null, $listTxMsgTypeNotIn: [String!] = null, $heightGT: Int = null, $heightLT: Int = null, $order: order_by = desc, $address: String = null) {
       %s {
-        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {height: $orderHeight}) {
+        transaction(where: {timestamp: {_lte: $endTime, _gte: $startTime}, transaction_messages: {type: {_in: $listTxMsgType, _nin: $listTxMsgTypeNotIn}, sender: {_eq: $address}}, _and: [{height: {_gt: $heightGT, _lt: $heightLT}}]}, limit: $limit, order_by: {id: $order}) {
           hash
           height
           fee
@@ -72,6 +72,27 @@ export const INDEXER_API_V2 = {
           transaction_messages {
             type
             content
+          }
+          evm_transaction{
+            hash
+          }
+        }
+      }
+    }`,
+    TX_EVM_EXECUTED: `query QueryEvmTxOfAccount($startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = null, $order: order_by = desc, $address: String = null) {
+      %s {
+        transaction: evm_transaction(where: {from: {_eq: $address}, transaction: {timestamp: {_gt: $startTime, _lt: $endTime}}, height: {_gt: $heightGT, _lt: $heightLT}}, limit: $limit, order_by: {id: $order}) {
+          from
+          to
+          hash
+          height
+          data
+          transaction {
+            timestamp
+            hash
+            transaction_messages {
+              content
+            }
           }
         }
       }
@@ -121,6 +142,32 @@ export const INDEXER_API_V2 = {
             transaction_messages {
               type
               content
+            }
+          }
+        }
+      }
+    }`,
+    TX_ERC20_TRANSFER: `query queryListTxsERC20($to: String = null, $from: String = null, $startTime: timestamptz = null, $endTime: timestamptz = null, $heightGT: Int = null, $heightLT: Int = null, $limit: Int = 100, $actionIn: [String!] = null) {
+      %s {
+        transaction: erc20_activity(where: {_or: [{to: {_eq: $to}}, {from: {_eq: $from}}], action: {_in: $actionIn}, height: {_gt: $heightGT, _lt: $heightLT}, evm_transaction: {transaction: {timestamp: {_lte: $endTime, _gte: $startTime}}}}, order_by: {id: desc}, limit: $limit) {
+          action
+          amount
+          from
+          to
+          height
+          erc20_contract {
+            decimal
+            address
+            symbol
+          }
+          tx_hash
+          evm_transaction {
+            data
+            transaction {
+              timestamp
+            }
+            transaction_message {
+              type
             }
           }
         }
@@ -278,7 +325,7 @@ export const INDEXER_API_V2 = {
       $from: timestamptz = null
       $id_gt: Int = null
     ) {
-      ${INDEXER_V2_DB} {
+      %s {
         asset(
           where: { updated_at: { _gte: $from }, id: { _gt: $id_gt } }
           order_by: { id: asc }
@@ -295,7 +342,7 @@ export const INDEXER_API_V2 = {
     }
   `,
     CW20_HOLDER_STAT: `query Cw20HolderStat($date_eq: date = null, $id_gt: Int = null) {
-      ${INDEXER_V2_DB} {
+      %s {
         cw20_contract(
           where: { track: { _eq: true }, id: { _gt: $id_gt } }
           order_by: { id: asc }
@@ -318,6 +365,17 @@ export const INDEXER_API_V2 = {
       }
     }
   `,
+    ERC20_INFO: `query Erc20Info($id_gt: Int = null) {
+      %s {
+        erc20_contract(where: {name: {_neq: ""}, id: {_gt: $id_gt}}, order_by: {id: asc}) {
+          name
+          address
+          symbol
+          id
+        }
+      }
+    }
+`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -333,7 +391,9 @@ export const INDEXER_API_V2 = {
     VALIDATORS: 'Validators',
     CW4973_STATUS: 'QueryCW4973Status',
     TX_EXECUTED: 'QueryTxOfAccount',
+    TX_EVM_EXECUTED: 'QueryEvmTxOfAccount',
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
+    TX_ERC20_TRANSFER: 'queryListTxsERC20',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
     TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
     EXECUTED_NOTIFICATION: 'ExecutedNotification',
@@ -346,6 +406,7 @@ export const INDEXER_API_V2 = {
     LIST_ACCOUNT: 'ListAccount',
     ASSETS: 'Assets',
     CW20_HOLDER_STAT: 'Cw20HolderStat',
+    ERC20_INFO: 'Erc20Info',
   },
   MAX_REQUEST: 100,
 };
@@ -358,8 +419,8 @@ export enum AURA_INFO {
 }
 
 export enum LENGTH {
-  CONTRACT_ADDRESS = 63,
-  ACCOUNT_ADDRESS = 43,
+  CONTRACT_ADDRESS_NO_PREFIX = 59,
+  ACCOUNT_ADDRESS_NO_PREFIX = 39,
 }
 
 export const ERROR_MAP = {
@@ -450,7 +511,7 @@ export const INFRASTRUCTURE_ERROR = {
 export const ADMIN_ERROR_MAP = {
   DUPLICATE_ADDRESS: {
     Code: 'E001',
-    Message: 'This address has already been set name tag',
+    Message: 'This address has already been set %s name tag',
   },
   DUPLICATE_TAG: {
     Code: 'E002',
@@ -463,6 +524,14 @@ export const ADMIN_ERROR_MAP = {
   INVALID_FORMAT: {
     Code: 'E003',
     Message: `Invalid %s address format`,
+  },
+  INVALID_TYPE_ADDRESS: {
+    Code: 'E007',
+    Message: 'Invalid type address',
+  },
+  INVALID_EVM_FORMAT: {
+    Code: 'E003',
+    Message: `Invalid EVM address format`,
   },
   INVALID_NAME_TAG: {
     Code: 'E004',
@@ -492,6 +561,7 @@ export enum ASSETS_TYPE {
   IBC = 'IBC_TOKEN',
   CW20 = 'CW20_TOKEN',
   NATIVE = 'NATIVE',
+  ERC20 = 'ERC20_TOKEN',
 }
 
 export enum SOULBOUND_TOKEN_STATUS {
@@ -603,6 +673,7 @@ export const QUEUES = {
     JOB_SYNC_ASSET: 'sync-asset',
     JOB_SYNC_NATIVE_ASSET_HOLDER: 'sync-native-asset-holder',
     JOB_SYNC_CW20_ASSET_HOLDER: 'sync-cw20-asset-holder',
+    JOB_SYNC_ERC20_ASSET_HOLDER: 'sync-erc20-asset-holder',
     JOB_CLEAN_ASSET_HOLDER: 'clean-asset-holder',
   },
   CW4973: {
@@ -663,6 +734,22 @@ export const TX_HEADER = {
     'UnixTimestamp',
     'Fee',
     'BlockHeight',
+    'EvmTxHash',
+  ],
+  EVM_EXECUTED: [
+    'EvmTxHash',
+    'Method',
+    'Height',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'ToAddress',
+    'Amount',
+    'Symbol',
+    'ComosTxHash',
   ],
   COIN_TRANSFER: [
     'TxHash',
@@ -710,6 +797,23 @@ export const TX_HEADER = {
     'TokenIdIn',
     'TokenIdOut',
     'NFTContractAddress',
+  ],
+  EVM_EXECUTED_NAMETAG: [
+    'EvmTxHash',
+    'Method',
+    'Height',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'Amount',
+    'Symbol',
+    'ComosTxHash',
   ],
   COIN_TRANSFER_NAMETAG: [
     'TxHash',
@@ -829,6 +933,7 @@ export const RPC_QUERY_URL = {
     '/cosmos.distribution.v1beta1.Query/DelegationTotalRewards',
   VALIDATOR_COMMISSION:
     '/cosmos.distribution.v1beta1.Query/ValidatorCommission',
+  EVM_CODES_ADDRESS: '/ethermint.evm.v1.Query/Code',
 };
 
 export const TYPE_ORM_ERROR_CODE = {
@@ -841,3 +946,21 @@ export const COSMOS = {
     CONTRACT_HEX: 59,
   },
 };
+
+export const EVM_EXTENSIONS = [
+  '0x0000000000000000000000000000000000000001',
+  '0x0000000000000000000000000000000000000002',
+  '0x0000000000000000000000000000000000000003',
+  '0x0000000000000000000000000000000000000004',
+  '0x0000000000000000000000000000000000000005',
+  '0x0000000000000000000000000000000000000006',
+  '0x0000000000000000000000000000000000000007',
+  '0x0000000000000000000000000000000000000008',
+  '0x0000000000000000000000000000000000000009',
+  '0x0000000000000000000000000000000000000400',
+  '0x0000000000000000000000000000000000000800',
+  '0x0000000000000000000000000000000000000801',
+  '0x0000000000000000000000000000000000000802',
+  '0x0000000000000000000000000000000000000803',
+  '0x0000000000000000000000000000000000000804',
+];

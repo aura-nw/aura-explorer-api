@@ -17,4 +17,7 @@ export class UpdatePublicNameTagParamsDto {
 
   @ApiProperty({ default: '' })
   address: string;
+
+  @ApiProperty({ default: '' })
+  evmAddress: string;
 }

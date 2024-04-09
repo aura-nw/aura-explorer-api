@@ -29,6 +29,9 @@ export class Explorer extends BaseEntityIncrementId {
   @Column({ name: 'decimal' })
   decimal: number;
 
+  @Column({ name: 'explorer_url' })
+  explorerUrl: string;
+
   @OneToMany(() => PublicNameTag, (publicNameTag) => publicNameTag.explorer)
   publicNameTags: PublicNameTag[];
 
@@ -49,4 +52,7 @@ export class Explorer extends BaseEntityIncrementId {
 
   @OneToMany(() => Notification, (userActivity) => userActivity.explorer)
   notifications: Notification[];
+
+  @OneToMany(() => Asset, (asset) => asset.explorer)
+  assets: Asset[];
 }

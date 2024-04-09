@@ -8,13 +8,19 @@ import { AssetController } from './controllers/asset.controller';
 import { Asset } from 'src/shared';
 import { AssetsRepository } from './repositories/assets.repository';
 import { TokenHolderStatistic } from 'src/shared/entities/token-holder-statistic.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
     SharedModule,
     HttpModule,
     ConfigModule,
-    TypeOrmModule.forFeature([Asset, AssetsRepository, TokenHolderStatistic]),
+    TypeOrmModule.forFeature([
+      Asset,
+      AssetsRepository,
+      TokenHolderStatistic,
+      Explorer,
+    ]),
   ],
   providers: [AssetService],
   controllers: [AssetController],

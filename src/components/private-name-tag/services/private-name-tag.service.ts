@@ -6,8 +6,6 @@ import {
 import {
   ADMIN_ERROR_MAP,
   AkcLogger,
-  LENGTH,
-  NAME_TAG_TYPE,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
@@ -17,12 +15,12 @@ import { CreatePrivateNameTagParamsDto } from '../dtos/create-private-name-tag-p
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { UpdatePrivateNameTagParamsDto } from '../dtos/update-private-name-tag-params.dto';
 import { EncryptionService } from '../../encryption/encryption.service';
-import { isValidBench32Address } from '../../../shared/utils/service.util';
 import { Not, Repository } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import * as util from 'util';
+import { VerifyAddressUtil } from '../../../shared/utils/verify-address.util';
 
 @Injectable()
 export class PrivateNameTagService {
@@ -30,6 +28,7 @@ export class PrivateNameTagService {
 
   constructor(
     private readonly logger: AkcLogger,
+    private verifyAddressUtil: VerifyAddressUtil,
     private encryptionService: EncryptionService,
     private privateNameTagRepository: PrivateNameTagRepository,
     @InjectRepository(Explorer)
@@ -90,6 +89,7 @@ export class PrivateNameTagService {
       }
       const entity = new PrivateNameTag();
       entity.address = req.address;
+      entity.evmAddress = req.evmAddress;
       entity.isFavorite = req.isFavorite;
       entity.type = req.type;
       entity.note = req.note;
@@ -114,7 +114,11 @@ export class PrivateNameTagService {
     req: UpdatePrivateNameTagParamsDto,
   ) {
     this.logger.log(ctx, `${this.updateNameTag.name} was called!`);
-    const request: CreatePrivateNameTagParamsDto = { ...req, address: '' };
+    const request: CreatePrivateNameTagParamsDto = {
+      ...req,
+      address: '',
+      evmAddress: '',
+    };
     const errorMsg = await this.validate(id, ctx, request, false);
     if (errorMsg) {
       return errorMsg;
@@ -126,7 +130,7 @@ export class PrivateNameTagService {
     if (!entity) {
       throw new NotFoundException('Private Name Tag not found');
     }
-
+    entity.evmAddress = req.evmAddress;
     entity.createdBy = ctx.user.id;
     entity.updatedAt = new Date();
 
@@ -185,30 +189,19 @@ export class PrivateNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = isValidBench32Address(
+      const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
-        explorer.addressPrefix,
+        req.evmAddress,
+        req.type,
+        explorer,
       );
-
-      if (
-        !validFormat ||
-        (req.address.length === LENGTH.CONTRACT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.CONTRACT) ||
-        (req.address.length === LENGTH.ACCOUNT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.ACCOUNT)
-      ) {
-        return {
-          code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-          message: util.format(
-            ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
-            explorer.addressPrefix,
-          ),
-        };
+      if (msgErrorVerify) {
+        return msgErrorVerify;
       }
 
       // check limited private name tag
       const count = await this.privateNameTagRepository.count({
-        where: { createdBy: user_id },
+        where: { createdBy: user_id, explorer: { id: explorer.id } },
       });
 
       if (count >= this.config.limitedPrivateNameTag) {
@@ -220,12 +213,21 @@ export class PrivateNameTagService {
 
       // check duplicate address
       const entity = await this.privateNameTagRepository.findOne({
-        where: { createdBy: user_id, address: req.address },
+        where: [
+          {
+            createdBy: user_id,
+            address: req.address,
+          },
+          { createdBy: user_id, evmAddress: req.evmAddress },
+        ],
       });
       if (entity) {
         return {
           code: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Code,
-          message: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+          message: util.format(
+            ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+            'private',
+          ),
         };
       }
     }
@@ -236,6 +238,7 @@ export class PrivateNameTagService {
         id: Not(id),
         createdBy: user_id,
         nameTag: await this.encryptionService.encrypt(req.nameTag ?? ''),
+        explorer: { id: explorer.id },
       },
     });
     if (entity) {

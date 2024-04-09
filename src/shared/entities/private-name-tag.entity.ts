@@ -32,6 +32,9 @@ export class PrivateNameTag {
   @Column()
   address: string;
 
+  @Column({ name: 'evm_address', nullable: true })
+  evmAddress: string;
+
   @Column({ name: 'created_by' })
   createdBy: number;
 

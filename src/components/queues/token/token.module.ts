@@ -11,6 +11,7 @@ import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { Asset } from 'src/shared/entities/asset.entity';
 import { SyncPoint } from 'src/shared/entities/sync-point.entity';
 import { TokenMarketsRepository } from 'src/components/cw20-token/repositories/token-markets.repository';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TokenMarketsRepository } from 'src/components/cw20-token/repositories/t
       AssetsRepository,
       Asset,
       SyncPoint,
+      Explorer,
     ]),
     BullModule.registerQueueAsync({
       name: QUEUES.TOKEN.QUEUE_NAME,

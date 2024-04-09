@@ -174,26 +174,30 @@ export class UserService {
   async activeUser(
     email: string,
     token: string,
-  ): Promise<{ message: string; code: string }> {
+    ctx: RequestContext,
+  ): Promise<{ msg: { message: string; code: string }; url: string }> {
     const userToActive = await this.findOne({
       where: { email: email, verificationToken: token },
     });
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
 
     if (!userToActive) {
-      return MSGS_ACTIVE_USER.EA002;
+      return { msg: MSGS_ACTIVE_USER.EA002, url: explorer.explorerUrl };
     }
 
     if (userToActive.verifiedAt) {
-      return MSGS_ACTIVE_USER.EA001;
+      return { msg: MSGS_ACTIVE_USER.EA001, url: explorer.explorerUrl };
     }
 
     if (userToActive.verificationToken === token) {
       userToActive.verifiedAt = new Date();
       await this.usersRepository.save(userToActive);
 
-      return MSGS_ACTIVE_USER.SA001;
+      return { msg: MSGS_ACTIVE_USER.SA001, url: explorer.explorerUrl };
     } else {
-      return MSGS_ACTIVE_USER.EA003;
+      return { msg: MSGS_ACTIVE_USER.EA003, url: explorer.explorerUrl };
     }
   }
 
@@ -279,7 +283,7 @@ export class UserService {
     userActivity.lastSendMailAttempt = new Date();
   }
 
-  async sendResetPasswordEmail(user: User): Promise<void> {
+  async sendResetPasswordEmail(user: User, ctx: RequestContext): Promise<void> {
     if (!user) {
       throw new BadRequestException('User have not registered.');
     }
@@ -291,6 +295,10 @@ export class UserService {
     user.resetPasswordToken = await this.generateTokenWithLength(
       RESET_PASSWORD_TOKEN_LENGTH,
     );
+
+    const explorer = await this.explorerRepository.findOneOrFail({
+      chainId: ctx.chainId,
+    });
 
     const resetPasswordActivity = await this.findOrCreateUserActivity(
       user,
@@ -304,6 +312,7 @@ export class UserService {
       QUEUES.SEND_MAIL.JOB,
       {
         user: user,
+        url: explorer.explorerUrl,
         mailType: USER_ACTIVITIES.SEND_MAIL_RESET_PASSWORD,
       },
       {
