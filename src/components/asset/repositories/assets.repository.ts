@@ -40,11 +40,8 @@ export class AssetsRepository extends Repository<Asset> {
     );
 
     const builder = this.createQueryBuilder('asset')
-      .where(
-        new Brackets((qb) => {
-          qb.where('asset.name IS NOT NULL').orWhere("asset.name <> ''");
-        }),
-      )
+      .where('asset.name IS NOT NULL')
+      .andWhere("asset.name <> ''")
       .andWhere('asset.explorer_id=:explorerId', {
         explorerId,
       });
