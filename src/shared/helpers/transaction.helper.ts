@@ -82,7 +82,7 @@ export class TransactionHelper {
           element.coin_transfers?.forEach((coin) => {
             const asset = coinConfig.find((k) => k.denom === coin.denom) || {};
             // Get denom ibc in config
-            let denom = asset?.symbol;
+            let denom = '';
             if (asset?.type === ASSETS_TYPE.IBC) {
               denom =
                 asset.symbol?.indexOf('ibc') === -1
@@ -91,6 +91,12 @@ export class TransactionHelper {
             } else {
               denom =
                 coin.denom?.indexOf('ibc') === -1 ? asset?.symbol : coin.denom;
+            }
+            if (!denom) {
+              // Set default symbol is natives symbol
+              denom = coinConfig.find(
+                (k) => k.denom === coinInfo.minimalDenom,
+              )?.symbol;
             }
 
             if (coin.to === currentAddress || coin.from === currentAddress) {
