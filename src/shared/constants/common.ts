@@ -749,7 +749,7 @@ export const TX_HEADER = {
     'ToAddress',
     'Amount',
     'Symbol',
-    'ComosTxHash',
+    'CosmosTxHash',
   ],
   COIN_TRANSFER: [
     'TxHash',
