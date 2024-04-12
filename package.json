@@ -62,7 +62,7 @@
     "joi": "^17.4.2",
     "js-sha256": "^0.9.0",
     "moment": "^2.29.4",
-    "mysql2": "^2.3.0",
+    "mysql2": "^3.9.4",
     "nest-schedule": "^0.6.4",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
