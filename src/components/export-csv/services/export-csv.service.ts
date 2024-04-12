@@ -202,19 +202,23 @@ export class ExportCsvService {
         FromAddress: tx.from,
         FromAddressPrivateNameTag:
           lstPrivateName?.find(
-            (item) => item.address === tx.from || item.evmAddress === tx.from,
+            (item) =>
+              item.address === tx.from ||
+              (item.evmAddress && item.evmAddress === tx.from),
           )?.nameTag || '',
         ToAddress: tx.to,
         ToAddressPrivateNameTag:
           lstPrivateName?.find(
-            (item) => item.address === tx.to || item.evmAddress === tx.to,
+            (item) =>
+              item.address === tx.to ||
+              (item.evmAddress && item.evmAddress === tx.to),
           )?.nameTag || '',
         Amount: TransactionHelper.balanceOf(
           tx.transaction?.transaction_messages[0].content.data.value,
-          explorer.decimal,
+          explorer.evmDecimal,
         ),
         Symbol: asset.symbol,
-        ComosTxHash: tx.transaction?.hash,
+        CosmosTxHash: tx.transaction?.hash,
       };
     });
 
@@ -293,7 +297,7 @@ export class ExportCsvService {
         }),
       );
     }
-    const data = [];
+    let data = [];
     txs?.forEach((tx) => {
       tx.arrEvent.forEach((evt) => {
         data.push({
@@ -307,14 +311,14 @@ export class ExportCsvService {
             lstPrivateName?.find(
               (item) =>
                 item.address === evt.fromAddress ||
-                item.evmAddress === evt.fromAddress,
+                (item.evmAddress && item.evmAddress === evt.fromAddress),
             )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
             lstPrivateName?.find(
               (item) =>
                 item.address === evt.toAddress ||
-                item.evmAddress === evt.toAddress,
+                (item.evmAddress && item.evmAddress === evt.toAddress),
             )?.nameTag || '',
           AmountIn: evt.toAddress === payload.address ? evt.amount : '',
           AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
@@ -323,6 +327,10 @@ export class ExportCsvService {
         });
       });
     });
+
+    if (data.length > EXPORT_LIMIT_RECORD) {
+      data = data.splice(0, EXPORT_LIMIT_RECORD);
+    }
 
     return { data, fileName, fields };
   }
@@ -413,14 +421,14 @@ export class ExportCsvService {
             lstPrivateName?.find(
               (item) =>
                 item.address === evt.fromAddress ||
-                item.evmAddress === evt.fromAddress,
+                (item.evmAddress && item.evmAddress === evt.fromAddress),
             )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
             lstPrivateName?.find(
               (item) =>
                 item.address === evt.toAddress ||
-                item.evmAddress === evt.toAddress,
+                (item.evmAddress && item.evmAddress === evt.toAddress),
             )?.nameTag || '',
           AmountIn: evt.toAddress === payload.address ? evt.amount : '',
           AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
@@ -512,12 +520,16 @@ export class ExportCsvService {
         FromAddress: tx.from,
         FromAddressPrivateNameTag:
           lstPrivateName?.find(
-            (item) => item.address === tx.from || item.evmAddress === tx.from,
+            (item) =>
+              item.address === tx.from ||
+              (item.evmAddress && item.evmAddress === tx.from),
           )?.nameTag || '',
         ToAddress: tx.to,
         ToAddressPrivateNameTag:
           lstPrivateName?.find(
-            (item) => item.address === tx.to || item.evmAddress === tx.to,
+            (item) =>
+              item.address === tx.to ||
+              (item.evmAddress && item.evmAddress === tx.to),
           )?.nameTag || '',
         AmountIn:
           tx.to === payload.evmAddress
@@ -613,14 +625,14 @@ export class ExportCsvService {
             lstPrivateName?.find(
               (item) =>
                 item.address === evt.fromAddress ||
-                item.evmAddress === evt.fromAddress,
+                (item.evmAddress && item.evmAddress === evt.fromAddress),
             )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
             lstPrivateName?.find(
               (item) =>
                 item.address === evt.toAddress ||
-                item.evmAddress === evt.toAddress,
+                (item.evmAddress && item.evmAddress === evt.toAddress),
             )?.nameTag || '',
           TokenIdIn: evt.toAddress === payload.address ? evt.tokenId : '',
           TokenIdOut: evt.toAddress !== payload.address ? evt.tokenId : '',
