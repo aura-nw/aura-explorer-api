@@ -749,7 +749,7 @@ export const TX_HEADER = {
     'ToAddress',
     'Amount',
     'Symbol',
-    'ComosTxHash',
+    'CosmosTxHash',
   ],
   COIN_TRANSFER: [
     'TxHash',
@@ -813,7 +813,7 @@ export const TX_HEADER = {
     'ToAddressPrivateNameTag',
     'Amount',
     'Symbol',
-    'ComosTxHash',
+    'CosmosTxHash',
   ],
   COIN_TRANSFER_NAMETAG: [
     'TxHash',

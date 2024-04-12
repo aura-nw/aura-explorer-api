@@ -54,10 +54,12 @@ export class TransactionHelper {
           ? StatusTransaction.Success
           : StatusTransaction.Fail;
 
-      const fee = this.balanceOf(
-        _.get(element, 'fee[0].amount') || 0,
-        coinInfo.decimal,
-      );
+      const decimal =
+        _.get(element, 'fee[0].denom') === coinInfo.evmDenom
+          ? coinInfo.evmDecimal
+          : coinInfo.decimal;
+
+      const fee = this.balanceOf(_.get(element, 'fee[0].amount') || 0, decimal);
       const height = _.get(element, 'height');
       const timestamp =
         _.get(element, 'timestamp') || _.get(element, 'tx.timestamp');
@@ -89,6 +91,12 @@ export class TransactionHelper {
             } else {
               denom =
                 coin.denom?.indexOf('ibc') === -1 ? asset?.symbol : coin.denom;
+            }
+            if (!denom) {
+              // Set default symbol is natives symbol
+              denom = coinConfig.find(
+                (k) => k.denom === coinInfo.minimalDenom,
+              )?.symbol;
             }
 
             if (coin.to === currentAddress || coin.from === currentAddress) {

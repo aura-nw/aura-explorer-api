@@ -29,6 +29,12 @@ export class Explorer extends BaseEntityIncrementId {
   @Column({ name: 'decimal' })
   decimal: number;
 
+  @Column({ name: 'evm_denom' })
+  evmDenom: string;
+
+  @Column({ name: 'evm_decimal' })
+  evmDecimal: number;
+
   @Column({ name: 'explorer_url' })
   explorerUrl: string;
 
