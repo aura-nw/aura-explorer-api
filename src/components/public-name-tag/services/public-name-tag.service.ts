@@ -146,6 +146,12 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
+      if (!req.address) {
+        return {
+          code: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Code,
+          message: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Message,
+        };
+      }
       const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
         req.evmAddress,
