@@ -548,6 +548,10 @@ export const ADMIN_ERROR_MAP = {
       process.env.LIMITED_PRIVATE_NAME_TAG || 10
     } max limitation of private name tag`,
   },
+  REQUIRED_ADDRESS: {
+    Code: 'E007',
+    Message: `Address is required`,
+  },
 };
 
 export const PAGE_REQUEST = {
@@ -918,6 +922,7 @@ export const WATCH_LIST = {
   ERROR_MSGS: {
     ERR_UNIQUE_ADDRESS: 'This address has already been added to watch list.',
     ERR_ADDRESS_NOT_FOUND: 'Address not found.',
+    ERR_ADDRESS_IS_REQUIRED: 'Address is required.',
     ERR_LIMIT_ADDRESS: `You have reached out of ${
       process.env.WATCH_LIST_LIMIT_ADDRESS || 20
     } max limitation of address.`,
