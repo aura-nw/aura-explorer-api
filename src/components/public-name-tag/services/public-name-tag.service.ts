@@ -163,7 +163,7 @@ export class PublicNameTagService {
       }
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
-        where: [{ address: req.address }, { evmAddress: req.evmAddress }],
+        where: { address: req.address },
       });
       if (address) {
         return {
