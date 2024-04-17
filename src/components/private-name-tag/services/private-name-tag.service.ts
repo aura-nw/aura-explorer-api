@@ -220,13 +220,10 @@ export class PrivateNameTagService {
 
       // check duplicate address
       const entity = await this.privateNameTagRepository.findOne({
-        where: [
-          {
-            createdBy: user_id,
-            address: req.address,
-          },
-          { createdBy: user_id, evmAddress: req.evmAddress },
-        ],
+        where: {
+          createdBy: user_id,
+          address: req.address,
+        },
       });
       if (entity) {
         return {

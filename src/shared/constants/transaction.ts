@@ -307,7 +307,7 @@ export const ABI_CHECK_INTERFACE = [
   'setApprovalForAll(address,bool)',
 ];
 
-export enum EMethodContract {
-  Creation = '60806040',
-  Default = 'Send',
-}
+export const EvmMethod = {
+  default: { name: 'Send' },
+  creation: { id: '60806040', name: 'Create Contract' },
+};

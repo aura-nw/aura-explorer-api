@@ -7,8 +7,7 @@ import {
   TYPE_TRANSACTION,
   TYPE_EXPORT,
   TypeTransaction,
-  ABI_CHECK_INTERFACE,
-  EMethodContract,
+  EvmMethod,
 } from '../constants/transaction';
 import BigNumber from 'bignumber.js';
 import { Explorer } from '../entities/explorer.entity';
@@ -269,27 +268,21 @@ export class TransactionHelper {
     return `0x${toHex(fromBase64(data))}`.substring(0, 10);
   }
 
-  static getFunctionNameByMethodId(methodId: string) {
+  static getFunctionNameByMethodId(methodId: string, listMethodMapping: any[]) {
     if (!methodId) {
-      return EMethodContract.Default;
+      return EvmMethod.default.name;
     }
-    let methodTemp = '';
-
-    const arrTxMapping = ABI_CHECK_INTERFACE.map<[string, string]>((k) => {
-      const item = keccak256Str(k).slice(2, 10);
-      return [item, k];
-    });
-    arrTxMapping?.unshift([EMethodContract.Creation, 'Create Contract']);
-    const listTxEvmMapping = new Map(arrTxMapping);
-    methodTemp = listTxEvmMapping.get(methodId);
-
-    if (!methodTemp) return methodId?.slice(0, 8);
-
-    methodTemp = methodTemp?.charAt(0).toUpperCase() + methodTemp?.slice(1);
-    const indexChar = methodTemp?.indexOf('(');
-    if (indexChar > 0) {
-      methodTemp = methodTemp?.substring(0, indexChar);
+    if (methodId === EvmMethod.creation.id) {
+      return EvmMethod.creation.name;
     }
-    return methodTemp;
+    const humanReadableTopic = listMethodMapping?.find(
+      (item) => item.function_id === methodId,
+    )?.human_readable_topic;
+    if (!humanReadableTopic) {
+      return methodId;
+    }
+    const methodTemp = humanReadableTopic?.split(' ')[1];
+    const method = methodTemp.substring(0, methodTemp.indexOf('('));
+    return method;
   }
 }
