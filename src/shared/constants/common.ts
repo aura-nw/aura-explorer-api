@@ -375,7 +375,15 @@ export const INDEXER_API_V2 = {
         }
       }
     }
-`,
+  `,
+    EVM_SIGNATURE_MAPPING: `query EvmSignatureMapping($methodIds: [String] = null) {
+      %s {
+        evm_signature_mapping(where: {function_id: {_in: $methodIds}}) {
+          function_id
+          human_readable_topic
+        }
+      }
+    }`,
   },
   OPERATION_NAME: {
     PROPOSAL_COUNT: 'CountProposal',
@@ -407,6 +415,7 @@ export const INDEXER_API_V2 = {
     ASSETS: 'Assets',
     CW20_HOLDER_STAT: 'Cw20HolderStat',
     ERC20_INFO: 'Erc20Info',
+    EVM_SIGNATURE_MAPPING: 'EvmSignatureMapping',
   },
   MAX_REQUEST: 100,
 };
@@ -547,6 +556,10 @@ export const ADMIN_ERROR_MAP = {
     Message: `You have reached out of ${
       process.env.LIMITED_PRIVATE_NAME_TAG || 10
     } max limitation of private name tag`,
+  },
+  REQUIRED_ADDRESS: {
+    Code: 'E007',
+    Message: `Address is required`,
   },
 };
 
@@ -918,6 +931,7 @@ export const WATCH_LIST = {
   ERROR_MSGS: {
     ERR_UNIQUE_ADDRESS: 'This address has already been added to watch list.',
     ERR_ADDRESS_NOT_FOUND: 'Address not found.',
+    ERR_ADDRESS_IS_REQUIRED: 'Address is required.',
     ERR_LIMIT_ADDRESS: `You have reached out of ${
       process.env.WATCH_LIST_LIMIT_ADDRESS || 20
     } max limitation of address.`,

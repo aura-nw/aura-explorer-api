@@ -146,6 +146,12 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
+      if (!req.address) {
+        return {
+          code: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Code,
+          message: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Message,
+        };
+      }
       const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
         req.evmAddress,
@@ -157,7 +163,7 @@ export class PublicNameTagService {
       }
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
-        where: [{ address: req.address }, { evmAddress: req.evmAddress }],
+        where: { address: req.address },
       });
       if (address) {
         return {
