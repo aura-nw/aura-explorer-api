@@ -189,6 +189,13 @@ export class PrivateNameTagService {
     }
 
     if (isCreate) {
+      if (!req.address) {
+        return {
+          code: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Code,
+          message: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Message,
+        };
+      }
+
       const msgErrorVerify = await this.verifyAddressUtil.verify(
         req.address,
         req.evmAddress,
@@ -213,13 +220,10 @@ export class PrivateNameTagService {
 
       // check duplicate address
       const entity = await this.privateNameTagRepository.findOne({
-        where: [
-          {
-            createdBy: user_id,
-            address: req.address,
-          },
-          { createdBy: user_id, evmAddress: req.evmAddress },
-        ],
+        where: {
+          createdBy: user_id,
+          address: req.address,
+        },
       });
       if (entity) {
         return {

@@ -103,7 +103,10 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_EXECUTED,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
@@ -162,7 +165,11 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_EVM_EXECUTED,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response, listMethods } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+      TYPE_EXPORT.EVMExecutedTxs,
+    );
     const asset = await this.assetRepository.findOneOrFail({
       denom: explorer.minimalDenom,
     });
@@ -187,12 +194,14 @@ export class ExportCsvService {
         }),
       );
     }
+
     const data = response.transaction.map((tx) => {
       return {
         EvmTxHash: tx.hash,
         // Retrieve the function name using the method ID for more accurate CSV data
         Method: TransactionHelper.getFunctionNameByMethodId(
           tx.data?.substring(0, 8),
+          listMethods,
         ),
         Height: tx.height,
         Timestamp: tx.transaction?.timestamp,
@@ -259,7 +268,10 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_COIN_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const coinConfig = await this.assetRepository.find({
       where: {
@@ -378,7 +390,10 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
@@ -484,7 +499,11 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_ERC20_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response, listMethods } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+      TYPE_EXPORT.Erc20Txs,
+    );
 
     let lstPrivateName;
     let fields = TX_HEADER.TOKEN_TRANSFER;
@@ -512,6 +531,7 @@ export class ExportCsvService {
         MessageRaw: tx.evm_transaction.transaction_message.type,
         Message: TransactionHelper.getFunctionNameByMethodId(
           tx.evm_transaction.data?.substring(0, 8),
+          listMethods,
         ),
         Timestamp: tx.evm_transaction.transaction.timestamp,
         UnixTimestamp: Math.floor(
@@ -582,7 +602,10 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
@@ -644,8 +667,13 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async queryData(graphqlQuery, chainDB = this.defaultChainDB) {
+  private async queryData(
+    graphqlQuery,
+    chainDB = this.defaultChainDB,
+    evmExecuted = null,
+  ) {
     const result = { transaction: [] };
+    const listMethods = [];
     let next = true;
     let timesLoop = 0;
     const MAX_LOOP = 10;
@@ -669,10 +697,43 @@ export class ExportCsvService {
         graphqlQuery.variables.heightLT =
           response?.transaction[response.transaction.length - 1]?.height;
       }
+      if (evmExecuted) {
+        let dataMethod = [];
+        if (evmExecuted === TYPE_EXPORT.EVMExecutedTxs) {
+          dataMethod = response.transaction
+            .map((tx) => {
+              return tx.data?.substring(0, 8);
+            })
+            ?.filter((item) => item);
+        } else if (evmExecuted === TYPE_EXPORT.Erc20Txs) {
+          dataMethod = response.transaction
+            .map((tx) => {
+              return tx.evm_transaction.data?.substring(0, 8);
+            })
+            ?.filter((item) => item);
+        }
+
+        const methodIds = [...new Set(dataMethod)];
+        const query = {
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.EVM_SIGNATURE_MAPPING,
+            chainDB,
+          ),
+          variables: {
+            methodIds: methodIds,
+          },
+          operationName: INDEXER_API_V2.OPERATION_NAME.EVM_SIGNATURE_MAPPING,
+        };
+
+        const listMethodMapping = (
+          await this.serviceUtil.fetchDataFromGraphQL(query)
+        )?.data[chainDB].evm_signature_mapping;
+        listMethods.push(...listMethodMapping);
+      }
       result.transaction?.push(...response?.transaction);
       timesLoop++;
     }
 
-    return result;
+    return { result, listMethods };
   }
 }

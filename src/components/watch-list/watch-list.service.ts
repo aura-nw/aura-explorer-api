@@ -54,6 +54,7 @@ export class WatchListService {
         createWatchListDto.evmAddress,
         explorer,
         createWatchListDto.type,
+        true,
       );
 
       // Check limit number address
@@ -362,7 +363,13 @@ export class WatchListService {
     evmAddress: string,
     explorer: Explorer,
     type?: NAME_TAG_TYPE,
+    isCreate = false,
   ) {
+    if (isCreate && !address) {
+      throw new BadRequestException(
+        WATCH_LIST.ERROR_MSGS.ERR_ADDRESS_IS_REQUIRED,
+      );
+    }
     const msgErrorVerify = await this.verifyAddressUtil.verify(
       address,
       evmAddress,
