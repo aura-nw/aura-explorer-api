@@ -241,7 +241,7 @@ export class TokenProcessor implements OnModuleInit {
 
     for (const [index, asset] of nativeAsset.entries()) {
       subQuery =
-        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}, amount: {_neq: "0"}}) {
+        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}, amount: {_gt: "0"}}) {
                             aggregate {
                               count
                             }
