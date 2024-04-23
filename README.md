@@ -1,6 +1,6 @@
 # Aura Explorer API
 
-Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume [Horoscope](https://github.com/aura-nw/horoscope) for view the status of a blockchain transaction and analytics smart contract, then provides API for [AuraScan](https://github.com/aura-nw/aurascan) query data.
+Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API also consume [Horoscope](https://github.com/aura-nw/horoscope-v2) for view the status of a blockchain transaction and analytics smart contract, then provides API for [AuraScan](https://github.com/aura-nw/aurascan) query data.
 
 ## Getting start
 
