@@ -13,13 +13,7 @@ export class addEvmColumn1712806916760 implements MigrationInterface {
 
     await queryRunner.query(`SET SQL_SAFE_UPDATES = 0`);
     await queryRunner.query(
-      `UPDATE explorer set evm_decimal = 18, evm_denom = 'ataura' where id = 1`,
-    );
-    await queryRunner.query(
-      `UPDATE explorer set evm_decimal = 18,evm_denom = 'atsei' where id = 2`,
-    );
-    await queryRunner.query(
-      `UPDATE explorer set evm_decimal = 18, evm_denom = 'atvemos' where id = 3`,
+      `UPDATE explorer set evm_decimal = 18, evm_denom = 'aeaura' where id = 1`,
     );
     await queryRunner.query(`SET SQL_SAFE_UPDATES = 1`);
   }
