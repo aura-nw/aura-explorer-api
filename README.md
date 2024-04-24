@@ -44,6 +44,8 @@ Aura Explorer API is a API Service for Aura Network explorer. Aura Explorer API 
 3. ```npm run lint```: Run ESLint.
 4. ```npm run test```: Run tests & generate coverage report.
 5. ```npm run migration:generate```: Create generate migration file.
+6. ```npm run migration:run```: Run migration file.
+7. ```npm run migration:revert```: Revert migration file.
 
 ## How to run
 
