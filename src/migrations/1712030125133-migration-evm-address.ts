@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { LENGTH } from 'src/shared';
+import { LENGTH } from '../shared';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { toChecksumAddress } from 'crypto-addr-codec';
 import { fromBech32 } from '@cosmjs/encoding';

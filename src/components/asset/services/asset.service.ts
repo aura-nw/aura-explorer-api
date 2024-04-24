@@ -5,9 +5,9 @@ import { AssetParamsDto } from '../dtos/asset-params.dto';
 import { AssetsTokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
 import { In, IsNull, MoreThan, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TokenHolderStatistic } from 'src/shared/entities/token-holder-statistic.entity';
+import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import * as moment from 'moment';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 
 @Injectable()
 export class AssetService {

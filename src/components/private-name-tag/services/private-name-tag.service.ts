@@ -18,7 +18,7 @@ import { EncryptionService } from '../../encryption/encryption.service';
 import { Not, Repository } from 'typeorm';
 import * as appConfig from '../../../shared/configs/configuration';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 import * as util from 'util';
 import { VerifyAddressUtil } from '../../../shared/utils/verify-address.util';
 

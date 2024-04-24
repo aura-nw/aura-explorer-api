@@ -23,10 +23,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from '../../../shared/entities/token-holder-statistic.entity';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { CronExpression } from '@nestjs/schedule';
-import { SyncPoint } from 'src/shared/entities/sync-point.entity';
+import { SyncPoint } from '../../../shared/entities/sync-point.entity';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import * as moment from 'moment';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 
 @Processor(QUEUES.TOKEN.QUEUE_NAME)
 export class TokenProcessor implements OnModuleInit {

@@ -5,10 +5,10 @@ import { SharedModule } from '../../shared/shared.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AssetService } from './services/asset.service';
 import { AssetController } from './controllers/asset.controller';
-import { Asset } from 'src/shared';
+import { Asset } from '../../shared';
 import { AssetsRepository } from './repositories/assets.repository';
-import { TokenHolderStatistic } from 'src/shared/entities/token-holder-statistic.entity';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { TokenHolderStatistic } from '../../shared/entities/token-holder-statistic.entity';
+import { Explorer } from '../../shared/entities/explorer.entity';
 
 @Module({
   imports: [

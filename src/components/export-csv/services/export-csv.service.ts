@@ -21,7 +21,7 @@ import { PrivateNameTagRepository } from '../../private-name-tag/repositories/pr
 import { EncryptionService } from '../../encryption/encryption.service';
 import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 import * as util from 'util';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 

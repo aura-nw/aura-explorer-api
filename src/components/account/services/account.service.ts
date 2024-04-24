@@ -24,9 +24,9 @@ import {
 } from 'cosmjs-types/cosmos/distribution/v1beta1/query';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import { Repository } from 'typeorm';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RpcUtil } from 'src/shared/utils/rpc.util';
+import { RpcUtil } from '../../../shared/utils/rpc.util';
 
 export type AccountBalanceResult = {
   address: string;
@@ -241,12 +241,6 @@ export class AccountService {
       `${this.getTotalBalanceByListAddress.name} was called!`,
     );
     try {
-      // if (address.length > LIMIT_HOLDER_ADDRESS) {
-      //   throw new BadRequestException(
-      //     `You have reached out of ${LIMIT_HOLDER_ADDRESS} max limitation of address.`,
-      //   );
-      // }
-
       const explorer = await this.explorerRepository.findOne({
         chainId: ctx.chainId,
       });
