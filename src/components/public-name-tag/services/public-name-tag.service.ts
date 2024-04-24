@@ -2,8 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   ADMIN_ERROR_MAP,
   AkcLogger,
-  LENGTH,
-  NAME_TAG_TYPE,
   REGEX_PARTERN,
   RequestContext,
 } from '../../../shared';
@@ -13,10 +11,10 @@ import { StorePublicNameTagParamsDto } from '../dtos/store-public-name-tag-param
 import { PublicNameTag } from '../../../shared/entities/public-name-tag.entity';
 import { GetPublicNameTagResult } from '../dtos/get-public-name-tag-result.dto';
 import { Not, Repository } from 'typeorm';
-import { isValidBench32Address } from '../../../shared/utils/service.util';
 import { UpdatePublicNameTagParamsDto } from '../dtos/update-public-name-tag-params.dto';
 import { Explorer } from '../../../shared/entities/explorer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { VerifyAddressUtil } from '../../../shared/utils/verify-address.util';
 import * as util from 'util';
 
 @Injectable()
@@ -26,6 +24,7 @@ export class PublicNameTagService {
     private nameTagRepository: PublicNameTagRepository,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
+    private verifyAddressUtil: VerifyAddressUtil,
   ) {}
 
   async getPublicNameTags(ctx: RequestContext, req: PublicNameTagParamsDto) {
@@ -70,6 +69,7 @@ export class PublicNameTagService {
 
       const entity = new PublicNameTag();
       entity.address = req.address;
+      entity.evmAddress = req.evmAddress;
       entity.type = req.type;
       entity.name_tag = req.nameTag;
       entity.updated_by = userId;
@@ -101,6 +101,7 @@ export class PublicNameTagService {
     entity.name_tag = req.nameTag;
     entity.updated_by = userId;
     entity.enterpriseUrl = req.enterpriseUrl;
+    entity.evmAddress = req.evmAddress;
     try {
       const result = await this.nameTagRepository.update(req.id, entity);
       return { data: result, meta: {} };
@@ -145,26 +146,20 @@ export class PublicNameTagService {
     }
 
     if (isCreate) {
-      const validFormat = isValidBench32Address(
-        req.address,
-        explorer?.addressPrefix,
-        req.type,
-      );
-
-      if (
-        !validFormat ||
-        (req.address.length === LENGTH.CONTRACT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.CONTRACT) ||
-        (req.address.length === LENGTH.ACCOUNT_ADDRESS &&
-          req.type !== NAME_TAG_TYPE.ACCOUNT)
-      ) {
+      if (!req.address) {
         return {
-          code: ADMIN_ERROR_MAP.INVALID_FORMAT.Code,
-          message: util.format(
-            ADMIN_ERROR_MAP.INVALID_FORMAT.Message,
-            explorer.addressPrefix,
-          ),
+          code: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Code,
+          message: ADMIN_ERROR_MAP.REQUIRED_ADDRESS.Message,
         };
+      }
+      const msgErrorVerify = await this.verifyAddressUtil.verify(
+        req.address,
+        req.evmAddress,
+        req.type,
+        explorer,
+      );
+      if (msgErrorVerify) {
+        return msgErrorVerify;
       }
       // check duplicate address
       const address = await this.nameTagRepository.findOne({
@@ -173,7 +168,10 @@ export class PublicNameTagService {
       if (address) {
         return {
           code: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Code,
-          message: ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+          message: util.format(
+            ADMIN_ERROR_MAP.DUPLICATE_ADDRESS.Message,
+            'public',
+          ),
         };
       }
     }
@@ -181,7 +179,7 @@ export class PublicNameTagService {
     const tag = await this.nameTagRepository.findOne({
       where: {
         name_tag: req.nameTag,
-        address: Not(req.address),
+        id: Not(req.id),
         explorer: { id: explorer.id },
       },
     });

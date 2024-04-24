@@ -13,6 +13,9 @@ export class StorePublicNameTagParamsDto {
   address: string;
 
   @ApiProperty({ default: '' })
+  evmAddress: string;
+
+  @ApiProperty({ default: '' })
   @MaxLength(35)
   nameTag: string;
 

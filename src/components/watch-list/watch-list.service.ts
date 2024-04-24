@@ -5,13 +5,12 @@ import { RequestContext } from '../../shared/request-context/request-context.dto
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm/repository/Repository';
 import { WatchList } from '../../shared/entities/watch-list.entity';
-import { UserService } from '../user/user.service';
 import { DeleteResult } from 'typeorm/query-builder/result/DeleteResult';
 import { EntityNotFoundError, In } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import {
-  AkcLogger,
   BaseApiResponse,
+  NAME_TAG_TYPE,
   TYPE_ORM_ERROR_CODE,
   WATCH_LIST,
 } from '../../shared/';
@@ -23,7 +22,8 @@ import { PrivateNameTag } from '../../shared/entities/private-name-tag.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { plainToClass } from 'class-transformer';
 import { User } from 'src/shared/entities/user.entity';
-import * as util from 'util';
+import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
+import { isAddress } from 'web3-validator';
 
 @Injectable()
 export class WatchListService {
@@ -38,6 +38,7 @@ export class WatchListService {
     private readonly explorerRepository: Repository<Explorer>,
     private readonly encryptionService: EncryptionService,
     private readonly configService: ConfigService,
+    private verifyAddressUtil: VerifyAddressUtil,
   ) {}
   async create(
     ctx: RequestContext,
@@ -48,10 +49,12 @@ export class WatchListService {
         chainId: ctx.chainId,
       });
 
-      this.validateAddress(
+      await this.validateAddress(
         createWatchListDto.address,
-        explorer.addressPrefix,
+        createWatchListDto.evmAddress,
+        explorer,
         createWatchListDto.type,
+        true,
       );
 
       // Check limit number address
@@ -166,9 +169,10 @@ export class WatchListService {
         },
       });
 
-      this.validateAddress(
+      await this.validateAddress(
         updateWatchListDto.address,
-        explorer.addressPrefix,
+        updateWatchListDto.evmAddress,
+        explorer,
         updateWatchListDto.type,
       );
 
@@ -214,28 +218,44 @@ export class WatchListService {
 
     const explorerId = explorer.id;
 
-    if (isValidBench32Address(keyword, explorer.addressPrefix)) {
+    if (
+      isValidBench32Address(keyword, explorer.addressPrefix) ||
+      isAddress(keyword)
+    ) {
       // Find in watch list.
       let foundedPublicNameTag = null;
       let foundPrivateNameTag = null;
 
       const foundedWatchList = (await this.watchListRepository.findOne({
-        where: { address: keyword, user: { id: ctx.user.id } },
+        where: [
+          { address: keyword, user: { id: ctx.user.id } },
+          { evmAddress: keyword, user: { id: ctx.user.id } },
+        ],
       })) as any as WatchListDetailResponse;
 
       if (foundedWatchList) {
         // Find in public tag.
         foundedPublicNameTag = await this.publicNameTagRepository.findOne({
-          where: { address: keyword, explorer: { id: explorerId } },
+          where: [
+            { address: keyword, explorer: { id: explorerId } },
+            { evmAddress: keyword, explorer: { id: explorerId } },
+          ],
         });
 
         // Find in private tag.
         foundPrivateNameTag = await this.privateNameTagRepository.findOne({
-          where: {
-            address: keyword,
-            createdBy: ctx.user.id,
-            explorer: { id: explorerId },
-          },
+          where: [
+            {
+              address: keyword,
+              createdBy: ctx.user.id,
+              explorer: { id: explorerId },
+            },
+            {
+              evmAddress: keyword,
+              createdBy: ctx.user.id,
+              explorer: { id: explorerId },
+            },
+          ],
         });
 
         // Mapping tags.
@@ -338,10 +358,26 @@ export class WatchListService {
     return count;
   }
 
-  validateAddress(address: string, prefix?: string, type?: string) {
-    if (!isValidBench32Address(address, prefix, type))
+  async validateAddress(
+    address: string,
+    evmAddress: string,
+    explorer: Explorer,
+    type?: NAME_TAG_TYPE,
+    isCreate = false,
+  ) {
+    if (isCreate && !address) {
       throw new BadRequestException(
-        util.format(WATCH_LIST.ERROR_MSGS.ERR_INVALID_ADDRESS, prefix),
+        WATCH_LIST.ERROR_MSGS.ERR_ADDRESS_IS_REQUIRED,
       );
+    }
+    const msgErrorVerify = await this.verifyAddressUtil.verify(
+      address,
+      evmAddress,
+      type,
+      explorer,
+    );
+    if (msgErrorVerify) {
+      throw new BadRequestException(msgErrorVerify.message);
+    }
   }
 }

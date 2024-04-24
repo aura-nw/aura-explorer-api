@@ -28,6 +28,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
       .select(
         `public_name_tag.id,
         public_name_tag.address,
+        public_name_tag.evm_address,
         public_name_tag.type,
         public_name_tag.name_tag,
         public_name_tag.created_at,
@@ -53,9 +54,16 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
         new Brackets((qb) => {
           qb.where('LOWER(public_name_tag.address) LIKE LOWER(:keyword)', {
             keyword: `%${keyword}%`,
-          }).orWhere('public_name_tag.name_tag LIKE :keyword', {
-            keyword: `%${keyword}%`,
-          });
+          })
+            .orWhere(
+              'LOWER(public_name_tag.evm_address) LIKE LOWER(:keyword)',
+              {
+                keyword: `%${keyword}%`,
+              },
+            )
+            .orWhere('public_name_tag.name_tag LIKE :keyword', {
+              keyword: `%${keyword}%`,
+            });
         }),
       );
     }
@@ -78,6 +86,7 @@ export class PublicNameTagRepository extends Repository<PublicNameTag> {
       .select([
         'publicNameTag.id as id',
         'address',
+        'evm_address',
         'name_tag',
         'enterprise_url as enterpriseUrl',
       ])

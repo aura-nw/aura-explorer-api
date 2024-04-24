@@ -75,7 +75,10 @@
     "tendermint": "^5.0.2",
     "typeorm": "^0.2.40",
     "uuid": "^8.3.2",
-    "winston": "^3.3.3"
+    "web3-validator": "^2.0.4",
+    "winston": "^3.3.3",
+    "ethers": "^6.11.1",
+    "crypto-addr-codec": "^0.1.8"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",

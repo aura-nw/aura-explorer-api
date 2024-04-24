@@ -5,7 +5,6 @@ import * as util from 'util';
 import {
   AkcLogger,
   INDEXER_API_V2,
-  LIMIT_HOLDER_ADDRESS,
   RPC_QUERY_URL,
   RequestContext,
 } from '../../../shared';
@@ -25,9 +24,14 @@ import {
 } from 'cosmjs-types/cosmos/distribution/v1beta1/query';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
 import { Repository } from 'typeorm';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RpcUtil } from 'src/shared/utils/rpc.util';
+import { RpcUtil } from '../../../shared/utils/rpc.util';
+
+export type AccountBalanceResult = {
+  address: string;
+  amount: number;
+};
 
 @Injectable()
 export class AccountService {
@@ -237,12 +241,6 @@ export class AccountService {
       `${this.getTotalBalanceByListAddress.name} was called!`,
     );
     try {
-      if (address.length > LIMIT_HOLDER_ADDRESS) {
-        throw new BadRequestException(
-          `You have reached out of ${LIMIT_HOLDER_ADDRESS} max limitation of address.`,
-        );
-      }
-
       const explorer = await this.explorerRepository.findOne({
         chainId: ctx.chainId,
       });
@@ -280,112 +278,25 @@ export class AccountService {
 
       const accountData = account?.data[explorer.chainDb]['account'] || [];
       const result = [];
+      const accountBalancePromises: Promise<AccountBalanceResult>[] = [];
+
       for (const data of accountData) {
-        const validatorData = validators?.data[explorer.chainDb]['validator'];
         if (!data) {
           return { address, amount: 0 };
         }
 
-        const accountDelegations = delegationsResponse?.find((item) => {
-          return !!item.find(
-            (el) => el.delegation.delegatorAddress === data.address,
-          );
-        });
-
-        const unbondingDelegations = unbondingResponse?.find((item) => {
-          return !!item.find((el) => el.delegatorAddress === data.address);
-        });
-
-        // get balance
-        let balancesAmount = 0;
-        const balances = data.balances?.length ? data.balances : [];
-        balances.forEach((item) => {
-          if (item.denom === explorer.minimalDenom) {
-            balancesAmount = parseFloat(item.amount);
-          }
-        });
-
-        // Get available
-        let available = 0;
-        if (data?.spendable_balances) {
-          const spendable_balances = data.spendable_balances?.length
-            ? data.spendable_balances
-            : [];
-          const uaura = spendable_balances?.find(
-            (f) => f.denom === explorer.minimalDenom,
-          );
-          if (uaura) {
-            const amount = uaura.amount;
-            available = parseFloat(amount);
-          }
-        }
-
-        // Get delegate
-        let delegatedAmount = 0;
-        let stakeReward = 0;
-        if (accountDelegations?.length > 0) {
-          const delegationsRewardRespone =
-            await this.queryDelegationTotalRewardsRequests(
-              data.address,
-              ctx.chainId,
-            );
-          accountDelegations.forEach((item) => {
-            delegatedAmount += parseInt(item.balance.amount);
-            if (
-              delegationsRewardRespone &&
-              delegationsRewardRespone.length > 0 &&
-              delegationsRewardRespone[0].denom === explorer.minimalDenom
-            ) {
-              stakeReward = parseInt(delegationsRewardRespone[0].amount);
-            }
-          });
-        }
-
-        // get unbonding
-        let unbondingAmount = 0;
-
-        unbondingDelegations?.forEach((item) => {
-          item.entries?.forEach((item1) => {
-            unbondingAmount += parseInt(item1.balance);
-          });
-        });
-
-        // get commission
-        let commission = '0';
-        // get validator by delegation address
-        const validator = validatorData?.filter(
-          (e) => e.account_address === data.address,
+        accountBalancePromises.push(
+          this.buildAccountBalanceResult(
+            data,
+            delegationsResponse,
+            unbondingResponse,
+            validators,
+            explorer,
+          ),
         );
-
-        if (validator?.length > 0) {
-          const commissionData = await this.queryValidatorCommissionRequests(
-            validator[0].operator_address,
-            ctx.chainId,
-          );
-          if (
-            commissionData?.length > 0 &&
-            commissionData[0].denom === explorer.minimalDenom
-          ) {
-            commission = commissionData[0].amount;
-          }
-        }
-
-        // //get auth_info
-        let delegatedVesting = 0;
-        if (balancesAmount > 0) {
-          delegatedVesting = balancesAmount - available;
-        }
-        // get total
-        const total =
-          available +
-          delegatedAmount +
-          unbondingAmount +
-          TransactionHelper.balanceOf(stakeReward, 18) +
-          TransactionHelper.balanceOf(commission, 18) +
-          delegatedVesting;
-
-        result.push({ address: data.address, amount: total });
       }
+      result.push(...(await Promise.all(accountBalancePromises)));
+
       return result;
     } catch (err) {
       this.logger.error(
@@ -394,6 +305,116 @@ export class AccountService {
       );
       throw new BadRequestException(err);
     }
+  }
+
+  async buildAccountBalanceResult(
+    data,
+    delegationsResponse,
+    unbondingResponse,
+    validators,
+    explorer,
+  ): Promise<AccountBalanceResult> {
+    const validatorData = validators?.data[explorer.chainDb]['validator'];
+
+    const accountDelegations = delegationsResponse?.find((item) => {
+      return !!item.find(
+        (el) => el.delegation.delegatorAddress === data.address,
+      );
+    });
+
+    const unbondingDelegations = unbondingResponse?.find((item) => {
+      return !!item.find((el) => el.delegatorAddress === data.address);
+    });
+
+    // get balance
+    let balancesAmount = 0;
+    const balances = data.balances?.length ? data.balances : [];
+    balances.forEach((item) => {
+      if (item.denom === explorer.minimalDenom) {
+        balancesAmount = parseFloat(item.amount);
+      }
+    });
+
+    // Get available
+    let available = 0;
+    if (data?.spendable_balances) {
+      const spendable_balances = data.spendable_balances?.length
+        ? data.spendable_balances
+        : [];
+      const uaura = spendable_balances?.find(
+        (f) => f.denom === explorer.minimalDenom,
+      );
+      if (uaura) {
+        const amount = uaura.amount;
+        available = parseFloat(amount);
+      }
+    }
+
+    // Get delegate
+    let delegatedAmount = 0;
+    let stakeReward = 0;
+    if (accountDelegations?.length > 0) {
+      const delegationsRewardRespone =
+        await this.queryDelegationTotalRewardsRequests(
+          data.address,
+          explorer.chainId,
+        );
+      accountDelegations.forEach((item) => {
+        delegatedAmount += parseInt(item.balance.amount);
+        if (
+          delegationsRewardRespone &&
+          delegationsRewardRespone.length > 0 &&
+          delegationsRewardRespone[0].denom === explorer.minimalDenom
+        ) {
+          stakeReward = parseInt(delegationsRewardRespone[0].amount);
+        }
+      });
+    }
+
+    // get unbonding
+    let unbondingAmount = 0;
+
+    unbondingDelegations?.forEach((item) => {
+      item.entries?.forEach((item1) => {
+        unbondingAmount += parseInt(item1.balance);
+      });
+    });
+
+    // get commission
+    let commission = '0';
+    // get validator by delegation address
+    const validator = validatorData?.filter(
+      (e) => e.account_address === data.address,
+    );
+
+    if (validator?.length > 0) {
+      const commissionData = await this.queryValidatorCommissionRequests(
+        validator[0].operator_address,
+        explorer.chainId,
+      );
+      if (
+        commissionData?.length > 0 &&
+        commissionData[0].denom === explorer.minimalDenom
+      ) {
+        commission = commissionData[0].amount;
+      }
+    }
+
+    // //get auth_info
+    let delegatedVesting = 0;
+    if (balancesAmount > 0) {
+      delegatedVesting = balancesAmount - available;
+    }
+    // get total
+    const total =
+      available +
+      delegatedAmount +
+      unbondingAmount +
+      TransactionHelper.balanceOf(stakeReward, 18) +
+      TransactionHelper.balanceOf(commission, 18) +
+      delegatedVesting;
+
+    return { address: data.address, amount: total };
   }
 
   async getDelegatorDelegations(address = [], explorer: string) {

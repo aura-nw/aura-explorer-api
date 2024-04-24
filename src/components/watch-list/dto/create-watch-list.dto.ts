@@ -12,6 +12,10 @@ export class CreateWatchListDto {
   @IsNotEmpty()
   address: string;
 
+  @ApiProperty()
+  @IsOptional()
+  evmAddress: string;
+
   @ApiProperty({ default: NAME_TAG_TYPE.ACCOUNT })
   @IsIn([NAME_TAG_TYPE.ACCOUNT, NAME_TAG_TYPE.CONTRACT])
   type: NAME_TAG_TYPE;
