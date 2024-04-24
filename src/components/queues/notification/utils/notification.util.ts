@@ -325,6 +325,7 @@ export class NotificationUtil {
       where: {
         type: ASSETS_TYPE.IBC,
         name: Not(IsNull()),
+        explorer: { id: explorer.id },
       },
     });
     const listTx = [];

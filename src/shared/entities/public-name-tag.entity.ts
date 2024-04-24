@@ -16,6 +16,9 @@ export class PublicNameTag extends BaseEntityIncrementId {
   @Column()
   address: string;
 
+  @Column({ name: 'evm_address', nullable: true })
+  evmAddress: string;
+
   @Column()
   updated_by: number;
 

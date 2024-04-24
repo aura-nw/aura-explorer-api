@@ -1,6 +1,14 @@
-import { Column, Entity, OneToMany, Unique } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  Unique,
+} from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { TokenHolderStatistic } from './token-holder-statistic.entity';
+import { Explorer } from './explorer.entity';
 
 @Entity('asset')
 @Unique(['denom'])
@@ -14,7 +22,7 @@ export class Asset extends BaseEntityIncrementId {
   @Column({ nullable: true })
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   image: string;
 
   @Column({
@@ -89,4 +97,10 @@ export class Asset extends BaseEntityIncrementId {
     (tokenHolderStatistic) => tokenHolderStatistic.asset,
   )
   tokenHolderStatistics: TokenHolderStatistic[];
+
+  @ManyToOne(() => Explorer, (explorer) => explorer.assets)
+  @JoinColumn({
+    name: 'explorer_id',
+  })
+  explorer: Explorer;
 }

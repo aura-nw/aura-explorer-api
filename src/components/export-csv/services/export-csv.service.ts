@@ -12,7 +12,6 @@ import {
   TX_HEADER,
 } from '../../../shared';
 import { TransactionHelper } from '../../../shared/helpers/transaction.helper';
-import { HttpService } from '@nestjs/axios';
 import {
   RANGE_EXPORT,
   TYPE_EXPORT,
@@ -20,9 +19,9 @@ import {
 import { ExportCsvParamDto } from '../dtos/export-csv-param.dto';
 import { PrivateNameTagRepository } from '../../private-name-tag/repositories/private-name-tag.repository';
 import { EncryptionService } from '../../encryption/encryption.service';
-import { IsNull, Not, Repository } from 'typeorm';
+import { In, IsNull, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../../shared/entities/explorer.entity';
 import * as util from 'util';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 
@@ -64,6 +63,10 @@ export class ExportCsvService {
           return this.tokenTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.NftTxs:
           return this.nftTransfer(ctx, payload, userId, explorer);
+        case TYPE_EXPORT.EVMExecutedTxs:
+          return this.evmExecuted(payload, userId, explorer);
+        case TYPE_EXPORT.Erc20Txs:
+          return this.erc20Transfer(ctx, payload, userId, explorer);
         default:
           break;
       }
@@ -100,27 +103,23 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_EXECUTED,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
-
-    const coinConfig = await this.assetRepository.find({
-      where: {
-        type: ASSETS_TYPE.IBC,
-        name: Not(IsNull()),
-      },
-    });
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       explorer,
       payload.dataType,
       payload.address,
-      coinConfig,
     );
 
     const fields = TX_HEADER.EXECUTED;
     const data = txs?.map((tx) => {
       return {
         TxHash: tx.tx_hash,
+        EvmTxHash: tx.evmTxHash,
         MessageRaw: tx.lstTypeTemp?.map((item) => item.type)?.toString(),
         Message: tx.lstType,
         Result: tx.status,
@@ -128,6 +127,107 @@ export class ExportCsvService {
         UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
         Fee: tx.fee,
         BlockHeight: tx.height,
+      };
+    });
+
+    return { data, fileName, fields };
+  }
+
+  private async evmExecuted(
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
+    const fileName = `export-account-evm-executed-${payload.evmAddress}.csv`;
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_EVM_EXECUTED,
+        explorer.chainDb,
+      ),
+      variables: {
+        limit: QUERY_LIMIT_RECORD,
+        address: payload.evmAddress,
+        heightLT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.max + 1
+            : null,
+        heightGT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.min > 1
+              ? +payload.min - 1
+              : 0
+            : null,
+        startTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+        endTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_EVM_EXECUTED,
+    };
+
+    const { result: response, listMethods } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+      TYPE_EXPORT.EVMExecutedTxs,
+    );
+    const asset = await this.assetRepository.findOneOrFail({
+      denom: explorer.minimalDenom,
+    });
+
+    let fields = TX_HEADER.EVM_EXECUTED;
+    let lstPrivateName;
+    if (userId) {
+      fields = TX_HEADER.EVM_EXECUTED_NAMETAG;
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        userId,
+        null,
+        null,
+        LIMIT_PRIVATE_NAME_TAG,
+        0,
+        explorer.chainId,
+      );
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.evmAddress = item.evm_address;
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
+
+    const data = response.transaction.map((tx) => {
+      return {
+        EvmTxHash: tx.hash,
+        // Retrieve the function name using the method ID for more accurate CSV data
+        Method: TransactionHelper.getFunctionNameByMethodId(
+          tx.data?.substring(0, 8),
+          listMethods,
+        ),
+        Height: tx.height,
+        Timestamp: tx.transaction?.timestamp,
+        UnixTimestamp: Math.floor(
+          new Date(tx.transaction?.timestamp).getTime() / 1000,
+        ),
+        FromAddress: tx.from,
+        FromAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) =>
+              item.address === tx.from ||
+              (item.evmAddress && item.evmAddress === tx.from),
+          )?.nameTag || '',
+        ToAddress: tx.to,
+        ToAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) =>
+              item.address === tx.to ||
+              (item.evmAddress && item.evmAddress === tx.to),
+          )?.nameTag || '',
+        Amount: TransactionHelper.balanceOf(
+          tx.transaction?.transaction_messages[0].content.data.value,
+          explorer.evmDecimal,
+        ),
+        Symbol: asset.symbol,
+        CosmosTxHash: tx.transaction?.hash,
       };
     });
 
@@ -168,12 +268,16 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_COIN_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const coinConfig = await this.assetRepository.find({
       where: {
-        type: ASSETS_TYPE.IBC,
+        type: In([ASSETS_TYPE.IBC, ASSETS_TYPE.NATIVE]),
         name: Not(IsNull()),
+        explorer: { id: explorer.id },
       },
     });
 
@@ -199,12 +303,13 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
       );
     }
-    const data = [];
+    let data = [];
     txs?.forEach((tx) => {
       tx.arrEvent.forEach((evt) => {
         data.push({
@@ -215,12 +320,18 @@ export class ExportCsvService {
           UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           FromAddress: evt.fromAddress,
           FromAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.fromAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                (item.evmAddress && item.evmAddress === evt.fromAddress),
+            )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.toAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                (item.evmAddress && item.evmAddress === evt.toAddress),
+            )?.nameTag || '',
           AmountIn: evt.toAddress === payload.address ? evt.amount : '',
           AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
           Symbol: evt.denom,
@@ -228,6 +339,10 @@ export class ExportCsvService {
         });
       });
     });
+
+    if (data.length > EXPORT_LIMIT_RECORD) {
+      data = data.splice(0, EXPORT_LIMIT_RECORD);
+    }
 
     return { data, fileName, fields };
   }
@@ -275,21 +390,16 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_TOKEN_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
-
-    const coinConfig = await this.assetRepository.find({
-      where: {
-        type: ASSETS_TYPE.IBC,
-        name: Not(IsNull()),
-      },
-    });
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       explorer,
       payload.dataType,
       payload.address,
-      coinConfig,
     );
 
     let lstPrivateName;
@@ -306,6 +416,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
@@ -322,18 +433,135 @@ export class ExportCsvService {
           UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           FromAddress: evt.fromAddress,
           FromAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.fromAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                (item.evmAddress && item.evmAddress === evt.fromAddress),
+            )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.toAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                (item.evmAddress && item.evmAddress === evt.toAddress),
+            )?.nameTag || '',
           AmountIn: evt.toAddress === payload.address ? evt.amount : '',
           AmountOut: evt.toAddress !== payload.address ? evt.amount : '',
           Symbol: evt.denom,
           TokenContractAddress: tx.contractAddress,
         });
       });
+    });
+
+    return { data, fileName, fields };
+  }
+
+  private async erc20Transfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
+    const fileName = `export-account-erc20-transfer-${payload.evmAddress}.csv`;
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_ERC20_TRANSFER,
+        explorer.chainDb,
+      ),
+      variables: {
+        limit: QUERY_LIMIT_RECORD,
+        to: payload.evmAddress,
+        from: payload.evmAddress,
+        heightLT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.max + 1
+            : null,
+        heightGT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.min > 1
+              ? +payload.min - 1
+              : 0
+            : null,
+        startTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+        endTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+        actionIn: [
+          'mint',
+          'burn',
+          'transfer',
+          'send',
+          'transfer_from',
+          'burn_from',
+          'send_from',
+        ],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_ERC20_TRANSFER,
+    };
+
+    const { result: response, listMethods } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+      TYPE_EXPORT.Erc20Txs,
+    );
+
+    let lstPrivateName;
+    let fields = TX_HEADER.TOKEN_TRANSFER;
+    if (userId) {
+      fields = TX_HEADER.TOKEN_TRANSFER_NAMETAG;
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        userId,
+        null,
+        null,
+        LIMIT_PRIVATE_NAME_TAG,
+        0,
+        ctx.chainId,
+      );
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.evmAddress = item.evm_address;
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
+    const data = response.transaction?.map((tx) => {
+      return {
+        TxHash: tx.tx_hash,
+        MessageRaw: tx.evm_transaction.transaction_message.type,
+        Message: TransactionHelper.getFunctionNameByMethodId(
+          tx.evm_transaction.data?.substring(0, 8),
+          listMethods,
+        ),
+        Timestamp: tx.evm_transaction.transaction.timestamp,
+        UnixTimestamp: Math.floor(
+          new Date(tx.evm_transaction.transaction.timestamp).getTime() / 1000,
+        ),
+        FromAddress: tx.from,
+        FromAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) =>
+              item.address === tx.from ||
+              (item.evmAddress && item.evmAddress === tx.from),
+          )?.nameTag || '',
+        ToAddress: tx.to,
+        ToAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) =>
+              item.address === tx.to ||
+              (item.evmAddress && item.evmAddress === tx.to),
+          )?.nameTag || '',
+        AmountIn:
+          tx.to === payload.evmAddress
+            ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
+            : '',
+        AmountOut:
+          tx.to !== payload.evmAddress
+            ? TransactionHelper.balanceOf(tx.amount, tx.erc20_contract.decimal)
+            : '',
+        Symbol: tx.erc20_contract.symbol,
+        TokenContractAddress: tx.erc20_contract.address,
+      };
     });
 
     return { data, fileName, fields };
@@ -374,21 +602,16 @@ export class ExportCsvService {
       operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
     };
 
-    const response = await this.queryData(graphqlQuery, explorer.chainDb);
-
-    const coinConfig = await this.assetRepository.find({
-      where: {
-        type: ASSETS_TYPE.IBC,
-        name: Not(IsNull()),
-      },
-    });
+    const { result: response } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+    );
 
     const txs = TransactionHelper.convertDataAccountTransaction(
       response,
       explorer,
       payload.dataType,
       payload.address,
-      coinConfig,
     );
 
     let lstPrivateName;
@@ -405,6 +628,7 @@ export class ExportCsvService {
       );
       lstPrivateName = await Promise.all(
         result.map(async (item) => {
+          item.evmAddress = item.evm_address;
           item.nameTag = await this.encryptionService.decrypt(item.nameTag);
           return item;
         }),
@@ -421,12 +645,18 @@ export class ExportCsvService {
           UnixTimestamp: Math.floor(new Date(tx.timestamp).getTime() / 1000),
           FromAddress: evt.fromAddress,
           FromAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.fromAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.fromAddress ||
+                (item.evmAddress && item.evmAddress === evt.fromAddress),
+            )?.nameTag || '',
           ToAddress: evt.toAddress,
           ToAddressPrivateNameTag:
-            lstPrivateName?.find((item) => item.address === evt.toAddress)
-              ?.nameTag || '',
+            lstPrivateName?.find(
+              (item) =>
+                item.address === evt.toAddress ||
+                (item.evmAddress && item.evmAddress === evt.toAddress),
+            )?.nameTag || '',
           TokenIdIn: evt.toAddress === payload.address ? evt.tokenId : '',
           TokenIdOut: evt.toAddress !== payload.address ? evt.tokenId : '',
           NFTContractAddress: evt.contractAddress,
@@ -437,8 +667,13 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async queryData(graphqlQuery, chainDB = this.defaultChainDB) {
+  private async queryData(
+    graphqlQuery,
+    chainDB = this.defaultChainDB,
+    evmExecuted = null,
+  ) {
     const result = { transaction: [] };
+    const listMethods = [];
     let next = true;
     let timesLoop = 0;
     const MAX_LOOP = 10;
@@ -462,10 +697,43 @@ export class ExportCsvService {
         graphqlQuery.variables.heightLT =
           response?.transaction[response.transaction.length - 1]?.height;
       }
+      if (evmExecuted) {
+        let dataMethod = [];
+        if (evmExecuted === TYPE_EXPORT.EVMExecutedTxs) {
+          dataMethod = response.transaction
+            .map((tx) => {
+              return tx.data?.substring(0, 8);
+            })
+            ?.filter((item) => item);
+        } else if (evmExecuted === TYPE_EXPORT.Erc20Txs) {
+          dataMethod = response.transaction
+            .map((tx) => {
+              return tx.evm_transaction.data?.substring(0, 8);
+            })
+            ?.filter((item) => item);
+        }
+
+        const methodIds = [...new Set(dataMethod)];
+        const query = {
+          query: util.format(
+            INDEXER_API_V2.GRAPH_QL.EVM_SIGNATURE_MAPPING,
+            chainDB,
+          ),
+          variables: {
+            methodIds: methodIds,
+          },
+          operationName: INDEXER_API_V2.OPERATION_NAME.EVM_SIGNATURE_MAPPING,
+        };
+
+        const listMethodMapping = (
+          await this.serviceUtil.fetchDataFromGraphQL(query)
+        )?.data[chainDB].evm_signature_mapping;
+        listMethods.push(...listMethodMapping);
+      }
       result.transaction?.push(...response?.transaction);
       timesLoop++;
     }
 
-    return result;
+    return { result, listMethods };
   }
 }

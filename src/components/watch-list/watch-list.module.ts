@@ -10,6 +10,8 @@ import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { AkcLogger } from 'src/shared';
+import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
+import { RpcUtil } from '../../shared/utils/rpc.util';
 
 @Module({
   imports: [
@@ -23,6 +25,12 @@ import { AkcLogger } from 'src/shared';
     UserModule,
   ],
   controllers: [WatchListController],
-  providers: [WatchListService, EncryptionService, AkcLogger],
+  providers: [
+    WatchListService,
+    EncryptionService,
+    AkcLogger,
+    VerifyAddressUtil,
+    RpcUtil,
+  ],
 })
 export class WatchListModule {}

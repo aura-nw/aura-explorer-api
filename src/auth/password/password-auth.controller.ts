@@ -16,6 +16,7 @@ import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { LoginUserWithPassword } from './dtos/login-with-password.dto';
 import { PasswordAuthService } from './password-auth.service';
 import { LoginUserWithPasswordResponseDto } from './dtos/login-with-password.response.dto';
+import { ReqContext, RequestContext } from '../../shared';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -31,17 +32,20 @@ export class PasswordAuthController {
     @Param('email') email: string,
     @Param('code') code: string,
     @Res() res,
+    @ReqContext() ctx: RequestContext,
   ) {
-    const auraScanUrl = this.configService.get('auraScanUrl');
-
-    const resultActive = await this.userService.activeUser(email, code);
+    const { msg: resultActive, url } = await this.userService.activeUser(
+      email,
+      code,
+      ctx,
+    );
 
     if (resultActive.code === MSGS_ACTIVE_USER.SA001.code) {
-      res.redirect(`${auraScanUrl}/user/welcome`);
+      res.redirect(`${url}/user/welcome`);
     } else if (resultActive.code === MSGS_ACTIVE_USER.EA001.code) {
-      res.redirect(`${auraScanUrl}/user/already-active`);
+      res.redirect(`${url}/user/already-active`);
     } else {
-      res.redirect(`${auraScanUrl}/something-wrong`);
+      res.redirect(`${url}/something-wrong`);
     }
   }
 
@@ -55,12 +59,15 @@ export class PasswordAuthController {
 
   @Get('send-reset-password-email/:email')
   @HttpCode(HttpStatus.OK)
-  async sendResetPasswordEmail(@Param('email') email: string) {
+  async sendResetPasswordEmail(
+    @Param('email') email: string,
+    @ReqContext() ctx: RequestContext,
+  ) {
     const user = await this.userService.findOne({
       where: { email: email },
       relations: ['userActivities'],
     });
-    await this.userService.sendResetPasswordEmail(user);
+    await this.userService.sendResetPasswordEmail(user, ctx);
   }
 
   @Post('reset-password')

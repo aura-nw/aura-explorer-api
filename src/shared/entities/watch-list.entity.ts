@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { BaseEntityIncrementId } from './base/base.entity';
 import { User } from './user.entity';
 import { WATCH_LIST } from '../constants/common';
@@ -9,6 +9,9 @@ import { Explorer } from './explorer.entity';
 export class WatchList extends BaseEntityIncrementId {
   @Column({ nullable: false })
   address: string;
+
+  @Column({ name: 'evm_address', nullable: true })
+  evmAddress: string;
 
   @Column({ type: 'enum', enum: WATCH_LIST.TYPE })
   type: string;
