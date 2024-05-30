@@ -61,8 +61,10 @@ export class ExportCsvService {
           return this.coinTransfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.FtsTxs:
           return this.tokenTransfer(ctx, payload, userId, explorer);
-        case TYPE_EXPORT.NftTxs:
-          return this.nftTransfer(ctx, payload, userId, explorer);
+        case TYPE_EXPORT.Cw721Txs:
+          return this.cw721Transfer(ctx, payload, userId, explorer);
+        case TYPE_EXPORT.Erc721Txs:
+          return this.erc721Transfer(ctx, payload, userId, explorer);
         case TYPE_EXPORT.EVMExecutedTxs:
           return this.evmExecuted(payload, userId, explorer);
         case TYPE_EXPORT.Erc20Txs:
@@ -567,16 +569,16 @@ export class ExportCsvService {
     return { data, fileName, fields };
   }
 
-  private async nftTransfer(
+  private async cw721Transfer(
     ctx: RequestContext,
     payload: ExportCsvParamDto,
     userId,
     explorer: Explorer,
   ) {
-    const fileName = `export-account-nft-transfer-${payload.address}.csv`;
+    const fileName = `export-account-cw721-transfer-${payload.address}.csv`;
     const graphqlQuery = {
       query: util.format(
-        INDEXER_API_V2.GRAPH_QL.TX_NFT_TRANSFER,
+        INDEXER_API_V2.GRAPH_QL.TX_CW721_TRANSFER,
         explorer.chainDb,
       ),
       variables: {
@@ -599,7 +601,7 @@ export class ExportCsvService {
           payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
         actionIn: ['mint', 'burn', 'transfer_nft', 'send_nft'],
       },
-      operationName: INDEXER_API_V2.OPERATION_NAME.TX_NFT_TRANSFER,
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_CW721_TRANSFER,
     };
 
     const { result: response } = await this.queryData(
@@ -615,9 +617,9 @@ export class ExportCsvService {
     );
 
     let lstPrivateName;
-    let fields = TX_HEADER.NFT_TRANSFER;
+    let fields = TX_HEADER.CW721_TRANSFER;
     if (userId) {
-      fields = TX_HEADER.NFT_TRANSFER_NAMETAG;
+      fields = TX_HEADER.CW721_TRANSFER_NAMETAG;
       const { result } = await this.privateNameTagRepository.getNameTags(
         userId,
         null,
@@ -659,9 +661,112 @@ export class ExportCsvService {
             )?.nameTag || '',
           TokenIdIn: evt.toAddress === payload.address ? evt.tokenId : '',
           TokenIdOut: evt.toAddress !== payload.address ? evt.tokenId : '',
-          NFTContractAddress: evt.contractAddress,
+          Cw721ContractAddress: evt.contractAddress,
+          Cw721ContractPrivateNameTag:
+            lstPrivateName?.find((item) => item.address === evt.contractAddress)
+              ?.nameTag || '',
         });
       });
+    });
+
+    return { data, fileName, fields };
+  }
+
+  private async erc721Transfer(
+    ctx: RequestContext,
+    payload: ExportCsvParamDto,
+    userId,
+    explorer: Explorer,
+  ) {
+    const fileName = `export-account-erc721-transfer-${payload.evmAddress}.csv`;
+    const graphqlQuery = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.TX_ERC721_TRANSFER,
+        explorer.chainDb,
+      ),
+      variables: {
+        limit: QUERY_LIMIT_RECORD,
+        to: payload.evmAddress,
+        from: payload.evmAddress,
+        heightLT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.max + 1
+            : null,
+        heightGT:
+          payload.dataRangeType === RANGE_EXPORT.Height
+            ? +payload.min > 1
+              ? +payload.min - 1
+              : 0
+            : null,
+        startTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.min : null,
+        endTime:
+          payload.dataRangeType === RANGE_EXPORT.Date ? payload.max : null,
+        actionIn: ['transfer'],
+      },
+      operationName: INDEXER_API_V2.OPERATION_NAME.TX_ERC721_TRANSFER,
+    };
+
+    const { result: response, listMethods } = await this.queryData(
+      graphqlQuery,
+      explorer.chainDb,
+      TYPE_EXPORT.Erc721Txs,
+    );
+
+    let lstPrivateName;
+    let fields = TX_HEADER.ERC721_TRANSFER;
+    if (userId) {
+      fields = TX_HEADER.ERC721_TRANSFER_NAMETAG;
+      const { result } = await this.privateNameTagRepository.getNameTags(
+        userId,
+        null,
+        null,
+        LIMIT_PRIVATE_NAME_TAG,
+        0,
+        ctx.chainId,
+      );
+      lstPrivateName = await Promise.all(
+        result.map(async (item) => {
+          item.evmAddress = item.evm_address;
+          item.nameTag = await this.encryptionService.decrypt(item.nameTag);
+          return item;
+        }),
+      );
+    }
+    const data = response.transaction?.map((tx) => {
+      const methodId = tx.evm_transaction.data?.substring(0, 8);
+      const method = TransactionHelper.getFunctionNameByMethodId(
+        methodId,
+        listMethods,
+      );
+
+      return {
+        TxHash: tx.tx_hash,
+        MessageRaw: tx.evm_transaction.transaction_message.type,
+        Message: method,
+        Timestamp: tx.evm_transaction.transaction.timestamp,
+        UnixTimestamp: Math.floor(
+          new Date(tx.evm_transaction.transaction.timestamp).getTime() / 1000,
+        ),
+        FromAddress: tx.from,
+        FromAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) =>
+              item.address === tx.from ||
+              (item.evmAddress && item.evmAddress === tx.from),
+          )?.nameTag || '',
+        ToAddress: tx.to,
+        ToAddressPrivateNameTag:
+          lstPrivateName?.find(
+            (item) =>
+              item.address === tx.to ||
+              (item.evmAddress && item.evmAddress === tx.to),
+          )?.nameTag || '',
+        TokenIdIn: tx.to === payload.evmAddress ? tx.erc721_token.token_id : '',
+        TokenIdOut:
+          tx.to !== payload.evmAddress ? tx.erc721_token.token_id : '',
+        Erc721ContractAddress: tx.erc721_contract.address,
+      };
     });
 
     return { data, fileName, fields };
@@ -705,7 +810,10 @@ export class ExportCsvService {
               return tx.data?.substring(0, 8);
             })
             ?.filter((item) => item);
-        } else if (evmExecuted === TYPE_EXPORT.Erc20Txs) {
+        } else if (
+          evmExecuted === TYPE_EXPORT.Erc20Txs ||
+          evmExecuted === TYPE_EXPORT.Erc721Txs
+        ) {
           dataMethod = response.transaction
             .map((tx) => {
               return tx.evm_transaction.data?.substring(0, 8);
