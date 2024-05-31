@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ASSETS_TYPE, AkcLogger, Asset, RequestContext } from '../../../shared';
 import { AssetsRepository } from '../../asset/repositories/assets.repository';
 import { AssetParamsDto } from '../dtos/asset-params.dto';
@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TokenHolderStatistic } from 'src/shared/entities/token-holder-statistic.entity';
 import * as moment from 'moment';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { UpdateAssetDto } from '../dtos/update-asset-dto';
 
 @Injectable()
 export class AssetService {
@@ -88,6 +89,21 @@ export class AssetService {
           },
         ],
       });
+    }
+  }
+
+  async updateAssetsDetail(updateAssetDto: UpdateAssetDto): Promise<Asset> {
+    try {
+      const asset = await this.assetsRepository.getAssetById(updateAssetDto.id);
+
+      if (asset) {
+        this.assetsRepository.merge(asset, updateAssetDto);
+        return await this.assetsRepository.save(asset);
+      } else {
+        throw new NotFoundException('Asset not found');
+      }
+    } catch (error) {
+      throw error;
     }
   }
 }

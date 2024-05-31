@@ -1,4 +1,5 @@
 import {
+  Body,
   CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
@@ -6,11 +7,14 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
@@ -23,11 +27,16 @@ import {
   MESSAGES,
   ReqContext,
   RequestContext,
+  USER_ROLE,
 } from 'src/shared';
 import { AssetService } from '../services/asset.service';
 import { AssetParamsDto } from '../dtos/asset-params.dto';
 import { AssetAttributes, GetAssetResult } from '../dtos/get-asset.dto';
 import { AssetsTokenMarketParamsDto } from '../dtos/cw20-token-market-params.dto';
+import { Roles } from '../../../auth/role/roles.decorator';
+import { JwtAuthGuard } from '../../../auth/jwt/jwt-auth.guard';
+import { RoleGuard } from '../../../auth/role/roles.guard';
+import { UpdateAssetDto } from '../dtos/update-asset-dto';
 
 @Controller()
 @ApiTags('asset')
@@ -84,5 +93,22 @@ export class AssetController {
   ): Promise<Asset> {
     this.logger.log(ctx, `${this.getAssetsDetail.name} was called!`);
     return await this.assetService.getAssetsDetail(ctx, denom);
+  }
+
+  @Patch('assets/:id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @ApiOperation({ summary: 'Update Assets detail' })
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(ClassSerializerInterceptor)
+  async updateAssetsDetail(
+    @ReqContext() ctx: RequestContext,
+    @Param('id') id: string,
+    @Body() updateAssetDto: UpdateAssetDto,
+  ): Promise<Asset> {
+    this.logger.log(ctx, `${this.updateAssetsDetail.name} was called!`);
+    updateAssetDto.id = +id || 0;
+    return await this.assetService.updateAssetsDetail(updateAssetDto);
   }
 }
