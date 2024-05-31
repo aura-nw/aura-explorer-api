@@ -2,7 +2,6 @@ import { Brackets, EntityRepository, Repository } from 'typeorm';
 import { PrivateNameTag } from '../../../shared/entities/private-name-tag.entity';
 import { Logger } from '@nestjs/common';
 import { User } from '../../../shared/entities/user.entity';
-import { PAGE_REQUEST } from '../../../shared';
 
 @EntityRepository(PrivateNameTag)
 export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
@@ -30,6 +29,7 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
       .select(
         `tag.id,
         tag.address,
+        tag.evm_address,
         tag.note,
         tag.is_favorite as isFavorite,
         tag.type,
@@ -66,9 +66,13 @@ export class PrivateNameTagRepository extends Repository<PrivateNameTag> {
         new Brackets((qb) => {
           qb.where('tag.address = :keyword', {
             keyword: `${keyword}`,
-          }).orWhere('tag.name_tag = :keywordEncrypt', {
-            keywordEncrypt: `${keywordEncrypt}`,
-          });
+          })
+            .orWhere('tag.evm_address = :keyword', {
+              keyword: `${keyword}`,
+            })
+            .orWhere('tag.name_tag = :keywordEncrypt', {
+              keywordEncrypt: `${keywordEncrypt}`,
+            });
         }),
       );
     }

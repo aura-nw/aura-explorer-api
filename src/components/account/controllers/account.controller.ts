@@ -1,4 +1,5 @@
 import {
+  CacheInterceptor,
   ClassSerializerInterceptor,
   Controller,
   Get,
@@ -54,11 +55,11 @@ export class AccountController {
     type: SwaggerBaseApiResponse(AccountOutput),
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseInterceptors(CacheInterceptor)
   async getTotalBalanceByListAddress(
     @ReqContext() ctx: RequestContext,
     @Param('address') listAddress: string,
   ): Promise<any> {
-    this.logger.log(ctx, `${this.getTotalBalanceByAddress.name} was called!`);
     const address = listAddress.split(',');
     const account = await this.accountService.getTotalBalanceByListAddress(
       ctx,
