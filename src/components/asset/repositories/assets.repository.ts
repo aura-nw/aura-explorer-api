@@ -129,4 +129,8 @@ export class AssetsRepository extends Repository<Asset> {
       .orIgnore()
       .execute();
   }
+
+  async getAssetById(id: number) {
+    return await this.findOne(id);
+  }
 }
