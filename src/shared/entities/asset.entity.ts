@@ -61,6 +61,9 @@ export class Asset extends BaseEntityIncrementId {
   @Column({ name: 'social_profiles', nullable: true, type: 'json' })
   socialProfiles: JSON;
 
+  @Column({ name: 'overview_info', type: 'text', nullable: true })
+  overviewInfo: string;
+
   @Column({ name: 'type', nullable: true })
   type: string;
 
