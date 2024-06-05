@@ -29,7 +29,12 @@ export class Micro3CampaignService {
     const explorer = await this.explorerRepository.findOneOrFail({
       chainId: query.chainId,
     });
-    const chain = explorer.chainDb == 'xstaxy' ? '' : `${explorer.chainDb}.`;
+    const chain =
+      explorer.chainDb == 'xstaxy'
+        ? ''
+        : explorer.chainDb == 'auratesnet'
+        ? 'dev.'
+        : `${explorer.chainDb}.`;
     switch (query.action) {
       case ACTION_TYPE.MintNft:
         result = await this.verifyMintNft(query);
