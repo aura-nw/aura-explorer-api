@@ -32,7 +32,7 @@ export class Micro3CampaignService {
     const chain =
       explorer.chainDb == 'xstaxy'
         ? ''
-        : explorer.chainDb == 'auratesnet'
+        : explorer.chainDb == 'auratestnet'
         ? 'dev.'
         : `${explorer.chainDb}.`;
     switch (query.action) {
