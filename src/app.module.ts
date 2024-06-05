@@ -44,7 +44,7 @@ import { Micro3CampaignModule } from './micro3-campaign/micro3-campaign.module';
       isGlobal: true,
     }),
     PasswordAuthModule,
-    // QueuesModule,
+    QueuesModule,
     GoogleRecaptchaModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) =>
