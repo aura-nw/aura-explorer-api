@@ -140,7 +140,7 @@ export class TransactionHelper {
             },
           ];
           break;
-        case TYPE_EXPORT.NftTxs:
+        case TYPE_EXPORT.Cw721Txs:
           const nftTypeAndAction = this.getTypeTx(element.tx);
 
           arrEvent = [
