@@ -12,7 +12,7 @@ on:
 
 jobs:
   build:
-    if: github.actor == 'hoangthanh212' || github.actor == 'kienvc' 
+    if: github.actor == 'hoangthanh212' || github.actor == 'kienvc' || github.actor == 'duonghb53'
     runs-on: ubuntu-latest
     #runs-on: self-hosted
 
