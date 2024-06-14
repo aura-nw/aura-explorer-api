@@ -88,7 +88,7 @@ export class PrivateNameTagController {
     @ReqContext() ctx: RequestContext,
     @Param('id') id: number,
   ): Promise<PrivateNameTag> {
-    this.logger.log(ctx, `${this.getNameTags.name} was called!`);
+    this.logger.log(ctx, `${this.getNameTagsDetail.name} was called!`);
     const result = await this.nameTagService.getNameTagsDetail(ctx, id);
     return result;
   }

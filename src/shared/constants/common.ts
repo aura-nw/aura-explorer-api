@@ -173,7 +173,7 @@ export const INDEXER_API_V2 = {
         }
       }
     }`,
-    TX_NFT_TRANSFER: `query Cw721TXMultilCondition(
+    TX_CW721_TRANSFER: `query Cw721TXMultilCondition(
       $receiver: String = null
       $sender: String = null
       $heightGT: Int = null
@@ -224,6 +224,56 @@ export const INDEXER_API_V2 = {
       }
     }
     `,
+    TX_ERC721_TRANSFER: `query Erc721TXMultilCondition(
+      $to: String = null, 
+      $from: String = null, 
+      $heightGT: Int = null, 
+      $heightLT: Int = null, 
+      $limit: Int = 100, 
+      $actionIn: [String!] = null, 
+      $startTime: timestamptz = null, 
+      $endTime: timestamptz = null
+    ) {
+        %s {
+          transaction: erc721_activity(
+            where: {
+              _or: [{to: {_eq: $to}}, {from: {_eq: $from}}], 
+              action: {_in: $actionIn}, 
+              height: {_gt: $heightGT, _lt: $heightLT}, 
+              evm_transaction: {
+                transaction: {
+                  timestamp: {_lte: $endTime, _gte: $startTime}
+                }
+              }
+            }, 
+            order_by: {height: desc}, 
+            limit: $limit
+          ) {
+            action
+            from
+            to
+            sender
+            erc721_contract {
+              address
+              symbol
+              name
+            }
+            tx_hash
+            erc721_token {
+              token_id
+            }
+            evm_transaction {
+              transaction {
+                timestamp
+              }
+              data
+              transaction_message {
+                type
+              }
+            }
+          }
+        }
+    }`,
     EXECUTED_NOTIFICATION: `query ExecutedNotification($heightGT: Int, $heightLT: Int) {
       %s {
         executed: transaction(where: {height: {_gt: $heightGT, _lt: $heightLT}, code: {_eq: 0}}, order_by: {height: desc}, limit: 100) {
@@ -403,7 +453,8 @@ export const INDEXER_API_V2 = {
     TX_COIN_TRANSFER: 'QueryTxMsgOfAccount',
     TX_ERC20_TRANSFER: 'queryListTxsERC20',
     TX_TOKEN_TRANSFER: 'Cw20TXMultilCondition',
-    TX_NFT_TRANSFER: 'Cw721TXMultilCondition',
+    TX_CW721_TRANSFER: 'Cw721TXMultilCondition',
+    TX_ERC721_TRANSFER: 'Erc721TXMultilCondition',
     EXECUTED_NOTIFICATION: 'ExecutedNotification',
     COIN_TRANSFER_NOTIFICATION: 'CoinTransferNotification',
     TOKEN_TRANSFER_NOTIFICATION: 'TokenTransferNotification',
@@ -796,7 +847,7 @@ export const TX_HEADER = {
     'Symbol',
     'TokenContractAddress',
   ],
-  NFT_TRANSFER: [
+  CW721_TRANSFER: [
     'TxHash',
     'MessageRaw',
     'Message',
@@ -809,7 +860,22 @@ export const TX_HEADER = {
     'ToAddress',
     'TokenIdIn',
     'TokenIdOut',
-    'NFTContractAddress',
+    'Cw721ContractAddress',
+  ],
+  ERC721_TRANSFER: [
+    'TxHash',
+    'MessageRaw',
+    'Method',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'ToAddress',
+    'TokenIdIn',
+    'TokenIdOut',
+    'Erc721ContractAddress',
   ],
   EVM_EXECUTED_NAMETAG: [
     'EvmTxHash',
@@ -864,7 +930,7 @@ export const TX_HEADER = {
     'Symbol',
     'TokenContractAddress',
   ],
-  NFT_TRANSFER_NAMETAG: [
+  CW721_TRANSFER_NAMETAG: [
     'TxHash',
     'MessageRaw',
     'Message',
@@ -879,7 +945,24 @@ export const TX_HEADER = {
     'ToAddressPrivateNameTag',
     'TokenIdIn',
     'TokenIdOut',
-    'NFTContractAddress',
+    'Cw721ContractAddress',
+  ],
+  ERC721_TRANSFER_NAMETAG: [
+    'TxHash',
+    'MessageRaw',
+    'Method',
+    {
+      label: 'Timestamp (UTC)',
+      value: 'Timestamp',
+    },
+    'UnixTimestamp',
+    'FromAddress',
+    'FromAddressPrivateNameTag',
+    'ToAddress',
+    'ToAddressPrivateNameTag',
+    'TokenIdIn',
+    'TokenIdOut',
+    'Erc721ContractAddress',
   ],
 };
 
