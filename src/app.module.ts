@@ -20,6 +20,7 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha/google-recaptch
 import { NotificationModule } from './components/notification/notification.module';
 import { WatchListModule } from './components/watch-list/watch-list.module';
 import { AssetModule } from './components/asset/asset.module';
+import { Micro3CampaignModule } from './micro3-campaign/micro3-campaign.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AssetModule } from './components/asset/asset.module';
         configService.get('googleRecaptchaOptions'),
       inject: [ConfigService],
     }),
+    Micro3CampaignModule,
   ],
   providers: [ServiceUtil],
 })
