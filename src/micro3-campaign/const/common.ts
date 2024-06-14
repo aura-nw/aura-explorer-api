@@ -1,4 +1,3 @@
-import { QUEUES } from './../../shared/constants/common';
 export const MICRO3_CAMPAIGN = {
   GRAPH_QL: {
     MINT_NFT: `query CheckMintNft($from: String = null, $to: String = null, $heightGTE: Int = 0, $limit: Int = 10) {
@@ -25,8 +24,16 @@ export const MICRO3_CAMPAIGN = {
           }
         }
       }`,
-    ADD_LP: 'AddLiquidity',
-    SWAP: 'Swap',
+    ADD_LP: `query CheckAddLiquidity($origin: Bytes!) {
+        data: mints(where: {origin: $origin}) {
+          origin
+        }
+      }`,
+    SWAP: `query CheckSwap($origin: Bytes!) {
+        data: swaps(where: {origin: $origin}) {
+          id
+        }
+      }`,
   },
   OPERATION_NAME: {
     MINT_NFT: 'CheckMintNft',

@@ -105,4 +105,7 @@ export default () => ({
   watchList: {
     limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
   },
+  haloTrade: {
+    graphQL: process.env.HALO_TRADE_GRAPHQL,
+  },
 });

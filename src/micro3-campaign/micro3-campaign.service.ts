@@ -13,12 +13,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as util from 'util';
 import { ServiceUtil } from '../shared/utils/service.util';
 const HALO_BASE_URL = `https://api.%shalotrade.zone/api/v1/evm`;
+const HALO_GRAPHQL_DEFAULT = `https://graph-api.%shalotrade.zone/subgraphs/name/halotrade/uniswap-v3`;
 import axios from 'axios';
 import { AkcLogger } from '../shared';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class Micro3CampaignService {
   constructor(
+    private configService: ConfigService,
     private readonly logger: AkcLogger,
     private serviceUtil: ServiceUtil,
     @InjectRepository(Explorer)
@@ -164,6 +167,24 @@ export class Micro3CampaignService {
     action: HALO_ACTION_TYPE,
     query: CampaignParamDto,
   ) {
+    console.log(`Query: ${JSON.stringify(query)}`);
+    switch (query.uniVersion) {
+      case 2:
+        return await this.verifyWithUniV2(chain, action, query);
+
+      case 3:
+        return await this.verifyWithUniV3(chain, action, query);
+
+      default:
+        return await this.verifyWithUniV3(chain, action, query);
+    }
+  }
+
+  async verifyWithUniV2(
+    chain: string,
+    action: HALO_ACTION_TYPE,
+    query: CampaignParamDto,
+  ) {
     const senders = await this.getSenderFromHalo(chain, action);
     console.log(`senders: ${JSON.stringify(senders)}`);
     console.log(`query: ${JSON.stringify(query)}`);
@@ -175,6 +196,50 @@ export class Micro3CampaignService {
       return true;
     }
     return false;
+  }
+
+  async verifyWithUniV3(chain: string, action: HALO_ACTION_TYPE, query: any) {
+    const endpoint = `${util.format(
+      this.configService.get('haloTrade.graphQL') ?? HALO_GRAPHQL_DEFAULT,
+      chain,
+    )}`;
+    const graphqlQuery = this.generateQuery(action, query);
+
+    const response = (
+      await this.serviceUtil.fetchDataFromGraphQL(graphqlQuery, endpoint)
+    )?.data;
+
+    console.log(`response: ${JSON.stringify(response)}`);
+    if (!response) {
+      return false;
+    } else {
+      return response.data?.length >= Number(query.amount);
+    }
+  }
+
+  generateQuery(action: HALO_ACTION_TYPE, query: CampaignParamDto) {
+    let graphqlQuery = {};
+    switch (action) {
+      case HALO_ACTION_TYPE.Swap:
+        graphqlQuery = {
+          query: util.format(MICRO3_CAMPAIGN.GRAPH_QL.SWAP),
+          variables: {
+            origin: query.address,
+          },
+        };
+        break;
+
+      case HALO_ACTION_TYPE.AddLiquidity:
+        graphqlQuery = {
+          query: util.format(MICRO3_CAMPAIGN.GRAPH_QL.ADD_LP),
+          variables: {
+            origin: query.address,
+          },
+        };
+        break;
+    }
+
+    return graphqlQuery;
   }
 
   async getSenderFromHalo(chain: string, action: HALO_ACTION_TYPE, method?) {
