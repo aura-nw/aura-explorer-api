@@ -7,7 +7,7 @@ import { Explorer } from '../shared/entities/explorer.entity';
 import { ServiceUtil } from '../shared/utils/service.util';
 import { SharedModule } from '../shared';
 import { HttpModule } from '@nestjs/axios';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from '../components/user/user.module';
 import { BullModule } from '@nestjs/bull';
 import { HaloTradeActivity } from './entities/micro3.entity';
@@ -23,7 +23,7 @@ import { HaloTradeActivity } from './entities/micro3.entity';
     //   name: MICRO3_QUEUES.CAMPAIGN.QUEUE_NAME,
     // }),
   ],
-  providers: [Micro3CampaignService, ServiceUtil],
+  providers: [Micro3CampaignService, ServiceUtil, ConfigService],
   controllers: [Micro3CampaignController],
   // exports: [
   //   BullModule.registerQueueAsync({

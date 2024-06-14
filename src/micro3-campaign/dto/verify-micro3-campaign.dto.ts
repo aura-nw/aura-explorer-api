@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 import { ACTION_TYPE } from '../const/common';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
 export class CampaignParamDto {
@@ -27,6 +27,10 @@ export class CampaignParamDto {
   @IsNotEmpty()
   @Transform(({ value }) => parseInt(value), { toClassOnly: true })
   amount: string;
+
+  // @ApiPropertyOptional()
+  @Transform(({ value }) => parseInt(value), { toClassOnly: true })
+  uniVersion: number;
 }
 
 export interface ResultDto {
