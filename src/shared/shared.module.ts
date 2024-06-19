@@ -18,10 +18,13 @@ import { RedisUtil } from './utils/redis.util';
 import { EncryptionModule } from '../components/encryption/encryption.module';
 import { CipherKey } from './entities/cipher-key.entity';
 import { Explorer } from './entities/explorer.entity';
+import { UserAuthorityService } from 'src/components/user-authority/user-authority.service';
+import { UserAuthority } from './entities/user-authority.entity';
+import { UserAuthorityModule } from 'src/components/user-authority/user-authority.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CipherKey, Explorer]),
+    TypeOrmModule.forFeature([CipherKey, Explorer, UserAuthority]),
     ConfigModule.forRoot(configModuleOptions),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -65,13 +68,15 @@ import { Explorer } from './entities/explorer.entity';
 
     AkcLoggerModule,
     EncryptionModule,
+    UserAuthorityModule,
   ],
-  exports: [ConfigModule, AkcLoggerModule],
+  exports: [ConfigModule, AkcLoggerModule, UserAuthorityService],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
     { provide: 'CACHE_INTERCEPTOR', useClass: CacheInterceptor },
     RedisUtil,
+    UserAuthorityService,
   ],
 })
 export class SharedModule {}

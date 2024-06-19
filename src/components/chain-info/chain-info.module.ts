@@ -1,3 +1,4 @@
+import { SharedModule } from './../../shared/shared.module';
 import { Module } from '@nestjs/common';
 import { ChainInfoService } from './chain-info.service';
 import { ChainInfoController } from './chain-info.controller';
@@ -7,7 +8,7 @@ import { IsUniqueConstraint } from './validator/is-unique.validator';
 import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ChainInfo]), UserModule],
+  imports: [SharedModule, TypeOrmModule.forFeature([ChainInfo]), UserModule],
   controllers: [ChainInfoController],
   providers: [ChainInfoService, IsUniqueConstraint],
 })
