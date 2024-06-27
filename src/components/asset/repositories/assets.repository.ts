@@ -28,6 +28,7 @@ export class AssetsRepository extends Repository<Asset> {
     const queryBuilder = this.createQueryBuilder('tm')
       .select(sqlSelect)
       .where("tm.coin_id <> '' ")
+      .orderBy('tm.id', 'ASC')
       .limit(limit)
       .offset(pageIndex * limit);
 
