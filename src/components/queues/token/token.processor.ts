@@ -207,6 +207,11 @@ export class TokenProcessor implements OnModuleInit {
         'asset',
         explorer,
       );
+
+      if (!listAsset || listAsset.length === 0) {
+        return;
+      }
+
       await this.assetsRepository.storeAsset(listAsset);
     } catch (error) {
       this.logger.error(`syncAsset has error: ${error.stack}`);
