@@ -47,6 +47,9 @@ import { ChangePasswordDto } from '../dtos/change-password.dto';
 import { NotificationTokenDto } from '../dtos/notification-token.dto';
 import { NotificationToken } from '../../../shared/entities/notification-token.entity';
 import { DeleteResult } from 'typeorm';
+import { AddUserAuthorityDto } from 'src/components/user-authority/dto/create-user-authority.dto';
+import { UpdateUserAuthorityDto } from 'src/components/user-authority/dto/update-user-authority.dto';
+import { UserAuthorityDto } from 'src/components/user-authority/dto/user-authority.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -200,5 +203,72 @@ export class UsersController {
     @Param('token') token: string,
   ): Promise<DeleteResult> {
     return await this.userService.deleteNotificationToken(req.user.id, token);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @Get('admin/user-authority')
+  @ApiOperation({ summary: 'Return user authority.' })
+  @ApiOkResponse({
+    description: 'Return users authority.',
+    type: UserAuthorityDto,
+    isArray: true,
+  })
+  @ApiNotFoundResponse({
+    description: 'User authority not found.',
+  })
+  async getUserAuthority(@Req() req, @ReqContext() _ctx: RequestContext) {
+    console.log(`getUserAuthority userId: ${req.user.id}`);
+    return await this.userService.getUserAuthority(req.user.id);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @Post('admin/add-user-authority')
+  @ApiOperation({ summary: 'Add new user authority.' })
+  @ApiOkResponse({
+    description: 'Add new user authority.',
+    type: AddUserAuthorityDto,
+  })
+  async addUserAuthority(
+    @ReqContext() _ctx: RequestContext,
+    @Body() createUserAuthorityDto: AddUserAuthorityDto,
+  ) {
+    return await this.userService.addUserAuthority(createUserAuthorityDto);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @Patch('admin/update-user-authority/:id')
+  @ApiOperation({ summary: 'Update user authority.' })
+  @ApiOkResponse({
+    description: 'Update user authority.',
+    type: UpdateUserAuthorityDto,
+  })
+  async updateUserAuthority(
+    @Param('id') id: string,
+    @ReqContext() _ctx: RequestContext,
+    @Body() updateUserAuthorityDto: UpdateUserAuthorityDto,
+  ) {
+    return await this.userService.updateUserAuthority(
+      +id,
+      updateUserAuthorityDto,
+    );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RoleGuard)
+  @Roles(USER_ROLE.ADMIN)
+  @Delete('delete-user-authority/:id')
+  @ApiOperation({ summary: 'Delete user authority.' })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeUserAuthority(
+    @Param('id') id: string,
+    @ReqContext() _ctx: RequestContext,
+  ) {
+    return await this.userService.removeUserAuthority(+id);
   }
 }

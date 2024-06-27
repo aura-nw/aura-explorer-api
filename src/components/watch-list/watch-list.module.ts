@@ -9,13 +9,13 @@ import { PrivateNameTag } from '../../shared/entities/private-name-tag.entity';
 import { EncryptionService } from '../encryption/encryption.service';
 import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
-import { AkcLogger, SharedModule } from 'src/shared';
+import { AkcLogger } from 'src/shared';
 import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
 import { RpcUtil } from '../../shared/utils/rpc.util';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
 
 @Module({
   imports: [
-    SharedModule,
     TypeOrmModule.forFeature([
       WatchList,
       PublicNameTag,
@@ -24,6 +24,7 @@ import { RpcUtil } from '../../shared/utils/rpc.util';
       Explorer,
     ]),
     UserModule,
+    UserAuthorityModule,
   ],
   controllers: [WatchListController],
   providers: [

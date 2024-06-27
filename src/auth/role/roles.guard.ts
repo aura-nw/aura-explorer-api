@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY, USER_ROLE, createRequestContext } from '../../shared';
 import { UserService } from '../../components/user/user.service';
-import { UserAuthorityService } from '../../components/user-authority/user-authority.service';
+import { UserAuthorityService } from 'src/components/user-authority/user-authority.service';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -27,10 +27,20 @@ export class RoleGuard implements CanActivate {
     console.log(ctx.chainId);
 
     const userFound = await this.userService.findOneByEmail(user?.email);
+    console.log(`userFound: ${JSON.stringify(userFound)}`);
     const userRole = userFound?.role || '';
+    let isAllowed = false;
+    if (userFound?.role === USER_ROLE.SUPER_ADMIN) {
+      return true;
+    } else {
+      isAllowed = await this.userAuthority.checkUserAuthority(
+        userFound.email,
+        ctx.chainId,
+      );
+      console.log(`isAllowed: ${isAllowed}`);
+    }
 
-    this.userAuthority.checkUserAuthority(userFound.id, ctx.chainId);
-    return this.matchRoles(requiredRoles, userRole);
+    return this.matchRoles(requiredRoles, userRole) && isAllowed;
   }
 
   matchRoles(roles: string[], userRole: string): boolean {

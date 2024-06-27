@@ -11,6 +11,7 @@ import { ServiceUtil } from '../../shared/utils/service.util';
 import { Explorer } from '../../shared/entities/explorer.entity';
 import { VerifyAddressUtil } from '../../shared/utils/verify-address.util';
 import { RpcUtil } from '../../shared/utils/rpc.util';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { RpcUtil } from '../../shared/utils/rpc.util';
     HttpModule,
     ConfigModule,
     UserModule,
+    UserAuthorityModule,
   ],
   providers: [PublicNameTagService, ServiceUtil, VerifyAddressUtil, RpcUtil],
   controllers: [PublicNameTagController],

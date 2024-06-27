@@ -45,6 +45,10 @@ import { NotificationTokenDto } from './dtos/notification-token.dto';
 import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
 import { NotificationToken } from '../../shared/entities/notification-token.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { AddUserAuthorityDto } from '../user-authority/dto/create-user-authority.dto';
+import { UserAuthorityService } from '../user-authority/user-authority.service';
+import { UpdateUserAuthorityDto } from '../user-authority/dto/update-user-authority.dto';
+
 const VERIFICATION_TOKEN_LENGTH = 20;
 const RESET_PASSWORD_TOKEN_LENGTH = 21;
 const RANDOM_BYTES_LENGTH = 20;
@@ -60,6 +64,7 @@ export class UserService {
     private userActivityRepository: Repository<UserActivity>,
     private configService: ConfigService,
     private notificationTokenRepository: NotificationTokenRepository,
+    private userAuthorityService: UserAuthorityService,
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
   ) {}
@@ -530,5 +535,24 @@ export class UserService {
     });
 
     return await this.notificationTokenRepository.delete(notificationToken?.id);
+  }
+
+  async getUserAuthority(userId: number) {
+    console.log(`userId: ${userId}`);
+    return this.userAuthorityService.findAuthoritiesByUserId(userId) || [];
+  }
+
+  async addUserAuthority(createUserAuthorityDto: AddUserAuthorityDto) {
+    return this.userAuthorityService.create(createUserAuthorityDto);
+  }
+
+  async updateUserAuthority(
+    id: number,
+    updateUserAuthorityDto: UpdateUserAuthorityDto,
+  ) {
+    return this.userAuthorityService.update(id, updateUserAuthorityDto);
+  }
+  async removeUserAuthority(id: number) {
+    return this.userAuthorityService.remove(id);
   }
 }

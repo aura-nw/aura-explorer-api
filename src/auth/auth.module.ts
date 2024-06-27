@@ -1,12 +1,15 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { GoogleOauthModule } from './google/google-oauth.module';
 import { JwtAuthModule } from './jwt/jwt-auth.module';
 import { UserModule } from '../components/user/user.module';
 import { AuthController } from './auth.controller';
 import { ConfigService } from '@nestjs/config';
-import { UserAuthorityModule } from '../components/user-authority/user-authority.module';
+import { UserAuthorityModule } from 'src/components/user-authority/user-authority.module';
 import { UserAuthorityService } from 'src/components/user-authority/user-authority.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserAuthority } from 'src/shared/entities/user-authority.entity';
+import { Explorer } from 'src/shared/entities/explorer.entity';
 
 @Module({
   imports: [
@@ -15,6 +18,7 @@ import { UserAuthorityService } from 'src/components/user-authority/user-authori
     GoogleOauthModule,
     JwtAuthModule,
     UserAuthorityModule,
+    TypeOrmModule.forFeature([Explorer, UserAuthority]),
   ],
   providers: [ConfigService, UserAuthorityService],
   controllers: [AuthController],

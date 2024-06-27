@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsOptional } from 'class-validator';
 
 export class UpdateAssetDto {
@@ -21,6 +21,9 @@ export class UpdateAssetDto {
   @ApiPropertyOptional()
   @IsOptional()
   officialSite: string;
+
+  @ApiProperty()
+  explorerId: number;
 
   @ApiPropertyOptional({
     example: {

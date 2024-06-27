@@ -10,14 +10,13 @@ import { UserActivity } from '../../shared/entities/user-activity.entity';
 import { SendMailModule } from '../queues/send-mail/send-mail.module';
 import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
 import { Explorer } from '../../shared/entities/explorer.entity';
-import { SharedModule } from '../../shared';
-import { UserAuthority } from 'src/shared/entities/user-authority.entity';
 import { UserAuthorityModule } from '../user-authority/user-authority.module';
+import { UserAuthority } from 'src/shared/entities/user-authority.entity';
 
 @Module({
   imports: [
     UserAuthorityModule,
-    TypeOrmModule.forFeature([User, Explorer]),
+    TypeOrmModule.forFeature([User, Explorer, UserAuthority]),
     TypeOrmModule.forFeature([UserActivity, NotificationTokenRepository]),
     SendMailModule,
   ],

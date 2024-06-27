@@ -9,6 +9,7 @@ import { NotificationController } from './controllers/notification.controller';
 import { UserModule } from '../user/user.module';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
     HttpModule,
     ConfigModule,
     UserModule,
+    UserAuthorityModule,
   ],
   providers: [NotificationService],
   controllers: [NotificationController],
