@@ -163,10 +163,6 @@ export class TokenProcessor implements OnModuleInit {
       }
     }
 
-    this.logger.log(`Response: ${JSON.stringify(response)}`);
-    this.logger.log(`tokenInfos: ${JSON.stringify(tokenInfos)}`);
-    this.logger.log(`coinMarkets: ${JSON.stringify(coinMarkets)}`);
-
     if (coinMarkets.length > 0) {
       await this.assetsRepository.save(coinMarkets);
     }
