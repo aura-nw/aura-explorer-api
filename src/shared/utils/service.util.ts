@@ -43,6 +43,7 @@ export class ServiceUtil {
       );
       return data;
     } catch (err) {
+      this.logger.error(ctx, `getDataAPI: ${err}`);
       return null;
     }
   }
