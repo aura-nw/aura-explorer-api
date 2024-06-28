@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Brackets, EntityRepository, Repository } from 'typeorm';
+import { Brackets, EntityRepository, IsNull, Not, Repository } from 'typeorm';
 import { Asset } from '../../../shared';
 
 @EntityRepository(Asset)
@@ -10,28 +10,32 @@ export class AssetsRepository extends Repository<Asset> {
     this._logger.log(
       `============== ${this.countAssetsHavingCoinId.name} was called! ==============`,
     );
-    const sqlSelect = `tm.denom, tm.coin_id`;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, count] = await this.findAndCount({
+      where: {
+        coinId: Not(''),
+      },
+    });
 
-    const queryBuilder = this.createQueryBuilder('tm')
-      .select(sqlSelect)
-      .where("tm.coin_id <> '' ");
-
-    return await queryBuilder.getCount();
+    return count;
   }
 
   async getAssetsHavingCoinId(limit: number, pageIndex: number) {
     this._logger.log(
       `============== ${this.getAssetsHavingCoinId.name} was called! ==============`,
     );
-    const sqlSelect = ` tm.coin_id`;
+    const data = await this.find({
+      where: {
+        coinId: Not(''),
+      },
+      take: limit,
+      skip: pageIndex * limit,
+      order: {
+        id: 'ASC',
+      },
+    });
 
-    const queryBuilder = this.createQueryBuilder('tm')
-      .select(sqlSelect)
-      .where("tm.coin_id <> '' ")
-      .limit(limit)
-      .offset(pageIndex * limit);
-
-    return await queryBuilder.getRawMany();
+    return data.map((item) => item.coinId);
   }
 
   async getAssets(keyword, limit = 1, offset = 0, type = '', explorerId = 1) {
