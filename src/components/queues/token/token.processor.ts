@@ -111,14 +111,15 @@ export class TokenProcessor implements OnModuleInit {
       const numberCW20Tokens =
         await this.assetsRepository.countAssetsHavingCoinId();
 
+      this.logger.log(`numberCW20Tokens: ${numberCW20Tokens}`);
+
       const limit = this.appParams.coingecko.maxRequest;
       const pages = Math.ceil(numberCW20Tokens / limit);
       for (let i = 0; i < pages; i++) {
         // Get data CW20 by paging
-        const dataHavingCoinId =
+        const tokensHavingCoinId =
           await this.assetsRepository.getAssetsHavingCoinId(limit, i);
 
-        const tokensHavingCoinId = dataHavingCoinId?.map((i) => i.coin_id);
         if (tokensHavingCoinId.length > 0) {
           this.syncCoingeckoPrice(tokensHavingCoinId);
         }
@@ -128,7 +129,7 @@ export class TokenProcessor implements OnModuleInit {
     }
   }
 
-  async syncCoingeckoPrice(listTokens) {
+  async syncCoingeckoPrice(listTokens: string[]) {
     const coingecko = this.appParams.coingecko;
     this.logger.log(`============== Call Coingecko Api ==============`);
     const coinIds = listTokens.join(',');
@@ -139,6 +140,8 @@ export class TokenProcessor implements OnModuleInit {
       coinIds,
       coingecko.maxRequest,
     )}`;
+
+    this.logger.log(`Para: ${para}`);
 
     const [response, tokenInfos] = await Promise.all([
       this.serviceUtil.getDataAPI(coingecko.api, para, ''),
@@ -159,6 +162,11 @@ export class TokenProcessor implements OnModuleInit {
         });
       }
     }
+
+    this.logger.log(`Response: ${JSON.stringify(response)}`);
+    this.logger.log(`tokenInfos: ${JSON.stringify(tokenInfos)}`);
+    this.logger.log(`coinMarkets: ${JSON.stringify(coinMarkets)}`);
+
     if (coinMarkets.length > 0) {
       await this.assetsRepository.save(coinMarkets);
     }
