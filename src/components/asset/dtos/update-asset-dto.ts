@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsObject, IsOptional } from 'class-validator';
+import { IsObject, IsOptional, MaxLength } from 'class-validator';
 
 export class UpdateAssetDto {
   @ApiPropertyOptional()
@@ -20,6 +20,7 @@ export class UpdateAssetDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @MaxLength(255)
   officialSite: string;
 
   @ApiPropertyOptional({
