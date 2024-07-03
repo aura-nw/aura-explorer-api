@@ -225,7 +225,7 @@ export class UsersController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN)
   @Post('admin/add-user-authority')
   @ApiOperation({ summary: 'Add new user authority.' })
   @ApiOkResponse({
@@ -238,7 +238,7 @@ export class UsersController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN)
   @Patch('admin/update-user-authority/:id')
   @ApiOperation({ summary: 'Update user authority.' })
   @ApiOkResponse({
@@ -258,7 +258,7 @@ export class UsersController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN)
   @Delete('delete-user-authority/:id')
   @ApiOperation({ summary: 'Delete user authority.' })
   @HttpCode(HttpStatus.NO_CONTENT)

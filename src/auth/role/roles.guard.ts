@@ -36,6 +36,7 @@ export class RoleGuard implements CanActivate {
         ctx.chainId,
       );
     }
+    console.log(isAllowed);
 
     return this.matchRoles(requiredRoles, userRole) && isAllowed;
   }

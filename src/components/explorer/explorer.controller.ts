@@ -67,7 +67,7 @@ export class ExplorerController {
   @Patch(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN)
   update(
     @Param('id') id: string,
     @Body() updateExplorerDto: UpdateExplorerDto,
@@ -78,7 +78,7 @@ export class ExplorerController {
   @Delete(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RoleGuard)
-  @Roles(USER_ROLE.ADMIN)
+  @Roles(USER_ROLE.SUPER_ADMIN)
   remove(@Param('id') id: string) {
     return this.explorerService.remove(+id);
   }
