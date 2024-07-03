@@ -21,6 +21,7 @@ import { NotificationModule } from './components/notification/notification.modul
 import { WatchListModule } from './components/watch-list/watch-list.module';
 import { AssetModule } from './components/asset/asset.module';
 import { Micro3CampaignModule } from './micro3-campaign/micro3-campaign.module';
+import { ExplorerModule } from './components/explorer/explorer.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { Micro3CampaignModule } from './micro3-campaign/micro3-campaign.module';
       inject: [ConfigService],
     }),
     Micro3CampaignModule,
+    ExplorerModule,
   ],
   providers: [ServiceUtil],
 })

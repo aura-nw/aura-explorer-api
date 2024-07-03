@@ -11,6 +11,7 @@ import { UserModule } from '../user/user.module';
 import { IsUniqueConstraint } from './validators/is-unique.validator';
 import { IsUniqueManyColumnConstraint } from './validators/is-unique-many-column.validator';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
     ConfigModule,
     HttpModule,
     UserModule,
+    UserAuthorityModule,
   ],
   providers: [
     Cw20TokenService,

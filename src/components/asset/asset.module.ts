@@ -10,6 +10,7 @@ import { AssetsRepository } from './repositories/assets.repository';
 import { TokenHolderStatistic } from 'src/shared/entities/token-holder-statistic.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { UserModule } from '../user/user.module';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UserModule } from '../user/user.module';
       TokenHolderStatistic,
       Explorer,
     ]),
+    UserAuthorityModule,
   ],
   providers: [AssetService],
   controllers: [AssetController],
