@@ -1,28 +1,65 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AddUserAuthorityDto } from './dto/create-user-authority.dto';
 import { UpdateUserAuthorityDto } from './dto/update-user-authority.dto';
 import { Repository } from 'typeorm';
 import { UserAuthority } from '../../shared/entities/user-authority.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { User } from 'src/shared/entities/user.entity';
+import { USER_ROLE } from 'src/shared';
 
 @Injectable()
 export class UserAuthorityService {
   constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     @InjectRepository(Explorer)
     private readonly explorerRepository: Repository<Explorer>,
     @InjectRepository(UserAuthority)
     private readonly userAuthorityRepository: Repository<UserAuthority>,
   ) {}
   async create(createUserAuthorityDto: AddUserAuthorityDto) {
-    const explorer = await this.explorerRepository.findOne({
-      where: { chainId: createUserAuthorityDto.chainId },
-    });
-    if (!explorer) {
-      throw new Error('Explorer not found');
+    try {
+      const explorer = await this.explorerRepository.findOne({
+        where: { chainId: createUserAuthorityDto.chainId },
+      });
+      if (!explorer) {
+        throw new NotFoundException('Explorer not found');
+      }
+
+      const user = await this.userRepository.findOne({
+        where: { email: createUserAuthorityDto.email },
+      });
+
+      if (!user) {
+        this.userRepository.save({
+          email: createUserAuthorityDto.email,
+          role: USER_ROLE.ADMIN,
+        });
+      } else {
+        this.userRepository.update(user.id, {
+          role: USER_ROLE.ADMIN,
+        });
+      }
+
+      createUserAuthorityDto.explorerId = explorer.id;
+      const userAuthority = await this.userAuthorityRepository.find({
+        explorerId: createUserAuthorityDto.explorerId,
+        email: createUserAuthorityDto.email,
+      });
+
+      if (userAuthority.length > 0) {
+        throw new BadRequestException('User authority already exists');
+      }
+
+      return await this.userAuthorityRepository.save(createUserAuthorityDto);
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
-    createUserAuthorityDto.explorerId = explorer.id;
-    await this.userAuthorityRepository.save(createUserAuthorityDto);
   }
 
   async findAll() {
@@ -50,7 +87,7 @@ export class UserAuthorityService {
       where: { chainId: updateUserAuthorityDto.chainId },
     });
     if (!explorer) {
-      throw new Error('Explorer not found');
+      throw new NotFoundException('Explorer not found');
     }
     updateUserAuthorityDto.explorerId = explorer.id;
     await this.userAuthorityRepository.update(id, updateUserAuthorityDto);
@@ -64,8 +101,6 @@ export class UserAuthorityService {
     const allAuthorities = await this.userAuthorityRepository.find({
       where: { email },
     });
-
-    console.log(`allAuthorities: ${JSON.stringify(allAuthorities)}`);
 
     if (allAuthorities.length === 0) {
       return true;

@@ -21,13 +21,11 @@ export class RoleGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
-    console.log(`user: ${JSON.stringify(user)}`);
     const request = context.switchToHttp().getRequest();
     const ctx = createRequestContext(request);
     console.log(ctx.chainId);
 
     const userFound = await this.userService.findOneByEmail(user?.email);
-    console.log(`userFound: ${JSON.stringify(userFound)}`);
     const userRole = userFound?.role || '';
     let isAllowed = false;
     if (userFound?.role === USER_ROLE.SUPER_ADMIN) {
@@ -37,7 +35,6 @@ export class RoleGuard implements CanActivate {
         userFound.email,
         ctx.chainId,
       );
-      console.log(`isAllowed: ${isAllowed}`);
     }
 
     return this.matchRoles(requiredRoles, userRole) && isAllowed;

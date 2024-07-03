@@ -10,6 +10,7 @@ import { UserAuthorityService } from 'src/components/user-authority/user-authori
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserAuthority } from 'src/shared/entities/user-authority.entity';
 import { Explorer } from 'src/shared/entities/explorer.entity';
+import { User } from 'src/shared/entities/user.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
     GoogleOauthModule,
     JwtAuthModule,
     UserAuthorityModule,
-    TypeOrmModule.forFeature([Explorer, UserAuthority]),
+    TypeOrmModule.forFeature([User, Explorer, UserAuthority]),
   ],
   providers: [ConfigService, UserAuthorityService],
   controllers: [AuthController],

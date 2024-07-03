@@ -232,11 +232,8 @@ export class UsersController {
     description: 'Add new user authority.',
     type: AddUserAuthorityDto,
   })
-  async addUserAuthority(
-    @ReqContext() _ctx: RequestContext,
-    @Body() createUserAuthorityDto: AddUserAuthorityDto,
-  ) {
-    return await this.userService.addUserAuthority(createUserAuthorityDto);
+  async addUserAuthority(@Body() body: AddUserAuthorityDto) {
+    return await this.userService.addUserAuthority(body);
   }
 
   @ApiBearerAuth()

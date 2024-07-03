@@ -543,7 +543,7 @@ export class UserService {
   }
 
   async addUserAuthority(createUserAuthorityDto: AddUserAuthorityDto) {
-    return this.userAuthorityService.create(createUserAuthorityDto);
+    return await this.userAuthorityService.create(createUserAuthorityDto);
   }
 
   async updateUserAuthority(

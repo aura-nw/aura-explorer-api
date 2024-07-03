@@ -8,12 +8,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { UserAuthority } from 'src/shared/entities/user-authority.entity';
 import { UserAuthorityService } from '../user-authority/user-authority.service';
+import { User } from 'src/shared/entities/user.entity';
 
 @Module({
   imports: [
     UserModule,
     UserAuthorityModule,
-    TypeOrmModule.forFeature([Explorer, UserAuthority, ExplorerRepository]),
+    TypeOrmModule.forFeature([
+      User,
+      Explorer,
+      UserAuthority,
+      ExplorerRepository,
+    ]),
   ],
   controllers: [ExplorerController],
   providers: [ExplorerService, UserAuthorityService],
