@@ -45,7 +45,7 @@ import { ExplorerModule } from './components/explorer/explorer.module';
       isGlobal: true,
     }),
     PasswordAuthModule,
-    // QueuesModule,
+    QueuesModule,
     GoogleRecaptchaModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) =>
