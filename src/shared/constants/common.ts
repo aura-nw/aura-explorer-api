@@ -438,6 +438,7 @@ export const INDEXER_API_V2 = {
             updated_at
             type
           }
+          denom: address
           decimal
           name
           symbol
