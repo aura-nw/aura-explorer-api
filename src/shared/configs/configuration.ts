@@ -108,4 +108,7 @@ export default () => ({
   haloTrade: {
     graphQL: process.env.HALO_TRADE_GRAPHQL,
   },
+  ancient8: {
+    chainId: process.env.ERC20_CHAIN_IDS || '888888888',
+  },
 });
