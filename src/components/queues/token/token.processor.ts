@@ -200,6 +200,17 @@ export class TokenProcessor implements OnModuleInit {
         });
       }
 
+      if (
+        this.appParams.ancient8.chainId.split(',').includes(explorer.chainId)
+      ) {
+        const listAsset = await this.syncOnlyErc20(explorer, from);
+        if (!listAsset || listAsset.length === 0) {
+          return;
+        }
+        await this.assetsRepository.storeAsset(listAsset);
+        return;
+      }
+
       const queryAssets = {
         query: util.format(INDEXER_API_V2.GRAPH_QL.ASSETS, explorer.chainDb),
         variables: { from: from },
@@ -452,6 +463,39 @@ export class TokenProcessor implements OnModuleInit {
       .values(listHolderStatistic)
       .orUpdate(['total_holder'], ['asset', 'date'])
       .execute();
+  }
+
+  async syncOnlyErc20(explorer: Explorer, from: string) {
+    const erc20Query = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.SYNC_ERC20_INFO,
+        explorer.chainDb,
+      ),
+      variables: { from },
+      operationName: INDEXER_API_V2.OPERATION_NAME.SYNC_ERC20_INFO,
+    };
+
+    const listErc20Contract = await this.getDataWithPagination(
+      erc20Query,
+      'erc20_contract',
+      explorer,
+    );
+
+    if (!listErc20Contract || listErc20Contract.length === 0) {
+      return;
+    }
+    listErc20Contract.map((erc20) => {
+      erc20.updated_at = erc20.evm_smart_contract.updated_at;
+      erc20.type = erc20.evm_smart_contract.type;
+      erc20.totalSupply = TransactionHelper.balanceOf(
+        erc20.total_supply || 0,
+        erc20.decimal || explorer.decimal,
+      );
+      erc20.explorer = explorer;
+      return erc20;
+    });
+
+    return listErc20Contract;
   }
 
   @OnQueueError()
