@@ -47,7 +47,7 @@ export class ExportCsvController {
     @Res() res: Response,
   ): Promise<void> {
     this.logger.log(ctx, `${this.exportCSV.name} was called!`);
-    this.proccessCSV(ctx, query, res);
+    this.processCSV(ctx, query, res);
   }
 
   @Get('private-name-tag')
@@ -63,10 +63,10 @@ export class ExportCsvController {
   ): Promise<void> {
     this.logger.log(ctx, `${this.exportCSVPrivate.name} was called!`);
     const userId = ctx.user?.id;
-    this.proccessCSV(ctx, query, res, userId);
+    this.processCSV(ctx, query, res, userId);
   }
 
-  private async proccessCSV(ctx, query, res, userId = null) {
+  private async processCSV(ctx, query, res, userId = null) {
     try {
       const { data, fileName, fields } =
         await this.exportCsvService.exportTransactionDataToCSV(

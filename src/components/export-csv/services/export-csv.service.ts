@@ -743,7 +743,7 @@ export class ExportCsvService {
       return {
         TxHash: tx.tx_hash,
         MessageRaw: tx.evm_transaction.transaction_message.type,
-        Message: method,
+        Method: method,
         Timestamp: tx.evm_transaction.transaction.timestamp,
         UnixTimestamp: Math.floor(
           new Date(tx.evm_transaction.transaction.timestamp).getTime() / 1000,
