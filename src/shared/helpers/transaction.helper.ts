@@ -282,7 +282,14 @@ export class TransactionHelper {
       return methodId;
     }
     const methodTemp = humanReadableTopic?.split(' ')[1];
-    const method = methodTemp.substring(0, methodTemp.indexOf('('));
+    const method = TransactionHelper.titleCaseWord(
+      methodTemp.substring(0, methodTemp.indexOf('(')),
+    );
     return method;
+  }
+
+  static titleCaseWord(word: string) {
+    if (!word) return word;
+    return word[0].toUpperCase() + word.substr(1);
   }
 }
