@@ -106,4 +106,7 @@ export default () => ({
     limitAddress: process.env.WATCH_LIST_LIMIT_ADDRESS || 20,
   },
   ipfsUrl: process.env.IPFS_URL || 'https://ipfs.io/',
+  haloTrade: {
+    graphQL: process.env.HALO_TRADE_GRAPHQL,
+  },
 });
