@@ -34,10 +34,11 @@ export class Micro3CampaignService {
     });
     const chain =
       explorer.chainDb == 'xstaxy'
-        ? ''
+        ? 'staging.'
         : explorer.chainDb == 'auratestnet'
         ? 'dev.'
         : `${explorer.chainDb}.`;
+
     switch (query.action) {
       case ACTION_TYPE.MintNft:
         result = await this.verifyMintNft(query);
