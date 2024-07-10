@@ -6,6 +6,7 @@ import {
   MICRO3_CAMPAIGN,
   NATIVE,
   NULL_EVM_ADDRESS,
+  PUNKGA_API,
 } from './const/common';
 import { Explorer } from '../shared/entities/explorer.entity';
 import { Repository } from 'typeorm';
@@ -56,6 +57,10 @@ export class Micro3CampaignService {
         result = await this.verifySwap(chain, query);
         break;
 
+      case ACTION_TYPE.Punkga:
+        result = await this.verifyPunkga(query);
+        break;
+
       default:
         return {
           error: {
@@ -84,6 +89,20 @@ export class Micro3CampaignService {
           result: false,
         },
       };
+    }
+  }
+  async verifyPunkga(query: CampaignParamDto) {
+    const endpoint =
+      (this.configService.get('punkga.api') || PUNKGA_API) + query.address;
+
+    const results = await this.fetchDataFromAPI(endpoint);
+
+    if (results && results['user_level'].length > 0) {
+      const lvl = results['user_level'][0].level;
+
+      return lvl >= query.amount;
+    } else {
+      return false;
     }
   }
   async verifySwap(chain: string, query: CampaignParamDto) {
@@ -248,7 +267,7 @@ export class Micro3CampaignService {
       HALO_BASE_URL,
       chain,
     )}/halo-pool/poolList`;
-    const pools = await this.fetchDataFromHalo(getPoolUrl, method);
+    const pools = await this.fetchDataFromAPI(getPoolUrl, method);
 
     console.log(pools);
     if (!pools) {
@@ -266,7 +285,7 @@ export class Micro3CampaignService {
         chain,
       )}/analytics/transactions?pageSize=10&type=${action}&poolId=${poolId}&sortBy=timeStamp&sortOrder=desc`;
 
-      const txs = await this.fetchDataFromHalo(getTxsUrl, method);
+      const txs = await this.fetchDataFromAPI(getTxsUrl, method);
       if (txs) {
         console.log(txs.data.res.results.map((tx) => tx.sender));
         senderResult = senderResult.concat(
@@ -278,7 +297,7 @@ export class Micro3CampaignService {
     return senderResult;
   }
 
-  async fetchDataFromHalo(endpoint, method?) {
+  async fetchDataFromAPI(endpoint, method?) {
     method = method ? method : 'GET';
 
     try {
@@ -291,16 +310,14 @@ export class Micro3CampaignService {
       if (response.data?.errors?.length > 0) {
         this.logger.error(
           response.data.errors,
-          `Error while querying from halo! ${JSON.stringify(
-            response.data.errors,
-          )}`,
+          `Error while querying ${JSON.stringify(response.data.errors)}`,
         );
         return null;
       }
 
       return response.data;
     } catch (error) {
-      this.logger.error(endpoint, `Error while querying from halo! ${error}`);
+      this.logger.error(endpoint, `Error while querying ${error}`);
       return null;
     }
   }

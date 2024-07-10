@@ -108,6 +108,9 @@ export default () => ({
   haloTrade: {
     graphQL: process.env.HALO_TRADE_GRAPHQL,
   },
+  punkga: {
+    api: process.env.PUNKGA_API,
+  },
   ancient8: {
     chainId: process.env.ERC20_CHAIN_IDS || '888888888',
   },
