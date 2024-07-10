@@ -48,6 +48,7 @@ export enum ACTION_TYPE {
   HoldAura = 'hold-aura',
   AddLiquidity = 'add-lp',
   Swap = 'swap-halo',
+  Punkga = 'punka-cp',
 }
 
 export enum HALO_ACTION_TYPE {
@@ -66,3 +67,5 @@ export const MICRO3_QUEUES = {
 
 export const NATIVE = 'NATIVE';
 export const NULL_EVM_ADDRESS = '0x0000000000000000000000000000000000000000';
+export const PUNKGA_API =
+  'https://hasura.punkga.me/api/rest/public/user-xp?wallet_address=';
