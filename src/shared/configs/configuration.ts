@@ -109,4 +109,7 @@ export default () => ({
   haloTrade: {
     graphQL: process.env.HALO_TRADE_GRAPHQL,
   },
+  punkga: {
+    api: process.env.PUNKGA_API,
+  },
 });
