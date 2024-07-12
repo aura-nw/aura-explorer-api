@@ -489,7 +489,7 @@ export class TokenProcessor implements OnModuleInit {
     }
     listErc20Contract.map((erc20) => {
       erc20.updated_at = erc20.evm_smart_contract.updated_at;
-      erc20.type = erc20.evm_smart_contract.type;
+      erc20.type = ASSETS_TYPE.ERC20;
       erc20.totalSupply = TransactionHelper.balanceOf(
         erc20.total_supply || 0,
         erc20.decimal || explorer.decimal,
