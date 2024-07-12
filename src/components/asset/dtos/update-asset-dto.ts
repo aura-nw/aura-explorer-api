@@ -8,20 +8,26 @@ export class UpdateAssetDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @MaxLength(255)
   coinId: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @MaxLength(255)
   name: string;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @MaxLength(255)
   verifyStatus: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @MaxLength(255)
   officialSite: string;
+
+  @ApiProperty()
+  explorerId: number;
 
   @ApiPropertyOptional({
     example: {

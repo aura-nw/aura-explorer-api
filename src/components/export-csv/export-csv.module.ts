@@ -12,6 +12,7 @@ import { CipherKey } from '../../shared/entities/cipher-key.entity';
 import { UserModule } from '../user/user.module';
 import { Explorer } from 'src/shared/entities/explorer.entity';
 import { AssetsRepository } from '../asset/repositories/assets.repository';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AssetsRepository } from '../asset/repositories/assets.repository';
       AssetsRepository,
       Explorer,
     ]),
+    UserAuthorityModule,
   ],
   providers: [ExportCsvService, EncryptionService, ServiceUtil],
   controllers: [ExportCsvController],

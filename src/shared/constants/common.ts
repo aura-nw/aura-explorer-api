@@ -426,6 +426,28 @@ export const INDEXER_API_V2 = {
       }
     }
   `,
+    SYNC_ERC20_INFO: `query SyncErc20Info($from: timestamptz = null, $id_gt: Int = null) {
+      %s {
+        erc20_contract(where: 
+        {
+          evm_smart_contract: {updated_at: {_gte: $from}}, id: {_gt: $id_gt}
+        },
+        order_by: {id: asc}) 
+        {
+          evm_smart_contract {
+            updated_at
+            type
+          }
+          denom: address
+          decimal
+          name
+          symbol
+          total_supply
+          id
+        }
+      }
+    }
+  `,
     EVM_SIGNATURE_MAPPING: `query EvmSignatureMapping($methodIds: [String] = null) {
       %s {
         evm_signature_mapping(where: {function_id: {_in: $methodIds}}) {
@@ -466,6 +488,7 @@ export const INDEXER_API_V2 = {
     ASSETS: 'Assets',
     CW20_HOLDER_STAT: 'Cw20HolderStat',
     ERC20_INFO: 'Erc20Info',
+    SYNC_ERC20_INFO: 'SyncErc20Info',
     EVM_SIGNATURE_MAPPING: 'EvmSignatureMapping',
   },
   MAX_REQUEST: 100,
@@ -657,6 +680,7 @@ export const DEFAULT_IPFS = 'https://ipfs.io/';
 export enum USER_ROLE {
   USER = 'user',
   ADMIN = 'admin',
+  SUPER_ADMIN = 'super_admin',
   BANNED = 'banned',
 }
 

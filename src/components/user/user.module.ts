@@ -9,11 +9,14 @@ import { MatchPasswordConstraint } from './validators/validate-match-password';
 import { UserActivity } from '../../shared/entities/user-activity.entity';
 import { SendMailModule } from '../queues/send-mail/send-mail.module';
 import { NotificationTokenRepository } from '../queues/notification/repositories/notification-token.repository';
-import { Explorer } from 'src/shared/entities/explorer.entity';
+import { Explorer } from '../../shared/entities/explorer.entity';
+import { UserAuthorityModule } from '../user-authority/user-authority.module';
+import { UserAuthority } from 'src/shared/entities/user-authority.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Explorer]),
+    UserAuthorityModule,
+    TypeOrmModule.forFeature([User, Explorer, UserAuthority]),
     TypeOrmModule.forFeature([UserActivity, NotificationTokenRepository]),
     SendMailModule,
   ],
