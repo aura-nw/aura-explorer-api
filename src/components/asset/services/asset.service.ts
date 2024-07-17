@@ -81,7 +81,7 @@ export class AssetService {
     } else {
       return await this.assetsRepository.find({
         where: [
-          { coinId: Not(''), explorer: { id: explorer.id } },
+          { explorer: { id: explorer.id } },
           {
             type: ASSETS_TYPE.ERC20,
             name: Not(IsNull()),
