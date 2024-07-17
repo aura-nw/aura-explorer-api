@@ -27,7 +27,7 @@
     "@aws-crypto/client-node": "^4.0.0",
     "@aws-sdk/client-kms": "^3.445.0",
     "@bull-board/api": "^5.0.0",
-    "@bull-board/express": "^5.0.0",
+    "@bull-board/express": "^5.17.0",
     "@cosmjs/amino": "^0.29.4",
     "@cosmjs/cosmwasm-stargate": "^0.29.5",
     "@cosmjs/stargate": "^0.29.5",
