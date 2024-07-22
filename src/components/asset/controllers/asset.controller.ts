@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -102,6 +104,7 @@ export class AssetController {
   @ApiOperation({ summary: 'Update Assets detail' })
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(ClassSerializerInterceptor)
+  @UsePipes(new ValidationPipe({ whitelist: true }))
   async updateAssetsDetail(
     @ReqContext() ctx: RequestContext,
     @Param('id') id: string,
