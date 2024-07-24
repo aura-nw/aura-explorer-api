@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Brackets, EntityRepository, IsNull, Not, Repository } from 'typeorm';
+import { Brackets, EntityRepository, Not, Repository } from 'typeorm';
 import { Asset } from '../../../shared';
 
 @EntityRepository(Asset)
@@ -43,12 +43,12 @@ export class AssetsRepository extends Repository<Asset> {
       `============== ${this.getAssets.name} was called! ==============`,
     );
 
-    const builder = this.createQueryBuilder('asset')
-      .where('asset.name IS NOT NULL')
-      .andWhere("asset.name <> ''")
-      .andWhere('asset.explorer_id=:explorerId', {
+    const builder = this.createQueryBuilder('asset').where(
+      'asset.explorer_id=:explorerId',
+      {
         explorerId,
-      });
+      },
+    );
 
     const _finalizeResult = async () => {
       const result: Asset[] = await builder
@@ -66,10 +66,10 @@ export class AssetsRepository extends Repository<Asset> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('asset.denom =:address', {
+          qb.where('LOWER(asset.denom) =LOWER(:address)', {
             address: keyword,
           })
-            .orWhere('asset.denom =:ibc', {
+            .orWhere('LOWER(asset.denom) =LOWER(:ibc)', {
               ibc: `ibc/${keyword}`,
             })
             .orWhere('LOWER(asset.name) LIKE LOWER(:keyword)', {
@@ -92,7 +92,7 @@ export class AssetsRepository extends Repository<Asset> {
     return await _finalizeResult();
   }
 
-  async getAssetsDetail(denom, explorerId = 1, days = 2) {
+  async getAssetsDetail(denom: string, explorerId = 1, days = 2) {
     this._logger.log(
       `============== ${this.getAssetsDetail.name} was called! ==============`,
     );
@@ -108,9 +108,9 @@ export class AssetsRepository extends Repository<Asset> {
       })
       .andWhere(
         new Brackets((qb) => {
-          qb.where('asset.denom =:denom', {
+          qb.where('LOWER(asset.denom) =LOWER(:denom)', {
             denom: `${denom}`,
-          }).orWhere('asset.denom =:ibcDenom', {
+          }).orWhere('LOWER(asset.denom) =LOWER(:ibcDenom)', {
             ibcDenom: `ibc/${denom}`,
           });
         }),
