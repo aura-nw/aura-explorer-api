@@ -13,6 +13,7 @@ import {
   FindOneOptions,
   Repository,
 } from 'typeorm';
+import { Address, verifyMessage } from 'viem';
 
 import { User } from '../../shared/entities/user.entity';
 import {
@@ -48,6 +49,7 @@ import { Explorer } from 'src/shared/entities/explorer.entity';
 import { AddUserAuthorityDto } from '../user-authority/dto/create-user-authority.dto';
 import { UserAuthorityService } from '../user-authority/user-authority.service';
 import { UpdateUserAuthorityDto } from '../user-authority/dto/update-user-authority.dto';
+import { LoginDto } from './dtos/login.dto';
 
 const VERIFICATION_TOKEN_LENGTH = 20;
 const RESET_PASSWORD_TOKEN_LENGTH = 21;
@@ -68,6 +70,18 @@ export class UserService {
     @InjectRepository(Explorer)
     private explorerRepository: Repository<Explorer>,
   ) {}
+
+  async login(loginDto: LoginDto) {
+    const valid = await verifyMessage({
+      message: loginDto.message,
+      signature: loginDto.signature as Address,
+      address: loginDto.address as Address,
+    });
+
+    if (!valid) {
+      throw new BadRequestException('Invalid signature');
+    }
+  }
 
   async findOne(params: FindOneOptions<User> = {}): Promise<User> {
     return await this.usersRepository.findOne(params);

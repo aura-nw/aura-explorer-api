@@ -50,6 +50,7 @@ import { DeleteResult } from 'typeorm';
 import { AddUserAuthorityDto } from 'src/components/user-authority/dto/create-user-authority.dto';
 import { UpdateUserAuthorityDto } from 'src/components/user-authority/dto/update-user-authority.dto';
 import { UserAuthorityDto } from 'src/components/user-authority/dto/user-authority.dto';
+import { LoginDto, LoginResponseDto } from '../dtos/login.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -65,6 +66,20 @@ import { UserAuthorityDto } from 'src/components/user-authority/dto/user-authori
 })
 export class UsersController {
   constructor(private readonly userService: UserService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Login user.' })
+  @ApiCreatedResponse({
+    description: 'Login user.',
+    type: LoginResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: MESSAGES.ERROR.BAD_REQUEST,
+  })
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    return await this.userService.login(loginDto);
+  }
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RoleGuard)
