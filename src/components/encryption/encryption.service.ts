@@ -45,7 +45,7 @@ export class EncryptionService implements OnModuleInit {
     });
 
     const cipherKey = new CipherKey();
-    cipherKey.cipher_text = CiphertextBlob.toString();
+    cipherKey.cipher_text = Buffer.from(CiphertextBlob).toString('hex');
     await this.cipherKeyRepository.save(cipherKey);
   }
 
