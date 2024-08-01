@@ -434,7 +434,7 @@ export class TokenProcessor implements OnModuleInit {
   }
 
   async getHolderWithPagination(assets: Asset[], explorer: Explorer) {
-    const totalHolders = [];
+    let totalHolders = {};
     let page = 0;
     let index = 0;
     const limit = INDEXER_API_V2.MAX_REQUEST;
@@ -454,8 +454,6 @@ export class TokenProcessor implements OnModuleInit {
                           }`);
       }
 
-      console.log(`subQuery: ${subQuery}`);
-
       const query = util.format(
         INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
         explorer.chainDb,
@@ -472,7 +470,7 @@ export class TokenProcessor implements OnModuleInit {
         await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
       )?.data[explorer.chainDb];
 
-      totalHolders.push(holders);
+      totalHolders = { ...totalHolders, ...holders };
       page++;
     } while (index < assets.length);
 
