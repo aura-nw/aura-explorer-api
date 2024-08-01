@@ -272,32 +272,11 @@ export class TokenProcessor implements OnModuleInit {
         explorer: { id: explorer.id },
       },
     });
-    let subQuery = '';
 
-    for (const [index, asset] of nativeAsset.entries()) {
-      subQuery =
-        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}, amount: {_gt: "0"}}) {
-                            aggregate {
-                              count
-                            }
-                          }`);
-    }
-
-    const query = util.format(
-      INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-      explorer.chainDb,
-      subQuery,
+    const totalHolders = await this.getHolderWithPagination(
+      nativeAsset,
+      explorer,
     );
-
-    const graphqlQueryTotalHolder = {
-      query,
-      operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
-      variables: {},
-    };
-
-    const totalHolders = (
-      await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-    )?.data[explorer.chainDb];
 
     for (const [index, asset] of nativeAsset.entries()) {
       const newTotalHolder =
@@ -452,6 +431,50 @@ export class TokenProcessor implements OnModuleInit {
     result.map((e) => (e.id = null));
 
     return result;
+  }
+
+  async getHolderWithPagination(assets: Asset[], explorer: Explorer) {
+    let totalHolders = {};
+    let page = 0;
+    let index = 0;
+    const limit = INDEXER_API_V2.MAX_REQUEST;
+    do {
+      let subQuery = '';
+      for (
+        index = page * limit;
+        index < (page + 1) * limit && index < assets.length;
+        index++
+      ) {
+        const asset = assets[index];
+        subQuery =
+          subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}, amount: {_gt: "0"}}) {
+                            aggregate {
+                              count
+                            }
+                          }`);
+      }
+
+      const query = util.format(
+        INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
+        explorer.chainDb,
+        subQuery,
+      );
+
+      const graphqlQueryTotalHolder = {
+        query,
+        operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
+        variables: {},
+      };
+
+      const holders = (
+        await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
+      )?.data[explorer.chainDb];
+
+      totalHolders = { ...totalHolders, ...holders };
+      page++;
+    } while (index < assets.length);
+
+    return totalHolders;
   }
 
   async upsertTokenHolderStatistic(
