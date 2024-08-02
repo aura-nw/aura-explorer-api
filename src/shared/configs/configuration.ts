@@ -112,4 +112,7 @@ export default () => ({
   punkga: {
     api: process.env.PUNKGA_API,
   },
+  ancient8: {
+    chainId: process.env.ERC20_CHAIN_IDS || '888888888',
+  },
 });

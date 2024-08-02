@@ -107,24 +107,29 @@ export class TokenProcessor implements OnModuleInit {
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_PRICE)
   async syncCW20TokenPrice(): Promise<void> {
-    const numberCW20Tokens =
-      await this.assetsRepository.countAssetsHavingCoinId();
+    try {
+      const numberCW20Tokens =
+        await this.assetsRepository.countAssetsHavingCoinId();
 
-    const limit = this.appParams.coingecko.maxRequest;
-    const pages = Math.ceil(numberCW20Tokens / limit);
-    for (let i = 0; i < pages; i++) {
-      // Get data CW20 by paging
-      const dataHavingCoinId =
-        await this.assetsRepository.getAssetsHavingCoinId(limit, i);
+      this.logger.log(`numberCW20Tokens: ${numberCW20Tokens}`);
 
-      const tokensHavingCoinId = dataHavingCoinId?.map((i) => i.coin_id);
-      if (tokensHavingCoinId.length > 0) {
-        this.syncCoingeckoPrice(tokensHavingCoinId);
+      const limit = this.appParams.coingecko.maxRequest;
+      const pages = Math.ceil(numberCW20Tokens / limit);
+      for (let i = 0; i < pages; i++) {
+        // Get data CW20 by paging
+        const tokensHavingCoinId =
+          await this.assetsRepository.getAssetsHavingCoinId(limit, i);
+
+        if (tokensHavingCoinId.length > 0) {
+          this.syncCoingeckoPrice(tokensHavingCoinId);
+        }
       }
+    } catch (error) {
+      this.logger.error(`syncCW20TokenPrice has error: ${error.stack}`);
     }
   }
 
-  async syncCoingeckoPrice(listTokens) {
+  async syncCoingeckoPrice(listTokens: string[]) {
     const coingecko = this.appParams.coingecko;
     this.logger.log(`============== Call Coingecko Api ==============`);
     const coinIds = listTokens.join(',');
@@ -135,6 +140,8 @@ export class TokenProcessor implements OnModuleInit {
       coinIds,
       coingecko.maxRequest,
     )}`;
+
+    this.logger.log(`Para: ${para}`);
 
     const [response, tokenInfos] = await Promise.all([
       this.serviceUtil.getDataAPI(coingecko.api, para, ''),
@@ -155,6 +162,7 @@ export class TokenProcessor implements OnModuleInit {
         });
       }
     }
+
     if (coinMarkets.length > 0) {
       await this.assetsRepository.save(coinMarkets);
     }
@@ -173,57 +181,84 @@ export class TokenProcessor implements OnModuleInit {
 
   @Process(QUEUES.TOKEN.JOB_SYNC_ASSET)
   async syncAsset(job: Job): Promise<void> {
-    const explorer: Explorer = job.data.explorer;
-    let from = new Date(new Date().getTime() - 60 * 1000).toJSON();
-    const alreadySynced = await this.syncPointRepository.findOne({
-      where: {
-        type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
-        explorer: { id: explorer.id },
-      },
-    });
-
-    if (!alreadySynced) {
-      from = null;
-
-      await this.syncPointRepository.save({
-        type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
-        explorer: { id: explorer.id },
+    try {
+      const explorer: Explorer = job.data.explorer;
+      let from = new Date(new Date().getTime() - 60 * 1000).toJSON();
+      const alreadySynced = await this.syncPointRepository.findOne({
+        where: {
+          type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+          explorer: { id: explorer.id },
+        },
       });
+
+      if (!alreadySynced) {
+        from = null;
+
+        await this.syncPointRepository.save({
+          type: SYNC_POINT_TYPE.FIRST_TIME_SYNC_ASSETS,
+          explorer: { id: explorer.id },
+        });
+      }
+
+      if (
+        this.appParams.ancient8.chainId.split(',').includes(explorer.chainId)
+      ) {
+        const listAsset = await this.syncOnlyErc20(explorer, from);
+        if (!listAsset || listAsset.length === 0) {
+          return;
+        }
+        await this.assetsRepository.storeAsset(listAsset);
+        return;
+      }
+
+      const queryAssets = {
+        query: util.format(INDEXER_API_V2.GRAPH_QL.ASSETS, explorer.chainDb),
+        variables: { from: from },
+        operationName: INDEXER_API_V2.OPERATION_NAME.ASSETS,
+      };
+
+      const listAsset = await this.getDataWithPagination(
+        queryAssets,
+        'asset',
+        explorer,
+      );
+
+      if (!listAsset || listAsset.length === 0) {
+        return;
+      }
+
+      await this.assetsRepository.storeAsset(listAsset);
+    } catch (error) {
+      this.logger.error(`syncAsset has error: ${error.stack}`);
     }
-
-    const queryAssets = {
-      query: util.format(INDEXER_API_V2.GRAPH_QL.ASSETS, explorer.chainDb),
-      variables: { from: from },
-      operationName: INDEXER_API_V2.OPERATION_NAME.ASSETS,
-    };
-
-    const listAsset = await this.getDataWithPagination(
-      queryAssets,
-      'asset',
-      explorer,
-    );
-    await this.assetsRepository.storeAsset(listAsset);
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_NATIVE_ASSET_HOLDER)
   async syncNativeAssetHolder(job: Job): Promise<void> {
-    const listHolderStatistic = await this.getHolders(job.data.explorer, [
-      ASSETS_TYPE.IBC,
-      ASSETS_TYPE.NATIVE,
-    ]);
+    try {
+      const listHolderStatistic = await this.getHolders(job.data.explorer, [
+        ASSETS_TYPE.IBC,
+        ASSETS_TYPE.NATIVE,
+      ]);
 
-    await this.upsertTokenHolderStatistic(listHolderStatistic);
+      await this.upsertTokenHolderStatistic(listHolderStatistic);
+    } catch (error) {
+      this.logger.error(`syncNativeAssetHolder has error: ${error.stack}`);
+    }
   }
 
   @Process(QUEUES.TOKEN.JOB_SYNC_CW20_ASSET_HOLDER)
   async syncCw20AssetHolder(job: Job): Promise<void> {
-    const { cw20WithNewImage, listHolderStatistic } = await this.getNewCw20Info(
-      job.data.explorer,
-    );
+    try {
+      const { cw20WithNewImage, listHolderStatistic } =
+        await this.getNewCw20Info(job.data.explorer);
 
-    await this.assetsRepository.save(cw20WithNewImage);
+      await this.assetsRepository.save(cw20WithNewImage);
 
-    await this.upsertTokenHolderStatistic(listHolderStatistic);
+      await this.upsertTokenHolderStatistic(listHolderStatistic);
+    } catch (error) {
+      this.logger.error(`syncCw20AssetHolder has error: ${error.stack}`);
+    }
   }
 
   async getHolders(
@@ -237,32 +272,11 @@ export class TokenProcessor implements OnModuleInit {
         explorer: { id: explorer.id },
       },
     });
-    let subQuery = '';
 
-    for (const [index, asset] of nativeAsset.entries()) {
-      subQuery =
-        subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}, amount: {_gt: "0"}}) {
-                            aggregate {
-                              count
-                            }
-                          }`);
-    }
-
-    const query = util.format(
-      INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
-      explorer.chainDb,
-      subQuery,
+    const totalHolders = await this.getHolderWithPagination(
+      nativeAsset,
+      explorer,
     );
-
-    const graphqlQueryTotalHolder = {
-      query,
-      operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
-      variables: {},
-    };
-
-    const totalHolders = (
-      await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
-    )?.data[explorer.chainDb];
 
     for (const [index, asset] of nativeAsset.entries()) {
       const newTotalHolder =
@@ -282,9 +296,13 @@ export class TokenProcessor implements OnModuleInit {
 
   @Process(QUEUES.TOKEN.JOB_CLEAN_ASSET_HOLDER)
   async cleanAssetHolder(): Promise<void> {
-    await this.tokenHolderStatisticRepo.delete({
-      created_at: LessThan(moment().subtract(2, 'days').toDate()),
-    });
+    try {
+      await this.tokenHolderStatisticRepo.delete({
+        created_at: LessThan(moment().subtract(2, 'days').toDate()),
+      });
+    } catch (error) {
+      this.logger.error(`cleanAssetHolder has error: ${error.stack}`);
+    }
   }
   async getNewCw20Info(explorer: Explorer): Promise<{
     cw20WithNewImage: Asset[];
@@ -341,13 +359,17 @@ export class TokenProcessor implements OnModuleInit {
 
   @Process(QUEUES.TOKEN.JOB_SYNC_ERC20_ASSET_HOLDER)
   async syncErc20AssetHolder(job: Job): Promise<void> {
-    const erc20Asset = await this.getNewErc20Info(job.data.explorer);
-    const listHolderStatistic = await this.getHolders(job.data.explorer, [
-      ASSETS_TYPE.ERC20,
-    ]);
+    try {
+      const erc20Asset = await this.getNewErc20Info(job.data.explorer);
+      const listHolderStatistic = await this.getHolders(job.data.explorer, [
+        ASSETS_TYPE.ERC20,
+      ]);
 
-    await this.assetsRepository.save(erc20Asset);
-    await this.upsertTokenHolderStatistic(listHolderStatistic);
+      await this.assetsRepository.save(erc20Asset);
+      await this.upsertTokenHolderStatistic(listHolderStatistic);
+    } catch (error) {
+      this.logger.error(`syncErc20AssetHolder has error: ${error.stack}`);
+    }
   }
 
   async getNewErc20Info(explorer: Explorer): Promise<Asset[]> {
@@ -411,6 +433,50 @@ export class TokenProcessor implements OnModuleInit {
     return result;
   }
 
+  async getHolderWithPagination(assets: Asset[], explorer: Explorer) {
+    let totalHolders = {};
+    let page = 0;
+    let index = 0;
+    const limit = INDEXER_API_V2.MAX_REQUEST;
+    do {
+      let subQuery = '';
+      for (
+        index = page * limit;
+        index < (page + 1) * limit && index < assets.length;
+        index++
+      ) {
+        const asset = assets[index];
+        subQuery =
+          subQuery.concat(`total_holder_${index}: account_balance_aggregate(where: {denom: {_eq: "${asset.denom}"}, amount: {_gt: "0"}}) {
+                            aggregate {
+                              count
+                            }
+                          }`);
+      }
+
+      const query = util.format(
+        INDEXER_API_V2.GRAPH_QL.BASE_QUERY,
+        explorer.chainDb,
+        subQuery,
+      );
+
+      const graphqlQueryTotalHolder = {
+        query,
+        operationName: INDEXER_API_V2.OPERATION_NAME.BASE_QUERY,
+        variables: {},
+      };
+
+      const holders = (
+        await this.serviceUtil.fetchDataFromGraphQL(graphqlQueryTotalHolder)
+      )?.data[explorer.chainDb];
+
+      totalHolders = { ...totalHolders, ...holders };
+      page++;
+    } while (index < assets.length);
+
+    return totalHolders;
+  }
+
   async upsertTokenHolderStatistic(
     listHolderStatistic: TokenHolderStatistic[],
   ) {
@@ -420,6 +486,39 @@ export class TokenProcessor implements OnModuleInit {
       .values(listHolderStatistic)
       .orUpdate(['total_holder'], ['asset', 'date'])
       .execute();
+  }
+
+  async syncOnlyErc20(explorer: Explorer, from: string) {
+    const erc20Query = {
+      query: util.format(
+        INDEXER_API_V2.GRAPH_QL.SYNC_ERC20_INFO,
+        explorer.chainDb,
+      ),
+      variables: { from },
+      operationName: INDEXER_API_V2.OPERATION_NAME.SYNC_ERC20_INFO,
+    };
+
+    const listErc20Contract = await this.getDataWithPagination(
+      erc20Query,
+      'erc20_contract',
+      explorer,
+    );
+
+    if (!listErc20Contract || listErc20Contract.length === 0) {
+      return;
+    }
+    listErc20Contract.map((erc20) => {
+      erc20.updated_at = erc20.evm_smart_contract.updated_at;
+      erc20.type = ASSETS_TYPE.ERC20;
+      erc20.totalSupply = TransactionHelper.balanceOf(
+        erc20.total_supply || 0,
+        erc20.decimal || explorer.decimal,
+      );
+      erc20.explorer = explorer;
+      return erc20;
+    });
+
+    return listErc20Contract;
   }
 
   @OnQueueError()

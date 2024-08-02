@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { Brackets, EntityRepository, Repository } from 'typeorm';
+import { Brackets, EntityRepository, Not, Repository } from 'typeorm';
 import { Asset } from '../../../shared';
 
 @EntityRepository(Asset)
@@ -10,28 +10,32 @@ export class AssetsRepository extends Repository<Asset> {
     this._logger.log(
       `============== ${this.countAssetsHavingCoinId.name} was called! ==============`,
     );
-    const sqlSelect = `tm.denom, tm.coin_id`;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, count] = await this.findAndCount({
+      where: {
+        coinId: Not(''),
+      },
+    });
 
-    const queryBuilder = this.createQueryBuilder('tm')
-      .select(sqlSelect)
-      .where("tm.coin_id <> '' ");
-
-    return await queryBuilder.getCount();
+    return count;
   }
 
   async getAssetsHavingCoinId(limit: number, pageIndex: number) {
     this._logger.log(
       `============== ${this.getAssetsHavingCoinId.name} was called! ==============`,
     );
-    const sqlSelect = ` tm.coin_id`;
+    const data = await this.find({
+      where: {
+        coinId: Not(''),
+      },
+      take: limit,
+      skip: pageIndex * limit,
+      order: {
+        id: 'ASC',
+      },
+    });
 
-    const queryBuilder = this.createQueryBuilder('tm')
-      .select(sqlSelect)
-      .where("tm.coin_id <> '' ")
-      .limit(limit)
-      .offset(pageIndex * limit);
-
-    return await queryBuilder.getRawMany();
+    return data.map((item) => item.coinId);
   }
 
   async getAssets(keyword, limit = 1, offset = 0, type = '', explorerId = 1) {
@@ -39,12 +43,12 @@ export class AssetsRepository extends Repository<Asset> {
       `============== ${this.getAssets.name} was called! ==============`,
     );
 
-    const builder = this.createQueryBuilder('asset')
-      .where('asset.name IS NOT NULL')
-      .andWhere("asset.name <> ''")
-      .andWhere('asset.explorer_id=:explorerId', {
+    const builder = this.createQueryBuilder('asset').where(
+      'asset.explorer_id=:explorerId',
+      {
         explorerId,
-      });
+      },
+    );
 
     const _finalizeResult = async () => {
       const result: Asset[] = await builder
@@ -62,10 +66,10 @@ export class AssetsRepository extends Repository<Asset> {
     if (keyword) {
       builder.andWhere(
         new Brackets((qb) => {
-          qb.where('asset.denom =:address', {
+          qb.where('LOWER(asset.denom) =LOWER(:address)', {
             address: keyword,
           })
-            .orWhere('asset.denom =:ibc', {
+            .orWhere('LOWER(asset.denom) =LOWER(:ibc)', {
               ibc: `ibc/${keyword}`,
             })
             .orWhere('LOWER(asset.name) LIKE LOWER(:keyword)', {
@@ -88,7 +92,7 @@ export class AssetsRepository extends Repository<Asset> {
     return await _finalizeResult();
   }
 
-  async getAssetsDetail(denom, explorerId = 1, days = 2) {
+  async getAssetsDetail(denom: string, explorerId = 1, days = 2) {
     this._logger.log(
       `============== ${this.getAssetsDetail.name} was called! ==============`,
     );
@@ -104,9 +108,9 @@ export class AssetsRepository extends Repository<Asset> {
       })
       .andWhere(
         new Brackets((qb) => {
-          qb.where('asset.denom =:denom', {
+          qb.where('LOWER(asset.denom) =LOWER(:denom)', {
             denom: `${denom}`,
-          }).orWhere('asset.denom =:ibcDenom', {
+          }).orWhere('LOWER(asset.denom) =LOWER(:ibcDenom)', {
             ibcDenom: `ibc/${denom}`,
           });
         }),
